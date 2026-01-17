@@ -197,38 +197,27 @@ header h1 {
   font-weight: 400;
 }
 
-/* Theme Toggle */
-.theme-toggle-btn {
+/* Home Button */
+.home-btn {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--color-primary);
   transition: all var(--transition-normal);
 }
 
-.theme-toggle-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+.home-btn:hover {
+  background: var(--color-primary-bg);
 }
 
-.theme-toggle-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-.theme-toggle-btn .icon-sun,
-[data-theme="dark"] .theme-toggle-btn .icon-moon {
-  display: none;
-}
-
-[data-theme="dark"] .theme-toggle-btn .icon-sun {
-  display: block;
+.home-btn:active {
+  transform: scale(0.95);
 }
 
 /* Auth Section */
@@ -1622,6 +1611,105 @@ header h1 {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: #fff;
+}
+
+/* 내 정보 모달 */
+.my-info-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.my-info-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--color-primary);
+}
+
+.my-info-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.my-info-details {
+  width: 100%;
+}
+
+.my-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.my-info-row:last-child {
+  border-bottom: none;
+}
+
+.my-info-label {
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
+.my-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 설정 모달 */
+.settings-section {
+  padding: 8px 0;
+}
+
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.theme-options {
+  display: flex;
+  gap: 12px;
+}
+
+.theme-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.theme-option:hover {
+  background: var(--bg-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.theme-option.active {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.theme-option span {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* Footer */

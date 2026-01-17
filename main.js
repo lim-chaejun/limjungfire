@@ -189,7 +189,53 @@ window.showMyInfo = function() {
   closeProfileMenu();
   if (!currentUser) return;
 
-  alert(`이름: ${currentUser.displayName || '-'}\n이메일: ${currentUser.email || '-'}`);
+  document.getElementById('myInfoPhoto').src = currentUser.photoURL || '';
+  document.getElementById('myInfoName').textContent = currentUser.displayName || '-';
+  document.getElementById('myInfoEmail').textContent = currentUser.email || '-';
+  document.getElementById('myInfoModal').style.display = 'flex';
+};
+
+// 내 정보 모달 닫기
+window.closeMyInfoModal = function() {
+  document.getElementById('myInfoModal').style.display = 'none';
+};
+
+// 설정 보기
+window.showSettings = function() {
+  closeProfileMenu();
+  updateThemeOptions();
+  document.getElementById('settingsModal').style.display = 'flex';
+};
+
+// 설정 모달 닫기
+window.closeSettingsModal = function() {
+  document.getElementById('settingsModal').style.display = 'none';
+};
+
+// 테마 옵션 업데이트
+function updateThemeOptions() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+  });
+}
+
+// 테마 설정 (설정 모달에서)
+window.setTheme = function(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  updateThemeOptions();
+};
+
+// 홈으로 이동
+window.goHome = function() {
+  // 검색 결과 초기화
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('addressInput').value = '';
+  document.getElementById('searchBtn').disabled = true;
+
+  // 헤더 다시 표시
+  document.getElementById('mainHeader').classList.remove('hidden');
 };
 
 // 검색기록 모달 상태
