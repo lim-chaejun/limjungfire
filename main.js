@@ -50,6 +50,16 @@ async function loadFirebase() {
   }
 }
 
+// 스플래시 화면 숨기기
+function hideSplashScreen() {
+  const splash = document.getElementById('splashScreen');
+  if (splash) {
+    splash.classList.add('hidden');
+    // 애니메이션 후 DOM에서 제거
+    setTimeout(() => splash.remove(), 300);
+  }
+}
+
 // 초기화
 (async function init() {
   const fb = await loadFirebase();
@@ -57,7 +67,12 @@ async function loadFirebase() {
     fb.onAuthChange((user) => {
       currentUser = user;
       updateAuthUI(user);
+      // 인증 상태 확인 후 스플래시 화면 숨기기
+      hideSplashScreen();
     });
+  } else {
+    // Firebase 로드 실패해도 스플래시 숨기기
+    hideSplashScreen();
   }
 })();
 
