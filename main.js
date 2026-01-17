@@ -985,6 +985,14 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         <button class="btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
       </div>
     </div>
+    ${renderFireFacilitiesCard({
+      pmsDay: permitDate,
+      totArea: totalArea,
+      grndFlrCnt: groundFloors,
+      ugrndFlrCnt: undergroundFloors,
+      mainPurpose: mainPurpose,
+      heit: height
+    })}
   `;
 }
 
@@ -1733,6 +1741,445 @@ function clearResult() {
 function showError(message) {
   document.getElementById('result').innerHTML = `<div class="error-message">${message}</div>`;
 }
+
+// ==================== 특정소방대상물 분류 ====================
+
+// 주용도 → 특정소방대상물 분류 매핑
+function getFireTargetClassification(mainPurpose) {
+  const classificationMap = {
+    // 공동주택
+    '아파트': { class: '공동주택', category: '아파트' },
+    '연립주택': { class: '공동주택', category: '연립주택' },
+    '다세대주택': { class: '공동주택', category: '다세대주택' },
+    '기숙사': { class: '공동주택', category: '기숙사' },
+
+    // 근린생활시설
+    '제1종근린생활시설': { class: '근린생활시설', category: '제1종' },
+    '제2종근린생활시설': { class: '근린생활시설', category: '제2종' },
+    '근린생활시설': { class: '근린생활시설', category: '일반' },
+
+    // 문화 및 집회시설
+    '문화및집회시설': { class: '문화 및 집회시설', category: '일반' },
+    '공연장': { class: '문화 및 집회시설', category: '공연장' },
+    '집회장': { class: '문화 및 집회시설', category: '집회장' },
+    '관람장': { class: '문화 및 집회시설', category: '관람장' },
+    '전시장': { class: '문화 및 집회시설', category: '전시장' },
+
+    // 종교시설
+    '종교시설': { class: '종교시설', category: '일반' },
+
+    // 판매시설
+    '판매시설': { class: '판매시설', category: '일반' },
+    '도매시장': { class: '판매시설', category: '도매시장' },
+    '소매시장': { class: '판매시설', category: '소매시장' },
+    '상점': { class: '판매시설', category: '상점' },
+
+    // 운수시설
+    '운수시설': { class: '운수시설', category: '일반' },
+
+    // 의료시설
+    '의료시설': { class: '의료시설', category: '일반' },
+    '병원': { class: '의료시설', category: '병원' },
+    '격리병원': { class: '의료시설', category: '격리병원' },
+
+    // 교육연구시설
+    '교육연구시설': { class: '교육연구시설', category: '일반' },
+    '학교': { class: '교육연구시설', category: '학교' },
+    '학원': { class: '교육연구시설', category: '학원' },
+    '도서관': { class: '교육연구시설', category: '도서관' },
+
+    // 노유자시설
+    '노유자시설': { class: '노유자시설', category: '일반' },
+    '아동관련시설': { class: '노유자시설', category: '아동관련시설' },
+    '노인복지시설': { class: '노유자시설', category: '노인복지시설' },
+
+    // 수련시설
+    '수련시설': { class: '수련시설', category: '일반' },
+    '유스호스텔': { class: '수련시설', category: '유스호스텔' },
+
+    // 운동시설
+    '운동시설': { class: '운동시설', category: '일반' },
+    '체육관': { class: '운동시설', category: '체육관' },
+
+    // 업무시설
+    '업무시설': { class: '업무시설', category: '일반' },
+    '오피스텔': { class: '업무시설', category: '오피스텔' },
+    '사무소': { class: '업무시설', category: '사무소' },
+
+    // 숙박시설
+    '숙박시설': { class: '숙박시설', category: '일반' },
+    '일반숙박시설': { class: '숙박시설', category: '일반숙박시설' },
+    '관광숙박시설': { class: '숙박시설', category: '관광숙박시설' },
+    '호텔': { class: '숙박시설', category: '호텔' },
+    '모텔': { class: '숙박시설', category: '모텔' },
+
+    // 위락시설
+    '위락시설': { class: '위락시설', category: '일반' },
+
+    // 공장
+    '공장': { class: '공장', category: '일반' },
+
+    // 창고시설
+    '창고시설': { class: '창고시설', category: '일반' },
+    '창고': { class: '창고시설', category: '창고' },
+
+    // 위험물 저장 및 처리 시설
+    '위험물저장및처리시설': { class: '위험물 저장 및 처리 시설', category: '일반' },
+
+    // 자동차 관련 시설
+    '자동차관련시설': { class: '자동차 관련 시설', category: '일반' },
+    '주차장': { class: '자동차 관련 시설', category: '주차장' },
+
+    // 방송통신시설
+    '방송통신시설': { class: '방송통신시설', category: '일반' },
+
+    // 발전시설
+    '발전시설': { class: '발전시설', category: '일반' },
+
+    // 관광휴게시설
+    '관광휴게시설': { class: '관광휴게시설', category: '일반' },
+
+    // 단독주택
+    '단독주택': { class: '단독주택', category: '단독주택' },
+    '다중주택': { class: '단독주택', category: '다중주택' },
+    '다가구주택': { class: '단독주택', category: '다가구주택' },
+  };
+
+  if (!mainPurpose) return null;
+
+  // 정확한 매칭 먼저 시도
+  if (classificationMap[mainPurpose]) {
+    return classificationMap[mainPurpose];
+  }
+
+  // 부분 매칭 시도
+  for (const [key, value] of Object.entries(classificationMap)) {
+    if (mainPurpose.includes(key) || key.includes(mainPurpose)) {
+      return value;
+    }
+  }
+
+  return { class: '기타시설', category: mainPurpose };
+}
+
+// ==================== 필수 소방시설 판단 ====================
+
+// 허가일 기준 필수 소방시설 판단
+function getRequiredFireFacilities(buildingInfo) {
+  const {
+    pmsDay,           // 허가일 (YYYYMMDD)
+    totArea,          // 연면적 (㎡)
+    grndFlrCnt,       // 지상층수
+    ugrndFlrCnt,      // 지하층수
+    mainPurpose,      // 주용도
+    heit              // 높이 (m)
+  } = buildingInfo;
+
+  const permitDate = parseInt(pmsDay) || 0;
+  const totalArea = parseFloat(totArea) || 0;
+  const groundFloors = parseInt(grndFlrCnt) || 0;
+  const undergroundFloors = parseInt(ugrndFlrCnt) || 0;
+  const height = parseFloat(heit) || 0;
+
+  const classification = getFireTargetClassification(mainPurpose);
+  const facilityClass = classification?.class || '기타시설';
+
+  const facilities = [];
+
+  // 1. 소화기 - 모든 특정소방대상물
+  facilities.push({
+    name: '소화기',
+    required: true,
+    reason: '모든 특정소방대상물',
+    icon: '🧯'
+  });
+
+  // 2. 옥내소화전
+  let indoorHydrantRequired = false;
+  let indoorHydrantReason = '';
+
+  if (totalArea >= 3000) {
+    indoorHydrantRequired = true;
+    indoorHydrantReason = '연면적 3,000㎡ 이상';
+  } else if (groundFloors >= 4 && totalArea >= 1500) {
+    indoorHydrantRequired = true;
+    indoorHydrantReason = '4층 이상 & 연면적 1,500㎡ 이상';
+  } else if (['근린생활시설', '판매시설', '운수시설', '의료시설', '노유자시설', '업무시설', '숙박시설', '위락시설', '공장', '창고시설'].includes(facilityClass)) {
+    if (totalArea >= 1500) {
+      indoorHydrantRequired = true;
+      indoorHydrantReason = `${facilityClass} 연면적 1,500㎡ 이상`;
+    }
+  }
+
+  facilities.push({
+    name: '옥내소화전',
+    required: indoorHydrantRequired,
+    reason: indoorHydrantReason || '해당없음',
+    icon: '🚿'
+  });
+
+  // 3. 스프링클러
+  let sprinklerRequired = false;
+  let sprinklerReason = '';
+
+  // 허가일에 따른 기준 적용
+  if (permitDate >= 20170128) {
+    // 2017.01.28 이후 - 강화된 기준
+    if (groundFloors >= 6) {
+      sprinklerRequired = true;
+      sprinklerReason = '6층 이상 (2017.01.28 이후 기준)';
+    } else if (height >= 30) {
+      sprinklerRequired = true;
+      sprinklerReason = '높이 30m 이상';
+    } else if (['숙박시설', '의료시설', '노유자시설'].includes(facilityClass)) {
+      sprinklerRequired = true;
+      sprinklerReason = `${facilityClass} (2017.01.28 이후 기준)`;
+    } else if (totalArea >= 5000) {
+      sprinklerRequired = true;
+      sprinklerReason = '연면적 5,000㎡ 이상';
+    }
+  } else if (permitDate >= 20030529) {
+    // 2003.05.29 ~ 2017.01.27
+    if (groundFloors >= 11) {
+      sprinklerRequired = true;
+      sprinklerReason = '11층 이상';
+    } else if (totalArea >= 10000) {
+      sprinklerRequired = true;
+      sprinklerReason = '연면적 10,000㎡ 이상';
+    } else if (['숙박시설', '의료시설'].includes(facilityClass) && totalArea >= 600) {
+      sprinklerRequired = true;
+      sprinklerReason = `${facilityClass} 연면적 600㎡ 이상`;
+    }
+  } else {
+    // 2003.05.29 이전
+    if (groundFloors >= 11) {
+      sprinklerRequired = true;
+      sprinklerReason = '11층 이상';
+    } else if (totalArea >= 30000) {
+      sprinklerRequired = true;
+      sprinklerReason = '연면적 30,000㎡ 이상';
+    }
+  }
+
+  facilities.push({
+    name: '스프링클러',
+    required: sprinklerRequired,
+    reason: sprinklerReason || '해당없음',
+    icon: '💦'
+  });
+
+  // 4. 자동화재탐지설비
+  let fireDetectorRequired = false;
+  let fireDetectorReason = '';
+
+  if (totalArea >= 1000) {
+    fireDetectorRequired = true;
+    fireDetectorReason = '연면적 1,000㎡ 이상';
+  } else if (groundFloors >= 6 || undergroundFloors >= 1) {
+    fireDetectorRequired = true;
+    fireDetectorReason = '6층 이상 또는 지하층';
+  } else if (['숙박시설', '의료시설', '노유자시설', '수련시설'].includes(facilityClass)) {
+    fireDetectorRequired = true;
+    fireDetectorReason = `${facilityClass}`;
+  }
+
+  facilities.push({
+    name: '자동화재탐지설비',
+    required: fireDetectorRequired,
+    reason: fireDetectorReason || '해당없음',
+    icon: '🔔'
+  });
+
+  // 5. 옥외소화전
+  let outdoorHydrantRequired = false;
+  let outdoorHydrantReason = '';
+
+  if (groundFloors >= 2 && totalArea >= 9000) {
+    outdoorHydrantRequired = true;
+    outdoorHydrantReason = '2층 이상 & 연면적 9,000㎡ 이상';
+  }
+
+  facilities.push({
+    name: '옥외소화전',
+    required: outdoorHydrantRequired,
+    reason: outdoorHydrantReason || '해당없음',
+    icon: '🔥'
+  });
+
+  // 6. 비상경보설비
+  let emergencyAlarmRequired = false;
+  let emergencyAlarmReason = '';
+
+  if (totalArea >= 400 || undergroundFloors >= 1) {
+    emergencyAlarmRequired = true;
+    emergencyAlarmReason = '연면적 400㎡ 이상 또는 지하층';
+  }
+
+  facilities.push({
+    name: '비상경보설비',
+    required: emergencyAlarmRequired,
+    reason: emergencyAlarmReason || '해당없음',
+    icon: '🚨'
+  });
+
+  // 7. 피난설비 (유도등)
+  facilities.push({
+    name: '유도등',
+    required: true,
+    reason: '모든 특정소방대상물',
+    icon: '🚪'
+  });
+
+  // 8. 비상조명등
+  let emergencyLightRequired = false;
+  let emergencyLightReason = '';
+
+  if (groundFloors >= 5 || undergroundFloors >= 1) {
+    emergencyLightRequired = true;
+    emergencyLightReason = '5층 이상 또는 지하층';
+  }
+
+  facilities.push({
+    name: '비상조명등',
+    required: emergencyLightRequired,
+    reason: emergencyLightReason || '해당없음',
+    icon: '💡'
+  });
+
+  // 9. 제연설비
+  let smokeControlRequired = false;
+  let smokeControlReason = '';
+
+  if (height >= 31) {
+    smokeControlRequired = true;
+    smokeControlReason = '높이 31m 이상';
+  } else if (['판매시설', '운수시설', '숙박시설', '의료시설'].includes(facilityClass) && totalArea >= 1000) {
+    smokeControlRequired = true;
+    smokeControlReason = `${facilityClass} 연면적 1,000㎡ 이상`;
+  }
+
+  facilities.push({
+    name: '제연설비',
+    required: smokeControlRequired,
+    reason: smokeControlReason || '해당없음',
+    icon: '🌬️'
+  });
+
+  // 10. 비상용승강기 (소방용)
+  let fireElevatorRequired = false;
+  let fireElevatorReason = '';
+
+  if (height >= 31) {
+    fireElevatorRequired = true;
+    fireElevatorReason = '높이 31m 이상';
+  }
+
+  facilities.push({
+    name: '비상용승강기',
+    required: fireElevatorRequired,
+    reason: fireElevatorReason || '해당없음',
+    icon: '🛗'
+  });
+
+  return {
+    classification,
+    facilities,
+    permitDate: pmsDay,
+    summary: {
+      totalArea,
+      groundFloors,
+      undergroundFloors,
+      height
+    }
+  };
+}
+
+// 소방시설 카드 렌더링
+function renderFireFacilitiesCard(buildingInfo) {
+  const result = getRequiredFireFacilities(buildingInfo);
+  const { classification, facilities, permitDate } = result;
+
+  const requiredFacilities = facilities.filter(f => f.required);
+  const notRequiredFacilities = facilities.filter(f => !f.required);
+
+  const lawInfo = getFireLawInfo(permitDate);
+  const lawPeriod = lawInfo ? lawInfo.period : '-';
+
+  let html = `
+    <div class="fire-facilities-card">
+      <div class="fire-facilities-header">
+        <div class="classification-badge">
+          <span class="classification-class">${classification?.class || '미분류'}</span>
+          ${classification?.category && classification.category !== '일반' ?
+            `<span class="classification-category">${classification.category}</span>` : ''}
+        </div>
+        <div class="law-period-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          ${lawPeriod}
+        </div>
+      </div>
+
+      <div class="facilities-section">
+        <div class="facilities-title required">
+          <span>필수 소방시설</span>
+          <span class="facilities-count">${requiredFacilities.length}개</span>
+        </div>
+        <div class="facilities-list">
+          ${requiredFacilities.map(f => `
+            <div class="facility-item required">
+              <span class="facility-icon">${f.icon}</span>
+              <div class="facility-info">
+                <span class="facility-name">${f.name}</span>
+                <span class="facility-reason">${f.reason}</span>
+              </div>
+              <span class="facility-status required">필수</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      ${notRequiredFacilities.length > 0 ? `
+        <div class="facilities-section collapsed" id="optionalFacilities">
+          <div class="facilities-title optional" onclick="toggleOptionalFacilities()">
+            <span>비해당 시설</span>
+            <span class="facilities-count">${notRequiredFacilities.length}개</span>
+            <svg class="toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          <div class="facilities-list optional-list">
+            ${notRequiredFacilities.map(f => `
+              <div class="facility-item optional">
+                <span class="facility-icon">${f.icon}</span>
+                <div class="facility-info">
+                  <span class="facility-name">${f.name}</span>
+                </div>
+                <span class="facility-status optional">비해당</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="facilities-note">
+        ※ 실제 적용 기준은 세부 용도, 수용인원, 지역 조례 등에 따라 달라질 수 있습니다.
+      </div>
+    </div>
+  `;
+
+  return html;
+}
+
+// 비해당 시설 토글
+window.toggleOptionalFacilities = function() {
+  const section = document.getElementById('optionalFacilities');
+  if (section) {
+    section.classList.toggle('collapsed');
+  }
+};
 
 // ==================== 지도 기능 ====================
 
