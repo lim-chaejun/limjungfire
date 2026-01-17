@@ -632,74 +632,57 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
     if (sumEmergency > emergencyElevator) emergencyElevator = sumEmergency;
   }
 
+  // 포맷팅
+  const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+  const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
+  const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
+
   return `
     <div class="summary-card">
       <div class="summary-header">
         <div class="summary-building-name">${buildingName}</div>
+        <span class="summary-purpose-badge">${mainPurpose}</span>
       </div>
-      <div class="summary-body-list">
-        <div class="summary-list-item">
-          <span class="summary-label">주용도:</span>
-          <span class="summary-value">${mainPurpose}</span>
+      <div class="summary-grid">
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">건축허가일</span>
+          <span class="summary-grid-value">${fmtDate(permitDate)}</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">기타용도:</span>
-          <span class="summary-value">${etcPurpose}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">사용승인일</span>
+          <span class="summary-grid-value">${fmtDate(approvalDate)}</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">주소:</span>
-          <span class="summary-value">${address}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">연면적</span>
+          <span class="summary-grid-value">${fmtArea(totalArea)}㎡</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">건축허가일:</span>
-          <span class="summary-value">${permitDate || '-'}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">건축면적</span>
+          <span class="summary-grid-value">${fmtArea(buildingArea)}㎡</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">사용승인일:</span>
-          <span class="summary-value">${approvalDate || '-'}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">층수</span>
+          <span class="summary-grid-value">지상${groundFloors || '-'} / 지하${undergroundFloors || '-'}</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">연면적(㎡):</span>
-          <span class="summary-value">${totalArea || '-'}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">높이</span>
+          <span class="summary-grid-value">${fmtHeight(height)}</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">건축면적(㎡):</span>
-          <span class="summary-value">${buildingArea || '-'}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">세대수</span>
+          <span class="summary-grid-value">${households || '-'}세대</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">세대수:</span>
-          <span class="summary-value">${households || '-'}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">승강기</span>
+          <span class="summary-grid-value">승용${passengerElevator} / 비상${emergencyElevator}</span>
         </div>
-        <div class="summary-list-item">
-          <span class="summary-label">지상층수:</span>
-          <span class="summary-value">${groundFloors || '-'}</span>
-        </div>
-        <div class="summary-list-item">
-          <span class="summary-label">지하층수:</span>
-          <span class="summary-value">${undergroundFloors || '-'}</span>
-        </div>
-        <div class="summary-list-item">
-          <span class="summary-label">높이:</span>
-          <span class="summary-value">${height || '-'}</span>
-        </div>
-        <div class="summary-list-item">
-          <span class="summary-label">건축물구조:</span>
-          <span class="summary-value">${structure}</span>
-        </div>
-        <div class="summary-list-item">
-          <span class="summary-label">지붕구조:</span>
-          <span class="summary-value">${roofStructure}</span>
-        </div>
-        <div class="summary-list-item">
-          <span class="summary-label">승용승강기(대):</span>
-          <span class="summary-value">${passengerElevator}</span>
-        </div>
-        <div class="summary-list-item">
-          <span class="summary-label">비상승강기(대):</span>
-          <span class="summary-value">${emergencyElevator}</span>
+        <div class="summary-grid-item full-width">
+          <span class="summary-grid-label">구조</span>
+          <span class="summary-grid-value">${structure}</span>
         </div>
       </div>
       <div class="summary-footer">
+        <button class="btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
         <button class="btn-detail-sm" onclick="showFloorModal(-1)">층별</button>
         <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
       </div>
