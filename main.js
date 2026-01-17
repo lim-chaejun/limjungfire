@@ -2169,30 +2169,7 @@ function renderFireFacilitiesCard(buildingInfo) {
       </div>
 
       <div class="law-links">
-        <a href="https://www.law.go.kr/법령/소방시설설치및관리에관한법률" target="_blank" class="law-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          소방시설법
-        </a>
-        <a href="https://www.law.go.kr/법령/소방시설설치및관리에관한법률시행령" target="_blank" class="law-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          시행령
-        </a>
-        <a href="https://www.law.go.kr/법령/소방시설설치및관리에관한법률시행규칙" target="_blank" class="law-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          시행규칙
-        </a>
+        ${getLawLinksHtml(permitDate)}
       </div>
     </div>
   `;
@@ -2207,6 +2184,53 @@ window.toggleOptionalFacilities = function() {
     section.classList.toggle('collapsed');
   }
 };
+
+// 허가일 기준 법령 링크 생성
+function getLawLinksHtml(permitDate) {
+  const date = parseInt(permitDate) || 0;
+
+  // 법령명 (2022.12.01 기준 변경)
+  let lawName, lawNameShort;
+  if (date >= 20221201) {
+    lawName = '소방시설설치및관리에관한법률';
+    lawNameShort = '소방시설법';
+  } else {
+    lawName = '소방시설설치유지및안전관리에관한법률';
+    lawNameShort = '소방시설법';
+  }
+
+  // 날짜 포맷 (YYYYMMDD)
+  const dateStr = permitDate || '';
+  const dateParam = dateStr ? `/(${dateStr})` : '';
+
+  const linkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+    <polyline points="15 3 21 3 21 9"/>
+    <line x1="10" y1="14" x2="21" y2="3"/>
+  </svg>`;
+
+  return `
+    <a href="https://www.law.go.kr/법령/${lawName}${dateParam}" target="_blank" class="law-link">
+      ${linkIcon}
+      ${lawNameShort}
+    </a>
+    <a href="https://www.law.go.kr/법령/${lawName}시행령${dateParam}" target="_blank" class="law-link">
+      ${linkIcon}
+      시행령
+    </a>
+    <a href="https://www.law.go.kr/법령/${lawName}시행규칙${dateParam}" target="_blank" class="law-link">
+      ${linkIcon}
+      시행규칙
+    </a>
+    <div class="law-date-info">허가일(${formatPermitDate(permitDate)}) 기준</div>
+  `;
+}
+
+// 허가일 포맷
+function formatPermitDate(dateStr) {
+  if (!dateStr || dateStr.length !== 8) return '-';
+  return `${dateStr.substring(0,4)}.${dateStr.substring(4,6)}.${dateStr.substring(6,8)}`;
+}
 
 // ==================== 지도 기능 ====================
 

@@ -2196,3 +2196,18 @@ footer {
 .law-link svg {
   flex-shrink: 0;
 }
+
+.law-date-info {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+  margin-top: 8px;
+}
+
+/* 법령 링크 wrap */
+.law-links {
+  flex-wrap: wrap;
+}
