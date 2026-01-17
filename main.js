@@ -450,6 +450,10 @@ function displayAllResults(titleData, floorData, generalData) {
     return;
   }
 
+  // 헤더 숨기기
+  const header = document.getElementById('mainHeader');
+  if (header) header.classList.add('hidden');
+
   renderBuildingView();
 }
 
@@ -476,21 +480,37 @@ function renderBuildingView() {
 
   // 여러 건물이 있을 경우 건물 선택 탭 표시
   if (buildingCount > 1) {
-    html += '<div class="building-selector">';
+    html += `
+      <div class="building-selector-wrapper">
+        <button class="scroll-btn scroll-left" onclick="scrollBuildingSelector(-1)" aria-label="왼쪽">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <div class="building-selector" id="buildingSelector">
+    `;
     sortedIndices.forEach((originalIndex, sortedIdx) => {
       const item = titleItems[originalIndex];
       const buildingName = item.dongNm || item.bldNm || `건물 ${sortedIdx + 1}`;
       const area = item.totArea ? Number(item.totArea).toLocaleString() : '-';
       const isActive = sortedIdx === selectedBuildingIndex;
       html += `
-        <button class="building-tab ${isActive ? 'active' : ''}" onclick="selectBuilding(${sortedIdx})">
-          <span class="tab-name">${buildingName}</span>
-          <span class="tab-area">${area}㎡</span>
-          ${sortedIdx === 0 ? '<span class="tab-badge">메인</span>' : ''}
-        </button>
+          <button class="building-tab ${isActive ? 'active' : ''}" onclick="selectBuilding(${sortedIdx})">
+            <span class="tab-name">${buildingName}</span>
+            <span class="tab-area">${area}㎡</span>
+            ${sortedIdx === 0 ? '<span class="tab-badge">메인</span>' : ''}
+          </button>
       `;
     });
-    html += '</div>';
+    html += `
+        </div>
+        <button class="scroll-btn scroll-right" onclick="scrollBuildingSelector(1)" aria-label="오른쪽">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+      </div>
+    `;
   }
 
   // 선택된 건물 카드 표시
@@ -509,6 +529,18 @@ function renderBuildingView() {
 window.selectBuilding = function(sortedIdx) {
   selectedBuildingIndex = sortedIdx;
   renderBuildingView();
+}
+
+// 건물 선택기 스크롤
+window.scrollBuildingSelector = function(direction) {
+  const selector = document.getElementById('buildingSelector');
+  if (selector) {
+    const scrollAmount = 150;
+    selector.scrollBy({
+      left: direction * scrollAmount,
+      behavior: 'smooth'
+    });
+  }
 }
 
 // 요약 카드 렌더링

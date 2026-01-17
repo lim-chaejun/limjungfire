@@ -97,15 +97,30 @@ body {
 .container {
   max-width: 480px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0 16px 16px;
   min-height: 100vh;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  z-index: 100;
 }
 
 /* Header */
 header {
   text-align: center;
-  padding: 24px 0 20px;
-  position: relative;
+  padding: 16px 0 20px;
+}
+
+header.hidden {
+  display: none;
 }
 
 .logo {
@@ -133,15 +148,6 @@ header h1 {
 }
 
 /* Theme Toggle */
-.theme-toggle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .theme-toggle-btn {
   width: 40px;
   height: 40px;
@@ -177,9 +183,8 @@ header h1 {
 
 /* Auth Section */
 .auth-section {
-  position: absolute;
-  top: 0;
-  right: 0;
+  display: flex;
+  align-items: center;
 }
 
 .auth-btn {
@@ -548,13 +553,53 @@ header h1 {
 }
 
 /* Building Selector */
+.building-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.scroll-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.scroll-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+}
+
+.scroll-btn:active {
+  transform: scale(0.95);
+}
+
+/* 모바일에서 스크롤 버튼 숨김 */
+@media (max-width: 768px) {
+  .scroll-btn {
+    display: none;
+  }
+}
+
 .building-selector {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   overflow-y: visible;
   padding: 10px 2px 6px;
-  margin: -10px -2px 0;
+  margin: -10px 0 0;
+  flex: 1;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -1202,11 +1247,15 @@ footer {
 /* Responsive */
 @media (max-width: 480px) {
   .container {
-    padding: 12px;
+    padding: 0 12px 12px;
+  }
+
+  .top-bar {
+    padding: 8px 0;
   }
 
   header {
-    padding: 20px 0 16px;
+    padding: 12px 0 16px;
   }
 
   header h1 {
@@ -1215,22 +1264,6 @@ footer {
 
   .subtitle {
     font-size: 13px;
-  }
-
-  .auth-section {
-    position: relative;
-    top: 0;
-    right: 0;
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 8px;
-  }
-
-  .theme-toggle {
-    position: relative;
-    top: 0;
-    left: 0;
-    margin-bottom: 8px;
   }
 
   .search-box input {
