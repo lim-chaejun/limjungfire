@@ -14,6 +14,19 @@
 <body>
   <div class="container">
     <header>
+      <!-- 다크모드 토글 -->
+      <div class="theme-toggle">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="테마 변경">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </button>
+      </div>
+
       <!-- 로그인 영역 -->
       <div id="authSection" class="auth-section">
         <div id="loginBtn" class="auth-btn" onclick="handleGoogleLogin()">
@@ -60,9 +73,9 @@
 
       <div class="logo">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="#ff6b35" opacity="0.2"/>
-          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="#ff6b35"/>
-          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="#ff6b35"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
+          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
         </svg>
       </div>
       <h1>소방용 건축물대장 검색</h1>

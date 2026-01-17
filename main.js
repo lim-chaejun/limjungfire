@@ -3,6 +3,37 @@ let selectedAddressData = null;
 let currentUser = null;
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
+// 테마 관리
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  } else if (prefersDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+}
+
+// 테마 토글
+window.toggleTheme = function() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+};
+
+// 시스템 테마 변경 감지
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (!localStorage.getItem('theme')) {
+    document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+  }
+});
+
+// 초기 테마 설정
+initTheme();
+
 // Firebase 함수들 (동적 로드)
 let firebaseModule = null;
 
