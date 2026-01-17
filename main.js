@@ -716,19 +716,11 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
 
 // 표제부 모달 표시
 window.showTitleModal = function(buildingIndex) {
-  const { titleItems, generalItems, permitItems } = currentBuildingData;
-  const generalInfo = generalItems[0] || {};
-  const permitInfo = permitItems[0] || {};
+  const { titleItems } = currentBuildingData;
   const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
   const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
 
   let html = '';
-
-  // 허가일 기준 적용 소방법령 (건축인허가정보 API의 archPmsDay 우선)
-  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
-  if (pmsDay) {
-    html += renderLawInfoCard(pmsDay);
-  }
 
   // 표제부 (동별) 상세
   if (titleItem) {
@@ -842,6 +834,10 @@ function renderDetailTitleCard(items) {
       <div class="detail-cards">`;
 
   items.forEach(item => {
+    const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+    const fmtArea = (a) => a ? Number(a).toLocaleString() : '-';
+    const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
+
     html += `
         <div class="detail-card-item">
           <div class="detail-card-title">${item.dongNm || '건물'}</div>
@@ -851,16 +847,48 @@ function renderDetailTitleCard(items) {
               <span class="detail-card-value">${item.mainPurpsCdNm || '-'}</span>
             </div>
             <div class="detail-card-row">
+              <span class="detail-card-label">기타용도</span>
+              <span class="detail-card-value">${item.etcPurps || '-'}</span>
+            </div>
+            <div class="detail-card-row">
               <span class="detail-card-label">구조</span>
               <span class="detail-card-value">${item.strctCdNm || '-'}</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">지붕구조</span>
+              <span class="detail-card-value">${item.roofCdNm || '-'}</span>
             </div>
             <div class="detail-card-row">
               <span class="detail-card-label">층수</span>
               <span class="detail-card-value">지상${item.grndFlrCnt || '-'} / 지하${item.ugrndFlrCnt || '-'}</span>
             </div>
             <div class="detail-card-row">
+              <span class="detail-card-label">높이</span>
+              <span class="detail-card-value">${fmtHeight(item.heit)}</span>
+            </div>
+            <div class="detail-card-row">
               <span class="detail-card-label">연면적</span>
-              <span class="detail-card-value">${item.totArea ? Number(item.totArea).toLocaleString() : '-'}㎡</span>
+              <span class="detail-card-value">${fmtArea(item.totArea)}㎡</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">건축면적</span>
+              <span class="detail-card-value">${fmtArea(item.archArea)}㎡</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">세대수</span>
+              <span class="detail-card-value">${item.hhldCnt || '-'}</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">승용승강기</span>
+              <span class="detail-card-value">${item.rideUseElvtCnt || '0'}대</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">비상승강기</span>
+              <span class="detail-card-value">${item.emgenUseElvtCnt || '0'}대</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">사용승인일</span>
+              <span class="detail-card-value">${fmtDate(item.useAprDay)}</span>
             </div>
           </div>
         </div>`;
@@ -883,10 +911,12 @@ function renderDetailFloorCard(items) {
 
   items.forEach(item => {
     const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
+    const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
     html += `
         <div class="detail-floor-item">
           <span class="floor-num">${floorLabel}</span>
           <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
+          ${etcPurps}
           <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
         </div>`;
   });
@@ -902,6 +932,7 @@ function renderDetailGeneralCard(items, permitInfo) {
   const item = items[0];
   // 허가일: 건축인허가정보 API의 archPmsDay 우선, 없으면 총괄표제부의 pmsDay 사용
   const permitDate = permitInfo?.archPmsDay || item.pmsDay;
+  const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
   return `
     <div class="detail-section">
@@ -909,6 +940,22 @@ function renderDetailGeneralCard(items, permitInfo) {
         <h4>총괄표제부</h4>
       </div>
       <div class="detail-card-grid">
+        <div class="detail-card-row">
+          <span class="detail-card-label">주용도</span>
+          <span class="detail-card-value">${item.mainPurpsCdNm || '-'}</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">기타용도</span>
+          <span class="detail-card-value">${item.etcPurps || '-'}</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">구조</span>
+          <span class="detail-card-value">${item.strctCdNm || '-'}</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">지붕구조</span>
+          <span class="detail-card-value">${item.roofCdNm || '-'}</span>
+        </div>
         <div class="detail-card-row">
           <span class="detail-card-label">허가일</span>
           <span class="detail-card-value">${formatDate(permitDate)}</span>
@@ -920,6 +967,18 @@ function renderDetailGeneralCard(items, permitInfo) {
         <div class="detail-card-row">
           <span class="detail-card-label">사용승인일</span>
           <span class="detail-card-value">${formatDate(item.useAprDay)}</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">지상층수</span>
+          <span class="detail-card-value">${item.grndFlrCnt || '-'}층</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">지하층수</span>
+          <span class="detail-card-value">${item.ugrndFlrCnt || '-'}층</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">높이</span>
+          <span class="detail-card-value">${fmtHeight(item.heit)}</span>
         </div>
         <div class="detail-card-row">
           <span class="detail-card-label">대지면적</span>
@@ -944,6 +1003,14 @@ function renderDetailGeneralCard(items, permitInfo) {
         <div class="detail-card-row">
           <span class="detail-card-label">세대수</span>
           <span class="detail-card-value">${item.hhldCnt || '-'}세대</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">승용승강기</span>
+          <span class="detail-card-value">${item.rideUseElvtCnt || '0'}대</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">비상승강기</span>
+          <span class="detail-card-value">${item.emgenUseElvtCnt || '0'}대</span>
         </div>
       </div>
     </div>`;

@@ -1288,6 +1288,15 @@ header h1 {
   text-overflow: ellipsis;
 }
 
+.floor-etc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .floor-area {
   font-size: 13px;
   color: var(--text-tertiary);
