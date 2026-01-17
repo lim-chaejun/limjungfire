@@ -1,4 +1,4 @@
-// Firebase import
+// Firebase import (ES Module)
 import { signInWithGoogle, logout, onAuthChange, saveSearchHistory, getMySearchHistory, deleteSearchHistory } from './firebase.js';
 
 // 전역 변수
