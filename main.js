@@ -928,24 +928,9 @@ function renderDetailTitleCard(items) {
 
 // 상세 층별 카드 렌더링
 function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
-  // 1. 소방법령 정보
-  let html = pmsDay ? renderLawInfoCard(pmsDay) : '';
+  let html = '';
 
-  // 2. 용도별 면적 합계 계산
-  const usageSummary = {};
-  items.forEach(item => {
-    const use = item.mainPurpsCdNm || '기타';
-    usageSummary[use] = (usageSummary[use] || 0) + (Number(item.area) || 0);
-  });
-
-  // 용도별 합계 표시
-  html += `<div class="usage-summary">`;
-  Object.entries(usageSummary).forEach(([use, area]) => {
-    html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
-  });
-  html += `</div>`;
-
-  // 3. 정렬 옵션 버튼
+  // 1. 정렬 옵션 버튼 (최상단)
   html += `
     <div class="floor-sort-bar">
       <span class="floor-sort-label">정렬</span>
@@ -971,6 +956,7 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
       </div>
     </div>`;
 
+  // 2. 층별 리스트 (검색결과)
   html += `<div class="detail-section floor-section-large">`;
 
   // 정렬 모드에 따른 렌더링
@@ -1037,6 +1023,25 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
   }
 
   html += `</div>`;
+
+  // 3. 용도별 면적 합계
+  const usageSummary = {};
+  items.forEach(item => {
+    const use = item.mainPurpsCdNm || '기타';
+    usageSummary[use] = (usageSummary[use] || 0) + (Number(item.area) || 0);
+  });
+
+  html += `<div class="usage-summary">`;
+  Object.entries(usageSummary).forEach(([use, area]) => {
+    html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
+  });
+  html += `</div>`;
+
+  // 4. 적용 소방법령 (최하단)
+  if (pmsDay) {
+    html += renderLawInfoCard(pmsDay);
+  }
+
   return html;
 }
 
