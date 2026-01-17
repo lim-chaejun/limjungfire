@@ -61,15 +61,23 @@ function updateAuthUI(user) {
   const userInfo = document.getElementById('userInfo');
   const userPhoto = document.getElementById('userPhoto');
   const userName = document.getElementById('userName');
+  const menuUserPhoto = document.getElementById('menuUserPhoto');
+  const menuUserName = document.getElementById('menuUserName');
+  const menuUserEmail = document.getElementById('menuUserEmail');
 
   if (user) {
     loginBtn.style.display = 'none';
     userInfo.style.display = 'flex';
     userPhoto.src = user.photoURL || '';
     userName.textContent = user.displayName || user.email;
+    // 드롭다운 메뉴 정보
+    if (menuUserPhoto) menuUserPhoto.src = user.photoURL || '';
+    if (menuUserName) menuUserName.textContent = user.displayName || '';
+    if (menuUserEmail) menuUserEmail.textContent = user.email || '';
   } else {
     loginBtn.style.display = 'flex';
     userInfo.style.display = 'none';
+    closeProfileMenu();
   }
   // 검색 기록 버튼 표시/숨김
   const historyBtn = document.getElementById('historyBtn');
@@ -77,6 +85,35 @@ function updateAuthUI(user) {
     historyBtn.style.display = user ? 'inline-flex' : 'none';
   }
 }
+
+// 프로필 메뉴 토글
+window.toggleProfileMenu = function() {
+  const menu = document.getElementById('profileMenu');
+  menu.classList.toggle('show');
+};
+
+// 프로필 메뉴 닫기
+function closeProfileMenu() {
+  const menu = document.getElementById('profileMenu');
+  if (menu) menu.classList.remove('show');
+}
+
+// 외부 클릭 시 메뉴 닫기
+document.addEventListener('click', function(e) {
+  const profileDropdown = document.querySelector('.profile-dropdown');
+  const profileMenu = document.getElementById('profileMenu');
+  if (profileDropdown && profileMenu && !profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+    closeProfileMenu();
+  }
+});
+
+// 내 정보 보기
+window.showMyInfo = function() {
+  closeProfileMenu();
+  if (!currentUser) return;
+
+  alert(`이름: ${currentUser.displayName || '-'}\n이메일: ${currentUser.email || '-'}`);
+};
 
 // 검색 기록 보기
 window.showSearchHistory = async function() {
