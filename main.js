@@ -176,10 +176,18 @@ function extractItems(data) {
   return Array.isArray(body.items.item) ? body.items.item : [body.items.item];
 }
 
+// 날짜 포맷팅 (YYYYMMDD -> YYYY.MM.DD)
+function formatDate(dateStr) {
+  if (!dateStr || dateStr.length !== 8) return '-';
+  return `${dateStr.substring(0, 4)}.${dateStr.substring(4, 6)}.${dateStr.substring(6, 8)}`;
+}
+
 // 총괄표제부 카드 렌더링
 function renderGeneralCard(items) {
+  const item = items[0]; // 총괄표제부는 보통 1개
+
   let html = `
-    <div class="result-card">
+    <div class="result-card highlight-card">
       <div class="card-header">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -189,6 +197,20 @@ function renderGeneralCard(items) {
         <h3 class="card-title">총괄표제부</h3>
       </div>
       <div class="card-body">
+        <div class="date-info">
+          <div class="date-item">
+            <span class="date-label">허가일</span>
+            <span class="date-value">${formatDate(item.pmsDay)}</span>
+          </div>
+          <div class="date-item">
+            <span class="date-label">착공일</span>
+            <span class="date-value">${formatDate(item.stcnsDay)}</span>
+          </div>
+          <div class="date-item">
+            <span class="date-label">사용승인일</span>
+            <span class="date-value">${formatDate(item.useAprDay)}</span>
+          </div>
+        </div>
         <table class="result-table">
           <thead>
             <tr>
