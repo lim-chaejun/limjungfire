@@ -1511,15 +1511,24 @@ header h1 {
 }
 
 /* 동 선택 탭 */
+.building-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.building-tabs-wrapper .scroll-btn {
+  flex-shrink: 0;
+}
+
 .building-tabs {
   display: flex;
   gap: 8px;
-  padding: 12px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  margin-bottom: 12px;
+  padding: 10px 4px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  flex: 1;
 }
 
 .building-tabs::-webkit-scrollbar {

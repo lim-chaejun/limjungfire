@@ -751,6 +751,15 @@ window.changeTitleBuilding = function(index) {
   document.getElementById('detailModalBody').innerHTML = html;
 };
 
+// 표제부 동 탭 스크롤
+window.scrollBuildingTabs = function(direction) {
+  const container = document.getElementById('buildingTabs');
+  if (container) {
+    const scrollAmount = 120;
+    container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+  }
+};
+
 // 층별 모달 상태 관리
 let currentFloorData = {
   items: [],
@@ -877,16 +886,30 @@ function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
 
   // 1. 동 선택 탭 (여러 동이 있을 경우)
   if (items.length > 1) {
-    html += `<div class="building-tabs">`;
+    html += `
+      <div class="building-tabs-wrapper">
+        <button class="scroll-btn" onclick="scrollBuildingTabs(-1)" aria-label="왼쪽">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <div class="building-tabs" id="buildingTabs">`;
     items.forEach((item, index) => {
       const name = item.dongNm || item.bldNm || `동 ${index + 1}`;
       html += `
-        <button class="building-tab-btn ${index === selectedIndex ? 'active' : ''}"
-                onclick="changeTitleBuilding(${index})">
-          ${name}
-        </button>`;
+          <button class="building-tab-btn ${index === selectedIndex ? 'active' : ''}"
+                  onclick="changeTitleBuilding(${index})">
+            ${name}
+          </button>`;
     });
-    html += `</div>`;
+    html += `
+        </div>
+        <button class="scroll-btn" onclick="scrollBuildingTabs(1)" aria-label="오른쪽">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+      </div>`;
   }
 
   // 선택된 동 정보
