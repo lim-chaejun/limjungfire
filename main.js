@@ -306,7 +306,7 @@ window.searchAddress = function() {
   }).open();
 }
 
-// 건축물대장 조회 (3가지 동시 조회)
+// 건축물대장 조회 (4가지 동시 조회)
 window.searchBuilding = async function() {
   if (!selectedAddressData) {
     alert('주소를 먼저 검색해주세요.');
@@ -322,14 +322,15 @@ window.searchBuilding = async function() {
     const bjdongCd = bcode.substring(5, 10);
     const jibunInfo = extractJibun(selectedAddressData.jibunAddress);
 
-    // 3가지 API 동시 호출
-    const [titleResult, floorResult, generalResult] = await Promise.all([
+    // 4가지 API 동시 호출
+    const [titleResult, floorResult, generalResult, permitResult] = await Promise.all([
       fetchBrTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
       fetchBrFlrOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
-      fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)
+      fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
+      fetchApBasisOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)
     ]);
 
-    displayAllResults(titleResult, floorResult, generalResult);
+    displayAllResults(titleResult, floorResult, generalResult, permitResult);
 
     // 로그인된 사용자면 검색 기록 저장
     if (currentUser) {
@@ -338,7 +339,8 @@ window.searchBuilding = async function() {
         const buildingData = {
           title: extractItems(titleResult),
           floor: extractItems(floorResult),
-          general: extractItems(generalResult)
+          general: extractItems(generalResult),
+          permit: extractItems(permitResult)
         };
         await fb.saveSearchHistory(selectedAddressData, buildingData);
       }
@@ -415,23 +417,41 @@ async function fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   return await response.json();
 }
 
+// 건축인허가 기본개요 조회 API (허가일 정보)
+async function fetchApBasisOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
+  const url = new URL('https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo');
+  url.searchParams.append('serviceKey', apiKey);
+  url.searchParams.append('sigunguCd', sigunguCd);
+  url.searchParams.append('bjdongCd', bjdongCd);
+  url.searchParams.append('platGbCd', '0');
+  if (jibunInfo.bun) url.searchParams.append('bun', jibunInfo.bun.padStart(4, '0'));
+  if (jibunInfo.ji) url.searchParams.append('ji', jibunInfo.ji.padStart(4, '0'));
+  url.searchParams.append('numOfRows', '100');
+  url.searchParams.append('pageNo', '1');
+  url.searchParams.append('_type', 'json');
+
+  const response = await fetch(url);
+  return await response.json();
+}
+
 // 전역 변수로 상세보기용 데이터 저장
 let currentBuildingData = {
   titleItems: [],
   floorItems: [],
   generalItems: [],
+  permitItems: [],
   sortedIndices: [] // 정렬된 인덱스 배열
 };
-let selectedBuildingIndex = 0; // 현재 선택된 건물 인덱스
 
 // 모든 결과 표시 (요약 카드 형식)
-function displayAllResults(titleData, floorData, generalData) {
+function displayAllResults(titleData, floorData, generalData, permitData) {
   const resultDiv = document.getElementById('result');
 
   // 데이터 추출
   const titleItems = extractItems(titleData);
   const floorItems = extractItems(floorData);
   const generalItems = extractItems(generalData);
+  const permitItems = permitData ? extractItems(permitData) : [];
 
   // 건축면적(totArea) 기준 내림차순 정렬된 인덱스 배열 생성
   const sortedIndices = titleItems
@@ -440,8 +460,7 @@ function displayAllResults(titleData, floorData, generalData) {
     .map(item => item.index);
 
   // 상세보기용 데이터 저장
-  currentBuildingData = { titleItems, floorItems, generalItems, sortedIndices };
-  selectedBuildingIndex = 0; // 초기화: 가장 큰 건물 선택
+  currentBuildingData = { titleItems, floorItems, generalItems, permitItems, sortedIndices };
 
   const buildingCount = titleItems.length;
 
@@ -460,9 +479,10 @@ function displayAllResults(titleData, floorData, generalData) {
 // 건물 뷰 렌더링 (선택된 건물만 표시)
 function renderBuildingView() {
   const resultDiv = document.getElementById('result');
-  const { titleItems, generalItems, sortedIndices } = currentBuildingData;
+  const { titleItems, generalItems, permitItems, sortedIndices } = currentBuildingData;
   const buildingCount = titleItems.length;
   const generalInfo = generalItems[0] || {};
+  const permitInfo = permitItems[0] || {};
 
   let html = '';
 
@@ -478,7 +498,7 @@ function renderBuildingView() {
     </div>
   `;
 
-  // 여러 건물이 있을 경우 건물 선택 탭 표시
+  // 여러 건물이 있을 경우 건물 선택 탭 표시 (클릭 시 동별표제부 모달 열기)
   if (buildingCount > 1) {
     html += `
       <div class="building-selector-wrapper">
@@ -493,9 +513,8 @@ function renderBuildingView() {
       const item = titleItems[originalIndex];
       const buildingName = item.dongNm || item.bldNm || `건물 ${sortedIdx + 1}`;
       const area = item.totArea ? Number(item.totArea).toLocaleString() : '-';
-      const isActive = sortedIdx === selectedBuildingIndex;
       html += `
-          <button class="building-tab ${isActive ? 'active' : ''}" onclick="selectBuilding(${sortedIdx})">
+          <button class="building-tab" onclick="showTitleModal(${originalIndex})">
             <span class="tab-name">${buildingName}</span>
             <span class="tab-area">${area}㎡</span>
             ${sortedIdx === 0 ? '<span class="tab-badge">메인</span>' : ''}
@@ -513,22 +532,10 @@ function renderBuildingView() {
     `;
   }
 
-  // 선택된 건물 카드 표시
-  if (buildingCount > 0) {
-    const originalIndex = sortedIndices[selectedBuildingIndex];
-    const item = titleItems[originalIndex];
-    html += renderSummaryCard(item, originalIndex, generalInfo);
-  } else if (generalItems.length > 0) {
-    html += renderGeneralOnlyCard(generalInfo);
-  }
+  // 총괄 요약 카드 표시 (총괄표제부 기준)
+  html += renderSummaryCard(generalInfo, permitInfo, titleItems);
 
   resultDiv.innerHTML = html;
-}
-
-// 건물 선택 함수
-window.selectBuilding = function(sortedIdx) {
-  selectedBuildingIndex = sortedIdx;
-  renderBuildingView();
 }
 
 // 건물 선택기 스크롤
@@ -543,146 +550,135 @@ window.scrollBuildingSelector = function(direction) {
   }
 }
 
-// 요약 카드 렌더링
-function renderSummaryCard(item, index, generalInfo) {
-  const buildingName = item.dongNm || item.bldNm || '건물명 미상';
-  const mainPurpose = item.mainPurpsCdNm || '-';
-  const permitDate = formatDate(generalInfo.pmsDay);
-  const approvalDate = formatDate(item.useAprDay || generalInfo.useAprDay);
-  const totalArea = item.totArea ? Number(item.totArea).toLocaleString() : '-';
-  const buildingArea = item.archArea ? Number(item.archArea).toLocaleString() : (generalInfo.archArea ? Number(generalInfo.archArea).toLocaleString() : '-');
-  const households = item.hhldCnt || generalInfo.hhldCnt || '-';
-  const groundFloors = item.grndFlrCnt || '-';
-  const undergroundFloors = item.ugrndFlrCnt || '-';
-  const height = item.heit ? Number(item.heit).toFixed(2) : '-';
-  const structure = item.strctCdNm || '-';
-  const passengerElevator = item.rideUseElvtCnt || '0';
-  const emergencyElevator = item.emgenUseElvtCnt || '0';
+// 요약 카드 렌더링 (총괄표제부 기준)
+function renderSummaryCard(generalInfo, permitInfo, titleItems) {
+  // 건물명: 첫 번째 표제부 또는 총괄표제부에서 가져오기
+  const mainTitle = titleItems && titleItems.length > 0 ? titleItems[0] : {};
+  const buildingName = mainTitle.bldNm || generalInfo.bldNm || selectedAddressData?.buildingName || '건축물 정보';
+
+  // 주용도, 기타용도
+  const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
+  const etcPurpose = generalInfo.etcPurps || mainTitle.etcPurps || '-';
+
+  // 주소
+  const address = generalInfo.platPlc || selectedAddressData?.jibunAddress || selectedAddressData?.address || '-';
+
+  // 허가일, 승인일
+  const permitDate = permitInfo?.archPmsDay || generalInfo.pmsDay || '';
+  const approvalDate = generalInfo.useAprDay || mainTitle.useAprDay || '';
+
+  // 면적
+  const totalArea = generalInfo.totArea || mainTitle.totArea || '';
+  const buildingArea = generalInfo.archArea || mainTitle.archArea || '';
+
+  // 세대수
+  const households = generalInfo.hhldCnt || mainTitle.hhldCnt || '';
+
+  // 층수 (총괄표제부 기준)
+  const groundFloors = generalInfo.grndFlrCnt || mainTitle.grndFlrCnt || '';
+  const undergroundFloors = generalInfo.ugrndFlrCnt || mainTitle.ugrndFlrCnt || '';
+
+  // 높이
+  const height = generalInfo.heit || mainTitle.heit || '';
+
+  // 구조
+  const structure = generalInfo.strctCdNm || mainTitle.strctCdNm || '-';
+  const roofStructure = generalInfo.roofCdNm || mainTitle.roofCdNm || '-';
+
+  // 승강기
+  const passengerElevator = generalInfo.rideUseElvtCnt || mainTitle.rideUseElvtCnt || '0';
+  const emergencyElevator = generalInfo.emgenUseElvtCnt || mainTitle.emgenUseElvtCnt || '0';
 
   return `
     <div class="summary-card">
       <div class="summary-header">
         <div class="summary-building-name">${buildingName}</div>
-        <div class="summary-purpose">${mainPurpose}</div>
       </div>
-      <div class="summary-body">
-        <div class="summary-row">
-          <div class="summary-item">
-            <span class="summary-label">건축허가일</span>
-            <span class="summary-value">${permitDate}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">사용승인일</span>
-            <span class="summary-value">${approvalDate}</span>
-          </div>
+      <div class="summary-body-list">
+        <div class="summary-list-item">
+          <span class="summary-label">주용도:</span>
+          <span class="summary-value">${mainPurpose}</span>
         </div>
-        <div class="summary-row">
-          <div class="summary-item">
-            <span class="summary-label">연면적</span>
-            <span class="summary-value">${totalArea}㎡</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">건축면적</span>
-            <span class="summary-value">${buildingArea}㎡</span>
-          </div>
+        <div class="summary-list-item">
+          <span class="summary-label">기타용도:</span>
+          <span class="summary-value">${etcPurpose}</span>
         </div>
-        <div class="summary-row">
-          <div class="summary-item">
-            <span class="summary-label">층수</span>
-            <span class="summary-value">지상${groundFloors} / 지하${undergroundFloors}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">높이</span>
-            <span class="summary-value">${height}m</span>
-          </div>
+        <div class="summary-list-item">
+          <span class="summary-label">주소:</span>
+          <span class="summary-value">${address}</span>
         </div>
-        <div class="summary-row">
-          <div class="summary-item">
-            <span class="summary-label">세대수</span>
-            <span class="summary-value">${households}세대</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">승강기</span>
-            <span class="summary-value">승용${passengerElevator} / 비상${emergencyElevator}</span>
-          </div>
+        <div class="summary-list-item">
+          <span class="summary-label">건축허가일:</span>
+          <span class="summary-value">${permitDate || '-'}</span>
         </div>
-        <div class="summary-row single">
-          <div class="summary-item full">
-            <span class="summary-label">구조</span>
-            <span class="summary-value">${structure}</span>
-          </div>
+        <div class="summary-list-item">
+          <span class="summary-label">사용승인일:</span>
+          <span class="summary-value">${approvalDate || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">연면적(㎡):</span>
+          <span class="summary-value">${totalArea || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">건축면적(㎡):</span>
+          <span class="summary-value">${buildingArea || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">세대수:</span>
+          <span class="summary-value">${households || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">지상층수:</span>
+          <span class="summary-value">${groundFloors || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">지하층수:</span>
+          <span class="summary-value">${undergroundFloors || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">높이:</span>
+          <span class="summary-value">${height || '-'}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">건축물구조:</span>
+          <span class="summary-value">${structure}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">지붕구조:</span>
+          <span class="summary-value">${roofStructure}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">승용승강기(대):</span>
+          <span class="summary-value">${passengerElevator}</span>
+        </div>
+        <div class="summary-list-item">
+          <span class="summary-label">비상승강기(대):</span>
+          <span class="summary-value">${emergencyElevator}</span>
         </div>
       </div>
       <div class="summary-footer">
-        <button class="btn-detail-sm" onclick="showTitleModal(${index})">표제부</button>
-        <button class="btn-detail-sm" onclick="showFloorModal(${index})">층별</button>
+        <button class="btn-detail-sm" onclick="showFloorModal(-1)">층별</button>
         <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
       </div>
     </div>
   `;
 }
 
-// 총괄표제부만 있는 경우의 카드
-function renderGeneralOnlyCard(generalInfo) {
-  const permitDate = formatDate(generalInfo.pmsDay);
-  const approvalDate = formatDate(generalInfo.useAprDay);
-  const totalArea = generalInfo.totArea ? Number(generalInfo.totArea).toLocaleString() : '-';
-  const buildingArea = generalInfo.archArea ? Number(generalInfo.archArea).toLocaleString() : '-';
-  const households = generalInfo.hhldCnt || '-';
-
-  return `
-    <div class="summary-card">
-      <div class="summary-header">
-        <div class="summary-building-name">건축물 정보</div>
-        <div class="summary-purpose">총괄표제부</div>
-      </div>
-      <div class="summary-body">
-        <div class="summary-row">
-          <div class="summary-item">
-            <span class="summary-label">건축허가일</span>
-            <span class="summary-value">${permitDate}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">사용승인일</span>
-            <span class="summary-value">${approvalDate}</span>
-          </div>
-        </div>
-        <div class="summary-row">
-          <div class="summary-item">
-            <span class="summary-label">연면적</span>
-            <span class="summary-value">${totalArea}㎡</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">건축면적</span>
-            <span class="summary-value">${buildingArea}㎡</span>
-          </div>
-        </div>
-        <div class="summary-row single">
-          <div class="summary-item">
-            <span class="summary-label">세대수</span>
-            <span class="summary-value">${households}세대</span>
-          </div>
-        </div>
-      </div>
-      <div class="summary-footer">
-        <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
-      </div>
-    </div>
-  `;
-}
 
 // 표제부 모달 표시
 window.showTitleModal = function(buildingIndex) {
-  const { titleItems, generalItems } = currentBuildingData;
+  const { titleItems, generalItems, permitItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
+  const permitInfo = permitItems[0] || {};
   const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
   const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
 
   let html = '';
 
-  // 허가일 기준 적용 소방법령
-  if (generalInfo.pmsDay) {
-    html += renderLawInfoCard(generalInfo.pmsDay);
+  // 허가일 기준 적용 소방법령 (건축인허가정보 API의 archPmsDay 우선)
+  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
+  if (pmsDay) {
+    html += renderLawInfoCard(pmsDay);
   }
 
   // 표제부 (동별) 상세
@@ -723,12 +719,13 @@ window.showFloorModal = function(buildingIndex) {
 
 // 총괄표제부 모달 표시
 window.showGeneralModal = function() {
-  const { generalItems } = currentBuildingData;
+  const { generalItems, permitItems } = currentBuildingData;
+  const permitInfo = permitItems[0] || {};
 
   let html = '';
 
   if (generalItems.length > 0) {
-    html += renderDetailGeneralCard(generalItems);
+    html += renderDetailGeneralCard(generalItems, permitInfo);
   } else {
     html = '<div class="no-result">총괄표제부 정보가 없습니다.</div>';
   }
@@ -740,8 +737,9 @@ window.showGeneralModal = function() {
 
 // 상세보기 모달 표시 (기존 - 호환성 유지)
 window.showDetailModal = function(buildingIndex) {
-  const { titleItems, floorItems, generalItems } = currentBuildingData;
+  const { titleItems, floorItems, generalItems, permitItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
+  const permitInfo = permitItems[0] || {};
   const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
   const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
 
@@ -752,9 +750,10 @@ window.showDetailModal = function(buildingIndex) {
 
   let html = '';
 
-  // 1. 허가일 기준 적용 소방법령
-  if (generalInfo.pmsDay) {
-    html += renderLawInfoCard(generalInfo.pmsDay);
+  // 1. 허가일 기준 적용 소방법령 (건축인허가정보 API의 archPmsDay 우선)
+  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
+  if (pmsDay) {
+    html += renderLawInfoCard(pmsDay);
   }
 
   // 2. 표제부 (동별) 상세 테이블
@@ -771,7 +770,7 @@ window.showDetailModal = function(buildingIndex) {
 
   // 4. 총괄표제부 상세 테이블
   if (generalItems.length > 0) {
-    html += renderDetailGeneralCard(generalItems);
+    html += renderDetailGeneralCard(generalItems, permitInfo);
   }
 
   document.getElementById('detailModalTitle').textContent = `${buildingName} 상세 정보`;
@@ -850,8 +849,10 @@ function renderDetailFloorCard(items) {
 }
 
 // 상세 총괄표제부 카드 렌더링
-function renderDetailGeneralCard(items) {
+function renderDetailGeneralCard(items, permitInfo) {
   const item = items[0];
+  // 허가일: 건축인허가정보 API의 archPmsDay 우선, 없으면 총괄표제부의 pmsDay 사용
+  const permitDate = permitInfo?.archPmsDay || item.pmsDay;
 
   return `
     <div class="detail-section">
@@ -861,7 +862,7 @@ function renderDetailGeneralCard(items) {
       <div class="detail-card-grid">
         <div class="detail-card-row">
           <span class="detail-card-label">허가일</span>
-          <span class="detail-card-value">${formatDate(item.pmsDay)}</span>
+          <span class="detail-card-value">${formatDate(permitDate)}</span>
         </div>
         <div class="detail-card-row">
           <span class="detail-card-label">착공일</span>
