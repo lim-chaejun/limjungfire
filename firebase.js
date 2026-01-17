@@ -162,5 +162,105 @@ export async function deleteSearchHistory(docId) {
   }
 }
 
+// ==================== 즐겨찾기 함수 ====================
+
+// 즐겨찾기 추가
+export async function addFavorite(addressData, buildingData) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return null;
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'favorites'), {
+      userId: user.uid,
+      userEmail: user.email,
+      address: addressData.address,
+      jibunAddress: addressData.jibunAddress,
+      roadAddress: addressData.roadAddress,
+      bcode: addressData.bcode,
+      buildingData: buildingData,
+      createdAt: serverTimestamp()
+    });
+    console.log('즐겨찾기 추가 완료:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('즐겨찾기 추가 실패:', error);
+    throw error;
+  }
+}
+
+// 즐겨찾기 삭제
+export async function removeFavorite(docId) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return false;
+  }
+
+  try {
+    await deleteDoc(doc(db, 'favorites', docId));
+    console.log('즐겨찾기 삭제 완료:', docId);
+    return true;
+  } catch (error) {
+    console.error('즐겨찾기 삭제 실패:', error);
+    throw error;
+  }
+}
+
+// 내 즐겨찾기 목록 조회
+export async function getMyFavorites(limitCount = 50) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return [];
+  }
+
+  try {
+    const q = query(
+      collection(db, 'favorites'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const querySnapshot = await getDocs(q);
+    const favorites = [];
+    querySnapshot.forEach((doc) => {
+      favorites.push({ id: doc.id, ...doc.data() });
+    });
+    return favorites;
+  } catch (error) {
+    console.error('즐겨찾기 조회 실패:', error);
+    throw error;
+  }
+}
+
+// 주소로 즐겨찾기 여부 확인
+export async function checkFavorite(address) {
+  const user = auth.currentUser;
+  if (!user) return null;
+
+  try {
+    const q = query(
+      collection(db, 'favorites'),
+      where('userId', '==', user.uid),
+      where('address', '==', address),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+
+    let result = null;
+    querySnapshot.forEach((doc) => {
+      result = { id: doc.id, ...doc.data() };
+    });
+    return result;
+  } catch (error) {
+    console.error('즐겨찾기 확인 실패:', error);
+    return null;
+  }
+}
+
 // Firestore DB export
 export { db };

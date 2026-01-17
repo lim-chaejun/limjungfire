@@ -192,6 +192,12 @@ window.showMyInfo = function() {
   alert(`이름: ${currentUser.displayName || '-'}\n이메일: ${currentUser.email || '-'}`);
 };
 
+// 검색기록 모달 상태
+let historyModalState = {
+  activeTab: 'recent', // 'recent' or 'favorites'
+  favorites: []
+};
+
 // 검색 기록 보기
 window.showSearchHistory = async function() {
   if (!currentUser) {
@@ -199,38 +205,173 @@ window.showSearchHistory = async function() {
     return;
   }
 
-  const fb = await loadFirebase();
-  if (!fb) return;
-
   const historyModal = document.getElementById('historyModal');
   const historyList = document.getElementById('historyList');
+
+  // 탭 UI 추가
+  historyModalState.activeTab = 'recent';
+  renderHistoryTabs();
 
   historyList.innerHTML = '<div class="loading-small">불러오는 중...</div>';
   historyModal.style.display = 'flex';
 
-  try {
-    const history = await fb.getMySearchHistory(20);
+  await loadHistoryTab('recent');
+};
 
-    if (history.length === 0) {
-      historyList.innerHTML = '<div class="no-history">검색 기록이 없습니다.</div>';
-      return;
-    }
+// 탭 UI 렌더링
+function renderHistoryTabs() {
+  const modalBody = document.querySelector('#historyModal .modal-body');
+  const existingTabs = modalBody.querySelector('.history-tabs');
 
-    historyList.innerHTML = history.map(item => `
-      <div class="history-item" data-id="${item.id}">
-        <div class="history-content" onclick="loadHistoryItem('${item.id}')">
-          <div class="history-address">${item.address}</div>
-          <div class="history-date">${formatTimestamp(item.createdAt)}</div>
-        </div>
-        <button class="history-delete" onclick="deleteHistory('${item.id}')">
+  if (!existingTabs) {
+    const tabsHtml = `
+      <div class="history-tabs">
+        <button class="history-tab-btn ${historyModalState.activeTab === 'recent' ? 'active' : ''}" onclick="switchHistoryTab('recent')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
           </svg>
+          최근 검색
+        </button>
+        <button class="history-tab-btn ${historyModalState.activeTab === 'favorites' ? 'active' : ''}" onclick="switchHistoryTab('favorites')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          즐겨찾기
         </button>
       </div>
-    `).join('');
+    `;
+    modalBody.insertAdjacentHTML('afterbegin', tabsHtml);
+  } else {
+    // 탭 활성화 상태 업데이트
+    existingTabs.querySelectorAll('.history-tab-btn').forEach((btn, index) => {
+      const isActive = (index === 0 && historyModalState.activeTab === 'recent') ||
+                       (index === 1 && historyModalState.activeTab === 'favorites');
+      btn.classList.toggle('active', isActive);
+    });
+  }
+}
+
+// 탭 전환
+window.switchHistoryTab = async function(tab) {
+  historyModalState.activeTab = tab;
+  renderHistoryTabs();
+  await loadHistoryTab(tab);
+};
+
+// 탭별 데이터 로드
+async function loadHistoryTab(tab) {
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = '<div class="loading-small">불러오는 중...</div>';
+
+  const fb = await loadFirebase();
+  if (!fb) return;
+
+  try {
+    if (tab === 'recent') {
+      const history = await fb.getMySearchHistory(20);
+      historyModalState.favorites = await fb.getMyFavorites(50);
+
+      if (history.length === 0) {
+        historyList.innerHTML = '<div class="no-history">검색 기록이 없습니다.</div>';
+        return;
+      }
+
+      historyList.innerHTML = history.map(item => {
+        const isFavorite = historyModalState.favorites.some(f => f.address === item.address);
+        return renderHistoryItem(item, isFavorite, 'history');
+      }).join('');
+    } else {
+      const favorites = await fb.getMyFavorites(50);
+      historyModalState.favorites = favorites;
+
+      if (favorites.length === 0) {
+        historyList.innerHTML = '<div class="no-history">즐겨찾기가 없습니다.</div>';
+        return;
+      }
+
+      historyList.innerHTML = favorites.map(item => renderHistoryItem(item, true, 'favorite')).join('');
+    }
   } catch (error) {
-    historyList.innerHTML = '<div class="error-small">기록을 불러오는데 실패했습니다.</div>';
+    historyList.innerHTML = '<div class="error-small">데이터를 불러오는데 실패했습니다.</div>';
+  }
+}
+
+// 기록 아이템 렌더링
+function renderHistoryItem(item, isFavorite, type) {
+  const starClass = isFavorite ? 'active' : '';
+  const deleteBtn = type === 'history' ? `
+    <button class="history-delete" onclick="deleteHistory('${item.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  ` : '';
+
+  return `
+    <div class="history-item" data-id="${item.id}" data-address="${item.address}">
+      <button class="history-favorite ${starClass}" onclick="toggleFavorite('${item.address}', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </button>
+      <div class="history-content" onclick="loadHistoryItem('${item.id}', '${type}')">
+        <div class="history-address">${item.address}</div>
+        <div class="history-date">${formatTimestamp(item.createdAt)}</div>
+      </div>
+      ${deleteBtn}
+    </div>
+  `;
+}
+
+// 즐겨찾기 토글
+window.toggleFavorite = async function(address, btnElement) {
+  const fb = await loadFirebase();
+  if (!fb) return;
+
+  const isCurrentlyFavorite = btnElement.classList.contains('active');
+
+  try {
+    if (isCurrentlyFavorite) {
+      // 즐겨찾기 삭제
+      const favorite = historyModalState.favorites.find(f => f.address === address);
+      if (favorite) {
+        await fb.removeFavorite(favorite.id);
+        historyModalState.favorites = historyModalState.favorites.filter(f => f.id !== favorite.id);
+      }
+      btnElement.classList.remove('active');
+      btnElement.querySelector('svg').setAttribute('fill', 'none');
+
+      // 즐겨찾기 탭에서 삭제한 경우 아이템 제거
+      if (historyModalState.activeTab === 'favorites') {
+        btnElement.closest('.history-item').remove();
+        if (document.querySelectorAll('.history-item').length === 0) {
+          document.getElementById('historyList').innerHTML = '<div class="no-history">즐겨찾기가 없습니다.</div>';
+        }
+      }
+    } else {
+      // 즐겨찾기 추가 - 해당 주소의 buildingData 찾기
+      const historyItem = document.querySelector(`.history-item[data-address="${address}"]`);
+      const docId = historyItem?.dataset.id;
+
+      // 검색기록에서 buildingData 가져오기
+      const history = await fb.getMySearchHistory(50);
+      const historyData = history.find(h => h.address === address);
+
+      if (historyData && historyData.buildingData) {
+        const favoriteId = await fb.addFavorite(
+          { address: historyData.address, jibunAddress: historyData.jibunAddress, roadAddress: historyData.roadAddress, bcode: historyData.bcode },
+          historyData.buildingData
+        );
+        historyModalState.favorites.push({ id: favoriteId, address: address });
+      }
+
+      btnElement.classList.add('active');
+      btnElement.querySelector('svg').setAttribute('fill', 'currentColor');
+    }
+  } catch (error) {
+    console.error('즐겨찾기 처리 실패:', error);
+    alert('즐겨찾기 처리에 실패했습니다.');
   }
 };
 
@@ -248,12 +389,19 @@ function formatTimestamp(timestamp) {
 }
 
 // 검색 기록 항목 불러오기 (저장된 데이터 표시)
-window.loadHistoryItem = async function(docId) {
+window.loadHistoryItem = async function(docId, type = 'history') {
   const fb = await loadFirebase();
   if (!fb) return;
 
-  const history = await fb.getMySearchHistory(20);
-  const item = history.find(h => h.id === docId);
+  let item = null;
+
+  if (type === 'favorite') {
+    const favorites = await fb.getMyFavorites(50);
+    item = favorites.find(f => f.id === docId);
+  } else {
+    const history = await fb.getMySearchHistory(50);
+    item = history.find(h => h.id === docId);
+  }
 
   if (item && item.buildingData) {
     closeHistoryModal();
@@ -295,6 +443,9 @@ window.deleteHistory = async function(docId) {
 // 모달 닫기
 window.closeHistoryModal = function() {
   document.getElementById('historyModal').style.display = 'none';
+  // 탭 UI 제거 (다음에 열 때 다시 생성)
+  const tabs = document.querySelector('#historyModal .history-tabs');
+  if (tabs) tabs.remove();
 };
 
 // 주소 검색 (카카오 우편번호 서비스)
