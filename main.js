@@ -427,7 +427,6 @@ let selectedBuildingIndex = 0; // 현재 선택된 건물 인덱스
 // 모든 결과 표시 (요약 카드 형식)
 function displayAllResults(titleData, floorData, generalData) {
   const resultDiv = document.getElementById('result');
-  const copySection = document.getElementById('copySection');
 
   // 데이터 추출
   const titleItems = extractItems(titleData);
@@ -448,11 +447,9 @@ function displayAllResults(titleData, floorData, generalData) {
 
   if (buildingCount === 0 && generalItems.length === 0) {
     resultDiv.innerHTML = '<div class="no-result">조회 결과가 없습니다.</div>';
-    copySection.style.display = 'none';
     return;
   }
 
-  copySection.style.display = 'block';
   renderBuildingView();
 }
 
@@ -489,7 +486,7 @@ function renderBuildingView() {
         <button class="building-tab ${isActive ? 'active' : ''}" onclick="selectBuilding(${sortedIdx})">
           <span class="tab-name">${buildingName}</span>
           <span class="tab-area">${area}㎡</span>
-          ${sortedIdx === 0 ? '<span class="tab-badge">최대</span>' : ''}
+          ${sortedIdx === 0 ? '<span class="tab-badge">메인</span>' : ''}
         </button>
       `;
     });
@@ -585,9 +582,9 @@ function renderSummaryCard(item, index, generalInfo) {
         </div>
       </div>
       <div class="summary-footer">
-        <button class="btn-detail" onclick="showDetailModal(${index})">
-          상세보기
-        </button>
+        <button class="btn-detail-sm" onclick="showTitleModal(${index})">표제부</button>
+        <button class="btn-detail-sm" onclick="showFloorModal(${index})">층별</button>
+        <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
       </div>
     </div>
   `;
@@ -636,15 +633,80 @@ function renderGeneralOnlyCard(generalInfo) {
         </div>
       </div>
       <div class="summary-footer">
-        <button class="btn-detail" onclick="showDetailModal(-1)">
-          상세보기
-        </button>
+        <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
       </div>
     </div>
   `;
 }
 
-// 상세보기 모달 표시
+// 표제부 모달 표시
+window.showTitleModal = function(buildingIndex) {
+  const { titleItems, generalItems } = currentBuildingData;
+  const generalInfo = generalItems[0] || {};
+  const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
+  const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
+
+  let html = '';
+
+  // 허가일 기준 적용 소방법령
+  if (generalInfo.pmsDay) {
+    html += renderLawInfoCard(generalInfo.pmsDay);
+  }
+
+  // 표제부 (동별) 상세
+  if (titleItem) {
+    html += renderDetailTitleCard([titleItem]);
+  } else if (titleItems.length > 0) {
+    html += renderDetailTitleCard(titleItems);
+  }
+
+  document.getElementById('detailModalTitle').textContent = `${buildingName} - 표제부`;
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModal').style.display = 'flex';
+};
+
+// 층별 모달 표시
+window.showFloorModal = function(buildingIndex) {
+  const { titleItems, floorItems } = currentBuildingData;
+  const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
+  const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
+
+  // 해당 건물의 층별 정보 필터링
+  const buildingFloors = buildingIndex >= 0
+    ? floorItems.filter(f => f.dongNm === titleItem.dongNm || (!f.dongNm && !titleItem.dongNm))
+    : floorItems;
+
+  let html = '';
+
+  if (buildingFloors.length > 0) {
+    html += renderDetailFloorCard(buildingFloors);
+  } else {
+    html = '<div class="no-result">층별 정보가 없습니다.</div>';
+  }
+
+  document.getElementById('detailModalTitle').textContent = `${buildingName} - 층별 개요`;
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModal').style.display = 'flex';
+};
+
+// 총괄표제부 모달 표시
+window.showGeneralModal = function() {
+  const { generalItems } = currentBuildingData;
+
+  let html = '';
+
+  if (generalItems.length > 0) {
+    html += renderDetailGeneralCard(generalItems);
+  } else {
+    html = '<div class="no-result">총괄표제부 정보가 없습니다.</div>';
+  }
+
+  document.getElementById('detailModalTitle').textContent = '총괄표제부';
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModal').style.display = 'flex';
+};
+
+// 상세보기 모달 표시 (기존 - 호환성 유지)
 window.showDetailModal = function(buildingIndex) {
   const { titleItems, floorItems, generalItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
@@ -959,7 +1021,6 @@ function showLoading(show) {
 // 결과 초기화
 function clearResult() {
   document.getElementById('result').innerHTML = '';
-  document.getElementById('copySection').style.display = 'none';
 }
 
 // 에러 표시
@@ -967,38 +1028,3 @@ function showError(message) {
   document.getElementById('result').innerHTML = `<div class="error-message">${message}</div>`;
 }
 
-// 결과 복사
-window.copyResult = function() {
-  const resultDiv = document.getElementById('result');
-  const tables = resultDiv.querySelectorAll('table');
-
-  if (tables.length === 0) {
-    alert('복사할 결과가 없습니다.');
-    return;
-  }
-
-  let text = '';
-  const cards = resultDiv.querySelectorAll('.result-card');
-
-  cards.forEach(card => {
-    const title = card.querySelector('.card-title')?.textContent || '';
-    text += `\n=== ${title} ===\n`;
-
-    const table = card.querySelector('table');
-    if (table) {
-      const rows = table.querySelectorAll('tr');
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('th, td');
-        const rowData = Array.from(cells).map(cell => cell.textContent).join('\t');
-        text += rowData + '\n';
-      });
-    }
-  });
-
-  navigator.clipboard.writeText(text.trim()).then(() => {
-    alert('결과가 클립보드에 복사되었습니다.');
-  }).catch(err => {
-    console.error('복사 실패:', err);
-    alert('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
-  });
-}
