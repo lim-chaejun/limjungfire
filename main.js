@@ -664,42 +664,36 @@ function renderDetailTitleCard(items) {
   let html = `
     <div class="detail-section">
       <div class="detail-section-header">
-        <div class="detail-section-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
         <h4>표제부 (동별)</h4>
       </div>
-      <div class="detail-table-wrapper">
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>동명칭</th>
-              <th>주용도</th>
-              <th>구조</th>
-              <th>지상층수</th>
-              <th>지하층수</th>
-              <th>연면적(㎡)</th>
-            </tr>
-          </thead>
-          <tbody>`;
+      <div class="detail-cards">`;
 
   items.forEach(item => {
     html += `
-            <tr>
-              <td>${item.dongNm || '-'}</td>
-              <td>${item.mainPurpsCdNm || '-'}</td>
-              <td>${item.strctCdNm || '-'}</td>
-              <td>${item.grndFlrCnt || '-'}</td>
-              <td>${item.ugrndFlrCnt || '-'}</td>
-              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
-            </tr>`;
+        <div class="detail-card-item">
+          <div class="detail-card-title">${item.dongNm || '건물'}</div>
+          <div class="detail-card-grid">
+            <div class="detail-card-row">
+              <span class="detail-card-label">주용도</span>
+              <span class="detail-card-value">${item.mainPurpsCdNm || '-'}</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">구조</span>
+              <span class="detail-card-value">${item.strctCdNm || '-'}</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">층수</span>
+              <span class="detail-card-value">지상${item.grndFlrCnt || '-'} / 지하${item.ugrndFlrCnt || '-'}</span>
+            </div>
+            <div class="detail-card-row">
+              <span class="detail-card-label">연면적</span>
+              <span class="detail-card-value">${item.totArea ? Number(item.totArea).toLocaleString() : '-'}㎡</span>
+            </div>
+          </div>
+        </div>`;
   });
 
   html += `
-          </tbody>
-        </table>
       </div>
     </div>`;
   return html;
@@ -710,42 +704,21 @@ function renderDetailFloorCard(items) {
   let html = `
     <div class="detail-section">
       <div class="detail-section-header">
-        <div class="detail-section-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 21H21M3 7V21M21 7V21M3 7L12 3L21 7M9 10H10M9 14H10M14 10H15M14 14H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
         <h4>층별 개요</h4>
       </div>
-      <div class="detail-table-wrapper">
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>동명칭</th>
-              <th>층구분</th>
-              <th>층번호</th>
-              <th>구조</th>
-              <th>주용도</th>
-              <th>면적(㎡)</th>
-            </tr>
-          </thead>
-          <tbody>`;
+      <div class="detail-floor-list">`;
 
   items.forEach(item => {
+    const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
     html += `
-            <tr>
-              <td>${item.dongNm || '-'}</td>
-              <td>${item.flrGbCdNm || '-'}</td>
-              <td>${item.flrNo || '-'}</td>
-              <td>${item.strctCdNm || '-'}</td>
-              <td>${item.mainPurpsCdNm || '-'}</td>
-              <td>${item.area ? Number(item.area).toLocaleString() : '-'}</td>
-            </tr>`;
+        <div class="detail-floor-item">
+          <span class="floor-num">${floorLabel}</span>
+          <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
+          <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
+        </div>`;
   });
 
   html += `
-          </tbody>
-        </table>
       </div>
     </div>`;
   return html;
@@ -755,62 +728,50 @@ function renderDetailFloorCard(items) {
 function renderDetailGeneralCard(items) {
   const item = items[0];
 
-  let html = `
+  return `
     <div class="detail-section">
       <div class="detail-section-header">
-        <div class="detail-section-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 17H15M9 13H15M9 9H10M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
         <h4>총괄표제부</h4>
       </div>
-      <div class="detail-date-info">
-        <div class="detail-date-item">
-          <span class="detail-date-label">허가일</span>
-          <span class="detail-date-value">${formatDate(item.pmsDay)}</span>
+      <div class="detail-card-grid">
+        <div class="detail-card-row">
+          <span class="detail-card-label">허가일</span>
+          <span class="detail-card-value">${formatDate(item.pmsDay)}</span>
         </div>
-        <div class="detail-date-item">
-          <span class="detail-date-label">착공일</span>
-          <span class="detail-date-value">${formatDate(item.stcnsDay)}</span>
+        <div class="detail-card-row">
+          <span class="detail-card-label">착공일</span>
+          <span class="detail-card-value">${formatDate(item.stcnsDay)}</span>
         </div>
-        <div class="detail-date-item">
-          <span class="detail-date-label">사용승인일</span>
-          <span class="detail-date-value">${formatDate(item.useAprDay)}</span>
+        <div class="detail-card-row">
+          <span class="detail-card-label">사용승인일</span>
+          <span class="detail-card-value">${formatDate(item.useAprDay)}</span>
         </div>
-      </div>
-      <div class="detail-table-wrapper">
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>대지면적(㎡)</th>
-              <th>건축면적(㎡)</th>
-              <th>연면적(㎡)</th>
-              <th>용적률(%)</th>
-              <th>건폐율(%)</th>
-              <th>세대수</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-  items.forEach(item => {
-    html += `
-            <tr>
-              <td>${item.platArea ? Number(item.platArea).toLocaleString() : '-'}</td>
-              <td>${item.archArea ? Number(item.archArea).toLocaleString() : '-'}</td>
-              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
-              <td>${item.vlRat || '-'}</td>
-              <td>${item.bcRat || '-'}</td>
-              <td>${item.hhldCnt || '-'}</td>
-            </tr>`;
-  });
-
-  html += `
-          </tbody>
-        </table>
+        <div class="detail-card-row">
+          <span class="detail-card-label">대지면적</span>
+          <span class="detail-card-value">${item.platArea ? Number(item.platArea).toLocaleString() : '-'}㎡</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">건축면적</span>
+          <span class="detail-card-value">${item.archArea ? Number(item.archArea).toLocaleString() : '-'}㎡</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">연면적</span>
+          <span class="detail-card-value">${item.totArea ? Number(item.totArea).toLocaleString() : '-'}㎡</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">용적률</span>
+          <span class="detail-card-value">${item.vlRat || '-'}%</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">건폐율</span>
+          <span class="detail-card-value">${item.bcRat || '-'}%</span>
+        </div>
+        <div class="detail-card-row">
+          <span class="detail-card-label">세대수</span>
+          <span class="detail-card-value">${item.hhldCnt || '-'}세대</span>
+        </div>
       </div>
     </div>`;
-  return html;
 }
 
 // API 응답에서 items 추출
@@ -943,36 +904,16 @@ function renderLawInfoCard(pmsDay) {
   ).join('');
 
   return `
-    <div class="result-card law-card">
-      <div class="card-header">
-        <div class="card-icon law-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h3 class="card-title">허가일 기준 적용 소방법령</h3>
+    <div class="detail-section law-section">
+      <div class="detail-section-header law-header">
+        <h4>적용 소방법령</h4>
       </div>
-      <div class="card-body law-body">
-        <div class="law-main">
-          <div class="law-name">${lawInfo.name}</div>
-          <div class="law-period">${lawInfo.period}</div>
-          <div class="law-desc">${lawInfo.description}</div>
-        </div>
-        <div class="law-details">
-          <div class="law-section-title">주요 적용 기준</div>
-          <ul class="law-points">
-            ${keyPointsHtml}
-          </ul>
-        </div>
-        <div class="law-notice">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span>정확한 법령 적용은 소방서 또는 전문가와 상담하시기 바랍니다.</span>
-        </div>
+      <div class="law-content">
+        <div class="law-name-compact">${lawInfo.name}</div>
+        <div class="law-period-compact">${lawInfo.period}</div>
+        <ul class="law-points-compact">
+          ${keyPointsHtml}
+        </ul>
       </div>
     </div>`;
 }
