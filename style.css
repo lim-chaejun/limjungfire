@@ -1045,6 +1045,72 @@ footer {
   font-weight: 700;
 }
 
+/* 건물 선택 탭 */
+.building-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.building-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-width: 140px;
+}
+
+.building-tab:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.building-tab.active {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(247, 147, 30, 0.1));
+  border-color: #ff6b35;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);
+}
+
+.tab-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.building-tab.active .tab-name {
+  color: #fff;
+}
+
+.tab-area {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.building-tab.active .tab-area {
+  color: #ff6b35;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
 /* 요약 카드 */
 .summary-card {
   background: rgba(255, 255, 255, 0.03);
@@ -1240,6 +1306,24 @@ footer {
 
 /* 반응형 - 요약 카드 */
 @media (max-width: 768px) {
+  .building-selector {
+    gap: 8px;
+  }
+
+  .building-tab {
+    padding: 12px 14px;
+    min-width: 120px;
+    flex: 1;
+  }
+
+  .tab-name {
+    font-size: 0.85rem;
+  }
+
+  .tab-area {
+    font-size: 0.75rem;
+  }
+
   .summary-grid {
     grid-template-columns: 1fr;
   }

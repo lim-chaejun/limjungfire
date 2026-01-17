@@ -388,8 +388,10 @@ async function fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
 let currentBuildingData = {
   titleItems: [],
   floorItems: [],
-  generalItems: []
+  generalItems: [],
+  sortedIndices: [] // 정렬된 인덱스 배열
 };
+let selectedBuildingIndex = 0; // 현재 선택된 건물 인덱스
 
 // 모든 결과 표시 (요약 카드 형식)
 function displayAllResults(titleData, floorData, generalData) {
@@ -401,18 +403,36 @@ function displayAllResults(titleData, floorData, generalData) {
   const floorItems = extractItems(floorData);
   const generalItems = extractItems(generalData);
 
-  // 상세보기용 데이터 저장
-  currentBuildingData = { titleItems, floorItems, generalItems };
+  // 건축면적(totArea) 기준 내림차순 정렬된 인덱스 배열 생성
+  const sortedIndices = titleItems
+    .map((item, index) => ({ index, area: Number(item.totArea) || 0 }))
+    .sort((a, b) => b.area - a.area)
+    .map(item => item.index);
 
-  let html = '';
+  // 상세보기용 데이터 저장
+  currentBuildingData = { titleItems, floorItems, generalItems, sortedIndices };
+  selectedBuildingIndex = 0; // 초기화: 가장 큰 건물 선택
+
   const buildingCount = titleItems.length;
 
   if (buildingCount === 0 && generalItems.length === 0) {
-    html = '<div class="no-result">조회 결과가 없습니다.</div>';
+    resultDiv.innerHTML = '<div class="no-result">조회 결과가 없습니다.</div>';
     copySection.style.display = 'none';
-    resultDiv.innerHTML = html;
     return;
   }
+
+  copySection.style.display = 'block';
+  renderBuildingView();
+}
+
+// 건물 뷰 렌더링 (선택된 건물만 표시)
+function renderBuildingView() {
+  const resultDiv = document.getElementById('result');
+  const { titleItems, generalItems, sortedIndices } = currentBuildingData;
+  const buildingCount = titleItems.length;
+  const generalInfo = generalItems[0] || {};
+
+  let html = '';
 
   // 건축물 수 표시
   html += `
@@ -426,21 +446,41 @@ function displayAllResults(titleData, floorData, generalData) {
     </div>
   `;
 
-  // 총괄표제부에서 공통 정보 가져오기
-  const generalInfo = generalItems[0] || {};
-
-  // 각 건축물에 대한 요약 카드 생성
-  if (buildingCount > 0) {
-    titleItems.forEach((item, index) => {
-      html += renderSummaryCard(item, index, generalInfo, floorItems);
+  // 여러 건물이 있을 경우 건물 선택 탭 표시
+  if (buildingCount > 1) {
+    html += '<div class="building-selector">';
+    sortedIndices.forEach((originalIndex, sortedIdx) => {
+      const item = titleItems[originalIndex];
+      const buildingName = item.dongNm || item.bldNm || `건물 ${sortedIdx + 1}`;
+      const area = item.totArea ? Number(item.totArea).toLocaleString() : '-';
+      const isActive = sortedIdx === selectedBuildingIndex;
+      html += `
+        <button class="building-tab ${isActive ? 'active' : ''}" onclick="selectBuilding(${sortedIdx})">
+          <span class="tab-name">${buildingName}</span>
+          <span class="tab-area">${area}㎡</span>
+          ${sortedIdx === 0 ? '<span class="tab-badge">최대</span>' : ''}
+        </button>
+      `;
     });
+    html += '</div>';
+  }
+
+  // 선택된 건물 카드 표시
+  if (buildingCount > 0) {
+    const originalIndex = sortedIndices[selectedBuildingIndex];
+    const item = titleItems[originalIndex];
+    html += renderSummaryCard(item, originalIndex, generalInfo);
   } else if (generalItems.length > 0) {
-    // 표제부가 없지만 총괄표제부만 있는 경우
     html += renderGeneralOnlyCard(generalInfo);
   }
 
-  copySection.style.display = 'block';
   resultDiv.innerHTML = html;
+}
+
+// 건물 선택 함수
+window.selectBuilding = function(sortedIdx) {
+  selectedBuildingIndex = sortedIdx;
+  renderBuildingView();
 }
 
 // 요약 카드 렌더링
