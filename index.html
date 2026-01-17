@@ -80,12 +80,11 @@
         <input type="text" id="addressInput" placeholder="클릭하여 주소를 검색하세요" readonly onclick="searchAddress()">
         <button onclick="searchAddress()" class="btn-search">주소 검색</button>
       </div>
-      <div id="selectedAddress" class="selected-address"></div>
     </div>
 
     <!-- 조회 버튼 -->
     <div class="action-section">
-      <button onclick="searchBuilding()" class="btn-primary" id="searchBtn">
+      <button onclick="searchBuilding()" class="btn-primary" id="searchBtn" disabled>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -167,6 +166,22 @@
       </div>
       <div class="modal-body">
         <div id="historyList" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상세보기 모달 -->
+  <div id="detailModal" class="modal" style="display: none;">
+    <div class="modal-content detail-modal-content">
+      <div class="modal-header">
+        <h2 id="detailModalTitle">상세 정보</h2>
+        <button class="modal-close" onclick="closeDetailModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
       </div>
     </div>
   </div>

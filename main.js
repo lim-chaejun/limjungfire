@@ -217,16 +217,9 @@ window.loadHistoryItem = async function(docId) {
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.general } } } }
     );
 
-    // 주소 정보도 표시
+    // 주소 정보 표시
     document.getElementById('addressInput').value = item.address;
-    const selectedAddressDiv = document.getElementById('selectedAddress');
-    selectedAddressDiv.innerHTML = `
-      <strong>선택된 주소 (기록에서 불러옴)</strong><br>
-      도로명: ${item.roadAddress || '-'}<br>
-      지번: ${item.jibunAddress || '-'}<br>
-      법정동코드: ${item.bcode}
-    `;
-    selectedAddressDiv.classList.add('show');
+    document.getElementById('searchBtn').disabled = false;
   }
 };
 
@@ -275,14 +268,9 @@ window.searchAddress = function() {
 
       // 주소 표시
       document.getElementById('addressInput').value = data.address;
-      const selectedAddressDiv = document.getElementById('selectedAddress');
-      selectedAddressDiv.innerHTML = `
-        <strong>선택된 주소</strong><br>
-        도로명: ${data.roadAddress || '-'}<br>
-        지번: ${data.jibunAddress || data.autoJibunAddress || '-'}<br>
-        법정동코드: ${data.bcode}
-      `;
-      selectedAddressDiv.classList.add('show');
+
+      // 조회 버튼 활성화
+      document.getElementById('searchBtn').disabled = false;
     }
   }).open();
 }
@@ -396,50 +384,404 @@ async function fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   return await response.json();
 }
 
-// 모든 결과 표시
+// 전역 변수로 상세보기용 데이터 저장
+let currentBuildingData = {
+  titleItems: [],
+  floorItems: [],
+  generalItems: []
+};
+
+// 모든 결과 표시 (요약 카드 형식)
 function displayAllResults(titleData, floorData, generalData) {
   const resultDiv = document.getElementById('result');
   const copySection = document.getElementById('copySection');
 
-  let html = '';
-  let hasResult = false;
-  let pmsDay = null;
-
-  // 총괄표제부
-  const generalItems = extractItems(generalData);
-  if (generalItems.length > 0) {
-    hasResult = true;
-    pmsDay = generalItems[0].pmsDay;
-    html += renderGeneralCard(generalItems);
-  }
-
-  // 허가일 기준 소방법령 안내
-  if (pmsDay) {
-    html += renderLawInfoCard(pmsDay);
-  }
-
-  // 표제부
+  // 데이터 추출
   const titleItems = extractItems(titleData);
-  if (titleItems.length > 0) {
-    hasResult = true;
-    html += renderTitleCard(titleItems);
-  }
-
-  // 층별
   const floorItems = extractItems(floorData);
-  if (floorItems.length > 0) {
-    hasResult = true;
-    html += renderFloorCard(floorItems);
-  }
+  const generalItems = extractItems(generalData);
 
-  if (!hasResult) {
+  // 상세보기용 데이터 저장
+  currentBuildingData = { titleItems, floorItems, generalItems };
+
+  let html = '';
+  const buildingCount = titleItems.length;
+
+  if (buildingCount === 0 && generalItems.length === 0) {
     html = '<div class="no-result">조회 결과가 없습니다.</div>';
     copySection.style.display = 'none';
-  } else {
-    copySection.style.display = 'block';
+    resultDiv.innerHTML = html;
+    return;
   }
 
+  // 건축물 수 표시
+  html += `
+    <div class="building-count-header">
+      <div class="count-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span>해당 주소에 포함된 건축물 수: <strong>${buildingCount || 1}개</strong></span>
+    </div>
+  `;
+
+  // 총괄표제부에서 공통 정보 가져오기
+  const generalInfo = generalItems[0] || {};
+
+  // 각 건축물에 대한 요약 카드 생성
+  if (buildingCount > 0) {
+    titleItems.forEach((item, index) => {
+      html += renderSummaryCard(item, index, generalInfo, floorItems);
+    });
+  } else if (generalItems.length > 0) {
+    // 표제부가 없지만 총괄표제부만 있는 경우
+    html += renderGeneralOnlyCard(generalInfo);
+  }
+
+  copySection.style.display = 'block';
   resultDiv.innerHTML = html;
+}
+
+// 요약 카드 렌더링
+function renderSummaryCard(item, index, generalInfo, floorItems) {
+  const buildingName = item.dongNm || item.bldNm || '건물명 미상';
+  const mainPurpose = item.mainPurpsCdNm || '-';
+  const etcPurpose = item.etcPurps || '-';
+  const address = item.platPlc || item.newPlatPlc || '-';
+  const permitDate = formatDate(generalInfo.pmsDay);
+  const approvalDate = formatDate(item.useAprDay || generalInfo.useAprDay);
+  const totalArea = item.totArea ? Number(item.totArea).toLocaleString() : '-';
+  const buildingArea = item.archArea ? Number(item.archArea).toLocaleString() : (generalInfo.archArea ? Number(generalInfo.archArea).toLocaleString() : '-');
+  const households = item.hhldCnt || generalInfo.hhldCnt || '-';
+  const groundFloors = item.grndFlrCnt || '-';
+  const undergroundFloors = item.ugrndFlrCnt || '-';
+  const height = item.heit ? Number(item.heit).toFixed(2) : '-';
+  const structure = item.strctCdNm || '-';
+  const roofStructure = item.roofCdNm || '-';
+  const passengerElevator = item.rideUseElvtCnt || '0';
+  const emergencyElevator = item.emgenUseElvtCnt || '0';
+
+  return `
+    <div class="summary-card">
+      <div class="summary-header">
+        <div class="summary-building-name">${buildingName}</div>
+        <div class="summary-purpose">${mainPurpose}</div>
+      </div>
+      <div class="summary-body">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">기타용도</span>
+            <span class="summary-value">${etcPurpose}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">주소</span>
+            <span class="summary-value">${address}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">건축허가일</span>
+            <span class="summary-value">${permitDate}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">사용승인일</span>
+            <span class="summary-value">${approvalDate}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">연면적(㎡)</span>
+            <span class="summary-value">${totalArea}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">건축면적(㎡)</span>
+            <span class="summary-value">${buildingArea}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">세대수</span>
+            <span class="summary-value">${households}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">층수</span>
+            <span class="summary-value">지상 ${groundFloors}층 / 지하 ${undergroundFloors}층</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">높이(m)</span>
+            <span class="summary-value">${height}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">건축물구조</span>
+            <span class="summary-value">${structure}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">지붕구조</span>
+            <span class="summary-value">${roofStructure}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">승강기</span>
+            <span class="summary-value">승용 ${passengerElevator}대 / 비상 ${emergencyElevator}대</span>
+          </div>
+        </div>
+      </div>
+      <div class="summary-footer">
+        <button class="btn-detail" onclick="showDetailModal(${index})">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M2.458 12C3.732 7.943 7.523 5 12 5C16.478 5 20.268 7.943 21.542 12C20.268 16.057 16.478 19 12 19C7.523 19 3.732 16.057 2.458 12Z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          상세보기
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// 총괄표제부만 있는 경우의 카드
+function renderGeneralOnlyCard(generalInfo) {
+  const permitDate = formatDate(generalInfo.pmsDay);
+  const approvalDate = formatDate(generalInfo.useAprDay);
+  const totalArea = generalInfo.totArea ? Number(generalInfo.totArea).toLocaleString() : '-';
+  const buildingArea = generalInfo.archArea ? Number(generalInfo.archArea).toLocaleString() : '-';
+  const households = generalInfo.hhldCnt || '-';
+
+  return `
+    <div class="summary-card">
+      <div class="summary-header">
+        <div class="summary-building-name">건축물 정보</div>
+        <div class="summary-purpose">총괄표제부</div>
+      </div>
+      <div class="summary-body">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">건축허가일</span>
+            <span class="summary-value">${permitDate}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">사용승인일</span>
+            <span class="summary-value">${approvalDate}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">연면적(㎡)</span>
+            <span class="summary-value">${totalArea}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">건축면적(㎡)</span>
+            <span class="summary-value">${buildingArea}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">세대수</span>
+            <span class="summary-value">${households}</span>
+          </div>
+        </div>
+      </div>
+      <div class="summary-footer">
+        <button class="btn-detail" onclick="showDetailModal(-1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M2.458 12C3.732 7.943 7.523 5 12 5C16.478 5 20.268 7.943 21.542 12C20.268 16.057 16.478 19 12 19C7.523 19 3.732 16.057 2.458 12Z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          상세보기
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// 상세보기 모달 표시
+window.showDetailModal = function(buildingIndex) {
+  const { titleItems, floorItems, generalItems } = currentBuildingData;
+  const generalInfo = generalItems[0] || {};
+  const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
+  const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
+
+  // 해당 건물의 층별 정보 필터링
+  const buildingFloors = buildingIndex >= 0
+    ? floorItems.filter(f => f.dongNm === titleItem.dongNm || (!f.dongNm && !titleItem.dongNm))
+    : floorItems;
+
+  let html = '';
+
+  // 1. 허가일 기준 적용 소방법령
+  if (generalInfo.pmsDay) {
+    html += renderLawInfoCard(generalInfo.pmsDay);
+  }
+
+  // 2. 표제부 (동별) 상세 테이블
+  if (titleItem) {
+    html += renderDetailTitleCard([titleItem]);
+  } else if (titleItems.length > 0) {
+    html += renderDetailTitleCard(titleItems);
+  }
+
+  // 3. 층별 개요 상세 테이블
+  if (buildingFloors.length > 0) {
+    html += renderDetailFloorCard(buildingFloors);
+  }
+
+  // 4. 총괄표제부 상세 테이블
+  if (generalItems.length > 0) {
+    html += renderDetailGeneralCard(generalItems);
+  }
+
+  document.getElementById('detailModalTitle').textContent = `${buildingName} 상세 정보`;
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModal').style.display = 'flex';
+};
+
+// 상세보기 모달 닫기
+window.closeDetailModal = function() {
+  document.getElementById('detailModal').style.display = 'none';
+};
+
+// 상세 표제부 카드 렌더링
+function renderDetailTitleCard(items) {
+  let html = `
+    <div class="detail-section">
+      <div class="detail-section-header">
+        <div class="detail-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h4>표제부 (동별)</h4>
+      </div>
+      <div class="detail-table-wrapper">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>동명칭</th>
+              <th>주용도</th>
+              <th>구조</th>
+              <th>지상층수</th>
+              <th>지하층수</th>
+              <th>연면적(㎡)</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+  items.forEach(item => {
+    html += `
+            <tr>
+              <td>${item.dongNm || '-'}</td>
+              <td>${item.mainPurpsCdNm || '-'}</td>
+              <td>${item.strctCdNm || '-'}</td>
+              <td>${item.grndFlrCnt || '-'}</td>
+              <td>${item.ugrndFlrCnt || '-'}</td>
+              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
+            </tr>`;
+  });
+
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  return html;
+}
+
+// 상세 층별 카드 렌더링
+function renderDetailFloorCard(items) {
+  let html = `
+    <div class="detail-section">
+      <div class="detail-section-header">
+        <div class="detail-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 21H21M3 7V21M21 7V21M3 7L12 3L21 7M9 10H10M9 14H10M14 10H15M14 14H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h4>층별 개요</h4>
+      </div>
+      <div class="detail-table-wrapper">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>동명칭</th>
+              <th>층구분</th>
+              <th>층번호</th>
+              <th>구조</th>
+              <th>주용도</th>
+              <th>면적(㎡)</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+  items.forEach(item => {
+    html += `
+            <tr>
+              <td>${item.dongNm || '-'}</td>
+              <td>${item.flrGbCdNm || '-'}</td>
+              <td>${item.flrNo || '-'}</td>
+              <td>${item.strctCdNm || '-'}</td>
+              <td>${item.mainPurpsCdNm || '-'}</td>
+              <td>${item.area ? Number(item.area).toLocaleString() : '-'}</td>
+            </tr>`;
+  });
+
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  return html;
+}
+
+// 상세 총괄표제부 카드 렌더링
+function renderDetailGeneralCard(items) {
+  const item = items[0];
+
+  let html = `
+    <div class="detail-section">
+      <div class="detail-section-header">
+        <div class="detail-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 17H15M9 13H15M9 9H10M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h4>총괄표제부</h4>
+      </div>
+      <div class="detail-date-info">
+        <div class="detail-date-item">
+          <span class="detail-date-label">허가일</span>
+          <span class="detail-date-value">${formatDate(item.pmsDay)}</span>
+        </div>
+        <div class="detail-date-item">
+          <span class="detail-date-label">착공일</span>
+          <span class="detail-date-value">${formatDate(item.stcnsDay)}</span>
+        </div>
+        <div class="detail-date-item">
+          <span class="detail-date-label">사용승인일</span>
+          <span class="detail-date-value">${formatDate(item.useAprDay)}</span>
+        </div>
+      </div>
+      <div class="detail-table-wrapper">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>대지면적(㎡)</th>
+              <th>건축면적(㎡)</th>
+              <th>연면적(㎡)</th>
+              <th>용적률(%)</th>
+              <th>건폐율(%)</th>
+              <th>세대수</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+  items.forEach(item => {
+    html += `
+            <tr>
+              <td>${item.platArea ? Number(item.platArea).toLocaleString() : '-'}</td>
+              <td>${item.archArea ? Number(item.archArea).toLocaleString() : '-'}</td>
+              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
+              <td>${item.vlRat || '-'}</td>
+              <td>${item.bcRat || '-'}</td>
+              <td>${item.hhldCnt || '-'}</td>
+            </tr>`;
+  });
+
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  return html;
 }
 
 // API 응답에서 items 추출
@@ -606,164 +948,11 @@ function renderLawInfoCard(pmsDay) {
     </div>`;
 }
 
-// 총괄표제부 카드 렌더링
-function renderGeneralCard(items) {
-  const item = items[0]; // 총괄표제부는 보통 1개
-
-  let html = `
-    <div class="result-card highlight-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 17H15M9 13H15M9 9H10M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h3 class="card-title">총괄표제부</h3>
-      </div>
-      <div class="card-body">
-        <div class="date-info">
-          <div class="date-item">
-            <span class="date-label">허가일</span>
-            <span class="date-value">${formatDate(item.pmsDay)}</span>
-          </div>
-          <div class="date-item">
-            <span class="date-label">착공일</span>
-            <span class="date-value">${formatDate(item.stcnsDay)}</span>
-          </div>
-          <div class="date-item">
-            <span class="date-label">사용승인일</span>
-            <span class="date-value">${formatDate(item.useAprDay)}</span>
-          </div>
-        </div>
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>대지면적(㎡)</th>
-              <th>건축면적(㎡)</th>
-              <th>연면적(㎡)</th>
-              <th>용적률(%)</th>
-              <th>건폐율(%)</th>
-              <th>세대수</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-  items.forEach(item => {
-    html += `
-            <tr>
-              <td>${item.platArea ? Number(item.platArea).toLocaleString() : '-'}</td>
-              <td>${item.archArea ? Number(item.archArea).toLocaleString() : '-'}</td>
-              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
-              <td>${item.vlRat || '-'}</td>
-              <td>${item.bcRat || '-'}</td>
-              <td>${item.hhldCnt || '-'}</td>
-            </tr>`;
-  });
-
-  html += `
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  return html;
-}
-
-// 표제부 카드 렌더링
-function renderTitleCard(items) {
-  let html = `
-    <div class="result-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h3 class="card-title">표제부 (동별)</h3>
-      </div>
-      <div class="card-body">
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>동명칭</th>
-              <th>주용도</th>
-              <th>구조</th>
-              <th>지상층수</th>
-              <th>지하층수</th>
-              <th>연면적(㎡)</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-  items.forEach(item => {
-    html += `
-            <tr>
-              <td>${item.dongNm || '-'}</td>
-              <td>${item.mainPurpsCdNm || '-'}</td>
-              <td>${item.strctCdNm || '-'}</td>
-              <td>${item.grndFlrCnt || '-'}</td>
-              <td>${item.ugrndFlrCnt || '-'}</td>
-              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
-            </tr>`;
-  });
-
-  html += `
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  return html;
-}
-
-// 층별 카드 렌더링
-function renderFloorCard(items) {
-  let html = `
-    <div class="result-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 21H21M3 7V21M21 7V21M3 7L12 3L21 7M9 10H10M9 14H10M14 10H15M14 14H15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h3 class="card-title">층별 개요</h3>
-      </div>
-      <div class="card-body">
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>동명칭</th>
-              <th>층구분</th>
-              <th>층번호</th>
-              <th>구조</th>
-              <th>주용도</th>
-              <th>면적(㎡)</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-  items.forEach(item => {
-    html += `
-            <tr>
-              <td>${item.dongNm || '-'}</td>
-              <td>${item.flrGbCdNm || '-'}</td>
-              <td>${item.flrNo || '-'}</td>
-              <td>${item.strctCdNm || '-'}</td>
-              <td>${item.mainPurpsCdNm || '-'}</td>
-              <td>${item.area ? Number(item.area).toLocaleString() : '-'}</td>
-            </tr>`;
-  });
-
-  html += `
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  return html;
-}
-
 // 로딩 표시
 function showLoading(show) {
   document.getElementById('loading').style.display = show ? 'block' : 'none';
-  document.getElementById('searchBtn').disabled = show;
+  // 로딩 중이면 비활성화, 아니면 주소 선택 여부에 따라 결정
+  document.getElementById('searchBtn').disabled = show || !selectedAddressData;
 }
 
 // 결과 초기화
