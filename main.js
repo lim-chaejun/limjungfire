@@ -714,24 +714,41 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
 }
 
 
+// 표제부 모달 상태 관리
+let currentTitleData = {
+  items: [],
+  selectedIndex: 0,
+  pmsDay: null
+};
+
 // 표제부 모달 표시
 window.showTitleModal = function(buildingIndex) {
-  const { titleItems } = currentBuildingData;
-  const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
-  const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
+  const { titleItems, generalItems, permitItems } = currentBuildingData;
 
-  let html = '';
+  // 허가일 가져오기
+  const permitInfo = permitItems[0] || {};
+  const generalInfo = generalItems[0] || {};
+  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
 
-  // 표제부 (동별) 상세
-  if (titleItem) {
-    html += renderDetailTitleCard([titleItem]);
-  } else if (titleItems.length > 0) {
-    html += renderDetailTitleCard(titleItems);
-  }
+  // 상태 저장
+  currentTitleData = {
+    items: titleItems,
+    selectedIndex: buildingIndex >= 0 ? buildingIndex : 0,
+    pmsDay: pmsDay
+  };
 
-  document.getElementById('detailModalTitle').textContent = `${buildingName} - 표제부`;
+  const html = renderDetailTitleCard(titleItems, currentTitleData.selectedIndex, pmsDay);
+
+  document.getElementById('detailModalTitle').textContent = '표제부 (동별)';
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModal').style.display = 'flex';
+};
+
+// 표제부 동 선택 변경
+window.changeTitleBuilding = function(index) {
+  currentTitleData.selectedIndex = index;
+  const html = renderDetailTitleCard(currentTitleData.items, index, currentTitleData.pmsDay);
+  document.getElementById('detailModalBody').innerHTML = html;
 };
 
 // 층별 모달 상태 관리
@@ -851,78 +868,130 @@ window.closeDetailModal = function() {
 };
 
 // 상세 표제부 카드 렌더링
-function renderDetailTitleCard(items) {
-  let html = `
-    <div class="detail-section">
-      <div class="detail-section-header">
-        <h4>표제부 (동별)</h4>
-      </div>
-      <div class="detail-cards">`;
+function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
+  const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+  const fmtArea = (a) => a ? Number(a).toLocaleString() : '-';
+  const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
-  items.forEach(item => {
-    const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
-    const fmtArea = (a) => a ? Number(a).toLocaleString() : '-';
-    const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
+  let html = '';
 
-    html += `
-        <div class="detail-card-item">
-          <div class="detail-card-title">${item.dongNm || '건물'}</div>
-          <div class="detail-card-grid">
-            <div class="detail-card-row">
-              <span class="detail-card-label">주용도</span>
-              <span class="detail-card-value">${item.mainPurpsCdNm || '-'}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">기타용도</span>
-              <span class="detail-card-value">${item.etcPurps || '-'}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">구조</span>
-              <span class="detail-card-value">${item.strctCdNm || '-'}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">지붕구조</span>
-              <span class="detail-card-value">${item.roofCdNm || '-'}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">층수</span>
-              <span class="detail-card-value">지상${item.grndFlrCnt || '-'} / 지하${item.ugrndFlrCnt || '-'}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">높이</span>
-              <span class="detail-card-value">${fmtHeight(item.heit)}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">연면적</span>
-              <span class="detail-card-value">${fmtArea(item.totArea)}㎡</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">건축면적</span>
-              <span class="detail-card-value">${fmtArea(item.archArea)}㎡</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">세대수</span>
-              <span class="detail-card-value">${item.hhldCnt || '-'}</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">승용승강기</span>
-              <span class="detail-card-value">${item.rideUseElvtCnt || '0'}대</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">비상승강기</span>
-              <span class="detail-card-value">${item.emgenUseElvtCnt || '0'}대</span>
-            </div>
-            <div class="detail-card-row">
-              <span class="detail-card-label">사용승인일</span>
-              <span class="detail-card-value">${fmtDate(item.useAprDay)}</span>
-            </div>
-          </div>
-        </div>`;
-  });
+  // 1. 동 선택 탭 (여러 동이 있을 경우)
+  if (items.length > 1) {
+    html += `<div class="building-tabs">`;
+    items.forEach((item, index) => {
+      const name = item.dongNm || item.bldNm || `동 ${index + 1}`;
+      html += `
+        <button class="building-tab-btn ${index === selectedIndex ? 'active' : ''}"
+                onclick="changeTitleBuilding(${index})">
+          ${name}
+        </button>`;
+    });
+    html += `</div>`;
+  }
 
+  // 선택된 동 정보
+  const item = items[selectedIndex] || items[0];
+  if (!item) {
+    return '<div class="no-result">표제부 정보가 없습니다.</div>';
+  }
+
+  // 2. 주요 정보 요약 칩
   html += `
+    <div class="info-summary-chips">
+      <span class="info-chip primary">${item.mainPurpsCdNm || '-'}</span>
+      <span class="info-chip">${item.strctCdNm || '-'}</span>
+      <span class="info-chip">지상${item.grndFlrCnt || '-'}층 / 지하${item.ugrndFlrCnt || '-'}층</span>
+    </div>`;
+
+  // 3. 규모 정보
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">규모 정보</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">높이</span>
+          <span class="detail-info-value">${fmtHeight(item.heit)}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">지상층수</span>
+          <span class="detail-info-value">${item.grndFlrCnt || '-'}층</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">지하층수</span>
+          <span class="detail-info-value">${item.ugrndFlrCnt || '-'}층</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">세대수</span>
+          <span class="detail-info-value">${item.hhldCnt || '-'}세대</span>
+        </div>
       </div>
     </div>`;
+
+  // 4. 면적 정보
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">면적 정보</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">건축면적</span>
+          <span class="detail-info-value">${fmtArea(item.archArea)}㎡</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">연면적</span>
+          <span class="detail-info-value highlight">${fmtArea(item.totArea)}㎡</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 5. 구조 및 설비
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">구조 및 설비</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">주용도</span>
+          <span class="detail-info-value">${item.mainPurpsCdNm || '-'}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">기타용도</span>
+          <span class="detail-info-value">${item.etcPurps || '-'}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">구조</span>
+          <span class="detail-info-value">${item.strctCdNm || '-'}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">지붕구조</span>
+          <span class="detail-info-value">${item.roofCdNm || '-'}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">승용승강기</span>
+          <span class="detail-info-value">${item.rideUseElvtCnt || '0'}대</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">비상승강기</span>
+          <span class="detail-info-value">${item.emgenUseElvtCnt || '0'}대</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 6. 인허가 정보
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">인허가 정보</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">사용승인일</span>
+          <span class="detail-info-value">${fmtDate(item.useAprDay)}</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 7. 적용 소방법령
+  if (pmsDay) {
+    html += renderLawInfoCard(pmsDay);
+  }
+
   return html;
 }
 
@@ -1084,86 +1153,126 @@ function renderDetailGeneralCard(items, permitInfo, titleItems = []) {
     if (sumEmgen > emgenElvt) emgenElvt = sumEmgen;
   }
 
-  return `
+  let html = '';
+
+  // 1. 주요 정보 요약 칩
+  html += `
+    <div class="info-summary-chips">
+      <span class="info-chip primary">${item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-'}</span>
+      <span class="info-chip">${structure}</span>
+      <span class="info-chip">지상${grndFlrCnt || '-'}층 / 지하${ugrndFlrCnt || '-'}층</span>
+    </div>`;
+
+  // 2. 규모 정보
+  html += `
     <div class="detail-section">
-      <div class="detail-section-header">
-        <h4>총괄표제부</h4>
-      </div>
-      <div class="detail-card-grid">
-        <div class="detail-card-row">
-          <span class="detail-card-label">주용도</span>
-          <span class="detail-card-value">${item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-'}</span>
+      <div class="floor-group-header">규모 정보</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">높이</span>
+          <span class="detail-info-value">${fmtHeight(height)}</span>
         </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">기타용도</span>
-          <span class="detail-card-value">${item.etcPurps || mainTitle.etcPurps || '-'}</span>
+        <div class="detail-info-item">
+          <span class="detail-info-label">지상층수</span>
+          <span class="detail-info-value">${grndFlrCnt || '-'}층</span>
         </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">구조</span>
-          <span class="detail-card-value">${structure}</span>
+        <div class="detail-info-item">
+          <span class="detail-info-label">지하층수</span>
+          <span class="detail-info-value">${ugrndFlrCnt || '-'}층</span>
         </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">지붕구조</span>
-          <span class="detail-card-value">${roofStructure}</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">허가일</span>
-          <span class="detail-card-value">${formatDate(permitDate)}</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">착공일</span>
-          <span class="detail-card-value">${formatDate(item.stcnsDay)}</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">사용승인일</span>
-          <span class="detail-card-value">${formatDate(item.useAprDay)}</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">지상층수</span>
-          <span class="detail-card-value">${grndFlrCnt || '-'}층</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">지하층수</span>
-          <span class="detail-card-value">${ugrndFlrCnt || '-'}층</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">높이</span>
-          <span class="detail-card-value">${fmtHeight(height)}</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">대지면적</span>
-          <span class="detail-card-value">${fmtArea(item.platArea)}㎡</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">건축면적</span>
-          <span class="detail-card-value">${fmtArea(item.archArea)}㎡</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">연면적</span>
-          <span class="detail-card-value">${fmtArea(item.totArea)}㎡</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">용적률</span>
-          <span class="detail-card-value">${item.vlRat || '-'}%</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">건폐율</span>
-          <span class="detail-card-value">${item.bcRat || '-'}%</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">세대수</span>
-          <span class="detail-card-value">${item.hhldCnt || '-'}세대</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">승용승강기</span>
-          <span class="detail-card-value">${rideElvt}대</span>
-        </div>
-        <div class="detail-card-row">
-          <span class="detail-card-label">비상승강기</span>
-          <span class="detail-card-value">${emgenElvt}대</span>
+        <div class="detail-info-item">
+          <span class="detail-info-label">세대수</span>
+          <span class="detail-info-value">${item.hhldCnt || '-'}세대</span>
         </div>
       </div>
     </div>`;
+
+  // 3. 면적 정보
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">면적 정보</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">대지면적</span>
+          <span class="detail-info-value">${fmtArea(item.platArea)}㎡</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">건축면적</span>
+          <span class="detail-info-value">${fmtArea(item.archArea)}㎡</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">연면적</span>
+          <span class="detail-info-value highlight">${fmtArea(item.totArea)}㎡</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">용적률</span>
+          <span class="detail-info-value">${item.vlRat || '-'}%</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">건폐율</span>
+          <span class="detail-info-value">${item.bcRat || '-'}%</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 4. 구조 및 설비
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">구조 및 설비</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">주용도</span>
+          <span class="detail-info-value">${item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-'}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">기타용도</span>
+          <span class="detail-info-value">${item.etcPurps || mainTitle.etcPurps || '-'}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">구조</span>
+          <span class="detail-info-value">${structure}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">지붕구조</span>
+          <span class="detail-info-value">${roofStructure}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">승용승강기</span>
+          <span class="detail-info-value">${rideElvt}대</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">비상승강기</span>
+          <span class="detail-info-value">${emgenElvt}대</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 5. 인허가 정보
+  html += `
+    <div class="detail-section">
+      <div class="floor-group-header">인허가 정보</div>
+      <div class="detail-info-list">
+        <div class="detail-info-item">
+          <span class="detail-info-label">허가일</span>
+          <span class="detail-info-value">${formatDate(permitDate)}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">착공일</span>
+          <span class="detail-info-value">${formatDate(item.stcnsDay)}</span>
+        </div>
+        <div class="detail-info-item">
+          <span class="detail-info-label">사용승인일</span>
+          <span class="detail-info-value">${formatDate(item.useAprDay)}</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 6. 적용 소방법령
+  if (permitDate) {
+    html += renderLawInfoCard(permitDate);
+  }
+
+  return html;
 }
 
 // API 응답에서 items 추출
