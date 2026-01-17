@@ -484,11 +484,9 @@ window.selectBuilding = function(sortedIdx) {
 }
 
 // 요약 카드 렌더링
-function renderSummaryCard(item, index, generalInfo, floorItems) {
+function renderSummaryCard(item, index, generalInfo) {
   const buildingName = item.dongNm || item.bldNm || '건물명 미상';
   const mainPurpose = item.mainPurpsCdNm || '-';
-  const etcPurpose = item.etcPurps || '-';
-  const address = item.platPlc || item.newPlatPlc || '-';
   const permitDate = formatDate(generalInfo.pmsDay);
   const approvalDate = formatDate(item.useAprDay || generalInfo.useAprDay);
   const totalArea = item.totArea ? Number(item.totArea).toLocaleString() : '-';
@@ -498,7 +496,6 @@ function renderSummaryCard(item, index, generalInfo, floorItems) {
   const undergroundFloors = item.ugrndFlrCnt || '-';
   const height = item.heit ? Number(item.heit).toFixed(2) : '-';
   const structure = item.strctCdNm || '-';
-  const roofStructure = item.roofCdNm || '-';
   const passengerElevator = item.rideUseElvtCnt || '0';
   const emergencyElevator = item.emgenUseElvtCnt || '0';
 
@@ -509,15 +506,7 @@ function renderSummaryCard(item, index, generalInfo, floorItems) {
         <div class="summary-purpose">${mainPurpose}</div>
       </div>
       <div class="summary-body">
-        <div class="summary-grid">
-          <div class="summary-item">
-            <span class="summary-label">기타용도</span>
-            <span class="summary-value">${etcPurpose}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">주소</span>
-            <span class="summary-value">${address}</span>
-          </div>
+        <div class="summary-row">
           <div class="summary-item">
             <span class="summary-label">건축허가일</span>
             <span class="summary-value">${permitDate}</span>
@@ -526,46 +515,46 @@ function renderSummaryCard(item, index, generalInfo, floorItems) {
             <span class="summary-label">사용승인일</span>
             <span class="summary-value">${approvalDate}</span>
           </div>
+        </div>
+        <div class="summary-row">
           <div class="summary-item">
-            <span class="summary-label">연면적(㎡)</span>
-            <span class="summary-value">${totalArea}</span>
+            <span class="summary-label">연면적</span>
+            <span class="summary-value">${totalArea}㎡</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">건축면적(㎡)</span>
-            <span class="summary-value">${buildingArea}</span>
+            <span class="summary-label">건축면적</span>
+            <span class="summary-value">${buildingArea}㎡</span>
           </div>
-          <div class="summary-item">
-            <span class="summary-label">세대수</span>
-            <span class="summary-value">${households}</span>
-          </div>
+        </div>
+        <div class="summary-row">
           <div class="summary-item">
             <span class="summary-label">층수</span>
-            <span class="summary-value">지상 ${groundFloors}층 / 지하 ${undergroundFloors}층</span>
+            <span class="summary-value">지상${groundFloors} / 지하${undergroundFloors}</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">높이(m)</span>
-            <span class="summary-value">${height}</span>
+            <span class="summary-label">높이</span>
+            <span class="summary-value">${height}m</span>
           </div>
+        </div>
+        <div class="summary-row">
           <div class="summary-item">
-            <span class="summary-label">건축물구조</span>
-            <span class="summary-value">${structure}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">지붕구조</span>
-            <span class="summary-value">${roofStructure}</span>
+            <span class="summary-label">세대수</span>
+            <span class="summary-value">${households}세대</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">승강기</span>
-            <span class="summary-value">승용 ${passengerElevator}대 / 비상 ${emergencyElevator}대</span>
+            <span class="summary-value">승용${passengerElevator} / 비상${emergencyElevator}</span>
+          </div>
+        </div>
+        <div class="summary-row single">
+          <div class="summary-item full">
+            <span class="summary-label">구조</span>
+            <span class="summary-value">${structure}</span>
           </div>
         </div>
       </div>
       <div class="summary-footer">
         <button class="btn-detail" onclick="showDetailModal(${index})">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M2.458 12C3.732 7.943 7.523 5 12 5C16.478 5 20.268 7.943 21.542 12C20.268 16.057 16.478 19 12 19C7.523 19 3.732 16.057 2.458 12Z" stroke="currentColor" stroke-width="2"/>
-          </svg>
           상세보기
         </button>
       </div>
@@ -588,7 +577,7 @@ function renderGeneralOnlyCard(generalInfo) {
         <div class="summary-purpose">총괄표제부</div>
       </div>
       <div class="summary-body">
-        <div class="summary-grid">
+        <div class="summary-row">
           <div class="summary-item">
             <span class="summary-label">건축허가일</span>
             <span class="summary-value">${permitDate}</span>
@@ -597,26 +586,26 @@ function renderGeneralOnlyCard(generalInfo) {
             <span class="summary-label">사용승인일</span>
             <span class="summary-value">${approvalDate}</span>
           </div>
+        </div>
+        <div class="summary-row">
           <div class="summary-item">
-            <span class="summary-label">연면적(㎡)</span>
-            <span class="summary-value">${totalArea}</span>
+            <span class="summary-label">연면적</span>
+            <span class="summary-value">${totalArea}㎡</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">건축면적(㎡)</span>
-            <span class="summary-value">${buildingArea}</span>
+            <span class="summary-label">건축면적</span>
+            <span class="summary-value">${buildingArea}㎡</span>
           </div>
+        </div>
+        <div class="summary-row single">
           <div class="summary-item">
             <span class="summary-label">세대수</span>
-            <span class="summary-value">${households}</span>
+            <span class="summary-value">${households}세대</span>
           </div>
         </div>
       </div>
       <div class="summary-footer">
         <button class="btn-detail" onclick="showDetailModal(-1)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M2.458 12C3.732 7.943 7.523 5 12 5C16.478 5 20.268 7.943 21.542 12C20.268 16.057 16.478 19 12 19C7.523 19 3.732 16.057 2.458 12Z" stroke="currentColor" stroke-width="2"/>
-          </svg>
           상세보기
         </button>
       </div>
