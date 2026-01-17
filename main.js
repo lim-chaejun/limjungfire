@@ -2167,6 +2167,33 @@ function renderFireFacilitiesCard(buildingInfo) {
       <div class="facilities-note">
         ※ 실제 적용 기준은 세부 용도, 수용인원, 지역 조례 등에 따라 달라질 수 있습니다.
       </div>
+
+      <div class="law-links">
+        <a href="https://www.law.go.kr/법령/소방시설설치및관리에관한법률" target="_blank" class="law-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          소방시설법
+        </a>
+        <a href="https://www.law.go.kr/법령/소방시설설치및관리에관한법률시행령" target="_blank" class="law-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          시행령
+        </a>
+        <a href="https://www.law.go.kr/법령/소방시설설치및관리에관한법률시행규칙" target="_blank" class="law-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          시행규칙
+        </a>
+      </div>
     </div>
   `;
 
