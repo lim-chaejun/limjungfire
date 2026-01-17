@@ -134,12 +134,19 @@ function displayAllResults(titleData, floorData, generalData) {
 
   let html = '';
   let hasResult = false;
+  let pmsDay = null;
 
   // 총괄표제부
   const generalItems = extractItems(generalData);
   if (generalItems.length > 0) {
     hasResult = true;
+    pmsDay = generalItems[0].pmsDay;
     html += renderGeneralCard(generalItems);
+  }
+
+  // 허가일 기준 소방법령 안내
+  if (pmsDay) {
+    html += renderLawInfoCard(pmsDay);
   }
 
   // 표제부
@@ -180,6 +187,154 @@ function extractItems(data) {
 function formatDate(dateStr) {
   if (!dateStr || dateStr.length !== 8) return '-';
   return `${dateStr.substring(0, 4)}.${dateStr.substring(4, 6)}.${dateStr.substring(6, 8)}`;
+}
+
+// 허가일 기준 적용 소방법령 판단
+function getFireLawInfo(pmsDay) {
+  if (!pmsDay || pmsDay.length !== 8) {
+    return null;
+  }
+
+  const date = parseInt(pmsDay);
+
+  // 소방법령 주요 변경 시점
+  const lawPeriods = [
+    {
+      start: 0,
+      end: 19750831,
+      name: '소방법',
+      period: '~ 1975.08.31',
+      description: '소방법 시행 초기',
+      keyPoints: ['소방시설 기준 초기 단계']
+    },
+    {
+      start: 19750901,
+      end: 19920730,
+      name: '소방법',
+      period: '1975.09.01 ~ 1992.07.30',
+      description: '소방법 시행령 적용',
+      keyPoints: ['스프링클러: 11층 이상 또는 연면적 3만㎡ 이상', '자동화재탐지설비 기준 적용']
+    },
+    {
+      start: 19920731,
+      end: 20030528,
+      name: '소방법',
+      period: '1992.07.31 ~ 2003.05.28',
+      description: '소방법 시행령 개정',
+      keyPoints: ['스프링클러 설치대상 확대', '6층 이상 건축물 스프링클러 적용', '특정소방대상물 분류 체계 정비']
+    },
+    {
+      start: 20030529,
+      end: 20111124,
+      name: '소방시설설치유지및안전관리에관한법률',
+      period: '2003.05.29 ~ 2011.11.24',
+      description: '소방법 분법 (소방기본법, 소방시설법 분리)',
+      keyPoints: ['소방시설 설치·유지 기준 강화', '소방안전관리자 제도 정비', '소방시설 자체점검 제도 도입']
+    },
+    {
+      start: 20111125,
+      end: 20151127,
+      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
+      period: '2011.11.25 ~ 2015.11.27',
+      description: '법률 명칭 변경',
+      keyPoints: ['성능위주설계 제도 도입', '소방시설관리사 제도 시행', '특정소방대상물 분류 개편']
+    },
+    {
+      start: 20151128,
+      end: 20170127,
+      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
+      period: '2015.11.28 ~ 2017.01.27',
+      description: '화재안전기준 개정',
+      keyPoints: ['피난기구 설치기준 변경', '노유자시설 스프링클러 설치 확대']
+    },
+    {
+      start: 20170128,
+      end: 20191007,
+      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
+      period: '2017.01.28 ~ 2019.10.07',
+      description: '스프링클러 설치 대상 확대',
+      keyPoints: ['모든 층 스프링클러 설치 기준 강화', '지하층·무창층 기준 강화', '간이스프링클러 설치대상 확대']
+    },
+    {
+      start: 20191008,
+      end: 20211130,
+      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
+      period: '2019.10.08 ~ 2021.11.30',
+      description: '화재안전기준 전면 개정',
+      keyPoints: ['소방시설 설치 기준 강화', '특정소방대상물 분류 체계 정비', '소방안전관리 대상 확대']
+    },
+    {
+      start: 20211201,
+      end: 20221130,
+      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
+      period: '2021.12.01 ~ 2022.11.30',
+      description: '전면 개정 법률 시행',
+      keyPoints: ['다중이용업소 안전관리 강화', '소방시설 성능유지 의무 강화']
+    },
+    {
+      start: 20221201,
+      end: 99999999,
+      name: '소방시설 설치 및 관리에 관한 법률',
+      period: '2022.12.01 ~ 현재',
+      description: '소방시설법, 화재예방법 분리 시행',
+      keyPoints: ['소방시설 설치 및 관리에 관한 법률', '화재의 예방 및 안전관리에 관한 법률', '성능위주설계 기준 강화', '소방시설 하자보수 책임 강화']
+    }
+  ];
+
+  for (const period of lawPeriods) {
+    if (date >= period.start && date <= period.end) {
+      return period;
+    }
+  }
+
+  return null;
+}
+
+// 소방법령 안내 카드 렌더링
+function renderLawInfoCard(pmsDay) {
+  const lawInfo = getFireLawInfo(pmsDay);
+
+  if (!lawInfo) {
+    return '';
+  }
+
+  let keyPointsHtml = lawInfo.keyPoints.map(point =>
+    `<li>${point}</li>`
+  ).join('');
+
+  return `
+    <div class="result-card law-card">
+      <div class="card-header">
+        <div class="card-icon law-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="card-title">허가일 기준 적용 소방법령</h3>
+      </div>
+      <div class="card-body law-body">
+        <div class="law-main">
+          <div class="law-name">${lawInfo.name}</div>
+          <div class="law-period">${lawInfo.period}</div>
+          <div class="law-desc">${lawInfo.description}</div>
+        </div>
+        <div class="law-details">
+          <div class="law-section-title">주요 적용 기준</div>
+          <ul class="law-points">
+            ${keyPointsHtml}
+          </ul>
+        </div>
+        <div class="law-notice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>정확한 법령 적용은 소방서 또는 전문가와 상담하시기 바랍니다.</span>
+        </div>
+      </div>
+    </div>`;
 }
 
 // 총괄표제부 카드 렌더링
