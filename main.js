@@ -641,9 +641,20 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
     <div class="summary-card">
       <div class="summary-header">
         <div class="summary-building-name">${buildingName}</div>
-        <span class="summary-purpose-badge">${mainPurpose}</span>
       </div>
       <div class="summary-grid">
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">주용도</span>
+          <span class="summary-grid-value">${mainPurpose}</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">기타용도</span>
+          <span class="summary-grid-value">${etcPurpose}</span>
+        </div>
+        <div class="summary-grid-item full-width">
+          <span class="summary-grid-label">주소</span>
+          <span class="summary-grid-value">${address}</span>
+        </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">건축허가일</span>
           <span class="summary-grid-value">${fmtDate(permitDate)}</span>
@@ -653,32 +664,44 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
           <span class="summary-grid-value">${fmtDate(approvalDate)}</span>
         </div>
         <div class="summary-grid-item">
-          <span class="summary-grid-label">연면적</span>
-          <span class="summary-grid-value">${fmtArea(totalArea)}㎡</span>
+          <span class="summary-grid-label">연면적(㎡)</span>
+          <span class="summary-grid-value">${fmtArea(totalArea)}</span>
         </div>
         <div class="summary-grid-item">
-          <span class="summary-grid-label">건축면적</span>
-          <span class="summary-grid-value">${fmtArea(buildingArea)}㎡</span>
+          <span class="summary-grid-label">건축면적(㎡)</span>
+          <span class="summary-grid-value">${fmtArea(buildingArea)}</span>
         </div>
         <div class="summary-grid-item">
-          <span class="summary-grid-label">층수</span>
-          <span class="summary-grid-value">지상${groundFloors || '-'} / 지하${undergroundFloors || '-'}</span>
+          <span class="summary-grid-label">세대수</span>
+          <span class="summary-grid-value">${households || '-'}</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">지상층수</span>
+          <span class="summary-grid-value">${groundFloors || '-'}</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">지하층수</span>
+          <span class="summary-grid-value">${undergroundFloors || '-'}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">높이</span>
           <span class="summary-grid-value">${fmtHeight(height)}</span>
         </div>
         <div class="summary-grid-item">
-          <span class="summary-grid-label">세대수</span>
-          <span class="summary-grid-value">${households || '-'}세대</span>
+          <span class="summary-grid-label">건축물구조</span>
+          <span class="summary-grid-value">${structure}</span>
         </div>
         <div class="summary-grid-item">
-          <span class="summary-grid-label">승강기</span>
-          <span class="summary-grid-value">승용${passengerElevator} / 비상${emergencyElevator}</span>
+          <span class="summary-grid-label">지붕구조</span>
+          <span class="summary-grid-value">${roofStructure}</span>
         </div>
-        <div class="summary-grid-item full-width">
-          <span class="summary-grid-label">구조</span>
-          <span class="summary-grid-value">${structure}</span>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">승용승강기(대)</span>
+          <span class="summary-grid-value">${passengerElevator}</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">비상승강기(대)</span>
+          <span class="summary-grid-value">${emergencyElevator}</span>
         </div>
       </div>
       <div class="summary-footer">
