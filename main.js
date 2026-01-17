@@ -1,9 +1,55 @@
+// Firebase import
+import { signInWithGoogle, logout, onAuthChange } from './firebase.js';
+
 // 전역 변수
 let selectedAddressData = null;
+let currentUser = null;
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
+// Google 로그인 처리
+window.handleGoogleLogin = async function() {
+  try {
+    await signInWithGoogle();
+  } catch (error) {
+    alert('로그인에 실패했습니다: ' + error.message);
+  }
+};
+
+// 로그아웃 처리
+window.handleLogout = async function() {
+  try {
+    await logout();
+  } catch (error) {
+    alert('로그아웃에 실패했습니다: ' + error.message);
+  }
+};
+
+// 인증 상태 변경 감지
+onAuthChange((user) => {
+  currentUser = user;
+  updateAuthUI(user);
+});
+
+// 인증 UI 업데이트
+function updateAuthUI(user) {
+  const loginBtn = document.getElementById('loginBtn');
+  const userInfo = document.getElementById('userInfo');
+  const userPhoto = document.getElementById('userPhoto');
+  const userName = document.getElementById('userName');
+
+  if (user) {
+    loginBtn.style.display = 'none';
+    userInfo.style.display = 'flex';
+    userPhoto.src = user.photoURL || '';
+    userName.textContent = user.displayName || user.email;
+  } else {
+    loginBtn.style.display = 'flex';
+    userInfo.style.display = 'none';
+  }
+}
+
 // 주소 검색 (카카오 우편번호 서비스)
-function searchAddress() {
+window.searchAddress = function() {
   new daum.Postcode({
     oncomplete: function(data) {
       // 선택한 주소 정보 저장
@@ -32,7 +78,7 @@ function searchAddress() {
 }
 
 // 건축물대장 조회 (3가지 동시 조회)
-async function searchBuilding() {
+window.searchBuilding = async function() {
   if (!selectedAddressData) {
     alert('주소를 먼저 검색해주세요.');
     return;
@@ -509,7 +555,7 @@ function showError(message) {
 }
 
 // 결과 복사
-function copyResult() {
+window.copyResult = function() {
   const resultDiv = document.getElementById('result');
   const tables = resultDiv.querySelectorAll('table');
 
