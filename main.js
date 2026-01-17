@@ -565,44 +565,72 @@ window.scrollBuildingSelector = function(direction) {
   }
 }
 
-// 요약 카드 렌더링 (총괄표제부 기준)
+// 요약 카드 렌더링 (총괄표제부 + 표제부 통합)
 function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   // 건물명: 첫 번째 표제부 또는 총괄표제부에서 가져오기
   const mainTitle = titleItems && titleItems.length > 0 ? titleItems[0] : {};
   const buildingName = mainTitle.bldNm || generalInfo.bldNm || selectedAddressData?.buildingName || '건축물 정보';
 
-  // 주용도, 기타용도
+  // 주용도, 기타용도 (모든 건물의 용도 수집)
+  const allPurposes = titleItems && titleItems.length > 0
+    ? [...new Set(titleItems.map(t => t.mainPurpsCdNm).filter(Boolean))].join(',')
+    : '';
   const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
-  const etcPurpose = generalInfo.etcPurps || mainTitle.etcPurps || '-';
+  const etcPurpose = generalInfo.etcPurps || mainTitle.etcPurps || allPurposes || '-';
 
   // 주소
-  const address = generalInfo.platPlc || selectedAddressData?.jibunAddress || selectedAddressData?.address || '-';
+  const address = generalInfo.platPlc || mainTitle.platPlc || selectedAddressData?.jibunAddress || selectedAddressData?.address || '-';
 
   // 허가일, 승인일
   const permitDate = permitInfo?.archPmsDay || generalInfo.pmsDay || '';
   const approvalDate = generalInfo.useAprDay || mainTitle.useAprDay || '';
 
-  // 면적
-  const totalArea = generalInfo.totArea || mainTitle.totArea || '';
-  const buildingArea = generalInfo.archArea || mainTitle.archArea || '';
+  // 면적 - 총괄표제부 우선, 없으면 표제부 합계
+  let totalArea = generalInfo.totArea || '';
+  let buildingArea = generalInfo.archArea || '';
+  if (!totalArea && titleItems && titleItems.length > 0) {
+    totalArea = titleItems.reduce((sum, t) => sum + (Number(t.totArea) || 0), 0);
+  }
+  if (!buildingArea && titleItems && titleItems.length > 0) {
+    buildingArea = titleItems.reduce((sum, t) => sum + (Number(t.archArea) || 0), 0);
+  }
 
-  // 세대수
-  const households = generalInfo.hhldCnt || mainTitle.hhldCnt || '';
+  // 세대수 - 총괄표제부 우선, 없으면 표제부 합계
+  let households = generalInfo.hhldCnt || '';
+  if (!households && titleItems && titleItems.length > 0) {
+    households = titleItems.reduce((sum, t) => sum + (Number(t.hhldCnt) || 0), 0);
+  }
 
-  // 층수 (총괄표제부 기준)
-  const groundFloors = generalInfo.grndFlrCnt || mainTitle.grndFlrCnt || '';
-  const undergroundFloors = generalInfo.ugrndFlrCnt || mainTitle.ugrndFlrCnt || '';
+  // 층수 - 모든 건물 중 최대값
+  let groundFloors = generalInfo.grndFlrCnt || '';
+  let undergroundFloors = generalInfo.ugrndFlrCnt || '';
+  if (titleItems && titleItems.length > 0) {
+    const maxGround = Math.max(...titleItems.map(t => Number(t.grndFlrCnt) || 0));
+    const maxUnder = Math.max(...titleItems.map(t => Number(t.ugrndFlrCnt) || 0));
+    if (!groundFloors || maxGround > Number(groundFloors)) groundFloors = maxGround;
+    if (!undergroundFloors || maxUnder > Number(undergroundFloors)) undergroundFloors = maxUnder;
+  }
 
-  // 높이
-  const height = generalInfo.heit || mainTitle.heit || '';
+  // 높이 - 모든 건물 중 최대값
+  let height = generalInfo.heit || '';
+  if (titleItems && titleItems.length > 0) {
+    const maxHeight = Math.max(...titleItems.map(t => Number(t.heit) || 0));
+    if (!height || maxHeight > Number(height)) height = maxHeight;
+  }
 
   // 구조
   const structure = generalInfo.strctCdNm || mainTitle.strctCdNm || '-';
   const roofStructure = generalInfo.roofCdNm || mainTitle.roofCdNm || '-';
 
-  // 승강기
-  const passengerElevator = generalInfo.rideUseElvtCnt || mainTitle.rideUseElvtCnt || '0';
-  const emergencyElevator = generalInfo.emgenUseElvtCnt || mainTitle.emgenUseElvtCnt || '0';
+  // 승강기 - 모든 건물 합계
+  let passengerElevator = Number(generalInfo.rideUseElvtCnt) || 0;
+  let emergencyElevator = Number(generalInfo.emgenUseElvtCnt) || 0;
+  if (titleItems && titleItems.length > 0) {
+    const sumPassenger = titleItems.reduce((sum, t) => sum + (Number(t.rideUseElvtCnt) || 0), 0);
+    const sumEmergency = titleItems.reduce((sum, t) => sum + (Number(t.emgenUseElvtCnt) || 0), 0);
+    if (sumPassenger > passengerElevator) passengerElevator = sumPassenger;
+    if (sumEmergency > emergencyElevator) emergencyElevator = sumEmergency;
+  }
 
   return `
     <div class="summary-card">
