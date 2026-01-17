@@ -1,15 +1,44 @@
-// Firebase import (ES Module)
-import { signInWithGoogle, logout, onAuthChange, saveSearchHistory, getMySearchHistory, deleteSearchHistory } from './firebase.js';
-
 // 전역 변수
 let selectedAddressData = null;
 let currentUser = null;
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
+// Firebase 함수들 (동적 로드)
+let firebaseModule = null;
+
+// Firebase 동적 로드
+async function loadFirebase() {
+  if (firebaseModule) return firebaseModule;
+  try {
+    firebaseModule = await import('./firebase.js');
+    console.log('Firebase 로드 성공');
+    return firebaseModule;
+  } catch (error) {
+    console.error('Firebase 로드 실패:', error);
+    return null;
+  }
+}
+
+// 초기화
+(async function init() {
+  const fb = await loadFirebase();
+  if (fb) {
+    fb.onAuthChange((user) => {
+      currentUser = user;
+      updateAuthUI(user);
+    });
+  }
+})();
+
 // Google 로그인 처리
 window.handleGoogleLogin = async function() {
+  const fb = await loadFirebase();
+  if (!fb) {
+    alert('Firebase를 로드할 수 없습니다.');
+    return;
+  }
   try {
-    await signInWithGoogle();
+    await fb.signInWithGoogle();
   } catch (error) {
     alert('로그인에 실패했습니다: ' + error.message);
   }
@@ -17,18 +46,14 @@ window.handleGoogleLogin = async function() {
 
 // 로그아웃 처리
 window.handleLogout = async function() {
+  const fb = await loadFirebase();
+  if (!fb) return;
   try {
-    await logout();
+    await fb.logout();
   } catch (error) {
     alert('로그아웃에 실패했습니다: ' + error.message);
   }
 };
-
-// 인증 상태 변경 감지
-onAuthChange((user) => {
-  currentUser = user;
-  updateAuthUI(user);
-});
 
 // 인증 UI 업데이트
 function updateAuthUI(user) {
@@ -60,6 +85,9 @@ window.showSearchHistory = async function() {
     return;
   }
 
+  const fb = await loadFirebase();
+  if (!fb) return;
+
   const historyModal = document.getElementById('historyModal');
   const historyList = document.getElementById('historyList');
 
@@ -67,7 +95,7 @@ window.showSearchHistory = async function() {
   historyModal.style.display = 'flex';
 
   try {
-    const history = await getMySearchHistory(20);
+    const history = await fb.getMySearchHistory(20);
 
     if (history.length === 0) {
       historyList.innerHTML = '<div class="no-history">검색 기록이 없습니다.</div>';
@@ -107,7 +135,10 @@ function formatTimestamp(timestamp) {
 
 // 검색 기록 항목 불러오기 (저장된 데이터 표시)
 window.loadHistoryItem = async function(docId) {
-  const history = await getMySearchHistory(20);
+  const fb = await loadFirebase();
+  if (!fb) return;
+
+  const history = await fb.getMySearchHistory(20);
   const item = history.find(h => h.id === docId);
 
   if (item && item.buildingData) {
@@ -135,8 +166,11 @@ window.loadHistoryItem = async function(docId) {
 window.deleteHistory = async function(docId) {
   if (!confirm('이 기록을 삭제하시겠습니까?')) return;
 
+  const fb = await loadFirebase();
+  if (!fb) return;
+
   try {
-    await deleteSearchHistory(docId);
+    await fb.deleteSearchHistory(docId);
     // UI에서 제거
     const item = document.querySelector(`.history-item[data-id="${docId}"]`);
     if (item) item.remove();
@@ -212,12 +246,15 @@ window.searchBuilding = async function() {
 
     // 로그인된 사용자면 검색 기록 저장
     if (currentUser) {
-      const buildingData = {
-        title: extractItems(titleResult),
-        floor: extractItems(floorResult),
-        general: extractItems(generalResult)
-      };
-      await saveSearchHistory(selectedAddressData, buildingData);
+      const fb = await loadFirebase();
+      if (fb) {
+        const buildingData = {
+          title: extractItems(titleResult),
+          floor: extractItems(floorResult),
+          general: extractItems(generalResult)
+        };
+        await fb.saveSearchHistory(selectedAddressData, buildingData);
+      }
     }
   } catch (error) {
     console.error('API 호출 오류:', error);
