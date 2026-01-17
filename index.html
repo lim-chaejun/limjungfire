@@ -5,12 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>소방용 건축물대장 검색</title>
   <link href='/style.css' rel='stylesheet'>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- 카카오 주소 검색 API -->
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
 <body>
   <div class="container">
     <header>
+      <div class="logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="#ff6b35" opacity="0.2"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="#ff6b35"/>
+          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="#ff6b35"/>
+        </svg>
+      </div>
       <h1>소방용 건축물대장 검색</h1>
       <p class="subtitle">주소를 검색하여 건축물 정보를 조회합니다</p>
     </header>
@@ -18,36 +28,45 @@
     <!-- 주소 검색 -->
     <div class="search-section">
       <div class="search-box">
-        <input type="text" id="addressInput" placeholder="주소를 검색하세요" readonly onclick="searchAddress()">
+        <div class="search-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 21L16.65 16.65M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <input type="text" id="addressInput" placeholder="클릭하여 주소를 검색하세요" readonly onclick="searchAddress()">
         <button onclick="searchAddress()" class="btn-search">주소 검색</button>
       </div>
       <div id="selectedAddress" class="selected-address"></div>
     </div>
 
-    <!-- 조회 탭 -->
-    <div class="tabs">
-      <button class="tab active" data-tab="title" onclick="switchTab('title')">표제부(동별)</button>
-      <button class="tab" data-tab="floor" onclick="switchTab('floor')">층별</button>
-      <button class="tab" data-tab="general" onclick="switchTab('general')">총괄표제부</button>
-    </div>
-
     <!-- 조회 버튼 -->
     <div class="action-section">
-      <button onclick="searchBuilding()" class="btn-primary" id="searchBtn">건축물대장 조회</button>
+      <button onclick="searchBuilding()" class="btn-primary" id="searchBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        건축물대장 조회
+      </button>
     </div>
 
     <!-- 로딩 표시 -->
     <div id="loading" class="loading" style="display: none;">
       <div class="spinner"></div>
-      <span>조회 중...</span>
+      <span>건축물 정보를 조회하고 있습니다...</span>
     </div>
 
     <!-- 결과 영역 -->
-    <div id="result" class="result-section"></div>
+    <div id="result" class="result-container"></div>
 
     <!-- 복사 버튼 -->
     <div id="copySection" class="copy-section" style="display: none;">
-      <button onclick="copyResult()" class="btn-copy">결과 복사</button>
+      <button onclick="copyResult()" class="btn-copy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.24264C20 6.71207 19.7893 6.20336 19.4142 5.82843L16.1716 2.58579C15.7966 2.21071 15.2879 2 14.7574 2H10C8.89543 2 8 2.89543 8 4Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 18V20C16 21.1046 15.1046 22 14 22H6C4.89543 22 4 21.1046 4 20V9C4 7.89543 4.89543 7 6 7H8" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        결과 복사
+      </button>
     </div>
 
     <footer>

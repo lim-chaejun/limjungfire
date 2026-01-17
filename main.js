@@ -1,6 +1,5 @@
 // 전역 변수
 let selectedAddressData = null;
-let currentTab = 'title';
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
 // 주소 검색 (카카오 우편번호 서비스)
@@ -12,9 +11,9 @@ function searchAddress() {
         address: data.address,
         jibunAddress: data.jibunAddress || data.autoJibunAddress,
         roadAddress: data.roadAddress,
-        bcode: data.bcode, // 법정동코드 (10자리)
-        sigunguCode: data.sigunguCode, // 시군구코드 (5자리)
-        bname: data.bname, // 법정동명
+        bcode: data.bcode,
+        sigunguCode: data.sigunguCode,
+        bname: data.bname,
         buildingName: data.buildingName
       };
 
@@ -22,7 +21,7 @@ function searchAddress() {
       document.getElementById('addressInput').value = data.address;
       const selectedAddressDiv = document.getElementById('selectedAddress');
       selectedAddressDiv.innerHTML = `
-        <strong>선택된 주소:</strong><br>
+        <strong>선택된 주소</strong><br>
         도로명: ${data.roadAddress || '-'}<br>
         지번: ${data.jibunAddress || data.autoJibunAddress || '-'}<br>
         법정동코드: ${data.bcode}
@@ -32,14 +31,7 @@ function searchAddress() {
   }).open();
 }
 
-// 탭 전환
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-}
-
-// 건축물대장 조회
+// 건축물대장 조회 (3가지 동시 조회)
 async function searchBuilding() {
   if (!selectedAddressData) {
     alert('주소를 먼저 검색해주세요.');
@@ -50,28 +42,19 @@ async function searchBuilding() {
   clearResult();
 
   try {
-    // 법정동코드에서 시군구코드(5자리)와 법정동코드(5자리) 추출
     const bcode = selectedAddressData.bcode;
     const sigunguCd = bcode.substring(0, 5);
     const bjdongCd = bcode.substring(5, 10);
-
-    // 지번 주소에서 번지 추출
     const jibunInfo = extractJibun(selectedAddressData.jibunAddress);
 
-    let result;
-    switch(currentTab) {
-      case 'title':
-        result = await fetchBrTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo);
-        break;
-      case 'floor':
-        result = await fetchBrFlrOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo);
-        break;
-      case 'general':
-        result = await fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo);
-        break;
-    }
+    // 3가지 API 동시 호출
+    const [titleResult, floorResult, generalResult] = await Promise.all([
+      fetchBrTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
+      fetchBrFlrOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
+      fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)
+    ]);
 
-    displayResult(result, currentTab);
+    displayAllResults(titleResult, floorResult, generalResult);
   } catch (error) {
     console.error('API 호출 오류:', error);
     showError('조회 중 오류가 발생했습니다: ' + error.message);
@@ -83,8 +66,6 @@ async function searchBuilding() {
 // 지번 주소에서 번지 추출
 function extractJibun(jibunAddress) {
   if (!jibunAddress) return { bun: '', ji: '' };
-
-  // 예: "서울 강남구 역삼동 123-45" 에서 "123-45" 추출
   const match = jibunAddress.match(/(\d+)(?:-(\d+))?(?:\s|$)/);
   if (match) {
     return {
@@ -109,8 +90,7 @@ async function fetchBrTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('_type', 'json');
 
   const response = await fetch(url);
-  const data = await response.json();
-  return data;
+  return await response.json();
 }
 
 // 층별 조회 API
@@ -127,8 +107,7 @@ async function fetchBrFlrOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('_type', 'json');
 
   const response = await fetch(url);
-  const data = await response.json();
-  return data;
+  return await response.json();
 }
 
 // 총괄표제부 조회 API
@@ -145,116 +124,193 @@ async function fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('_type', 'json');
 
   const response = await fetch(url);
-  const data = await response.json();
-  return data;
+  return await response.json();
 }
 
-// 결과 표시
-function displayResult(data, tab) {
+// 모든 결과 표시
+function displayAllResults(titleData, floorData, generalData) {
   const resultDiv = document.getElementById('result');
   const copySection = document.getElementById('copySection');
 
-  // API 응답 확인
-  if (!data || !data.response) {
-    showError('API 응답이 올바르지 않습니다.');
-    return;
-  }
-
-  const header = data.response.header;
-  if (header.resultCode !== '00') {
-    showError(`API 오류: ${header.resultMsg}`);
-    return;
-  }
-
-  const body = data.response.body;
-  if (!body || !body.items || !body.items.item) {
-    resultDiv.innerHTML = '<div class="no-result">조회 결과가 없습니다.</div>';
-    return;
-  }
-
-  const items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
-
   let html = '';
+  let hasResult = false;
 
-  switch(tab) {
-    case 'title':
-      html = renderTitleResult(items);
-      break;
-    case 'floor':
-      html = renderFloorResult(items);
-      break;
-    case 'general':
-      html = renderGeneralResult(items);
-      break;
+  // 총괄표제부
+  const generalItems = extractItems(generalData);
+  if (generalItems.length > 0) {
+    hasResult = true;
+    html += renderGeneralCard(generalItems);
+  }
+
+  // 표제부
+  const titleItems = extractItems(titleData);
+  if (titleItems.length > 0) {
+    hasResult = true;
+    html += renderTitleCard(titleItems);
+  }
+
+  // 층별
+  const floorItems = extractItems(floorData);
+  if (floorItems.length > 0) {
+    hasResult = true;
+    html += renderFloorCard(floorItems);
+  }
+
+  if (!hasResult) {
+    html = '<div class="no-result">조회 결과가 없습니다.</div>';
+    copySection.style.display = 'none';
+  } else {
+    copySection.style.display = 'block';
   }
 
   resultDiv.innerHTML = html;
-  copySection.style.display = 'block';
 }
 
-// 표제부 결과 렌더링
-function renderTitleResult(items) {
-  let html = '<h3 class="result-header">표제부(동별) 조회 결과</h3>';
-  html += '<table class="result-table"><thead><tr>';
-  html += '<th>동명칭</th><th>주용도</th><th>구조</th><th>지상층수</th><th>지하층수</th><th>연면적(㎡)</th>';
-  html += '</tr></thead><tbody>';
+// API 응답에서 items 추출
+function extractItems(data) {
+  if (!data?.response?.header || data.response.header.resultCode !== '00') {
+    return [];
+  }
+  const body = data.response.body;
+  if (!body?.items?.item) return [];
+  return Array.isArray(body.items.item) ? body.items.item : [body.items.item];
+}
+
+// 총괄표제부 카드 렌더링
+function renderGeneralCard(items) {
+  let html = `
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 17H15M9 13H15M9 9H10M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="card-title">총괄표제부</h3>
+      </div>
+      <div class="card-body">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>대지면적(㎡)</th>
+              <th>건축면적(㎡)</th>
+              <th>연면적(㎡)</th>
+              <th>용적률(%)</th>
+              <th>건폐율(%)</th>
+              <th>세대수</th>
+            </tr>
+          </thead>
+          <tbody>`;
 
   items.forEach(item => {
-    html += '<tr>';
-    html += `<td>${item.dongNm || '-'}</td>`;
-    html += `<td>${item.mainPurpsCdNm || '-'}</td>`;
-    html += `<td>${item.strctCdNm || '-'}</td>`;
-    html += `<td>${item.grndFlrCnt || '-'}</td>`;
-    html += `<td>${item.ugrndFlrCnt || '-'}</td>`;
-    html += `<td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>`;
-    html += '</tr>';
+    html += `
+            <tr>
+              <td>${item.platArea ? Number(item.platArea).toLocaleString() : '-'}</td>
+              <td>${item.archArea ? Number(item.archArea).toLocaleString() : '-'}</td>
+              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
+              <td>${item.vlRat || '-'}</td>
+              <td>${item.bcRat || '-'}</td>
+              <td>${item.hhldCnt || '-'}</td>
+            </tr>`;
   });
 
-  html += '</tbody></table>';
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>`;
   return html;
 }
 
-// 층별 결과 렌더링
-function renderFloorResult(items) {
-  let html = '<h3 class="result-header">층별 조회 결과</h3>';
-  html += '<table class="result-table"><thead><tr>';
-  html += '<th>동명칭</th><th>층구분</th><th>층번호</th><th>구조</th><th>주용도</th><th>면적(㎡)</th>';
-  html += '</tr></thead><tbody>';
+// 표제부 카드 렌더링
+function renderTitleCard(items) {
+  let html = `
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="card-title">표제부 (동별)</h3>
+      </div>
+      <div class="card-body">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>동명칭</th>
+              <th>주용도</th>
+              <th>구조</th>
+              <th>지상층수</th>
+              <th>지하층수</th>
+              <th>연면적(㎡)</th>
+            </tr>
+          </thead>
+          <tbody>`;
 
   items.forEach(item => {
-    html += '<tr>';
-    html += `<td>${item.dongNm || '-'}</td>`;
-    html += `<td>${item.flrGbCdNm || '-'}</td>`;
-    html += `<td>${item.flrNo || '-'}</td>`;
-    html += `<td>${item.strctCdNm || '-'}</td>`;
-    html += `<td>${item.mainPurpsCdNm || '-'}</td>`;
-    html += `<td>${item.area ? Number(item.area).toLocaleString() : '-'}</td>`;
-    html += '</tr>';
+    html += `
+            <tr>
+              <td>${item.dongNm || '-'}</td>
+              <td>${item.mainPurpsCdNm || '-'}</td>
+              <td>${item.strctCdNm || '-'}</td>
+              <td>${item.grndFlrCnt || '-'}</td>
+              <td>${item.ugrndFlrCnt || '-'}</td>
+              <td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>
+            </tr>`;
   });
 
-  html += '</tbody></table>';
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>`;
   return html;
 }
 
-// 총괄표제부 결과 렌더링
-function renderGeneralResult(items) {
-  let html = '<h3 class="result-header">총괄표제부 조회 결과</h3>';
-  html += '<table class="result-table"><thead><tr>';
-  html += '<th>대지면적(㎡)</th><th>건축면적(㎡)</th><th>연면적(㎡)</th><th>용적률(%)</th><th>건폐율(%)</th><th>세대수</th>';
-  html += '</tr></thead><tbody>';
+// 층별 카드 렌더링
+function renderFloorCard(items) {
+  let html = `
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 21H21M3 7V21M21 7V21M3 7L12 3L21 7M9 10H10M9 14H10M14 10H15M14 14H15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="card-title">층별 개요</h3>
+      </div>
+      <div class="card-body">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>동명칭</th>
+              <th>층구분</th>
+              <th>층번호</th>
+              <th>구조</th>
+              <th>주용도</th>
+              <th>면적(㎡)</th>
+            </tr>
+          </thead>
+          <tbody>`;
 
   items.forEach(item => {
-    html += '<tr>';
-    html += `<td>${item.platArea ? Number(item.platArea).toLocaleString() : '-'}</td>`;
-    html += `<td>${item.archArea ? Number(item.archArea).toLocaleString() : '-'}</td>`;
-    html += `<td>${item.totArea ? Number(item.totArea).toLocaleString() : '-'}</td>`;
-    html += `<td>${item.vlRat || '-'}</td>`;
-    html += `<td>${item.bcRat || '-'}</td>`;
-    html += `<td>${item.hhldCnt || '-'}</td>`;
-    html += '</tr>';
+    html += `
+            <tr>
+              <td>${item.dongNm || '-'}</td>
+              <td>${item.flrGbCdNm || '-'}</td>
+              <td>${item.flrNo || '-'}</td>
+              <td>${item.strctCdNm || '-'}</td>
+              <td>${item.mainPurpsCdNm || '-'}</td>
+              <td>${item.area ? Number(item.area).toLocaleString() : '-'}</td>
+            </tr>`;
   });
 
-  html += '</tbody></table>';
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>`;
   return html;
 }
 
@@ -278,23 +334,32 @@ function showError(message) {
 // 결과 복사
 function copyResult() {
   const resultDiv = document.getElementById('result');
-  const table = resultDiv.querySelector('table');
+  const tables = resultDiv.querySelectorAll('table');
 
-  if (!table) {
+  if (tables.length === 0) {
     alert('복사할 결과가 없습니다.');
     return;
   }
 
-  // 테이블 데이터를 텍스트로 변환
   let text = '';
-  const rows = table.querySelectorAll('tr');
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('th, td');
-    const rowData = Array.from(cells).map(cell => cell.textContent).join('\t');
-    text += rowData + '\n';
+  const cards = resultDiv.querySelectorAll('.result-card');
+
+  cards.forEach(card => {
+    const title = card.querySelector('.card-title')?.textContent || '';
+    text += `\n=== ${title} ===\n`;
+
+    const table = card.querySelector('table');
+    if (table) {
+      const rows = table.querySelectorAll('tr');
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const rowData = Array.from(cells).map(cell => cell.textContent).join('\t');
+        text += rowData + '\n';
+      });
+    }
   });
 
-  navigator.clipboard.writeText(text).then(() => {
+  navigator.clipboard.writeText(text.trim()).then(() => {
     alert('결과가 클립보드에 복사되었습니다.');
   }).catch(err => {
     console.error('복사 실패:', err);
