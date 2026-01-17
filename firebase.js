@@ -9,6 +9,7 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -259,6 +260,28 @@ export async function checkFavorite(address) {
   } catch (error) {
     console.error('즐겨찾기 확인 실패:', error);
     return null;
+  }
+}
+
+// 즐겨찾기 메모 업데이트
+export async function updateFavoriteMemo(docId, memo) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return false;
+  }
+
+  try {
+    const favoriteRef = doc(db, 'favorites', docId);
+    await updateDoc(favoriteRef, {
+      memo: memo,
+      updatedAt: serverTimestamp()
+    });
+    console.log('메모 업데이트 완료:', docId);
+    return true;
+  } catch (error) {
+    console.error('메모 업데이트 실패:', error);
+    throw error;
   }
 }
 

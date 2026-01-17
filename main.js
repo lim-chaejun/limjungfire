@@ -346,6 +346,9 @@ async function loadHistoryTab(tab) {
 // 기록 아이템 렌더링
 function renderHistoryItem(item, isFavorite, type) {
   const starClass = isFavorite ? 'active' : '';
+  const escapedAddress = (item.address || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const escapedMemo = (item.memo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
   const deleteBtn = type === 'history'
     ? `<button class="history-delete" onclick="deleteHistory('${item.id}')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -358,9 +361,32 @@ function renderHistoryItem(item, isFavorite, type) {
         </svg>
       </button>`;
 
+  // 즐겨찾기 탭에서만 메모 표시
+  const memoHtml = type === 'favorite' ? `
+    <div class="history-memo">
+      ${item.memo ? `<span class="memo-preview">${item.memo}</span>` : '<span class="memo-placeholder">메모 추가</span>'}
+      <button class="memo-btn" onclick="event.stopPropagation(); showMemoEditor('${item.id}', '${escapedMemo}')" title="메모 편집">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    </div>
+  ` : '';
+
+  // 지도 버튼
+  const mapBtn = `
+    <button class="history-map" onclick="event.stopPropagation(); showMapModal('${escapedAddress}')" title="지도">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </button>
+  `;
+
   return `
     <div class="history-item" data-id="${item.id}" data-address="${item.address}">
-      <button class="history-favorite ${starClass}" onclick="toggleFavorite('${item.address}', this)">
+      <button class="history-favorite ${starClass}" onclick="toggleFavorite('${escapedAddress}', this)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
@@ -368,7 +394,9 @@ function renderHistoryItem(item, isFavorite, type) {
       <div class="history-content" onclick="loadHistoryItem('${item.id}', '${type}')">
         <div class="history-address">${item.address}</div>
         <div class="history-date">${formatTimestamp(item.createdAt)}</div>
+        ${memoHtml}
       </div>
+      ${mapBtn}
       ${deleteBtn}
     </div>
   `;
@@ -864,10 +892,30 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
+  // 주소 escape (onclick 속성용)
+  const escapedAddress = address.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
   return `
     <div class="summary-card">
       <div class="summary-header">
         <div class="summary-building-name">${buildingName}</div>
+        <div class="summary-actions">
+          <button class="action-btn" onclick="showMapModal('${escapedAddress}')" title="지도">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </button>
+          <button class="action-btn" onclick="shareBuilding()" title="공유">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="summary-grid">
         <div class="summary-grid-item">
@@ -1684,5 +1732,145 @@ function clearResult() {
 // 에러 표시
 function showError(message) {
   document.getElementById('result').innerHTML = `<div class="error-message">${message}</div>`;
+}
+
+// ==================== 지도 기능 ====================
+
+// 지도 모달 표시
+window.showMapModal = function(address) {
+  const mapModal = document.getElementById('mapModal');
+  const mapContainer = document.getElementById('mapContainer');
+  const mapAddress = document.getElementById('mapAddress');
+
+  mapModal.style.display = 'flex';
+  mapAddress.textContent = address;
+
+  // 카카오 지도 API 체크
+  if (typeof kakao === 'undefined' || !kakao.maps) {
+    mapContainer.innerHTML = '<div class="map-error">카카오 지도 API를 불러올 수 없습니다.<br>API 키 설정이 필요합니다.</div>';
+    return;
+  }
+
+  // 카카오 Geocoder로 주소→좌표 변환
+  const geocoder = new kakao.maps.services.Geocoder();
+  geocoder.addressSearch(address, function(result, status) {
+    if (status === kakao.maps.services.Status.OK) {
+      const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+      const map = new kakao.maps.Map(mapContainer, {
+        center: coords,
+        level: 3
+      });
+
+      const marker = new kakao.maps.Marker({
+        map: map,
+        position: coords
+      });
+
+      // 인포윈도우로 장소명 표시
+      const infowindow = new kakao.maps.InfoWindow({
+        content: `<div style="padding:5px;font-size:12px;">${address}</div>`
+      });
+      infowindow.open(map, marker);
+    } else {
+      mapContainer.innerHTML = '<div class="map-error">주소를 찾을 수 없습니다.</div>';
+    }
+  });
+};
+
+// 지도 모달 닫기
+window.closeMapModal = function() {
+  document.getElementById('mapModal').style.display = 'none';
+  // 지도 컨테이너 초기화
+  document.getElementById('mapContainer').innerHTML = '';
+};
+
+// ==================== 공유 기능 ====================
+
+// 건물 정보 공유
+window.shareBuilding = async function() {
+  const { generalItems, titleItems } = currentBuildingData;
+  const general = generalItems[0] || {};
+  const title = titleItems[0] || {};
+
+  const buildingName = title.bldNm || general.bldNm || '건축물';
+  const address = general.platPlc || title.platPlc || selectedAddressData?.address || '-';
+  const mainPurpose = general.mainPurpsCdNm || title.mainPurpsCdNm || '-';
+  const totalArea = general.totArea || title.totArea || '-';
+
+  const shareText = `[소방용 건축물대장]
+${buildingName}
+주소: ${address}
+주용도: ${mainPurpose}
+연면적: ${totalArea !== '-' ? Number(totalArea).toLocaleString() + '㎡' : '-'}`;
+
+  try {
+    if (navigator.share) {
+      // 모바일 네이티브 공유
+      await navigator.share({
+        title: buildingName,
+        text: shareText,
+        url: window.location.href
+      });
+    } else {
+      // 클립보드 복사
+      await navigator.clipboard.writeText(shareText);
+      showToast('클립보드에 복사되었습니다.');
+    }
+  } catch (error) {
+    console.error('공유 실패:', error);
+    // 공유 취소시 에러 무시
+    if (error.name !== 'AbortError') {
+      showToast('공유에 실패했습니다.');
+    }
+  }
+};
+
+// 토스트 메시지 표시
+function showToast(message) {
+  // 기존 토스트 제거
+  const existingToast = document.querySelector('.toast-message');
+  if (existingToast) existingToast.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-message';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // 애니메이션 후 제거
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+// ==================== 메모 기능 ====================
+
+// 메모 편집기 표시
+window.showMemoEditor = function(docId, currentMemo) {
+  const newMemo = prompt('메모 입력', currentMemo || '');
+  if (newMemo !== null) {
+    saveMemo(docId, newMemo);
+  }
+};
+
+// 메모 저장
+async function saveMemo(docId, memo) {
+  try {
+    const fb = await loadFirebase();
+    if (!fb) {
+      alert('Firebase를 불러올 수 없습니다.');
+      return;
+    }
+
+    await fb.updateFavoriteMemo(docId, memo);
+    showToast('메모가 저장되었습니다.');
+
+    // UI 업데이트
+    loadHistoryTab('favorites');
+  } catch (error) {
+    console.error('메모 저장 실패:', error);
+    alert('메모 저장에 실패했습니다.');
+  }
 }
 

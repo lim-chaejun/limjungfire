@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- 카카오 주소 검색 API -->
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <!-- 카카오 지도 API -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=3c04db3601014dafb5bcf18a66b5bd6f&libraries=services"></script>
 </head>
 <body>
   <!-- 초기 로딩 화면 -->
@@ -260,6 +262,24 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 지도 모달 -->
+  <div id="mapModal" class="modal" style="display: none;">
+    <div class="modal-content map-modal-content">
+      <div class="modal-header">
+        <h2 id="mapModalTitle">위치 확인</h2>
+        <button class="modal-close" onclick="closeMapModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body map-modal-body">
+        <div id="mapContainer" class="map-container"></div>
+        <div id="mapAddress" class="map-address"></div>
       </div>
     </div>
   </div>

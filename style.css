@@ -1784,3 +1784,181 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
+
+/* ==================== 지도 모달 ==================== */
+.map-modal-content {
+  max-width: 500px;
+  width: 100%;
+}
+
+.map-modal-body {
+  padding: 0;
+}
+
+.map-container {
+  width: 100%;
+  height: 350px;
+  background: var(--bg-tertiary);
+  border-radius: 0;
+}
+
+.map-address {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-light);
+}
+
+.map-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+/* ==================== 요약 카드 액션 버튼 ==================== */
+.summary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ==================== 메모 스타일 ==================== */
+.history-memo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.memo-preview {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.memo-placeholder {
+  font-size: 12px;
+  color: var(--text-disabled);
+  font-style: italic;
+}
+
+.memo-btn {
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-disabled);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.memo-btn:hover {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+/* 검색기록 지도 버튼 */
+.history-map {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  color: var(--text-disabled);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.history-map:hover {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+/* ==================== 토스트 메시지 ==================== */
+.toast-message {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2000;
+  animation: toastSlideIn 0.3s ease;
+}
+
+.toast-message.fade-out {
+  animation: toastFadeOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes toastFadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
