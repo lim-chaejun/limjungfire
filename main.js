@@ -705,9 +705,9 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         </div>
       </div>
       <div class="summary-footer">
-        <button class="btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
-        <button class="btn-detail-sm" onclick="showFloorModal(-1)">층별</button>
         <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
+        <button class="btn-detail-sm" onclick="showFloorModal(-1)">층별</button>
+        <button class="btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
       </div>
     </div>
   `;
@@ -734,21 +734,40 @@ window.showTitleModal = function(buildingIndex) {
   document.getElementById('detailModal').style.display = 'flex';
 };
 
+// 층별 모달 상태 관리
+let currentFloorData = {
+  items: [],
+  pmsDay: null,
+  sortMode: 'floor-desc' // 'floor-desc', 'floor-asc', 'usage'
+};
+
 // 층별 모달 표시
 window.showFloorModal = function(buildingIndex) {
-  const { titleItems, floorItems } = currentBuildingData;
+  const { titleItems, floorItems, generalItems, permitItems } = currentBuildingData;
   const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
   const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
+
+  // 허가일 가져오기
+  const permitInfo = permitItems[0] || {};
+  const generalInfo = generalItems[0] || {};
+  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
 
   // 해당 건물의 층별 정보 필터링
   const buildingFloors = buildingIndex >= 0
     ? floorItems.filter(f => f.dongNm === titleItem.dongNm || (!f.dongNm && !titleItem.dongNm))
     : floorItems;
 
+  // 상태 저장
+  currentFloorData = {
+    items: buildingFloors,
+    pmsDay: pmsDay,
+    sortMode: 'floor-desc'
+  };
+
   let html = '';
 
   if (buildingFloors.length > 0) {
-    html += renderDetailFloorCard(buildingFloors);
+    html += renderDetailFloorCard(buildingFloors, pmsDay, 'floor-desc');
   } else {
     html = '<div class="no-result">층별 정보가 없습니다.</div>';
   }
@@ -756,6 +775,13 @@ window.showFloorModal = function(buildingIndex) {
   document.getElementById('detailModalTitle').textContent = `${buildingName} - 층별 개요`;
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModal').style.display = 'flex';
+};
+
+// 층별 정렬 모드 변경
+window.changeFloorSortMode = function(mode) {
+  currentFloorData.sortMode = mode;
+  const html = renderDetailFloorCard(currentFloorData.items, currentFloorData.pmsDay, mode);
+  document.getElementById('detailModalBody').innerHTML = html;
 };
 
 // 총괄표제부 모달 표시
@@ -901,29 +927,116 @@ function renderDetailTitleCard(items) {
 }
 
 // 상세 층별 카드 렌더링
-function renderDetailFloorCard(items) {
-  let html = `
-    <div class="detail-section">
-      <div class="detail-section-header">
-        <h4>층별 개요</h4>
-      </div>
-      <div class="detail-floor-list">`;
+function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
+  // 1. 소방법령 정보
+  let html = pmsDay ? renderLawInfoCard(pmsDay) : '';
 
+  // 2. 용도별 면적 합계 계산
+  const usageSummary = {};
   items.forEach(item => {
-    const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
-    const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
-    html += `
-        <div class="detail-floor-item">
-          <span class="floor-num">${floorLabel}</span>
-          <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
-          ${etcPurps}
-          <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
-        </div>`;
+    const use = item.mainPurpsCdNm || '기타';
+    usageSummary[use] = (usageSummary[use] || 0) + (Number(item.area) || 0);
   });
 
+  // 용도별 합계 표시
+  html += `<div class="usage-summary">`;
+  Object.entries(usageSummary).forEach(([use, area]) => {
+    html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
+  });
+  html += `</div>`;
+
+  // 3. 정렬 옵션 버튼
   html += `
+    <div class="floor-sort-bar">
+      <span class="floor-sort-label">정렬</span>
+      <div class="floor-sort-buttons">
+        <button class="floor-sort-btn ${sortMode === 'floor-desc' ? 'active' : ''}" onclick="changeFloorSortMode('floor-desc')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+          높은층
+        </button>
+        <button class="floor-sort-btn ${sortMode === 'floor-asc' ? 'active' : ''}" onclick="changeFloorSortMode('floor-asc')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+          낮은층
+        </button>
+        <button class="floor-sort-btn ${sortMode === 'usage' ? 'active' : ''}" onclick="changeFloorSortMode('usage')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M3 12h12M3 18h6"/>
+          </svg>
+          용도별
+        </button>
       </div>
     </div>`;
+
+  html += `<div class="detail-section floor-section-large">`;
+
+  // 정렬 모드에 따른 렌더링
+  if (sortMode === 'usage') {
+    // 용도별 그룹화
+    const usageGroups = {};
+    items.forEach(item => {
+      const use = item.mainPurpsCdNm || '기타';
+      if (!usageGroups[use]) usageGroups[use] = [];
+      usageGroups[use].push(item);
+    });
+
+    Object.entries(usageGroups).forEach(([use, floors]) => {
+      html += `<div class="floor-group-header">${use}</div>`;
+      html += `<div class="detail-floor-list">`;
+      floors.sort((a, b) => {
+        const aVal = a.flrGbCdNm === '지하' ? -Number(a.flrNo) : Number(a.flrNo);
+        const bVal = b.flrGbCdNm === '지하' ? -Number(b.flrNo) : Number(b.flrNo);
+        return bVal - aVal;
+      }).forEach(item => {
+        const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
+        const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
+        html += `
+          <div class="detail-floor-item">
+            <span class="floor-num">${floorLabel}</span>
+            <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
+            ${etcPurps}
+            <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
+          </div>`;
+      });
+      html += `</div>`;
+    });
+  } else {
+    // 층수 기준 정렬 (지상/지하 분리)
+    const isDesc = sortMode === 'floor-desc';
+    const groundFloors = items.filter(f => f.flrGbCdNm !== '지하')
+      .sort((a, b) => isDesc ? Number(b.flrNo) - Number(a.flrNo) : Number(a.flrNo) - Number(b.flrNo));
+    const undergroundFloors = items.filter(f => f.flrGbCdNm === '지하')
+      .sort((a, b) => isDesc ? Number(a.flrNo) - Number(b.flrNo) : Number(b.flrNo) - Number(a.flrNo));
+
+    // 내림차순: 지상 먼저, 오름차순: 지하 먼저
+    const sections = isDesc
+      ? [{ name: '지상층', floors: groundFloors }, { name: '지하층', floors: undergroundFloors }]
+      : [{ name: '지하층', floors: undergroundFloors }, { name: '지상층', floors: groundFloors }];
+
+    sections.forEach(section => {
+      if (section.floors.length > 0) {
+        html += `<div class="floor-group-header">${section.name}</div>`;
+        html += `<div class="detail-floor-list">`;
+        section.floors.forEach(item => {
+          const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
+          const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
+          html += `
+            <div class="detail-floor-item">
+              <span class="floor-num">${floorLabel}</span>
+              <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
+              ${etcPurps}
+              <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
+            </div>`;
+        });
+        html += `</div>`;
+      }
+    });
+  }
+
+  html += `</div>`;
   return html;
 }
 

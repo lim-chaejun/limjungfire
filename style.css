@@ -1165,13 +1165,13 @@ header h1 {
 /* Detail Modal */
 .detail-modal-content {
   width: 100%;
-  max-width: 440px;
-  max-height: 85vh;
+  max-width: 560px;
+  max-height: 90vh;
 }
 
 .detail-modal-content .modal-body {
-  max-height: 70vh;
-  padding: 12px;
+  max-height: 80vh;
+  padding: 16px;
 }
 
 .detail-section {
@@ -1357,6 +1357,100 @@ header h1 {
   height: 5px;
   background: var(--color-success);
   border-radius: 50%;
+}
+
+/* 용도별 합계 */
+.usage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.usage-chip {
+  padding: 4px 10px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 지상/지하 그룹 헤더 */
+.floor-group-header {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 12px;
+  background: var(--bg-secondary);
+}
+
+.floor-group-header:first-child {
+  margin-top: 0;
+}
+
+/* 층별 정렬 바 */
+.floor-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.floor-sort-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.floor-sort-buttons {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.floor-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.floor-sort-btn:hover {
+  background: var(--bg-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.floor-sort-btn.active {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.floor-sort-btn svg {
+  flex-shrink: 0;
+}
+
+/* 층별 섹션 확대 */
+.floor-section-large .detail-floor-list {
+  max-height: 400px;
+  padding: 10px;
 }
 
 /* Footer */
