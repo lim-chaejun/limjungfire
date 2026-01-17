@@ -1,25 +1,7 @@
 // 전역 변수
 let selectedAddressData = null;
 let currentTab = 'title';
-
-// 페이지 로드 시 저장된 API 키 불러오기
-document.addEventListener('DOMContentLoaded', function() {
-  const savedApiKey = localStorage.getItem('buildingApiKey');
-  if (savedApiKey) {
-    document.getElementById('apiKey').value = savedApiKey;
-  }
-});
-
-// API 키 저장
-function saveApiKey() {
-  const apiKey = document.getElementById('apiKey').value.trim();
-  if (apiKey) {
-    localStorage.setItem('buildingApiKey', apiKey);
-    alert('API 키가 저장되었습니다.');
-  } else {
-    alert('API 키를 입력해주세요.');
-  }
-}
+const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
 // 주소 검색 (카카오 우편번호 서비스)
 function searchAddress() {
@@ -59,13 +41,6 @@ function switchTab(tab) {
 
 // 건축물대장 조회
 async function searchBuilding() {
-  const apiKey = document.getElementById('apiKey').value.trim();
-
-  if (!apiKey) {
-    alert('API 키를 입력해주세요.');
-    return;
-  }
-
   if (!selectedAddressData) {
     alert('주소를 먼저 검색해주세요.');
     return;
@@ -86,13 +61,13 @@ async function searchBuilding() {
     let result;
     switch(currentTab) {
       case 'title':
-        result = await fetchBrTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo);
+        result = await fetchBrTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo);
         break;
       case 'floor':
-        result = await fetchBrFlrOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo);
+        result = await fetchBrFlrOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo);
         break;
       case 'general':
-        result = await fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo);
+        result = await fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo);
         break;
     }
 
