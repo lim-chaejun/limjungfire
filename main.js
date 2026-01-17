@@ -30,8 +30,19 @@ async function loadFirebase() {
   }
 })();
 
-// Google 로그인 처리
-window.handleGoogleLogin = async function() {
+// 로그인/회원가입 모달 열기
+window.handleGoogleLogin = function() {
+  document.getElementById('authModal').style.display = 'flex';
+};
+
+// 모달 닫기
+window.closeAuthModal = function() {
+  document.getElementById('authModal').style.display = 'none';
+};
+
+// 로그인 처리
+window.handleLogin = async function() {
+  closeAuthModal();
   const fb = await loadFirebase();
   if (!fb) {
     alert('Firebase를 로드할 수 없습니다.');
@@ -41,6 +52,26 @@ window.handleGoogleLogin = async function() {
     await fb.signInWithGoogle();
   } catch (error) {
     alert('로그인에 실패했습니다: ' + error.message);
+  }
+};
+
+// 회원가입 처리 (Google 로그인 후 Firestore에 사용자 정보 저장)
+window.handleSignup = async function() {
+  closeAuthModal();
+  const fb = await loadFirebase();
+  if (!fb) {
+    alert('Firebase를 로드할 수 없습니다.');
+    return;
+  }
+  try {
+    const user = await fb.signInWithGoogle();
+    // Firestore에 사용자 정보 저장
+    if (user && fb.saveUserInfo) {
+      await fb.saveUserInfo(user);
+    }
+    alert('회원가입이 완료되었습니다!');
+  } catch (error) {
+    alert('회원가입에 실패했습니다: ' + error.message);
   }
 };
 

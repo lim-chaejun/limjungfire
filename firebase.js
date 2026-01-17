@@ -7,6 +7,7 @@ import {
   addDoc,
   getDocs,
   doc,
+  setDoc,
   deleteDoc,
   query,
   where,
@@ -66,6 +67,28 @@ export function getCurrentUser() {
 }
 
 // ==================== Firestore 함수 ====================
+
+// 사용자 정보 저장 (회원가입 시)
+export async function saveUserInfo(user) {
+  if (!user) return null;
+
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      createdAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp()
+    }, { merge: true });
+    console.log('사용자 정보 저장 완료');
+    return true;
+  } catch (error) {
+    console.error('사용자 정보 저장 실패:', error);
+    throw error;
+  }
+}
 
 // 검색 기록 저장
 export async function saveSearchHistory(addressData, buildingData) {
