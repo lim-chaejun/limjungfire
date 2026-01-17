@@ -300,13 +300,17 @@ async function loadHistoryTab(tab) {
 // 기록 아이템 렌더링
 function renderHistoryItem(item, isFavorite, type) {
   const starClass = isFavorite ? 'active' : '';
-  const deleteBtn = type === 'history' ? `
-    <button class="history-delete" onclick="deleteHistory('${item.id}')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M18 6L6 18M6 6l12 12"/>
-      </svg>
-    </button>
-  ` : '';
+  const deleteBtn = type === 'history'
+    ? `<button class="history-delete" onclick="deleteHistory('${item.id}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>`
+    : `<button class="history-delete" onclick="deleteFavorite('${item.id}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>`;
 
   return `
     <div class="history-item" data-id="${item.id}" data-address="${item.address}">
@@ -372,6 +376,32 @@ window.toggleFavorite = async function(address, btnElement) {
   } catch (error) {
     console.error('즐겨찾기 처리 실패:', error);
     alert('즐겨찾기 처리에 실패했습니다.');
+  }
+};
+
+// 즐겨찾기 삭제
+window.deleteFavorite = async function(docId) {
+  if (!confirm('즐겨찾기에서 삭제하시겠습니까?')) return;
+
+  const fb = await loadFirebase();
+  if (!fb) return;
+
+  try {
+    await fb.removeFavorite(docId);
+    // UI에서 제거
+    const item = document.querySelector(`.history-item[data-id="${docId}"]`);
+    if (item) item.remove();
+
+    // 상태에서도 제거
+    historyModalState.favorites = historyModalState.favorites.filter(f => f.id !== docId);
+
+    // 남은 즐겨찾기가 없으면 메시지 표시
+    const historyList = document.getElementById('historyList');
+    if (historyList.querySelectorAll('.history-item').length === 0) {
+      historyList.innerHTML = '<div class="no-history">즐겨찾기가 없습니다.</div>';
+    }
+  } catch (error) {
+    alert('삭제에 실패했습니다.');
   }
 };
 
