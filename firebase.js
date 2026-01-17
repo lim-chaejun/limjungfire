@@ -1,6 +1,19 @@
 // Firebase 초기화 및 인증
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCHZq-GQsvzlCXajzEG5fZqo_7khF0W_yA",
@@ -16,6 +29,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
 // Google 로그인
 export async function signInWithGoogle() {
@@ -50,3 +64,80 @@ export function onAuthChange(callback) {
 export function getCurrentUser() {
   return auth.currentUser;
 }
+
+// ==================== Firestore 함수 ====================
+
+// 검색 기록 저장
+export async function saveSearchHistory(addressData, buildingData) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return null;
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'searchHistory'), {
+      userId: user.uid,
+      userEmail: user.email,
+      address: addressData.address,
+      jibunAddress: addressData.jibunAddress,
+      roadAddress: addressData.roadAddress,
+      bcode: addressData.bcode,
+      buildingData: buildingData,
+      createdAt: serverTimestamp()
+    });
+    console.log('검색 기록 저장 완료:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('검색 기록 저장 실패:', error);
+    throw error;
+  }
+}
+
+// 내 검색 기록 조회
+export async function getMySearchHistory(limitCount = 20) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return [];
+  }
+
+  try {
+    const q = query(
+      collection(db, 'searchHistory'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const querySnapshot = await getDocs(q);
+    const history = [];
+    querySnapshot.forEach((doc) => {
+      history.push({ id: doc.id, ...doc.data() });
+    });
+    return history;
+  } catch (error) {
+    console.error('검색 기록 조회 실패:', error);
+    throw error;
+  }
+}
+
+// 검색 기록 삭제
+export async function deleteSearchHistory(docId) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('로그인이 필요합니다.');
+    return false;
+  }
+
+  try {
+    await deleteDoc(doc(db, 'searchHistory', docId));
+    console.log('검색 기록 삭제 완료:', docId);
+    return true;
+  } catch (error) {
+    console.error('검색 기록 삭제 실패:', error);
+    throw error;
+  }
+}
+
+// Firestore DB export
+export { db };

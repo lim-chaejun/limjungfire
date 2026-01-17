@@ -1,5 +1,5 @@
 // Firebase import
-import { signInWithGoogle, logout, onAuthChange } from './firebase.js';
+import { signInWithGoogle, logout, onAuthChange, saveSearchHistory, getMySearchHistory, deleteSearchHistory } from './firebase.js';
 
 // 전역 변수
 let selectedAddressData = null;
@@ -46,7 +46,115 @@ function updateAuthUI(user) {
     loginBtn.style.display = 'flex';
     userInfo.style.display = 'none';
   }
+  // 검색 기록 버튼 표시/숨김
+  const historyBtn = document.getElementById('historyBtn');
+  if (historyBtn) {
+    historyBtn.style.display = user ? 'inline-flex' : 'none';
+  }
 }
+
+// 검색 기록 보기
+window.showSearchHistory = async function() {
+  if (!currentUser) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  const historyModal = document.getElementById('historyModal');
+  const historyList = document.getElementById('historyList');
+
+  historyList.innerHTML = '<div class="loading-small">불러오는 중...</div>';
+  historyModal.style.display = 'flex';
+
+  try {
+    const history = await getMySearchHistory(20);
+
+    if (history.length === 0) {
+      historyList.innerHTML = '<div class="no-history">검색 기록이 없습니다.</div>';
+      return;
+    }
+
+    historyList.innerHTML = history.map(item => `
+      <div class="history-item" data-id="${item.id}">
+        <div class="history-content" onclick="loadHistoryItem('${item.id}')">
+          <div class="history-address">${item.address}</div>
+          <div class="history-date">${formatTimestamp(item.createdAt)}</div>
+        </div>
+        <button class="history-delete" onclick="deleteHistory('${item.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  } catch (error) {
+    historyList.innerHTML = '<div class="error-small">기록을 불러오는데 실패했습니다.</div>';
+  }
+};
+
+// 타임스탬프 포맷팅
+function formatTimestamp(timestamp) {
+  if (!timestamp) return '';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+// 검색 기록 항목 불러오기 (저장된 데이터 표시)
+window.loadHistoryItem = async function(docId) {
+  const history = await getMySearchHistory(20);
+  const item = history.find(h => h.id === docId);
+
+  if (item && item.buildingData) {
+    closeHistoryModal();
+    displayAllResults(
+      { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.title } } } },
+      { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.floor } } } },
+      { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.general } } } }
+    );
+
+    // 주소 정보도 표시
+    document.getElementById('addressInput').value = item.address;
+    const selectedAddressDiv = document.getElementById('selectedAddress');
+    selectedAddressDiv.innerHTML = `
+      <strong>선택된 주소 (기록에서 불러옴)</strong><br>
+      도로명: ${item.roadAddress || '-'}<br>
+      지번: ${item.jibunAddress || '-'}<br>
+      법정동코드: ${item.bcode}
+    `;
+    selectedAddressDiv.classList.add('show');
+  }
+};
+
+// 검색 기록 삭제
+window.deleteHistory = async function(docId) {
+  if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+
+  try {
+    await deleteSearchHistory(docId);
+    // UI에서 제거
+    const item = document.querySelector(`.history-item[data-id="${docId}"]`);
+    if (item) item.remove();
+
+    // 남은 기록이 없으면 메시지 표시
+    const historyList = document.getElementById('historyList');
+    if (historyList.children.length === 0) {
+      historyList.innerHTML = '<div class="no-history">검색 기록이 없습니다.</div>';
+    }
+  } catch (error) {
+    alert('삭제에 실패했습니다.');
+  }
+};
+
+// 모달 닫기
+window.closeHistoryModal = function() {
+  document.getElementById('historyModal').style.display = 'none';
+};
 
 // 주소 검색 (카카오 우편번호 서비스)
 window.searchAddress = function() {
@@ -101,6 +209,16 @@ window.searchBuilding = async function() {
     ]);
 
     displayAllResults(titleResult, floorResult, generalResult);
+
+    // 로그인된 사용자면 검색 기록 저장
+    if (currentUser) {
+      const buildingData = {
+        title: extractItems(titleResult),
+        floor: extractItems(floorResult),
+        general: extractItems(generalResult)
+      };
+      await saveSearchHistory(selectedAddressData, buildingData);
+    }
   } catch (error) {
     console.error('API 호출 오류:', error);
     showError('조회 중 오류가 발생했습니다: ' + error.message);
