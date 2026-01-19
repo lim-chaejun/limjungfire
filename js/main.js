@@ -2455,53 +2455,76 @@ window.closeFireStandardsModal = function() {
   document.getElementById('fireStandardsModal').style.display = 'none';
 };
 
-// 시설 상세 모달 표시 (아코디언 방식 - 모든 시설 표시)
+// 시설 상세 모달 표시 (클릭한 시설만 표시)
 window.showFacilityDetailModal = function(facilityIndex) {
-  if (!currentFacilitiesResult || !currentFacilitiesResult.facilities) {
+  if (!currentFacilitiesResult || !currentFacilitiesResult.facilities[facilityIndex]) {
     showToast('시설 정보를 찾을 수 없습니다.');
     return;
   }
 
-  const facilities = currentFacilitiesResult.facilities;
+  const facility = currentFacilitiesResult.facilities[facilityIndex];
   const permitDate = currentFacilitiesResult.permitDate;
 
-  // 필수 시설과 비해당 시설 분리
-  const requiredFacilities = facilities.filter(f => f.required);
-  const optionalFacilities = facilities.filter(f => !f.required);
+  // 적용되는 규정만 필터링
+  const allRegs = facility.allRegulations || facility.regulations || [];
+  const applicableRegs = getApplicableRegulations(allRegs, permitDate);
+
+  // 적용 기간 포맷
+  const formatPeriod = (reg) => {
+    const start = reg.start_date || '';
+    const end = reg.end_date;
+    if (!start && !end) return '상시 적용';
+    if (!end) return `${start} ~ 현재`;
+    return `${start} ~ ${end}`;
+  };
 
   let html = `
-    <div class="accordion-header-info">
-      <span class="accordion-permit-badge">허가일: ${formatPermitDate(permitDate) || '-'}</span>
+    <div class="facility-detail-header">
+      <span class="facility-detail-icon">${facility.icon}</span>
+      <div class="facility-detail-info">
+        <span class="facility-detail-name">${facility.name}</span>
+        <span class="facility-detail-category">${facility.category || ''}</span>
+      </div>
+      <span class="facility-detail-status ${facility.required ? 'required' : 'optional'}">
+        ${facility.required ? '필수' : '비해당'}
+      </span>
     </div>
-    <div class="accordion-list">
   `;
 
-  // 필수 시설 먼저 렌더링
-  requiredFacilities.forEach((facility, idx) => {
-    // 첫 번째 필수 시설은 기본으로 펼침
-    const content = renderFacilityDetailContent(facility, permitDate);
-    if (idx === 0) {
-      html += content.replace('class="accordion-item required"', 'class="accordion-item required expanded"');
-    } else {
-      html += content;
-    }
-  });
+  if (applicableRegs.length > 0) {
+    html += `<div class="facility-detail-section"><h4>설치 기준</h4><div class="regulations-list">`;
+    applicableRegs.forEach(reg => {
+      html += `
+        <div class="regulation-item applicable">
+          <div class="regulation-period">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>${formatPeriod(reg)}</span>
+          </div>
+          <div class="regulation-criteria">${reg.criteria}</div>
+          ${reg.applicable_to ? `<div class="regulation-target">대상: ${reg.applicable_to}</div>` : ''}
+          ${reg.note ? `<div class="regulation-note">※ ${reg.note}</div>` : ''}
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  } else {
+    html += `
+      <div class="facility-detail-empty">
+        <p>적용되는 설치 기준이 없습니다.</p>
+      </div>
+    `;
+  }
 
-  // 비해당 시설
-  optionalFacilities.forEach(facility => {
-    html += renderFacilityDetailContent(facility, permitDate);
-  });
-
-  html += `</div>`;
-
-  // 푸터 정보
   html += `
-    <div class="accordion-footer">
-      <p>※ 허가일 기준 적용되는 설치기준만 표시됩니다.</p>
+    <div class="facility-detail-footer">
+      <p>건축허가일: ${formatPermitDate(permitDate) || '-'}</p>
     </div>
   `;
 
-  document.getElementById('facilityDetailTitle').textContent = '소방시설 설치기준';
+  document.getElementById('facilityDetailTitle').textContent = facility.name;
   document.getElementById('facilityDetailBody').innerHTML = html;
   document.getElementById('facilityDetailModal').style.display = 'flex';
 };
