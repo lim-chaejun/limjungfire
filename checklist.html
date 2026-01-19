@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="canonical" href="https://limjungfire.pages.dev/checklist.html">
+  <title>건물용도별 소방시설 체크리스트 | 림정파이어</title>
+  <meta name="description" content="건물용도별 소방시설 체크리스트. 아파트, 근린생활시설, 숙박시설 등 용도별로 필요한 소방시설을 확인하세요.">
+  <meta name="keywords" content="소방시설 체크리스트, 아파트 소방시설, 근린생활시설 소방시설, 소방점검">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="건물용도별 소방시설 체크리스트">
+  <meta property="og:description" content="용도별로 필요한 소방시설을 체크리스트로 확인하세요.">
+  <meta property="og:image" content="https://limjungfire.pages.dev/og-image.jpg">
+
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .page-header p {
+      color: var(--text-tertiary);
+      font-size: 15px;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .checklist-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .checklist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--bg-tertiary);
+      cursor: pointer;
+    }
+    .checklist-header:hover {
+      background: var(--color-primary-bg);
+    }
+    .checklist-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .checklist-title .icon {
+      font-size: 24px;
+    }
+    .checklist-title h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .checklist-arrow {
+      color: var(--text-tertiary);
+      transition: transform 0.2s;
+    }
+    .checklist-card.open .checklist-arrow {
+      transform: rotate(180deg);
+    }
+    .checklist-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .checklist-card.open .checklist-body {
+      max-height: 1000px;
+    }
+    .checklist-content {
+      padding: 20px;
+    }
+    .checklist-section {
+      margin-bottom: 16px;
+    }
+    .checklist-section:last-child {
+      margin-bottom: 0;
+    }
+    .checklist-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .checklist-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .checklist-item .emoji {
+      font-size: 18px;
+    }
+    .checklist-item.required {
+      background: var(--color-error-bg);
+      color: var(--color-error);
+    }
+    .checklist-note {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+    }
+    .info-box {
+      background: var(--color-primary-bg);
+      border: 1px solid var(--color-primary);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .info-box p {
+      font-size: 14px;
+      color: var(--color-primary);
+      margin: 0;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      메인으로 돌아가기
+    </a>
+
+    <div class="page-header">
+      <h1>건물용도별 소방시설 체크리스트</h1>
+      <p>용도별 주요 소방시설 설치 기준 요약</p>
+    </div>
+
+    <div class="info-box">
+      <p>💡 아래는 일반적인 기준이며, 정확한 설치 기준은 메인 페이지에서 건물을 검색해 확인하세요.</p>
+    </div>
+
+    <!-- 공동주택 -->
+    <div class="checklist-card open">
+      <div class="checklist-header" onclick="toggleChecklist(this)">
+        <div class="checklist-title">
+          <span class="icon">🏢</span>
+          <h3>공동주택 (아파트)</h3>
+        </div>
+        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="checklist-body">
+        <div class="checklist-content">
+          <div class="checklist-section">
+            <div class="checklist-section-title">소화설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기 (각 세대 + 공용부분)</div>
+              <div class="checklist-item required"><span class="emoji">⚡</span> 자동소화장치 (주방)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전 (3,000㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (6층 이상)</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">경보설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🔔</span> 단독경보형감지기 (각 세대)</div>
+              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비 (1,000㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비 (3,500㎡ 이상)</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">피난설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구 (3층~10층)</div>
+              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등 (5층 이상 + 3,000㎡)</div>
+            </div>
+          </div>
+          <div class="checklist-note">
+            ※ 2017년 이후 건축허가 건물은 세대 내 감지기, 주방자동소화장치 의무
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 근린생활시설 -->
+    <div class="checklist-card">
+      <div class="checklist-header" onclick="toggleChecklist(this)">
+        <div class="checklist-title">
+          <span class="icon">🏪</span>
+          <h3>근린생활시설</h3>
+        </div>
+        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="checklist-body">
+        <div class="checklist-content">
+          <div class="checklist-section">
+            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기 (33㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">🔔</span> 비상경보설비 (400㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전 (3,000㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (6층 이상 또는 5,000㎡ 이상)</div>
+              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+            </div>
+          </div>
+          <div class="checklist-note">
+            ※ 음식점, 의원, 학원 등 용도에 따라 추가 기준 적용
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 숙박시설 -->
+    <div class="checklist-card">
+      <div class="checklist-header" onclick="toggleChecklist(this)">
+        <div class="checklist-title">
+          <span class="icon">🏨</span>
+          <h3>숙박시설</h3>
+        </div>
+        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="checklist-body">
+        <div class="checklist-content">
+          <div class="checklist-section">
+            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기</div>
+              <div class="checklist-item required"><span class="emoji">🔔</span> 자동화재탐지설비</div>
+              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+              <div class="checklist-item required"><span class="emoji">🪜</span> 피난기구 (객실마다)</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (11층 이상)</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비 (3,500㎡ 이상)</div>
+            </div>
+          </div>
+          <div class="checklist-note">
+            ※ 숙박시설은 모든 규모에서 자동화재탐지설비 필수
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 판매시설 -->
+    <div class="checklist-card">
+      <div class="checklist-header" onclick="toggleChecklist(this)">
+        <div class="checklist-title">
+          <span class="icon">🛒</span>
+          <h3>판매시설</h3>
+        </div>
+        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="checklist-body">
+        <div class="checklist-content">
+          <div class="checklist-section">
+            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기</div>
+              <div class="checklist-item required"><span class="emoji">🔔</span> 자동화재탐지설비</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (수용인원 500명 이상 또는 3,000㎡ 이상)</div>
+              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 업무시설 -->
+    <div class="checklist-card">
+      <div class="checklist-header" onclick="toggleChecklist(this)">
+        <div class="checklist-title">
+          <span class="icon">🏬</span>
+          <h3>업무시설 (오피스)</h3>
+        </div>
+        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="checklist-body">
+        <div class="checklist-content">
+          <div class="checklist-section">
+            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-items">
+              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기</div>
+              <div class="checklist-item"><span class="emoji">🔔</span> 자동화재탐지설비 (1,000㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전 (3,000㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (6층 이상)</div>
+              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2025 림정파이어. 소방시설 설치기준 확인 서비스</p>
+    </footer>
+  </div>
+
+  <script>
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function toggleChecklist(header) {
+      const card = header.closest('.checklist-card');
+      card.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

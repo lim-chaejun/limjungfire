@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="canonical" href="https://limjungfire.pages.dev/guide/">
+  <title>소방시설 가이드 - 설치기준 상세 안내 | 림정파이어</title>
+  <meta name="description" content="소방시설별 설치기준 상세 가이드. 스프링클러, 소화기, 비상경보설비, 자동화재탐지설비 등 각 시설의 설치 기준과 법적 요건을 확인하세요.">
+  <meta name="keywords" content="소방시설 가이드, 스프링클러 설치기준, 소화기 설치기준, 소방법">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="소방시설 가이드 - 설치기준 상세 안내">
+  <meta property="og:description" content="소방시설별 설치기준 상세 가이드를 확인하세요.">
+  <meta property="og:image" content="https://limjungfire.pages.dev/og-image.jpg">
+
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .page-header p {
+      color: var(--text-tertiary);
+      font-size: 15px;
+    }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 400px) {
+      .guide-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .guide-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+    }
+    .guide-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-primary);
+    }
+    .guide-card .icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .guide-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .guide-card p {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      text-align: center;
+      line-height: 1.4;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .category-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      margin: 24px 0 12px;
+      padding-left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      메인으로 돌아가기
+    </a>
+
+    <div class="page-header">
+      <h1>소방시설 가이드</h1>
+      <p>시설별 설치기준과 법적 요건을 확인하세요</p>
+    </div>
+
+    <div class="category-title">소화설비</div>
+    <div class="guide-grid">
+      <a href="fire-extinguisher.html" class="guide-card">
+        <span class="icon">🧯</span>
+        <h3>소화기</h3>
+        <p>기본 소화설비<br>설치 기준 안내</p>
+      </a>
+      <a href="sprinkler.html" class="guide-card">
+        <span class="icon">💦</span>
+        <h3>스프링클러</h3>
+        <p>자동 소화설비<br>설치 기준 안내</p>
+      </a>
+      <a href="indoor-hydrant.html" class="guide-card">
+        <span class="icon">🔴</span>
+        <h3>옥내소화전</h3>
+        <p>수동 소화설비<br>설치 기준 안내</p>
+      </a>
+      <a href="auto-extinguisher.html" class="guide-card">
+        <span class="icon">⚡</span>
+        <h3>자동소화장치</h3>
+        <p>주방용 자동소화<br>설치 기준 안내</p>
+      </a>
+    </div>
+
+    <div class="category-title">경보설비</div>
+    <div class="guide-grid">
+      <a href="fire-detector.html" class="guide-card">
+        <span class="icon">🔔</span>
+        <h3>자동화재탐지설비</h3>
+        <p>화재 감지 및 경보<br>설치 기준 안내</p>
+      </a>
+      <a href="emergency-alarm.html" class="guide-card">
+        <span class="icon">🚨</span>
+        <h3>비상경보설비</h3>
+        <p>비상벨/사이렌<br>설치 기준 안내</p>
+      </a>
+      <a href="emergency-broadcast.html" class="guide-card">
+        <span class="icon">📢</span>
+        <h3>비상방송설비</h3>
+        <p>비상 안내방송<br>설치 기준 안내</p>
+      </a>
+    </div>
+
+    <div class="category-title">피난설비</div>
+    <div class="guide-grid">
+      <a href="escape-equipment.html" class="guide-card">
+        <span class="icon">🪜</span>
+        <h3>피난기구</h3>
+        <p>피난사다리/완강기<br>설치 기준 안내</p>
+      </a>
+      <a href="exit-sign.html" class="guide-card">
+        <span class="icon">🚪</span>
+        <h3>유도등</h3>
+        <p>피난 유도 표시<br>설치 기준 안내</p>
+      </a>
+      <a href="emergency-light.html" class="guide-card">
+        <span class="icon">💡</span>
+        <h3>비상조명등</h3>
+        <p>정전시 조명<br>설치 기준 안내</p>
+      </a>
+    </div>
+
+    <footer>
+      <p>&copy; 2025 림정파이어. 소방시설 설치기준 확인 서비스</p>
+    </footer>
+  </div>
+
+  <script>
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+</body>
+</html>

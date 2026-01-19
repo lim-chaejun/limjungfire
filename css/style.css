@@ -2947,3 +2947,75 @@ footer {
   margin: 0;
   text-align: center;
 }
+
+/* 하단 네비게이션 */
+.bottom-nav {
+  margin-top: 32px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.bottom-nav-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.bottom-nav-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.bottom-nav-link:hover {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.bottom-nav-link .nav-icon {
+  font-size: 24px;
+}
+
+.bottom-nav-link .nav-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.bottom-nav-link:hover .nav-text {
+  color: var(--color-primary);
+}
+
+@media (max-width: 400px) {
+  .bottom-nav-links {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-nav-link {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .bottom-nav-link .nav-icon {
+    font-size: 20px;
+  }
+}
