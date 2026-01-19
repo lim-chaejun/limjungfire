@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="canonical" href="https://limjungfire.pages.dev/pages/about.html">
+  <title>서비스 소개 | 림정파이어</title>
+  <meta name="description" content="림정파이어는 건축물대장 검색으로 소방시설 설치기준을 빠르게 확인할 수 있는 서비스입니다. 소방 전문가와 건축주를 위한 정보 제공 서비스입니다.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="서비스 소개 - 림정파이어">
+  <meta property="og:description" content="건축물대장 검색으로 소방시설 설치기준을 빠르게 확인하세요">
+  <meta property="og:image" content="https://limjungfire.pages.dev/assets/og-image.jpg">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .page-header p {
+      color: var(--text-tertiary);
+      font-size: 15px;
+    }
+    .about-hero {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #1565c0 100%);
+      border-radius: var(--radius-lg);
+      padding: 40px 24px;
+      text-align: center;
+      margin-bottom: 24px;
+      color: white;
+    }
+    .about-hero-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 16px;
+    }
+    .about-hero-icon svg {
+      width: 100%;
+      height: 100%;
+      color: white;
+    }
+    .about-hero h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .about-hero p {
+      font-size: 15px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    .about-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .about-section h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .about-section h3 svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-primary);
+    }
+    .about-section p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 12px;
+    }
+    .about-section p:last-child {
+      margin-bottom: 0;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .feature-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .feature-card-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--color-primary-bg);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    .feature-card-icon svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-primary);
+    }
+    .feature-card h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .data-source {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .data-source h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .data-source ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .data-source li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--text-secondary);
+      transition: background 0.2s;
+    }
+    .contact-item:hover {
+      background: var(--border-color);
+    }
+    .contact-item svg {
+      width: 20px;
+      height: 20px;
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+    .contact-item span {
+      font-size: 14px;
+    }
+    .disclaimer {
+      background: var(--color-warning-bg, #fff3cd);
+      border: 1px solid var(--color-warning, #ffc107);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .disclaimer p {
+      font-size: 13px;
+      color: var(--text-primary);
+      margin: 0;
+      line-height: 1.6;
+    }
+    [data-theme="dark"] .disclaimer {
+      background: rgba(255, 193, 7, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 상단 바 -->
+    <div class="top-bar">
+      <a href="/" class="home-btn" aria-label="홈으로">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
+          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
+        </svg>
+      </a>
+      <div id="authSection" class="auth-section">
+        <div id="loginBtn" class="auth-btn" onclick="handleGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>로그인</span>
+        </div>
+        <div id="userInfo" class="user-info" style="display: none;">
+          <div class="profile-dropdown" onclick="toggleProfileMenu()">
+            <img id="userPhoto" class="user-photo" src="" alt="프로필">
+            <span id="userName" class="user-name"></span>
+            <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          <div id="profileMenu" class="profile-menu">
+            <div class="profile-menu-header">
+              <img id="menuUserPhoto" class="menu-user-photo" src="" alt="프로필">
+              <div class="menu-user-info">
+                <span id="menuUserName" class="menu-user-name"></span>
+                <span id="menuUserEmail" class="menu-user-email"></span>
+              </div>
+            </div>
+            <div class="profile-menu-divider"></div>
+            <button class="profile-menu-item" onclick="showMyInfo()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+              </svg>
+              내 정보
+            </button>
+            <button class="profile-menu-item" onclick="showSettings()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              설정
+            </button>
+            <div class="profile-menu-divider"></div>
+            <button class="profile-menu-item logout" onclick="handleLogout()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+              </svg>
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-header">
+      <h1>서비스 소개</h1>
+      <p>림정파이어에 대해 알아보세요</p>
+    </div>
+
+    <div class="about-hero">
+      <div class="about-hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.3"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
+          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <h2>림정파이어</h2>
+      <p>건축물대장 검색으로 소방시설 설치기준을<br>빠르게 확인할 수 있는 서비스입니다.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </div>
+        <h4>건축물대장 검색</h4>
+        <p>주소만 입력하면 건축물대장 정보와 함께 건축허가일 기준 소방시설 설치기준을 확인할 수 있습니다.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 8v4l3 3"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+        </div>
+        <h4>법령 타임라인</h4>
+        <p>2003년부터 현재까지 소방법령의 주요 변경 내용을 연도별로 정리하여 제공합니다.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <h4>용도별 체크리스트</h4>
+        <p>30개 건물 용도별 소방시설 설치기준을 체크리스트 형태로 제공합니다.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </div>
+        <h4>소방시설 가이드</h4>
+        <p>스프링클러, 소화기, 자동화재탐지설비 등 주요 소방시설의 설치기준을 상세하게 안내합니다.</p>
+      </div>
+    </div>
+
+    <div class="about-section">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4M12 8h.01"/>
+        </svg>
+        서비스 소개
+      </h3>
+      <p>림정파이어는 소방 전문가, 건축주, 시설관리자를 위한 소방시설 설치기준 확인 서비스입니다.</p>
+      <p>건축물의 소방시설 설치기준은 <strong>건축허가일 당시의 법령</strong>을 적용합니다. 따라서 건축물대장에서 건축허가일을 확인하고, 해당 시점의 법령을 찾아보는 과정이 필요합니다.</p>
+      <p>림정파이어는 이 과정을 간소화하여, 주소 검색만으로 건축허가일 기준의 소방시설 설치기준을 빠르게 확인할 수 있도록 도와드립니다.</p>
+
+      <div class="disclaimer">
+        <p><strong>주의:</strong> 본 서비스에서 제공하는 정보는 참고용이며, 법적 효력이 있는 공식 문서가 아닙니다. 실제 소방시설 설치 시에는 반드시 관할 소방서 및 전문가와 상담하시기 바랍니다.</p>
+      </div>
+    </div>
+
+    <div class="about-section">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </svg>
+        데이터 출처
+      </h3>
+      <p>림정파이어는 신뢰할 수 있는 공공 데이터를 기반으로 서비스를 제공합니다.</p>
+      <div class="data-source">
+        <h4>사용 데이터</h4>
+        <ul>
+          <li><strong>건축물대장 정보:</strong> 국토교통부 건축물대장정보 서비스 API</li>
+          <li><strong>소방법령 정보:</strong> 국가법령정보센터 (법제처)</li>
+          <li><strong>주소 검색:</strong> 카카오 주소 검색 API</li>
+          <li><strong>지도 서비스:</strong> 카카오 지도 API</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="about-section">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        문의 및 피드백
+      </h3>
+      <p>서비스 이용 중 문의사항이나 개선 의견이 있으시면 아래 채널을 통해 연락해주세요.</p>
+      <div class="contact-info">
+        <a href="https://github.com/anthropics/claude-code/issues" target="_blank" rel="noopener" class="contact-item">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          <span>GitHub Issues에서 문의하기</span>
+        </a>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-links">
+        <a href="/pages/about.html">서비스 소개</a>
+        <span class="footer-divider">·</span>
+        <a href="/pages/terms.html">이용약관</a>
+        <span class="footer-divider">·</span>
+        <a href="/pages/privacy.html">개인정보처리방침</a>
+      </div>
+      <p>&copy; 2025 림정파이어. 소방시설 설치기준 확인 서비스</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

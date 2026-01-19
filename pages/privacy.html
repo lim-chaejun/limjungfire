@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="canonical" href="https://limjungfire.pages.dev/pages/privacy.html">
+  <title>개인정보처리방침 | 림정파이어</title>
+  <meta name="description" content="림정파이어 개인정보처리방침. 수집하는 개인정보 항목, 수집 목적, 보유 기간 및 이용자 권리에 대해 안내합니다.">
+  <meta name="robots" content="noindex">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="개인정보처리방침 - 림정파이어">
+  <meta property="og:description" content="림정파이어 개인정보처리방침 안내">
+  <meta property="og:image" content="https://limjungfire.pages.dev/assets/og-image.jpg">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .page-header p {
+      color: var(--text-tertiary);
+      font-size: 15px;
+    }
+    .policy-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .policy-section {
+      margin-bottom: 32px;
+    }
+    .policy-section:last-child {
+      margin-bottom: 0;
+    }
+    .policy-section h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--color-primary);
+    }
+    .policy-section h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 16px 0 8px;
+    }
+    .policy-section p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 12px;
+    }
+    .policy-section ul {
+      margin: 12px 0;
+      padding-left: 20px;
+    }
+    .policy-section li {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 8px;
+    }
+    .policy-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .policy-table th,
+    .policy-table td {
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      text-align: left;
+    }
+    .policy-table th {
+      background: var(--bg-tertiary);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .policy-table td {
+      color: var(--text-secondary);
+    }
+    .update-date {
+      text-align: right;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 상단 바 -->
+    <div class="top-bar">
+      <a href="/" class="home-btn" aria-label="홈으로">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
+          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
+        </svg>
+      </a>
+      <div id="authSection" class="auth-section">
+        <div id="loginBtn" class="auth-btn" onclick="handleGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>로그인</span>
+        </div>
+        <div id="userInfo" class="user-info" style="display: none;">
+          <div class="profile-dropdown" onclick="toggleProfileMenu()">
+            <img id="userPhoto" class="user-photo" src="" alt="프로필">
+            <span id="userName" class="user-name"></span>
+            <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          <div id="profileMenu" class="profile-menu">
+            <div class="profile-menu-header">
+              <img id="menuUserPhoto" class="menu-user-photo" src="" alt="프로필">
+              <div class="menu-user-info">
+                <span id="menuUserName" class="menu-user-name"></span>
+                <span id="menuUserEmail" class="menu-user-email"></span>
+              </div>
+            </div>
+            <div class="profile-menu-divider"></div>
+            <button class="profile-menu-item" onclick="showMyInfo()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+              </svg>
+              내 정보
+            </button>
+            <button class="profile-menu-item" onclick="showSettings()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              설정
+            </button>
+            <div class="profile-menu-divider"></div>
+            <button class="profile-menu-item logout" onclick="handleLogout()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+              </svg>
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-header">
+      <h1>개인정보처리방침</h1>
+      <p>림정파이어 서비스 이용 시 적용되는 개인정보 처리에 관한 사항</p>
+    </div>
+
+    <div class="policy-content">
+      <div class="policy-section">
+        <h2>1. 개인정보의 수집 및 이용 목적</h2>
+        <p>림정파이어(이하 "서비스")는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하는 개인정보는 다음의 목적 이외의 용도로는 사용되지 않으며, 이용 목적이 변경되는 경우에는 별도의 동의를 받는 등 필요한 조치를 이행합니다.</p>
+        <ul>
+          <li><strong>회원 가입 및 관리:</strong> 회원제 서비스 이용에 따른 본인확인, 개인식별, 서비스 부정이용 방지</li>
+          <li><strong>서비스 제공:</strong> 건축물대장 검색 서비스 제공, 검색 기록 저장 및 관리</li>
+          <li><strong>서비스 개선:</strong> 서비스 이용 통계 분석, 서비스 개선 및 신규 서비스 개발</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>2. 수집하는 개인정보 항목</h2>
+        <table class="policy-table">
+          <thead>
+            <tr>
+              <th>수집 방법</th>
+              <th>수집 항목</th>
+              <th>수집 목적</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Google 로그인</td>
+              <td>이름, 이메일 주소, 프로필 사진</td>
+              <td>회원 식별 및 서비스 제공</td>
+            </tr>
+            <tr>
+              <td>서비스 이용</td>
+              <td>검색 기록, 접속 로그, 기기 정보</td>
+              <td>서비스 제공 및 개선</td>
+            </tr>
+            <tr>
+              <td>자동 수집</td>
+              <td>IP 주소, 쿠키, 방문 일시</td>
+              <td>서비스 이용 통계 및 부정이용 방지</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="policy-section">
+        <h2>3. 개인정보의 보유 및 이용 기간</h2>
+        <p>서비스는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보를 수집 시에 동의 받은 개인정보 보유·이용기간 내에서 개인정보를 처리·보유합니다.</p>
+        <ul>
+          <li><strong>회원 정보:</strong> 회원 탈퇴 시까지 (탈퇴 후 즉시 파기)</li>
+          <li><strong>검색 기록:</strong> 사용자의 브라우저 LocalStorage에 저장되며, 사용자가 직접 삭제 가능</li>
+          <li><strong>접속 로그:</strong> 3개월 (통신비밀보호법)</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>4. 개인정보의 제3자 제공</h2>
+        <p>서비스는 원칙적으로 이용자의 개인정보를 제3자에게 제공하지 않습니다. 다만, 다음의 경우에는 예외로 합니다.</p>
+        <ul>
+          <li>이용자가 사전에 동의한 경우</li>
+          <li>법령의 규정에 의거하거나, 수사 목적으로 법령에 정해진 절차와 방법에 따라 수사기관의 요구가 있는 경우</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>5. 개인정보 처리 위탁</h2>
+        <p>서비스는 원활한 서비스 제공을 위해 다음과 같이 개인정보 처리업무를 위탁하고 있습니다.</p>
+        <table class="policy-table">
+          <thead>
+            <tr>
+              <th>수탁업체</th>
+              <th>위탁 업무</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Google LLC (Firebase)</td>
+              <td>회원 인증, 데이터 저장</td>
+            </tr>
+            <tr>
+              <td>Google LLC (Analytics)</td>
+              <td>서비스 이용 통계 분석</td>
+            </tr>
+            <tr>
+              <td>Cloudflare, Inc.</td>
+              <td>웹사이트 호스팅</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="policy-section">
+        <h2>6. 정보주체의 권리·의무 및 행사방법</h2>
+        <p>이용자는 개인정보주체로서 다음과 같은 권리를 행사할 수 있습니다.</p>
+        <ul>
+          <li><strong>개인정보 열람 요구:</strong> 본인의 개인정보 열람을 요구할 수 있습니다.</li>
+          <li><strong>개인정보 정정·삭제 요구:</strong> 오류 등이 있을 경우 정정 또는 삭제를 요구할 수 있습니다.</li>
+          <li><strong>개인정보 처리정지 요구:</strong> 개인정보 처리의 정지를 요구할 수 있습니다.</li>
+          <li><strong>회원 탈퇴:</strong> Google 계정 연결 해제를 통해 언제든지 회원 탈퇴가 가능합니다.</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>7. 개인정보의 파기</h2>
+        <p>서비스는 개인정보 보유기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.</p>
+        <ul>
+          <li><strong>전자적 파일:</strong> 기록을 재생할 수 없는 기술적 방법을 사용하여 삭제</li>
+          <li><strong>종이 문서:</strong> 분쇄기로 분쇄하거나 소각</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>8. 쿠키의 사용</h2>
+        <p>서비스는 이용자에게 개별적인 맞춤서비스를 제공하기 위해 이용정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다.</p>
+        <ul>
+          <li><strong>쿠키 사용 목적:</strong> 로그인 상태 유지, 테마 설정 저장, 서비스 이용 통계</li>
+          <li><strong>쿠키 거부 방법:</strong> 웹 브라우저의 설정을 통해 쿠키 저장을 거부할 수 있습니다. 단, 쿠키를 거부할 경우 일부 서비스 이용에 어려움이 있을 수 있습니다.</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>9. 개인정보 보호책임자</h2>
+        <p>서비스는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 정보주체의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.</p>
+        <ul>
+          <li><strong>서비스명:</strong> 림정파이어</li>
+          <li><strong>문의:</strong> GitHub Issues를 통해 문의 가능</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>10. 개인정보처리방침 변경</h2>
+        <p>이 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.</p>
+      </div>
+
+      <p class="update-date">최종 수정일: 2025년 1월 19일</p>
+    </div>
+
+    <footer>
+      <div class="footer-links">
+        <a href="/pages/about.html">서비스 소개</a>
+        <span class="footer-divider">·</span>
+        <a href="/pages/terms.html">이용약관</a>
+        <span class="footer-divider">·</span>
+        <a href="/pages/privacy.html">개인정보처리방침</a>
+      </div>
+      <p>&copy; 2025 림정파이어. 소방시설 설치기준 확인 서비스</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
