@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <style>
-        .checklist-container { max-width: 480px; margin: 0 auto; padding: 0 16px 16px; }
+        .checklist-container { max-width: 480px; margin: 0 auto; padding: 0 16px 16px; min-height: 100vh; display: flex; flex-direction: column; }
         .checklist-header { text-align: center; margin-bottom: 30px; }
         .checklist-header h1 { font-size: 24px; margin-bottom: 10px; }
         .checklist-header p { color: var(--text-secondary); font-size: 14px; }
@@ -195,6 +195,17 @@
             <div class="building-card" data-type="복합건축물"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">30. 복합건축물</div><div class="building-def">둘 이상의 용도로 사용되는 건축물</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>11층 이상 전층</li><li>연면적 5,000㎡ 이상 전층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">건축</div><div class="facility-item"><div class="facility-name">방화구획</div><ul class="facility-criteria"><li>면적별 1,000㎡ 마다 (11층 이상 200㎡)</li><li>층별 방화구획: 매 층마다</li></ul></div><div class="facility-item"><div class="facility-name">특별피난계단</div><ul class="facility-criteria"><li>지상 11층 이상 층 (바닥 400㎡ 미만 제외)</li><li>지하 3층 이하 층 (바닥 400㎡ 미만 제외)</li></ul></div><div class="facility-item"><div class="facility-name">헬리포트</div><ul class="facility-criteria"><li>11층 이상 바닥면적 합계 1만㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">비상용 승강기</div><ul class="facility-criteria"><li>높이 31m 초과</li></ul></div></div></div></div>
 
         </div>
+
+        <footer>
+            <div class="footer-links">
+                <a href="/pages/about.html">서비스 소개</a>
+                <span class="footer-divider">·</span>
+                <a href="/pages/terms.html">이용약관</a>
+                <span class="footer-divider">·</span>
+                <a href="/pages/privacy.html">개인정보처리방침</a>
+            </div>
+            <p>&copy; 2025 림정파이어. 소방시설 설치기준 확인 서비스</p>
+        </footer>
     </div>
 
     <script>

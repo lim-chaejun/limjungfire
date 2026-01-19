@@ -149,6 +149,8 @@ body {
   margin: 0 auto;
   padding: 0 16px 16px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Top Bar */
@@ -1724,6 +1726,7 @@ footer {
   padding: 24px 16px;
   color: var(--text-disabled);
   font-size: 12px;
+  margin-top: auto;
 }
 
 /* Responsive */
