@@ -229,6 +229,7 @@ window.handleLogout = async function() {
 
 // 인증 UI 업데이트
 function updateAuthUI(user) {
+  const authSection = document.getElementById('authSection');
   const loginBtn = document.getElementById('loginBtn');
   const userInfo = document.getElementById('userInfo');
   const userPhoto = document.getElementById('userPhoto');
@@ -250,6 +251,10 @@ function updateAuthUI(user) {
     loginBtn.style.display = 'flex';
     userInfo.style.display = 'none';
     closeProfileMenu();
+  }
+  // 인증 상태 확인 완료 - 로그인 영역 표시
+  if (authSection) {
+    authSection.classList.add('auth-ready');
   }
   // 검색 기록 버튼 표시/숨김
   const historyBtn = document.getElementById('historyBtn');

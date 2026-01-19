@@ -224,6 +224,12 @@ header h1 {
 .auth-section {
   display: flex;
   align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.auth-section.auth-ready {
+  opacity: 1;
 }
 
 .auth-btn {
