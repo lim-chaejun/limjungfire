@@ -1082,6 +1082,7 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
     </div>
     ${renderFireFacilitiesCard({
       pmsDay: permitDate,
+      useAprDay: approvalDate,
       totArea: totalArea,
       grndFlrCnt: groundFloors,
       ugrndFlrCnt: undergroundFloors,
@@ -2129,10 +2130,43 @@ function mapPurposeToFireDataType(mainPurpose) {
 
 // ==================== 필수 소방시설 판단 ====================
 
-// 허가일 기준 필수 소방시설 판단
+// 시설별 아이콘 매핑
+const facilityIcons = {
+  '소화기구': '🧯',
+  '옥내소화전설비': '🚿',
+  '스프링클러설비': '💦',
+  '간이스프링클러설비': '💧',
+  '물분무등소화설비': '🌊',
+  '옥외소화전설비': '🔥',
+  '자동소화장치': '⚡',
+  '자동화재탐지설비': '🔔',
+  '비상경보설비': '🚨',
+  '비상방송설비': '📢',
+  '단독경보형감지기': '🔊',
+  '시각경보장치': '💡',
+  '가스누설경보기': '⚠️',
+  '피난기구': '🪜',
+  '인명구조기구': '🦺',
+  '유도등': '🚪',
+  '비상조명등': '💡',
+  '휴대용비상조명등': '🔦',
+  '제연설비': '🌬️',
+  '연결송수관설비': '🔗',
+  '연결살수설비': '💨',
+  '비상콘센트설비': '🔌',
+  '무선통신보조설비': '📡',
+  '상수도소화용수설비': '🚰',
+  '소화수조및저수조': '🏊',
+  '옥상출입문자동개폐장치': '🚪',
+  '피난시설': '🏃',
+  '헬리포트': '🚁'
+};
+
+// 허가일 기준 필수 소방시설 판단 (JSON 데이터 기반)
 function getRequiredFireFacilities(buildingInfo) {
   const {
     pmsDay,           // 허가일 (YYYYMMDD)
+    useAprDay,        // 사용승인일 (YYYYMMDD)
     totArea,          // 연면적 (㎡)
     grndFlrCnt,       // 지상층수
     ugrndFlrCnt,      // 지하층수
@@ -2140,216 +2174,75 @@ function getRequiredFireFacilities(buildingInfo) {
     heit              // 높이 (m)
   } = buildingInfo;
 
-  const permitDate = parseInt(pmsDay) || 0;
+  // 허가일이 없으면 사용승인일 사용
+  const hasPermitDate = pmsDay && pmsDay.length === 8;
+  const effectiveDate = hasPermitDate ? pmsDay : (useAprDay || '');
+  const usedApprovalDate = !hasPermitDate && useAprDay; // 사용승인일 사용 여부
+
+  const permitDate = parseInt(effectiveDate) || 0;
   const totalArea = parseFloat(totArea) || 0;
   const groundFloors = parseInt(grndFlrCnt) || 0;
   const undergroundFloors = parseInt(ugrndFlrCnt) || 0;
   const height = parseFloat(heit) || 0;
 
   const classification = getFireTargetClassification(mainPurpose);
-  const facilityClass = classification?.class || '기타시설';
+  const buildingType = mapPurposeToFireDataType(mainPurpose);
 
   const facilities = [];
 
-  // 1. 소화기 - 모든 특정소방대상물
-  facilities.push({
-    name: '소화기',
-    required: true,
-    reason: '모든 특정소방대상물',
-    icon: '🧯'
-  });
+  // JSON 데이터가 있으면 해당 데이터 사용
+  if (fireFacilitiesData && buildingType && fireFacilitiesData[buildingType]) {
+    const fireData = fireFacilitiesData[buildingType];
 
-  // 2. 옥내소화전
-  let indoorHydrantRequired = false;
-  let indoorHydrantReason = '';
+    fireData.fire_facilities.forEach(facility => {
+      // 허가일에 맞는 규정만 필터링
+      const applicableRegs = facility.regulations.filter(reg => {
+        const startDate = reg.start_date ? parseInt(reg.start_date.replace(/-/g, '')) : 0;
+        const endDate = reg.end_date ? parseInt(reg.end_date.replace(/-/g, '')) : 99999999;
 
-  if (totalArea >= 3000) {
-    indoorHydrantRequired = true;
-    indoorHydrantReason = '연면적 3,000㎡ 이상';
-  } else if (groundFloors >= 4 && totalArea >= 1500) {
-    indoorHydrantRequired = true;
-    indoorHydrantReason = '4층 이상 & 연면적 1,500㎡ 이상';
-  } else if (['근린생활시설', '판매시설', '운수시설', '의료시설', '노유자시설', '업무시설', '숙박시설', '위락시설', '공장', '창고시설'].includes(facilityClass)) {
-    if (totalArea >= 1500) {
-      indoorHydrantRequired = true;
-      indoorHydrantReason = `${facilityClass} 연면적 1,500㎡ 이상`;
-    }
-  }
+        // 허가일이 있으면 범위 내 체크
+        if (permitDate > 0) {
+          return permitDate >= startDate && permitDate <= endDate;
+        }
+        // 허가일이 없으면 현재 적용 중인 규정만
+        return !reg.end_date;
+      });
 
-  facilities.push({
-    name: '옥내소화전',
-    required: indoorHydrantRequired,
-    reason: indoorHydrantReason || '해당없음',
-    icon: '🚿'
-  });
+      // 시설 정보 생성
+      const facilityInfo = {
+        name: facility.facility_name,
+        category: facility.category,
+        required: applicableRegs.length > 0,
+        regulations: applicableRegs,
+        allRegulations: facility.regulations, // 모든 규정 (모달 표시용)
+        reason: applicableRegs.length > 0
+          ? applicableRegs[0].criteria
+          : '해당없음',
+        icon: facilityIcons[facility.facility_name] || '📋'
+      };
 
-  // 3. 스프링클러
-  let sprinklerRequired = false;
-  let sprinklerReason = '';
-
-  // 허가일에 따른 기준 적용
-  if (permitDate >= 20170128) {
-    // 2017.01.28 이후 - 강화된 기준
-    if (groundFloors >= 6) {
-      sprinklerRequired = true;
-      sprinklerReason = '6층 이상 (2017.01.28 이후 기준)';
-    } else if (height >= 30) {
-      sprinklerRequired = true;
-      sprinklerReason = '높이 30m 이상';
-    } else if (['숙박시설', '의료시설', '노유자시설'].includes(facilityClass)) {
-      sprinklerRequired = true;
-      sprinklerReason = `${facilityClass} (2017.01.28 이후 기준)`;
-    } else if (totalArea >= 5000) {
-      sprinklerRequired = true;
-      sprinklerReason = '연면적 5,000㎡ 이상';
-    }
-  } else if (permitDate >= 20030529) {
-    // 2003.05.29 ~ 2017.01.27
-    if (groundFloors >= 11) {
-      sprinklerRequired = true;
-      sprinklerReason = '11층 이상';
-    } else if (totalArea >= 10000) {
-      sprinklerRequired = true;
-      sprinklerReason = '연면적 10,000㎡ 이상';
-    } else if (['숙박시설', '의료시설'].includes(facilityClass) && totalArea >= 600) {
-      sprinklerRequired = true;
-      sprinklerReason = `${facilityClass} 연면적 600㎡ 이상`;
-    }
+      facilities.push(facilityInfo);
+    });
   } else {
-    // 2003.05.29 이전
-    if (groundFloors >= 11) {
-      sprinklerRequired = true;
-      sprinklerReason = '11층 이상';
-    } else if (totalArea >= 30000) {
-      sprinklerRequired = true;
-      sprinklerReason = '연면적 30,000㎡ 이상';
-    }
+    // JSON 데이터가 없으면 기본 시설만 표시
+    facilities.push({
+      name: '소화기구',
+      category: '소화설비',
+      required: totalArea >= 33,
+      regulations: [],
+      allRegulations: [],
+      reason: totalArea >= 33 ? '연면적 33㎡ 이상' : '해당없음',
+      icon: '🧯'
+    });
   }
-
-  facilities.push({
-    name: '스프링클러',
-    required: sprinklerRequired,
-    reason: sprinklerReason || '해당없음',
-    icon: '💦'
-  });
-
-  // 4. 자동화재탐지설비
-  let fireDetectorRequired = false;
-  let fireDetectorReason = '';
-
-  if (totalArea >= 1000) {
-    fireDetectorRequired = true;
-    fireDetectorReason = '연면적 1,000㎡ 이상';
-  } else if (groundFloors >= 6 || undergroundFloors >= 1) {
-    fireDetectorRequired = true;
-    fireDetectorReason = '6층 이상 또는 지하층';
-  } else if (['숙박시설', '의료시설', '노유자시설', '수련시설'].includes(facilityClass)) {
-    fireDetectorRequired = true;
-    fireDetectorReason = `${facilityClass}`;
-  }
-
-  facilities.push({
-    name: '자동화재탐지설비',
-    required: fireDetectorRequired,
-    reason: fireDetectorReason || '해당없음',
-    icon: '🔔'
-  });
-
-  // 5. 옥외소화전
-  let outdoorHydrantRequired = false;
-  let outdoorHydrantReason = '';
-
-  if (groundFloors >= 2 && totalArea >= 9000) {
-    outdoorHydrantRequired = true;
-    outdoorHydrantReason = '2층 이상 & 연면적 9,000㎡ 이상';
-  }
-
-  facilities.push({
-    name: '옥외소화전',
-    required: outdoorHydrantRequired,
-    reason: outdoorHydrantReason || '해당없음',
-    icon: '🔥'
-  });
-
-  // 6. 비상경보설비
-  let emergencyAlarmRequired = false;
-  let emergencyAlarmReason = '';
-
-  if (totalArea >= 400 || undergroundFloors >= 1) {
-    emergencyAlarmRequired = true;
-    emergencyAlarmReason = '연면적 400㎡ 이상 또는 지하층';
-  }
-
-  facilities.push({
-    name: '비상경보설비',
-    required: emergencyAlarmRequired,
-    reason: emergencyAlarmReason || '해당없음',
-    icon: '🚨'
-  });
-
-  // 7. 피난설비 (유도등)
-  facilities.push({
-    name: '유도등',
-    required: true,
-    reason: '모든 특정소방대상물',
-    icon: '🚪'
-  });
-
-  // 8. 비상조명등
-  let emergencyLightRequired = false;
-  let emergencyLightReason = '';
-
-  if (groundFloors >= 5 || undergroundFloors >= 1) {
-    emergencyLightRequired = true;
-    emergencyLightReason = '5층 이상 또는 지하층';
-  }
-
-  facilities.push({
-    name: '비상조명등',
-    required: emergencyLightRequired,
-    reason: emergencyLightReason || '해당없음',
-    icon: '💡'
-  });
-
-  // 9. 제연설비
-  let smokeControlRequired = false;
-  let smokeControlReason = '';
-
-  if (height >= 31) {
-    smokeControlRequired = true;
-    smokeControlReason = '높이 31m 이상';
-  } else if (['판매시설', '운수시설', '숙박시설', '의료시설'].includes(facilityClass) && totalArea >= 1000) {
-    smokeControlRequired = true;
-    smokeControlReason = `${facilityClass} 연면적 1,000㎡ 이상`;
-  }
-
-  facilities.push({
-    name: '제연설비',
-    required: smokeControlRequired,
-    reason: smokeControlReason || '해당없음',
-    icon: '🌬️'
-  });
-
-  // 10. 비상용승강기 (소방용)
-  let fireElevatorRequired = false;
-  let fireElevatorReason = '';
-
-  if (height >= 31) {
-    fireElevatorRequired = true;
-    fireElevatorReason = '높이 31m 이상';
-  }
-
-  facilities.push({
-    name: '비상용승강기',
-    required: fireElevatorRequired,
-    reason: fireElevatorReason || '해당없음',
-    icon: '🛗'
-  });
 
   return {
     classification,
+    buildingType,
     facilities,
     permitDate: pmsDay,
+    effectiveDate,         // 실제 사용된 날짜 (허가일 또는 사용승인일)
+    usedApprovalDate,      // 사용승인일 사용 여부
     summary: {
       totalArea,
       groundFloors,
@@ -2359,10 +2252,16 @@ function getRequiredFireFacilities(buildingInfo) {
   };
 }
 
+// 현재 시설 데이터 저장 (모달 표시용)
+let currentFacilitiesResult = null;
+
 // 소방시설 카드 렌더링
 function renderFireFacilitiesCard(buildingInfo) {
   const result = getRequiredFireFacilities(buildingInfo);
-  const { classification, facilities, permitDate } = result;
+  const { classification, facilities, permitDate, usedApprovalDate, effectiveDate } = result;
+
+  // 모달에서 사용할 수 있도록 저장
+  currentFacilitiesResult = result;
 
   const requiredFacilities = facilities.filter(f => f.required);
   const notRequiredFacilities = facilities.filter(f => !f.required);
@@ -2387,20 +2286,34 @@ function renderFireFacilitiesCard(buildingInfo) {
         </div>
       </div>
 
+      ${usedApprovalDate ? `
+        <div class="approval-date-warning">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>허가일이 조회되지 않아 <strong>사용승인일(${effectiveDate ? effectiveDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3') : '-'})</strong> 기준으로 판단했습니다. 재확인이 필요합니다.</span>
+        </div>
+      ` : ''}
+
       <div class="facilities-section">
         <div class="facilities-title required">
           <span>필수 소방시설</span>
           <span class="facilities-count">${requiredFacilities.length}개</span>
         </div>
         <div class="facilities-list">
-          ${requiredFacilities.map(f => `
-            <div class="facility-item required">
+          ${requiredFacilities.map((f, idx) => `
+            <div class="facility-item required clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
               <span class="facility-icon">${f.icon}</span>
               <div class="facility-info">
                 <span class="facility-name">${f.name}</span>
                 <span class="facility-reason">${f.reason}</span>
               </div>
               <span class="facility-status required">필수</span>
+              <svg class="facility-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
             </div>
           `).join('')}
         </div>
@@ -2416,13 +2329,16 @@ function renderFireFacilitiesCard(buildingInfo) {
             </svg>
           </div>
           <div class="facilities-list optional-list">
-            ${notRequiredFacilities.map(f => `
-              <div class="facility-item optional">
+            ${notRequiredFacilities.map((f, idx) => `
+              <div class="facility-item optional clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
                 <span class="facility-icon">${f.icon}</span>
                 <div class="facility-info">
                   <span class="facility-name">${f.name}</span>
                 </div>
                 <span class="facility-status optional">비해당</span>
+                <svg class="facility-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
               </div>
             `).join('')}
           </div>
@@ -2430,11 +2346,7 @@ function renderFireFacilitiesCard(buildingInfo) {
       ` : ''}
 
       <div class="facilities-note">
-        ※ 실제 적용 기준은 세부 용도, 수용인원, 지역 조례 등에 따라 달라질 수 있습니다.
-      </div>
-
-      <div class="law-links">
-        ${getLawLinksHtml(permitDate)}
+        ※ 시설을 클릭하면 상세 기준을 확인할 수 있습니다.
       </div>
 
       <div class="fire-standards-btn-wrapper">
@@ -2551,6 +2463,130 @@ window.showFireStandardsModal = function(purpose, permitDate, buildingInfo) {
 window.closeFireStandardsModal = function() {
   document.getElementById('fireStandardsModal').style.display = 'none';
 };
+
+// 시설 상세 모달 표시
+window.showFacilityDetailModal = function(facilityIndex) {
+  if (!currentFacilitiesResult || !currentFacilitiesResult.facilities[facilityIndex]) {
+    showToast('시설 정보를 찾을 수 없습니다.');
+    return;
+  }
+
+  const facility = currentFacilitiesResult.facilities[facilityIndex];
+  const permitDate = currentFacilitiesResult.permitDate;
+
+  const html = renderFacilityDetailContent(facility, permitDate);
+
+  document.getElementById('facilityDetailTitle').textContent = facility.name;
+  document.getElementById('facilityDetailBody').innerHTML = html;
+  document.getElementById('facilityDetailModal').style.display = 'flex';
+};
+
+// 시설 상세 모달 닫기
+window.closeFacilityDetailModal = function() {
+  document.getElementById('facilityDetailModal').style.display = 'none';
+};
+
+// 시설 상세 콘텐츠 렌더링
+function renderFacilityDetailContent(facility, permitDate) {
+  const permitNum = parseInt(permitDate) || 0;
+
+  let html = `
+    <div class="facility-detail-header">
+      <span class="facility-detail-icon">${facility.icon}</span>
+      <div class="facility-detail-info">
+        <span class="facility-detail-name">${facility.name}</span>
+        <span class="facility-detail-category">${facility.category || ''}</span>
+      </div>
+      <span class="facility-detail-status ${facility.required ? 'required' : 'optional'}">
+        ${facility.required ? '필수' : '비해당'}
+      </span>
+    </div>
+  `;
+
+  // 모든 규정 표시 (적용 기간 포함)
+  const allRegs = facility.allRegulations || facility.regulations || [];
+
+  if (allRegs.length > 0) {
+    html += `
+      <div class="facility-detail-section">
+        <h4>설치 기준</h4>
+        <div class="regulations-list">
+    `;
+
+    allRegs.forEach(reg => {
+      const startDate = reg.start_date ? parseInt(reg.start_date.replace(/-/g, '')) : 0;
+      const endDate = reg.end_date ? parseInt(reg.end_date.replace(/-/g, '')) : 99999999;
+
+      // 현재 건물에 적용되는 규정인지 확인
+      let isApplicable = false;
+      if (permitNum > 0) {
+        isApplicable = permitNum >= startDate && permitNum <= endDate;
+      } else {
+        isApplicable = !reg.end_date; // 허가일이 없으면 현재 유효한 규정만
+      }
+
+      // 적용 기간 포맷
+      const periodText = formatRegulationPeriod(reg.start_date, reg.end_date);
+
+      html += `
+        <div class="regulation-item ${isApplicable ? 'applicable' : 'not-applicable'}">
+          <div class="regulation-period">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>${periodText}</span>
+            ${isApplicable ? '<span class="applicable-tag">적용</span>' : ''}
+          </div>
+          <div class="regulation-criteria">${reg.criteria}</div>
+          ${reg.applicable_to ? `<div class="regulation-target">대상: ${reg.applicable_to}</div>` : ''}
+          ${reg.note ? `<div class="regulation-note">※ ${reg.note}</div>` : ''}
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="facility-detail-empty">
+        <p>해당 시설의 상세 기준 정보가 없습니다.</p>
+      </div>
+    `;
+  }
+
+  // 허가일 정보
+  html += `
+    <div class="facility-detail-footer">
+      <p>건축허가일: ${formatPermitDate(permitDate) || '-'}</p>
+    </div>
+  `;
+
+  return html;
+}
+
+// 규정 적용 기간 포맷
+function formatRegulationPeriod(startDate, endDate) {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    return dateStr; // YYYY-MM-DD 형식 그대로 사용
+  };
+
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+
+  if (!start && !end) {
+    return '상시 적용';
+  } else if (!start) {
+    return `~ ${end}`;
+  } else if (!end) {
+    return `${start} ~`;
+  } else {
+    return `${start} ~ ${end}`;
+  }
+}
 
 // 소방시설 카드에서 호출 (currentBuildingData 사용)
 window.showFireStandardsModalFromCard = function() {

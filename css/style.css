@@ -2010,6 +2010,30 @@ footer {
   border-radius: 12px;
 }
 
+.approval-date-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #fff8e5 0%, #fff3cd 100%);
+  border-left: 3px solid #ff9800;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #856404;
+}
+
+.approval-date-warning svg {
+  flex-shrink: 0;
+  stroke: #ff9800;
+  margin-top: 1px;
+}
+
+.approval-date-warning strong {
+  color: #e65100;
+  font-weight: 600;
+}
+
 .facilities-section {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-light);
@@ -2526,4 +2550,197 @@ footer {
 
 .fire-standards-note p:last-child {
   margin-bottom: 0;
+}
+
+/* ==================== 클릭 가능한 시설 항목 ==================== */
+.facility-item.clickable {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.facility-item.clickable:hover {
+  transform: translateX(4px);
+  background: var(--color-primary-bg);
+}
+
+.facility-item.clickable.required:hover {
+  background: rgba(240, 68, 82, 0.15);
+}
+
+.facility-arrow {
+  color: var(--text-disabled);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.facility-item.clickable:hover .facility-arrow {
+  color: var(--color-primary);
+  transform: translateX(2px);
+}
+
+/* ==================== 시설 상세 모달 ==================== */
+.facility-detail-modal-content {
+  max-width: 480px;
+  max-height: 85vh;
+}
+
+.facility-detail-modal-content .modal-body {
+  padding: 0;
+  max-height: 75vh;
+}
+
+.facility-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.facility-detail-icon {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.facility-detail-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.facility-detail-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.facility-detail-category {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.facility-detail-status {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.facility-detail-status.required {
+  background: var(--color-error);
+  color: #fff;
+}
+
+.facility-detail-status.optional {
+  background: var(--bg-secondary);
+  color: var(--text-disabled);
+  border: 1px solid var(--border-color);
+}
+
+.facility-detail-section {
+  padding: 16px;
+}
+
+.facility-detail-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.regulations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.regulation-item {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  border-left: 4px solid var(--border-color);
+}
+
+.regulation-item.applicable {
+  border-left-color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.regulation-item.not-applicable {
+  opacity: 0.6;
+}
+
+.regulation-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.regulation-period svg {
+  flex-shrink: 0;
+}
+
+.applicable-tag {
+  background: var(--color-error);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.regulation-criteria {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.regulation-target {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.regulation-note {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-light);
+}
+
+.facility-detail-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.facility-detail-footer {
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+}
+
+.facility-detail-footer p {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
 }
