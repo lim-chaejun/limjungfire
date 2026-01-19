@@ -1844,6 +1844,7 @@ function showError(message) {
 function getFireTargetClassification(mainPurpose) {
   const classificationMap = {
     // 공동주택
+    '공동주택': { class: '공동주택', category: '일반' },
     '아파트': { class: '공동주택', category: '아파트' },
     '연립주택': { class: '공동주택', category: '연립주택' },
     '다세대주택': { class: '공동주택', category: '다세대주택' },
