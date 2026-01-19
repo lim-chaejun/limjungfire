@@ -1,449 +1,162 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="canonical" href="https://limjungfire.pages.dev/checklist.html">
-  <title>건물용도별 소방시설 체크리스트 | 림정파이어</title>
-  <meta name="description" content="건물용도별 소방시설 체크리스트. 아파트, 근린생활시설, 숙박시설 등 용도별로 필요한 소방시설을 확인하세요.">
-  <meta name="keywords" content="소방시설 체크리스트, 아파트 소방시설, 근린생활시설 소방시설, 소방점검">
-
-  <meta property="og:type" content="article">
-  <meta property="og:title" content="건물용도별 소방시설 체크리스트">
-  <meta property="og:description" content="용도별로 필요한 소방시설을 체크리스트로 확인하세요.">
-  <meta property="og:image" content="https://limjungfire.pages.dev/og-image.jpg">
-
-  <link rel="stylesheet" href="css/style.css">
-  <style>
-    .page-header {
-      text-align: center;
-      padding: 40px 0 30px;
-    }
-    .page-header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 10px;
-    }
-    .page-header p {
-      color: var(--text-tertiary);
-      font-size: 15px;
-    }
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--color-primary);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 20px;
-    }
-    .checklist-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      margin-bottom: 16px;
-      overflow: hidden;
-    }
-    .checklist-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      background: var(--bg-tertiary);
-      cursor: pointer;
-    }
-    .checklist-header:hover {
-      background: var(--color-primary-bg);
-    }
-    .checklist-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .checklist-title .icon {
-      font-size: 24px;
-    }
-    .checklist-title h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0;
-    }
-    .checklist-arrow {
-      color: var(--text-tertiary);
-      transition: transform 0.2s;
-    }
-    .checklist-card.open .checklist-arrow {
-      transform: rotate(180deg);
-    }
-    .checklist-body {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-    .checklist-card.open .checklist-body {
-      max-height: 2000px;
-    }
-    .checklist-content {
-      padding: 20px;
-    }
-    .checklist-section {
-      margin-bottom: 16px;
-    }
-    .checklist-section:last-child {
-      margin-bottom: 0;
-    }
-    .checklist-section-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-tertiary);
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border-light);
-    }
-    .checklist-items {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .checklist-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-    .checklist-item .emoji {
-      font-size: 16px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .checklist-note {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      margin-top: 12px;
-      padding: 12px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-sm);
-      line-height: 1.6;
-    }
-    .info-box {
-      background: var(--color-primary-bg);
-      border: 1px solid var(--color-primary);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      margin-bottom: 24px;
-    }
-    .info-box p {
-      font-size: 14px;
-      color: var(--color-primary);
-      margin: 0;
-      font-weight: 500;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건물 용도별 소방시설 체크리스트 - 림정파이어</title>
+    <meta name="description" content="30개 건물 용도별 소방시설 설치 기준 체크리스트. 공동주택, 근린생활시설, 의료시설 등 모든 용도의 소방시설 기준을 확인하세요.">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        .checklist-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .checklist-header { text-align: center; margin-bottom: 30px; }
+        .checklist-header h1 { font-size: 24px; margin-bottom: 10px; }
+        .checklist-header p { color: var(--text-secondary); font-size: 14px; }
+        .building-card { background: var(--card-bg); border-radius: 12px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .building-header { padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .building-header:hover { background: var(--hover-bg); }
+        .building-title { font-weight: 600; font-size: 15px; }
+        .building-def { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+        .building-arrow { transition: transform 0.2s; color: var(--text-tertiary); }
+        .building-card.open .building-arrow { transform: rotate(180deg); }
+        .building-content { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border-color); }
+        .building-card.open .building-content { display: block; }
+        .facility-section { margin-top: 12px; }
+        .facility-section-title { font-size: 13px; font-weight: 600; color: var(--primary-color); margin-bottom: 8px; padding: 6px 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; }
+        .facility-item { padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+        .facility-item:last-child { border-bottom: none; }
+        .facility-name { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+        .facility-criteria { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0; padding-left: 16px; }
+        .facility-criteria li { margin-bottom: 4px; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--card-bg); }
+        .search-box input:focus { outline: none; border-color: var(--primary-color); }
+        .back-link { display: inline-block; margin-bottom: 20px; color: var(--primary-color); text-decoration: none; font-size: 14px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <a href="/" class="back-link">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-      </svg>
-      메인으로 돌아가기
-    </a>
+    <div class="checklist-container">
+        <a href="/" class="back-link">← 메인으로</a>
+        <div class="checklist-header">
+            <h1>건물 용도별 소방시설 체크리스트</h1>
+            <p>30개 용도별 소방시설 설치 기준</p>
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="용도 검색 (예: 공동주택, 의료시설...)">
+        </div>
+        <div id="buildingList">
+            <!-- 01. 공동주택 -->
+            <div class="building-card" data-type="공동주택"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">01. 공동주택</div><div class="building-def">아파트등, 연립주택, 다세대주택, 기숙사</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">소화기구</div><ul class="facility-criteria"><li>연면적 33㎡ 이상</li><li>아파트등 주방에 K급 소화기 적용</li></ul></div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 600㎡ 이상 층</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 아파트 모든 층</li><li>16층 이상 아파트 모든 층</li></ul></div><div class="facility-item"><div class="facility-name">물분무등소화설비</div><ul class="facility-criteria"><li>내부 차고·주차장(필로티 포함) 200㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">단독경보형감지기</div><ul class="facility-criteria"><li>연립주택·다세대주택 각 세대별 설치</li></ul></div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>11층 이상 아파트 중 11층 이상 부분</li><li>30세대 이상</li></ul></div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>30층 이상 아파트</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">피난기구</div><ul class="facility-criteria"><li>아파트등 10층 이하는 제외</li></ul></div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>적용</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">연결송수관설비</div><ul class="facility-criteria"><li>5층 이상 연면적 6,000㎡ 이상</li><li>지하층 포함 7개층 이상</li></ul></div><div class="facility-item"><div class="facility-name">비상콘센트설비</div><ul class="facility-criteria"><li>11층 이상은 11층 이상의 층</li></ul></div></div></div></div>
 
-    <div class="page-header">
-      <h1>건물용도별 소방시설 체크리스트</h1>
-      <p>용도별 주요 소방시설 설치 기준 요약</p>
+            <!-- 02. 근린생활시설 -->
+            <div class="building-card" data-type="근린생활시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">02. 근린생활시설</div><div class="building-def">슈퍼마켓, 일용품점, 음식점, 의원, 미용실, 학원 등</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">소화기구</div><ul class="facility-criteria"><li>연면적 33㎡ 이상</li><li>주방에 K급 소화기 적용</li></ul></div><div class="facility-item"><div class="facility-name">자동소화장치</div><ul class="facility-criteria"><li>음식점 주방 상업용 주방자동소화장치</li></ul></div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상 (목욕장업 600㎡)</li><li>지하층·무창층·4층 이상 바닥면적 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상인 경우 모든 층</li><li>지하층·무창층·4층 이상 바닥면적 1,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">간이스프링클러설비</div><ul class="facility-criteria"><li>의원·치과의원·한의원 600㎡ 이상 / 입원 가능 모든 의원</li><li>고시원 500㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">비상방송설비</div><ul class="facility-criteria"><li>연면적 3,500㎡ 이상</li><li>11층 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">피난기구</div><ul class="facility-criteria"><li>3층~10층 (피난층 제외)</li></ul></div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>적용 (목욕장업 대형유도등)</li></ul></div></div></div></div>
+
+            <!-- 03. 문화및집회시설 -->
+            <div class="building-card" data-type="문화및집회시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">03. 문화및집회시설</div><div class="building-def">공연장, 집회장, 관람장, 전시장, 동·식물원</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>수용인원 100명(460㎡) 이상</li><li>무대부 300㎡(지하·무창·4층) / 500㎡(기타)</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">시각경보기</div><ul class="facility-criteria"><li>자동화재탐지설비 설치 대상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>대형유도등 및 객석유도등 적용</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">제연설비</div><ul class="facility-criteria"><li>무대부 200㎡ 이상</li><li>지하층·무창층 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 04. 종교시설 -->
+            <div class="building-card" data-type="종교시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">04. 종교시설</div><div class="building-def">종교집회장 300㎡ 이상, 봉안당</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 600㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>수용인원 100명(460㎡) 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>대형유도등 및 객석유도등 적용</li></ul></div></div></div></div>
+
+            <!-- 05. 판매시설 -->
+            <div class="building-card" data-type="판매시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">05. 판매시설</div><div class="building-def">도매시장, 소매시장, 상점, 백화점, 쇼핑센터</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>수용인원 500명(1,500㎡) 이상 / 바닥면적 5,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">시각경보기</div><ul class="facility-criteria"><li>자동화재탐지설비 설치 대상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">제연설비</div><ul class="facility-criteria"><li>지하층·무창층 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 06. 운수시설 -->
+            <div class="building-card" data-type="운수시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">06. 운수시설</div><div class="building-def">여객자동차터미널, 철도시설, 공항시설, 항만시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>바닥면적 5,000㎡ 이상 / 수용인원 500명 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">인명구조기구</div><ul class="facility-criteria"><li>지하역사: 공기호흡기 층마다 2개 이상</li></ul></div><div class="facility-item"><div class="facility-name">휴대용비상조명등</div><ul class="facility-criteria"><li>지하역사: 25m 이내마다 3개 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">제연설비</div><ul class="facility-criteria"><li>지하층·무창층 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 07. 의료시설 -->
+            <div class="building-card" data-type="의료시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">07. 의료시설</div><div class="building-def">종합병원, 병원, 요양병원, 정신병원, 격리병원</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상 (종합병원·요양병원 600㎡)</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>종합병원·요양병원·정신병원·격리병원 모든 층</li><li>정신건강의학과 의원 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">간이스프링클러설비</div><ul class="facility-criteria"><li>정신건강의학과 의원 300㎡ 미만</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>병원, 요양병원, 정신의료기관 500㎡ 이상 층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>대형유도등 적용</li></ul></div></div></div></div>
+
+            <!-- 08. 교육연구시설 -->
+            <div class="building-card" data-type="교육연구시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">08. 교육연구시설</div><div class="building-def">학교, 교육원, 직업훈련소, 학원, 연구소, 도서관</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>기숙사 5,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">간이스프링클러설비</div><ul class="facility-criteria"><li>합숙소 100㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">자동소화장치</div><ul class="facility-criteria"><li>집단급식소 상업용 주방자동소화장치</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 2,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">시각경보기</div><ul class="facility-criteria"><li>도서관만 적용</li></ul></div></div></div></div>
+
+            <!-- 09. 노유자시설 -->
+            <div class="building-card" data-type="노유자시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">09. 노유자시설</div><div class="building-def">노인복지시설, 아동관련시설, 장애인복지시설, 정신건강증진시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>노인요양·장애인복지·정신요양시설 400㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">간이스프링클러설비</div><ul class="facility-criteria"><li>노유자시설 300㎡ 이상 600㎡ 미만</li><li>노유자 생활시설 모든 층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">단독경보형감지기</div><ul class="facility-criteria"><li>노유자시설 수용인원 10명 미만</li></ul></div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 400㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>노인요양·장애인복지·정신요양시설 500㎡ 이상 층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">피난유도선</div><ul class="facility-criteria"><li>피난유도 안내정보 및 피난유도선 설치</li></ul></div></div></div></div>
+
+            <!-- 10. 수련시설 -->
+            <div class="building-card" data-type="수련시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">10. 수련시설</div><div class="building-def">청소년수련관, 청소년수련원, 유스호스텔</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>숙박 가능 수련시설 600㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">단독경보형감지기</div><ul class="facility-criteria"><li>숙박시설 수용인원 100명(300㎡) 미만</li></ul></div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>숙박시설 500㎡ 이상 층</li></ul></div></div></div></div>
+
+            <!-- 11. 운동시설 -->
+            <div class="building-card" data-type="운동시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">11. 운동시설</div><div class="building-def">탁구장, 체육도장, 체력단련장, 볼링장, 체육관</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>수용인원 100명(460㎡) 이상</li><li>무대부 300㎡(지하·무창·4층) / 500㎡(기타)</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>대형유도등 및 객석유도등 적용</li></ul></div></div></div></div>
+
+            <!-- 12. 업무시설 -->
+            <div class="building-card" data-type="업무시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">12. 업무시설</div><div class="building-def">공공업무시설, 일반업무시설, 오피스텔</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>오피스텔 4층 이상 모든 층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상 / 오피스텔</li></ul></div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>오피스텔 모든 층</li></ul></div></div></div></div>
+
+            <!-- 13. 숙박시설 -->
+            <div class="building-card" data-type="숙박시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">13. 숙박시설</div><div class="building-def">일반숙박시설, 생활숙박시설, 관광숙박시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>객실이 있는 모든 층</li></ul></div><div class="facility-item"><div class="facility-name">간이스프링클러설비</div><ul class="facility-criteria"><li>객실 수 11실 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">단독경보형감지기</div><ul class="facility-criteria"><li>객실 수 10실 이하</li></ul></div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>바닥면적 500㎡ 이상 층</li></ul></div></div></div></div>
+
+            <!-- 14. 위락시설 -->
+            <div class="building-card" data-type="위락시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">14. 위락시설</div><div class="building-def">단란주점, 유흥주점, 유원시설업, 무도장, 카지노</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">제연설비</div><ul class="facility-criteria"><li>지하층·무창층 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 15. 공장 -->
+            <div class="building-card" data-type="공장"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">15. 공장</div><div class="building-def">물품의 제조·가공 또는 수리에 계속적으로 이용되는 건축물</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상 (불연X,내화X: 750㎡)</li><li>특수가연물 750배 이상 저장·취급</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>특수가연물 1,000배 이상</li><li>랙식 창고 높이 10m 초과 1,500㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">비상경보설비</div><ul class="facility-criteria"><li>50명 이상 근로자 옥내작업장</li></ul></div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li><li>특수가연물 500배 이상</li></ul></div></div></div></div>
+
+            <!-- 16. 창고시설 -->
+            <div class="building-card" data-type="창고시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">16. 창고시설</div><div class="building-def">창고, 하역장, 물류터미널, 집배송시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li><li>특수가연물 750배 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>바닥면적 5,000㎡ 이상 (불연X,내화X: 2,500㎡)</li><li>랙식 창고 높이 10m 초과 1,500㎡ 이상</li><li>특수가연물 1,000배 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li><li>특수가연물 500배 이상</li></ul></div><div class="facility-item"><div class="facility-name">시각경보기</div><ul class="facility-criteria"><li>물류터미널 자동화재탐지설비 설치 대상</li></ul></div></div></div></div>
+
+            <!-- 17. 위험물저장및처리시설 -->
+            <div class="building-card" data-type="위험물저장및처리시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">17. 위험물저장및처리시설</div><div class="building-def">제조소등, 가스시설(제조·저장·취급)</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">소화기구</div><ul class="facility-criteria"><li>연면적 33㎡ 이상</li><li>가스시설 적용</li></ul></div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상 (가스시설 제외)</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">상수도소화용수설비</div><ul class="facility-criteria"><li>가스시설 지상 노출탱크 100t 이상</li></ul></div><div class="facility-item"><div class="facility-name">연결살수설비</div><ul class="facility-criteria"><li>가스시설 지상 노출탱크 30t 이상</li></ul></div></div></div></div>
+
+            <!-- 18. 항공기및자동차관련시설 -->
+            <div class="building-card" data-type="항공기및자동차관련시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">18. 항공기및자동차관련시설</div><div class="building-def">항공기 격납고, 차고, 주차장, 세차장, 정비공장</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">물분무등소화설비</div><ul class="facility-criteria"><li>항공기 격납고</li><li>차고·주차용 건축물 800㎡ 이상</li><li>내부 차고·주차장 200㎡ 이상</li><li>기계장치 주차시설 20대 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 19. 동물및식물관련시설 -->
+            <div class="building-card" data-type="동물및식물관련시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">19. 동물및식물관련시설</div><div class="building-def">축사, 가축시설, 도축장, 작물재배사, 종묘배양시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li><li>지하층·무창층(축사 제외)·4층 이상 600㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">비상경보설비</div><ul class="facility-criteria"><li>연면적 400㎡ 이상 (벽 없는 축사 제외)</li></ul></div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 2,000㎡ 이상 (필로티 제외)</li></ul></div></div></div></div>
+
+            <!-- 20. 자원순환관련시설 -->
+            <div class="building-card" data-type="자원순환관련시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">20. 자원순환관련시설</div><div class="building-def">하수 등 처리시설, 고물상, 폐기물재활용시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 2,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">상수도소화용수설비</div><ul class="facility-criteria"><li>폐기물재활용·처분시설 적용</li></ul></div></div></div></div>
+
+            <!-- 21. 교정및군사시설 -->
+            <div class="building-card" data-type="교정및군사시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">21. 교정및군사시설</div><div class="building-def">교도소, 구치소, 소년원, 유치장, 국방·군사시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상 (국방·군사시설)</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>교도소, 구치소, 소년원 수용거실</li><li>출입국 보호시설 / 경찰 유치장</li></ul></div><div class="facility-item"><div class="facility-name">간이스프링클러설비</div><ul class="facility-criteria"><li>외국인보호실, 외국인보호소</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 2,000㎡ 이상</li><li>국방·군사시설 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 22. 방송통신시설 -->
+            <div class="building-card" data-type="방송통신시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">22. 방송통신시설</div><div class="building-def">방송국, 전신전화국, 촬영소, 통신용 시설, 데이터센터</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">시각경보기</div><ul class="facility-criteria"><li>방송국 자동화재탐지설비 설치 대상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>대형유도등 적용</li></ul></div></div></div></div>
+
+            <!-- 23. 발전시설 -->
+            <div class="building-card" data-type="발전시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">23. 발전시설</div><div class="building-def">원자력발전소, 화력발전소, 수력발전소, 전기저장시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">소화기구</div><ul class="facility-criteria"><li>연면적 33㎡ 이상</li><li>전기저장시설 면적 없이 적용</li></ul></div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>전기저장시설</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상 / 전기저장시설 전체</li></ul></div></div></div></div>
+
+            <!-- 24. 묘지관련시설 -->
+            <div class="building-card" data-type="묘지관련시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">24. 묘지관련시설</div><div class="building-def">화장시설, 봉안당, 묘지 부수 건축물, 동물화장시설</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 2,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 25. 관광휴게시설 -->
+            <div class="building-card" data-type="관광휴게시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">25. 관광휴게시설</div><div class="building-def">야외음악당, 야외극장, 어린이회관, 관망탑, 휴게소</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 3,000㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li></ul></div></div></div></div>
+
+            <!-- 26. 장례시설 -->
+            <div class="building-card" data-type="장례시설"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">26. 장례시설</div><div class="building-def">장례식장, 동물 전용 장례식장</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">시각경보기</div><ul class="facility-criteria"><li>자동화재탐지설비 설치 대상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">유도등</div><ul class="facility-criteria"><li>대형유도등 적용</li></ul></div></div></div></div>
+
+            <!-- 27. 지하상가·터널 -->
+            <div class="building-card" data-type="지하상가터널"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">27. 지하상가·터널</div><div class="building-def">지하상가, 차량 통행용 터널, 방음터널</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상 (터널 제외)</li></ul></div><div class="facility-item"><div class="facility-name">물분무등소화설비</div><ul class="facility-criteria"><li>터널 적용</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상 (터널 제외)</li><li>터널 길이 1,000m 이상</li></ul></div><div class="facility-item"><div class="facility-name">비상경보설비</div><ul class="facility-criteria"><li>터널 길이 500m 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">피난구조설비</div><div class="facility-item"><div class="facility-name">휴대용비상조명등</div><ul class="facility-criteria"><li>지하상가: 25m 이내마다 3개 이상</li></ul></div><div class="facility-item"><div class="facility-name">비상조명등</div><ul class="facility-criteria"><li>터널 길이 500m 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">제연설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상</li><li>터널 길이 1,000m 이상</li></ul></div><div class="facility-item"><div class="facility-name">무선통신보조설비</div><ul class="facility-criteria"><li>연면적 1,000㎡ 이상 (터널 제외)</li><li>터널 길이 500m 이상</li></ul></div></div></div></div>
+
+            <!-- 28. 지하구 -->
+            <div class="building-card" data-type="지하구"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">28. 지하구</div><div class="building-def">전력구, 통신구, 공동구</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">소화기구</div><ul class="facility-criteria"><li>출입구 부근에 5개 이상 (A.B.C소화기 3.3㎏ 이상)</li></ul></div><div class="facility-item"><div class="facility-name">자동소화장치</div><ul class="facility-criteria"><li>발전실·변전실·배전반실 300㎡ 미만</li></ul></div><div class="facility-item"><div class="facility-name">소공간용 소화용구</div><ul class="facility-criteria"><li>제어반 또는 분전반마다 설치</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>발화지점 1m 단위 온도 확인 감지기</li></ul></div><div class="facility-item"><div class="facility-name">통합감시시설</div><ul class="facility-criteria"><li>소방관서-통제실 정보통신망 구축</li></ul></div></div><div class="facility-section"><div class="facility-section-title">소화활동설비</div><div class="facility-item"><div class="facility-name">연소방지설비</div><ul class="facility-criteria"><li>전력 또는 통신사업용</li><li>환기구·작업구마다 양쪽방향 살수헤드</li></ul></div><div class="facility-item"><div class="facility-name">방화벽</div><ul class="facility-criteria"><li>분기구 및 건축물 연결부위(20m 이내)</li></ul></div></div></div></div>
+
+            <!-- 29. 국가유산 -->
+            <div class="building-card" data-type="국가유산"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">29. 국가유산</div><div class="building-def">문화유산 중 지정문화유산, 천연기념물등 중 건축물</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">소화기구</div><ul class="facility-criteria"><li>전체</li></ul></div><div class="facility-item"><div class="facility-name">옥외소화전설비</div><ul class="facility-criteria"><li>보물 또는 국보 목조건축물</li></ul></div><div class="facility-item"><div class="facility-name">물분무등소화설비</div><ul class="facility-criteria"><li>소방청장-국가유산청장 협의</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재속보설비</div><ul class="facility-criteria"><li>보물 또는 국보 목조건축물</li></ul></div></div></div></div>
+
+            <!-- 30. 복합건축물 -->
+            <div class="building-card" data-type="복합건축물"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">30. 복합건축물</div><div class="building-def">둘 이상의 용도로 사용되는 건축물</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>11층 이상 전층</li><li>연면적 5,000㎡ 이상 전층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">건축</div><div class="facility-item"><div class="facility-name">방화구획</div><ul class="facility-criteria"><li>면적별 1,000㎡ 마다 (11층 이상 200㎡)</li><li>층별 방화구획: 매 층마다</li></ul></div><div class="facility-item"><div class="facility-name">특별피난계단</div><ul class="facility-criteria"><li>지상 11층 이상 층 (바닥 400㎡ 미만 제외)</li><li>지하 3층 이하 층 (바닥 400㎡ 미만 제외)</li></ul></div><div class="facility-item"><div class="facility-name">헬리포트</div><ul class="facility-criteria"><li>11층 이상 바닥면적 합계 1만㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">비상용 승강기</div><ul class="facility-criteria"><li>높이 31m 초과</li></ul></div></div></div></div>
+
+        </div>
     </div>
 
-    <div class="info-box">
-      <p>아래는 현행 기준 요약이며, 건축허가일에 따라 다를 수 있습니다. 정확한 기준은 메인 페이지에서 건물을 검색해 확인하세요.</p>
-    </div>
-
-    <!-- 공동주택 -->
-    <div class="checklist-card open">
-      <div class="checklist-header" onclick="toggleChecklist(this)">
-        <div class="checklist-title">
-          <span class="icon">🏢</span>
-          <h3>공동주택 (아파트등)</h3>
-        </div>
-        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-      <div class="checklist-body">
-        <div class="checklist-content">
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">⚡</span> 자동소화장치: 아파트등 각 세대별 주방 (2014.07.07~)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 3,000㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 600㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 6층 이상 모든 층 (2018.01.28~)</div>
-              <div class="checklist-item"><span class="emoji">💧</span> 간이스프링클러: 연립주택·다세대주택 (2024.12.01~)</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">경보설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🔔</span> 단독경보형감지기: 연립·다세대주택 연동형 설치 (2024.12.01~)</div>
-              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 아파트등 모든 층 (2022.12.01~)</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">피난구조설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치 (계단실형 아파트는 각 세대마다)</div>
-              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 아파트 소형유도등 (2014.08.18~)</div>
-              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화활동설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🚒</span> 연결송수관: 5층 이상 + 연면적 6,000㎡ 이상 또는 지하층 포함 7층 이상</div>
-              <div class="checklist-item"><span class="emoji">📻</span> 무선통신보조설비: 지하층 바닥면적 합계 3,000㎡ 이상 또는 30층 이상</div>
-              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 특별피난계단·비상용승강기 승강장</div>
-            </div>
-          </div>
-          <div class="checklist-note">
-            ※ 2017년 이후 건축허가 건물은 세대 내 감지기, 주방자동소화장치 의무<br>
-            ※ 150세대 이상 승강기 설치 공동주택은 공기안전매트 설치 의무
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 근린생활시설 -->
-    <div class="checklist-card">
-      <div class="checklist-header" onclick="toggleChecklist(this)">
-        <div class="checklist-title">
-          <span class="icon">🏪</span>
-          <h3>근린생활시설</h3>
-        </div>
-        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-      <div class="checklist-body">
-        <div class="checklist-content">
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상 (음식점·다중이용업소 주방 K급 소화기)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 6층 이상 모든 층 또는 지하층·무창층·4층 이상 바닥면적 1,000㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💧</span> 간이스프링클러: 바닥면적 합계 1,000㎡ 이상 / 입원실 있는 의원급</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">경보설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🔔</span> 비상경보설비: 연면적 400㎡ 이상 또는 지하층·무창층 150㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 연면적 600㎡ 이상 (목욕탕 1,000㎡) 또는 6층 이상</div>
-              <div class="checklist-item"><span class="emoji">📱</span> 자동화재속보설비: 입원실 있는 의원급, 조산원·산후조리원</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">피난구조설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치 (입원실 있는 의원·접골원·조산원은 구조대)</div>
-              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 설치 의무</div>
-              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
-            </div>
-          </div>
-          <div class="checklist-note">
-            ※ 조산원·산후조리원: 연면적 600㎡ 이상 스프링클러, 600㎡ 미만 간이스프링클러<br>
-            ※ 의원, 체력단련장, 공연장, 종교집회장은 방염 적용 (2019.08.06~)
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 숙박시설 -->
-    <div class="checklist-card">
-      <div class="checklist-header" onclick="toggleChecklist(this)">
-        <div class="checklist-title">
-          <span class="icon">🏨</span>
-          <h3>숙박시설</h3>
-        </div>
-        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-      <div class="checklist-body">
-        <div class="checklist-content">
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상 (호텔 주방 K급 소화기)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 바닥면적 합계 600㎡ 이상 모든 층 (2022.12.01~) 또는 6층 이상</div>
-              <div class="checklist-item"><span class="emoji">💧</span> 간이스프링클러: 바닥면적 합계 300㎡ 이상 600㎡ 미만</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">경보설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 모든 층 (2022.12.01~) 또는 연면적 600㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">👁️</span> 시각경보기: 자동화재탐지설비 설치 대상</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">피난구조설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 + 객실마다 완강기 또는 간이완강기</div>
-              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 관광숙박업 대형유도등, 기타 중형유도등</div>
-              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">🔦</span> 휴대용비상조명등: 객실 또는 구획된 실마다 1개 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화활동설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 지하층·무창층 바닥면적 합계 1,000㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">🛡️</span> 인명구조기구: 7층 이상 관광호텔 (방열복·공기호흡기·인공소생기)</div>
-            </div>
-          </div>
-          <div class="checklist-note">
-            ※ 숙박시설은 방염 적용 대상<br>
-            ※ 2022.12.01 이후 건축허가: 모든 숙박시설 자동화재탐지설비 필수
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 판매시설 -->
-    <div class="checklist-card">
-      <div class="checklist-header" onclick="toggleChecklist(this)">
-        <div class="checklist-title">
-          <span class="icon">🛒</span>
-          <h3>판매시설</h3>
-        </div>
-        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-      <div class="checklist-body">
-        <div class="checklist-content">
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">⚡</span> 자동소화장치: 대규모점포 내 일반음식점 주방 (2023.12.01~)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 바닥면적 5,000㎡ 이상 또는 수용인원 500명 이상 또는 6층 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">경보설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 연면적 1,000㎡ 이상 또는 전통시장 또는 6층 이상</div>
-              <div class="checklist-item"><span class="emoji">🔔</span> 화재알림설비: 전통시장 (2023.12.01~)</div>
-              <div class="checklist-item"><span class="emoji">📱</span> 자동화재속보설비: 전통시장 (2018.06.27~)</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">피난구조설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치</div>
-              <div class="checklist-item"><span class="emoji">🛡️</span> 인명구조기구: 대규모점포 층마다 공기호흡기 2개 이상</div>
-              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 대형유도등 적용</div>
-              <div class="checklist-item"><span class="emoji">🔦</span> 휴대용비상조명등: 대규모점포 보행거리 50m 이내마다 3개 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화활동설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 지하층·무창층 바닥면적 합계 1,000㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💧</span> 연결살수설비: 바닥면적 합계 1,000㎡ 이상</div>
-            </div>
-          </div>
-          <div class="checklist-note">
-            ※ 전통시장: 화재알림설비, 자동화재속보설비 필수<br>
-            ※ 대규모점포: 인명구조기구, 휴대용비상조명등 필수
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 업무시설 -->
-    <div class="checklist-card">
-      <div class="checklist-header" onclick="toggleChecklist(this)">
-        <div class="checklist-title">
-          <span class="icon">🏬</span>
-          <h3>업무시설 (오피스텔)</h3>
-        </div>
-        <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-      <div class="checklist-body">
-        <div class="checklist-content">
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상 (공동취사용 주방 K급 소화기)</div>
-              <div class="checklist-item"><span class="emoji">⚡</span> 자동소화장치: 오피스텔 모든 층 각실별 주방 (2022.12.01~)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 6층 이상 모든 층 또는 지하층·무창층·4층 이상 바닥면적 1,000㎡ 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">경보설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 연면적 1,000㎡ 이상 또는 6층 이상</div>
-              <div class="checklist-item"><span class="emoji">👁️</span> 시각경보기: 자동화재탐지설비 설치 대상</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">피난구조설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치</div>
-              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 중형유도등 적용</div>
-              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
-            </div>
-          </div>
-          <div class="checklist-section">
-            <div class="checklist-section-title">소화활동설비</div>
-            <div class="checklist-items">
-              <div class="checklist-item"><span class="emoji">🚒</span> 연결송수관: 5층 이상 + 연면적 6,000㎡ 이상 또는 지하층 포함 7층 이상</div>
-              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 특별피난계단·비상용승강기 승강장 (높이 31m 초과)</div>
-            </div>
-          </div>
-          <div class="checklist-note">
-            ※ 오피스텔: 2022.12.01 이후 건축허가 시 각실별 주방 자동소화장치 필수<br>
-            ※ 업무시설 중 무인변전소(원격조정 시)는 옥내소화전 제외
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      <p>&copy; 2025 림정파이어. 소방시설 설치기준 확인 서비스</p>
-    </footer>
-  </div>
-
-  <script>
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-
-    function toggleChecklist(header) {
-      const card = header.closest('.checklist-card');
-      card.classList.toggle('open');
-    }
-  </script>
+    <script>
+        function toggleCard(header) {
+            const card = header.parentElement;
+            card.classList.toggle('open');
+        }
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.building-card');
+            cards.forEach(card => {
+                const type = card.dataset.type.toLowerCase();
+                const title = card.querySelector('.building-title').textContent.toLowerCase();
+                const def = card.querySelector('.building-def').textContent.toLowerCase();
+                if (type.includes(query) || title.includes(query) || def.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
