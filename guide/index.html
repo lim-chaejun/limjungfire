@@ -32,12 +32,25 @@
     }
     .guide-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
     }
-    @media (max-width: 400px) {
+    @media (max-width: 480px) {
       .guide-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .guide-card {
+        padding: 16px 8px;
+      }
+      .guide-card .icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+      .guide-card h3 {
+        font-size: 12px;
+      }
+      .guide-card p {
+        font-size: 10px;
       }
     }
     .guide-card {
