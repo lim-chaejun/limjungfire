@@ -88,6 +88,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;
   background: var(--bg-primary);
   min-height: 100vh;
+  min-height: 100dvh; /* 모바일 대응 */
   color: var(--text-primary);
   transition: background var(--transition-normal), color var(--transition-normal);
   -webkit-font-smoothing: antialiased;
@@ -149,6 +150,7 @@ body {
   margin: 0 auto;
   padding: 0 16px 16px;
   min-height: 100vh;
+  min-height: 100dvh; /* 모바일 대응 */
   display: flex;
   flex-direction: column;
 }
