@@ -57,6 +57,7 @@ window.copyUrl = function() {
 // 전역 변수
 let selectedAddressData = null;
 let currentUser = null;
+let fireFacilitiesData = null;
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
 // 테마 관리
@@ -106,6 +107,39 @@ async function loadFirebase() {
   }
 }
 
+// 소방시설 법규 데이터 로드
+async function loadFireFacilitiesData() {
+  const files = [
+    '01_공동주택', '02_근린생활시설', '03_문화및집회시설',
+    '04_종교시설', '05_판매시설', '06_운수시설', '07_의료시설',
+    '08_교육연구시설', '09_노유자시설', '10_수련시설', '11_운동시설',
+    '12_업무시설', '13_숙박시설', '14_위락시설', '15_공장',
+    '16_창고시설', '17_위험물저장및처리시설', '18_항공기및자동차관련시설',
+    '19_동물및식물관련시설', '20_자원순환관련시설', '21_교정및군사시설',
+    '22_방송통신시설', '23_발전시설', '24_묘지관련시설', '25_관광휴게시설',
+    '26_장례시설', '27_지하상가터널', '28_지하구', '29_국가유산'
+  ];
+  const data = {};
+  try {
+    await Promise.all(files.map(async (file) => {
+      try {
+        const res = await fetch(`/data/${file}.json`);
+        if (res.ok) {
+          const json = await res.json();
+          data[json.building_type] = json;
+        }
+      } catch (e) {
+        console.warn(`소방시설 데이터 로드 실패: ${file}`, e);
+      }
+    }));
+    console.log('소방시설 법규 데이터 로드 완료:', Object.keys(data).length, '개');
+    return data;
+  } catch (error) {
+    console.error('소방시설 법규 데이터 로드 실패:', error);
+    return {};
+  }
+}
+
 // 스플래시 화면 숨기기
 function hideSplashScreen() {
   const splash = document.getElementById('splashScreen');
@@ -118,7 +152,12 @@ function hideSplashScreen() {
 
 // 초기화
 (async function init() {
-  const fb = await loadFirebase();
+  // Firebase와 소방시설 데이터 병렬 로드
+  const [fb] = await Promise.all([
+    loadFirebase(),
+    loadFireFacilitiesData().then(d => { fireFacilitiesData = d; })
+  ]);
+
   if (fb) {
     fb.onAuthChange((user) => {
       currentUser = user;
@@ -1918,6 +1957,176 @@ function getFireTargetClassification(mainPurpose) {
   return { class: '기타시설', category: mainPurpose };
 }
 
+// 주용도 → JSON building_type 매핑
+function mapPurposeToFireDataType(mainPurpose) {
+  if (!mainPurpose) return null;
+
+  // 정확한 매핑 테이블
+  const mappingTable = {
+    // 공동주택
+    '아파트': '공동주택',
+    '연립주택': '공동주택',
+    '다세대주택': '공동주택',
+    '기숙사': '공동주택',
+    '공동주택': '공동주택',
+
+    // 근린생활시설
+    '제1종근린생활시설': '근린생활시설',
+    '제2종근린생활시설': '근린생활시설',
+    '근린생활시설': '근린생활시설',
+
+    // 문화 및 집회시설
+    '문화및집회시설': '문화및집회시설',
+    '공연장': '문화및집회시설',
+    '집회장': '문화및집회시설',
+    '관람장': '문화및집회시설',
+    '전시장': '문화및집회시설',
+
+    // 종교시설
+    '종교시설': '종교시설',
+
+    // 판매시설
+    '판매시설': '판매시설',
+    '도매시장': '판매시설',
+    '소매시장': '판매시설',
+    '상점': '판매시설',
+
+    // 운수시설
+    '운수시설': '운수시설',
+    '여객자동차터미널': '운수시설',
+    '철도역사': '운수시설',
+    '공항시설': '운수시설',
+
+    // 의료시설
+    '의료시설': '의료시설',
+    '병원': '의료시설',
+    '격리병원': '의료시설',
+    '장례식장': '장례시설',
+
+    // 교육연구시설
+    '교육연구시설': '교육연구시설',
+    '학교': '교육연구시설',
+    '학원': '교육연구시설',
+    '도서관': '교육연구시설',
+    '연구소': '교육연구시설',
+
+    // 노유자시설
+    '노유자시설': '노유자시설',
+    '아동관련시설': '노유자시설',
+    '노인복지시설': '노유자시설',
+    '어린이집': '노유자시설',
+    '유치원': '노유자시설',
+
+    // 수련시설
+    '수련시설': '수련시설',
+    '유스호스텔': '수련시설',
+    '청소년수련관': '수련시설',
+
+    // 운동시설
+    '운동시설': '운동시설',
+    '체육관': '운동시설',
+    '수영장': '운동시설',
+    '볼링장': '운동시설',
+
+    // 업무시설
+    '업무시설': '업무시설',
+    '오피스텔': '업무시설',
+    '사무소': '업무시설',
+
+    // 숙박시설
+    '숙박시설': '숙박시설',
+    '일반숙박시설': '숙박시설',
+    '관광숙박시설': '숙박시설',
+    '호텔': '숙박시설',
+    '모텔': '숙박시설',
+    '여관': '숙박시설',
+
+    // 위락시설
+    '위락시설': '위락시설',
+    '유흥주점': '위락시설',
+    '단란주점': '위락시설',
+
+    // 공장
+    '공장': '공장',
+
+    // 창고시설
+    '창고시설': '창고시설',
+    '창고': '창고시설',
+    '물류창고': '창고시설',
+
+    // 위험물 저장 및 처리 시설
+    '위험물저장및처리시설': '위험물저장및처리시설',
+    '주유소': '위험물저장및처리시설',
+    '석유판매소': '위험물저장및처리시설',
+    '가스충전소': '위험물저장및처리시설',
+
+    // 항공기및자동차관련시설
+    '자동차관련시설': '항공기및자동차관련시설',
+    '주차장': '항공기및자동차관련시설',
+    '세차장': '항공기및자동차관련시설',
+    '정비공장': '항공기및자동차관련시설',
+
+    // 동물및식물관련시설
+    '동물및식물관련시설': '동물및식물관련시설',
+    '축사': '동물및식물관련시설',
+    '온실': '동물및식물관련시설',
+
+    // 자원순환관련시설
+    '자원순환관련시설': '자원순환관련시설',
+    '분뇨처리시설': '자원순환관련시설',
+    '폐기물처리시설': '자원순환관련시설',
+
+    // 교정및군사시설
+    '교정및군사시설': '교정및군사시설',
+
+    // 방송통신시설
+    '방송통신시설': '방송통신시설',
+    '방송국': '방송통신시설',
+    '통신시설': '방송통신시설',
+
+    // 발전시설
+    '발전시설': '발전시설',
+
+    // 묘지관련시설
+    '묘지관련시설': '묘지관련시설',
+    '납골당': '묘지관련시설',
+    '화장시설': '묘지관련시설',
+
+    // 관광휴게시설
+    '관광휴게시설': '관광휴게시설',
+    '야외음악당': '관광휴게시설',
+    '야외극장': '관광휴게시설',
+    '휴게소': '관광휴게시설',
+
+    // 장례시설
+    '장례시설': '장례시설',
+
+    // 지하상가/터널
+    '지하상가': '지하상가터널',
+
+    // 지하구
+    '지하구': '지하구',
+
+    // 국가유산
+    '국가유산': '국가유산',
+    '문화재': '국가유산'
+  };
+
+  // 정확한 매칭
+  if (mappingTable[mainPurpose]) {
+    return mappingTable[mainPurpose];
+  }
+
+  // 부분 매칭
+  for (const [key, value] of Object.entries(mappingTable)) {
+    if (mainPurpose.includes(key) || key.includes(mainPurpose)) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 // ==================== 필수 소방시설 판단 ====================
 
 // 허가일 기준 필수 소방시설 판단
@@ -2227,6 +2436,19 @@ function renderFireFacilitiesCard(buildingInfo) {
       <div class="law-links">
         ${getLawLinksHtml(permitDate)}
       </div>
+
+      <div class="fire-standards-btn-wrapper">
+        <button class="btn-fire-standards" onclick="showFireStandardsModalFromCard()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          전체 소방기준 보기
+        </button>
+      </div>
     </div>
   `;
 
@@ -2286,6 +2508,166 @@ function getLawLinksHtml(permitDate) {
 function formatPermitDate(dateStr) {
   if (!dateStr || dateStr.length !== 8) return '-';
   return `${dateStr.substring(0,4)}.${dateStr.substring(4,6)}.${dateStr.substring(6,8)}`;
+}
+
+// ==================== 소방기준 모달 ====================
+
+// 현재 소방기준 모달 상태
+let currentFireStandardsData = {
+  buildingType: null,
+  permitDate: null,
+  buildingInfo: null
+};
+
+// 소방기준 모달 표시
+window.showFireStandardsModal = function(purpose, permitDate, buildingInfo) {
+  if (!fireFacilitiesData) {
+    showToast('소방시설 데이터를 불러오는 중입니다...');
+    return;
+  }
+
+  // 용도를 JSON building_type으로 매핑
+  const buildingType = mapPurposeToFireDataType(purpose);
+  if (!buildingType || !fireFacilitiesData[buildingType]) {
+    showToast('해당 용도의 소방시설 기준을 찾을 수 없습니다.');
+    return;
+  }
+
+  // 상태 저장
+  currentFireStandardsData = {
+    buildingType,
+    permitDate,
+    buildingInfo
+  };
+
+  const data = fireFacilitiesData[buildingType];
+  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo);
+
+  document.getElementById('fireStandardsBody').innerHTML = html;
+  document.getElementById('fireStandardsModal').style.display = 'flex';
+};
+
+// 소방기준 모달 닫기
+window.closeFireStandardsModal = function() {
+  document.getElementById('fireStandardsModal').style.display = 'none';
+};
+
+// 소방시설 카드에서 호출 (currentBuildingData 사용)
+window.showFireStandardsModalFromCard = function() {
+  if (!currentBuildingData) {
+    showToast('건물 데이터가 없습니다.');
+    return;
+  }
+
+  const { generalItems, permitItems, titleItems } = currentBuildingData;
+  const generalInfo = generalItems[0] || {};
+  const permitInfo = permitItems[0] || {};
+  const mainTitle = titleItems && titleItems.length > 0 ? titleItems[0] : {};
+
+  const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
+  const permitDate = permitInfo.archPmsDay || generalInfo.pmsDay || '';
+
+  showFireStandardsModal(mainPurpose, permitDate, null);
+};
+
+// 소방기준 모달 콘텐츠 렌더링
+function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
+  const permitNum = parseInt(permitDate) || 0;
+
+  // 카테고리별 시설 그룹핑
+  const categories = {
+    '소화설비': { color: '#f04452', icon: '🔥', facilities: [] },
+    '경보설비': { color: '#f59f00', icon: '🚨', facilities: [] },
+    '피난구조설비': { color: '#00c471', icon: '🚪', facilities: [] },
+    '소화활동설비': { color: '#3182f6', icon: '🚒', facilities: [] },
+    '건축': { color: '#8b95a1', icon: '🏗️', facilities: [] }
+  };
+
+  // 시설별로 적용 가능한 규정 필터링
+  data.fire_facilities.forEach(facility => {
+    const category = categories[facility.category];
+    if (!category) return;
+
+    // 허가일 기준 적용 가능한 규정 필터링
+    const applicableRegs = facility.regulations.filter(reg => {
+      const startDate = reg.start_date ? parseInt(reg.start_date.replace(/-/g, '')) : 0;
+      const endDate = reg.end_date ? parseInt(reg.end_date.replace(/-/g, '')) : 99999999;
+
+      // 허가일이 규정 기간 내에 있는지 확인
+      if (permitNum > 0) {
+        return permitNum >= startDate && permitNum <= endDate;
+      }
+      // 허가일이 없으면 현재 적용 중인 규정만 (end_date가 null)
+      return !reg.end_date;
+    });
+
+    if (applicableRegs.length > 0) {
+      category.facilities.push({
+        name: facility.facility_name,
+        regulations: applicableRegs
+      });
+    }
+  });
+
+  // HTML 생성
+  let html = `
+    <div class="fire-standards-header-info">
+      <span class="purpose-badge">${data.building_type}</span>
+      ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
+    </div>
+  `;
+
+  // 카테고리별 렌더링
+  Object.entries(categories).forEach(([catName, catData]) => {
+    if (catData.facilities.length === 0) return;
+
+    html += `
+      <div class="standards-category" style="--category-color: ${catData.color}">
+        <div class="standards-category-header">
+          <span class="category-icon">${catData.icon}</span>
+          <h3>${catName}</h3>
+          <span class="category-count">${catData.facilities.length}개</span>
+        </div>
+        <div class="standards-facility-list">
+    `;
+
+    catData.facilities.forEach(facility => {
+      html += `
+        <div class="standards-facility-item">
+          <div class="standards-facility-name">${facility.name}</div>
+          <div class="standards-facility-criteria">
+      `;
+
+      facility.regulations.forEach(reg => {
+        html += `
+          <div class="criteria-item">
+            <span class="criteria-text">${reg.criteria}</span>
+            ${reg.applicable_to ? `<span class="applicable-badge">${reg.applicable_to}</span>` : ''}
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  // 참고사항
+  html += `
+    <div class="fire-standards-note">
+      <p>※ 위 기준은 허가일(${formatPermitDate(permitDate) || '-'}) 당시 적용되는 법령을 기준으로 합니다.</p>
+      <p>※ 실제 소방시설 설치 여부는 건축물의 세부 조건에 따라 달라질 수 있습니다.</p>
+    </div>
+  `;
+
+  return html;
 }
 
 // ==================== 지도 기능 ====================

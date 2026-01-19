@@ -1,0 +1,309 @@
+{
+  "building_type": "관광휴게시설",
+  "definition": "야외음악당 / 야외극장 / 어린이회관 / 관망탑 / 휴게소 / 공원·유원지·관광지에 부수 건축물",
+  "fire_facilities": [
+    {
+      "category": "소화설비",
+      "facility_name": "소화기구",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 33㎡ 이상인 것"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "옥내소화전설비",
+      "regulations": [
+        {
+          "start_date": "1992-07-28",
+          "end_date": null,
+          "criteria": "연면적 3,000㎡ 이상"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층·4층 이상인 층이 바닥면적이 600㎡ 이상인 층이 있는 것은 모든 층"
+        },
+        {
+          "start_date": "1997-09-27",
+          "end_date": null,
+          "criteria": "옥상 차고 또는 주차장용도 200㎡ 이상인 것은 해당 부분"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "스프링클러설비",
+      "regulations": [
+        {
+          "start_date": "2018-01-28",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층",
+          "note": "부속된 보일러실·연결통로 포함"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 층이 있는 경우 해당 층"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "물분무등소화설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "내부 차고·주차장(필로티 포함) 용도 사용면적 200㎡ 이상"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "전기실·발전실·변전실·축전지실·통신기기실·전산실 바닥면적 300㎡ 이상"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "옥외소화전설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지상1층~2층 바닥면적의 합계가 9,000㎡ 이상",
+          "note": "연소우려 이격거리 1층 6m·2층 10m"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "단독경보형감지기",
+      "regulations": [
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 부분"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상경보설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 400㎡ 이상 모든 층"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층 바닥면적 150㎡ 이상 모든 층"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 모든 층"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "자동화재탐지설비",
+      "regulations": [
+        {
+          "start_date": "2022-12-01",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 1,000㎡ 이상인 것"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 이상 모든 층"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상방송설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 3,500㎡ 이상"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "층수가 11층 이상"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층의 층수가 3층 이상인 것 모든 층"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "피난기구",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지상3층 ~ 지상10층까지 설치(피난층 제외)"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "인명구조기구",
+      "regulations": [
+        {
+          "start_date": "2012-02-05",
+          "end_date": null,
+          "criteria": "이산화탄소소화설비가 설치 장소(출입구 외부 인근 공기호흡기 1대 이상 비치)",
+          "note": "2012.2.5. 신규대상 적용, 2013.2.5.까지 기존 대상 소급"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "유도등",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "적용"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "비상조명등",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 포함 5개층 이상이고 연면적 3,000㎡ 이상"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층 바닥면적이 450㎡ 이상인 경우 해당 층"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "상수도소화용수설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 5,000㎡ 이상"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "제연설비",
+      "regulations": [
+        {
+          "start_date": "1992-07-28",
+          "end_date": null,
+          "criteria": "특별피난계단(지하3층 이상 또는 지상11층 이상), 비상용 승강기(높이 31m 초과)"
+        },
+        {
+          "start_date": "2021-01-05",
+          "end_date": null,
+          "criteria": "피난용 승강기의 승강장(지상 30층 이상)"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "연결송수관설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "5층 이상이고 연면적 6,000㎡ 이상 모든 층"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 포함 7개층 이상 모든 층"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 층수가 3개층 이상이고 지하층 바닥면적 합계가 1,000㎡ 이상 모든 층"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "연결살수설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층(주출구가 도로와 접한 피난층은 제외) 바닥면적의 합계가 150㎡ 이상은 지하 모든 층",
+          "note": "부속된 연결통로 포함"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 또는 20대 미만의 기계장치 주차시설"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "비상콘센트설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "층수가 11층 이상은 11층 이상의 층"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 층수가 3개층 이상이고 지하층 바닥면적 합계가 1,000㎡ 이상 지하 모든 층"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "무선통신보조설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 바닥면적의 합계가 3,000㎡ 이상"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "30층 이상은 16층 이상 부분의 모든 층"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 층수가 3개층 이상이고 지하층 바닥면적 합계가 1,000㎡ 이상 지하 모든 층"
+        }
+      ]
+    }
+  ]
+}

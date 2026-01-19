@@ -1,0 +1,490 @@
+{
+  "building_type": "공동주택",
+  "sub_types": [
+    {
+      "name": "아파트등",
+      "definition": "주택으로 쓰는 층수가 5층 이상인 주택"
+    },
+    {
+      "name": "연립주택",
+      "definition": "주택으로 쓰는 1개 동의 바닥면적 합계가 660㎡를 초과하고, 층수가 4개 층 이하인 주택",
+      "effective_date": "2024-12-01"
+    },
+    {
+      "name": "다세대주택",
+      "definition": "주택으로 쓰는 1개 동의 바닥면적 합계가 660㎡ 이하이고, 층수가 4개 층 이하인 주택",
+      "effective_date": "2024-12-01"
+    },
+    {
+      "name": "기숙사",
+      "definition": "학교 또는 공장 등의 학생 또는 종업원 등을 위하여 쓰는 것으로서 1개 동의 공동취사시설 이용 세대 수가 전체의 50퍼센트 이상인 것"
+    }
+  ],
+  "fire_facilities": [
+    {
+      "category": "소화설비",
+      "facility_name": "소화기구",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 33㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2017-06-12",
+          "end_date": null,
+          "criteria": "기숙사 주방에 K급 소화기 적용",
+          "applicable_to": "기숙사"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "자동소화장치",
+      "regulations": [
+        {
+          "start_date": "1994-07-20",
+          "end_date": "1997-09-26",
+          "criteria": "아파트 11층 이상인 층",
+          "applicable_to": "아파트"
+        },
+        {
+          "start_date": "1997-09-27",
+          "end_date": "2004-05-29",
+          "criteria": "아파트 11층 이상인 것 중 6층 이상인 층",
+          "applicable_to": "아파트"
+        },
+        {
+          "start_date": "2004-05-30",
+          "end_date": "2014-07-06",
+          "criteria": "아파트",
+          "applicable_to": "아파트"
+        },
+        {
+          "start_date": "2014-07-07",
+          "end_date": null,
+          "criteria": "아파트등 각세대 별 주방",
+          "applicable_to": "아파트등"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "옥내소화전설비",
+      "regulations": [
+        {
+          "start_date": "1992-07-28",
+          "end_date": null,
+          "criteria": "연면적 3,000㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층·4층이상인 층이 바닥면적이 600㎡ 이상인 층이 있는 것 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "스프링클러설비",
+      "regulations": [
+        {
+          "start_date": "1990-07-01",
+          "end_date": "1992-07-27",
+          "criteria": "16층 이상인 것은 16층 이상인 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "1992-07-28",
+          "end_date": "2004-12-31",
+          "criteria": "지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 층이 있는 경우 해당 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2005-01-01",
+          "end_date": "2018-01-27",
+          "criteria": "층수가 11층 이상일 경우 전층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2018-01-28",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "간이스프링클러설비",
+      "regulations": [
+        {
+          "start_date": "2024-12-01",
+          "end_date": null,
+          "criteria": "공동주택 중 연립주택 및 다세대주택",
+          "applicable_to": "연립주택, 다세대주택"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "물분무등소화설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "내부 차고·주차장(필로티 포함) 용도 사용면적 200㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2018-01-26",
+          "end_date": null,
+          "criteria": "50세대 이상의 연립주택·다세대 주택",
+          "applicable_to": "연립주택, 다세대주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "전기실·발전실·변전실·축전지실·통신기기실·전산실 바닥면적 300㎡ 이상",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "단독경보형감지기",
+      "regulations": [
+        {
+          "start_date": "2024-12-01",
+          "end_date": null,
+          "criteria": "연립주택 및 다세대주택(연동형으로 설치)",
+          "applicable_to": "연립주택, 다세대주택"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 부분",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상경보설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 400㎡ 이상 모든 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층 바닥면적 150㎡ 이상인 것 모든 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "자동화재탐지설비",
+      "regulations": [
+        {
+          "start_date": "1968-01-15",
+          "end_date": "1981-11-05",
+          "criteria": "공동주택 연면적이 500㎡ 이상의 것",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "1981-11-06",
+          "end_date": "2022-11-30",
+          "criteria": "4층 이상의 공동주택은 연면적 1,000㎡ 이상인 것",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2022-12-01",
+          "end_date": null,
+          "criteria": "아파트 등의 경우에는 모든 층",
+          "applicable_to": "아파트등"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 이상 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상방송설비",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 3,500㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "층수가 11층 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층의 층수가 3층 이상인 것 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "피난기구",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지상3층 ~ 지상10층까지 설치(계단실형 아파트는 각 세대마다) *피난층 제외",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "1993-11-11",
+          "end_date": null,
+          "criteria": "150세대 이상으로서 승강기가 설치된 공동주택은 공기안전매트 설치",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "인명구조기구",
+      "regulations": [
+        {
+          "start_date": "2012-02-05",
+          "end_date": null,
+          "criteria": "이산화탄소소화설비가 설치 장소(출입구 외부 인근 공기호흡기 1대 이상 비치)",
+          "applicable_to": "공동주택",
+          "note": "2012.2.5. 신규대상 적용, 2013.2.5.까지 기 대상 소급"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "유도등",
+      "regulations": [
+        {
+          "start_date": "2014-08-18",
+          "end_date": null,
+          "criteria": "아파트 소형유도등",
+          "applicable_to": "아파트"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "비상조명등",
+      "regulations": [
+        {
+          "start_date": "2004-05-30",
+          "end_date": null,
+          "criteria": "지하층 포함 5개층 이상이고 연면적 3,000㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "1984-07-01",
+          "end_date": null,
+          "criteria": "지하층·무창층 바닥면적이 450㎡ 이상인 경우 해당 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "상수도소화용수설비",
+      "regulations": [
+        {
+          "start_date": "1968-01-15",
+          "end_date": null,
+          "criteria": "연면적 5,000㎡ 이상",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "제연설비",
+      "regulations": [
+        {
+          "start_date": "1992-07-28",
+          "end_date": null,
+          "criteria": "특별피난계단 및 비상용승강기의 승강장 *갓복도형 아파트등 제외",
+          "applicable_to": "공동주택",
+          "note": "1986.12.29.특피(지하3층이상또는지상16층이상)/1987.6.30.비승(16층이상)/2007.11.15.비승(10층이상)"
+        },
+        {
+          "start_date": "2021-01-05",
+          "end_date": null,
+          "criteria": "피난용 승강기의 승강장(지상 30층 이상)",
+          "applicable_to": "공동주택",
+          "note": "2018.10.18. 건축법 설치기준 마련"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "연결송수관설비",
+      "regulations": [
+        {
+          "start_date": "1968-01-15",
+          "end_date": null,
+          "criteria": "5층 이상이고 연면적 6,000㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 포함 7개층 이상 모든 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 층수가 3개층 이상이고 지하층 바닥면적 합계가 1,000㎡ 이상 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "연결살수설비",
+      "regulations": [
+        {
+          "start_date": "1973-12-29",
+          "end_date": null,
+          "criteria": "대피시설로 사용하는 지하층 700㎡ 이상(부속된 연결통로 포함)",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2026-03-01",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 또는 20대 미만의 기계장치 주차시설",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "비상콘센트설비",
+      "regulations": [
+        {
+          "start_date": "1968-01-15",
+          "end_date": null,
+          "criteria": "층수가 11층 이상은 11층 이상의 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 층수가 3개층 이상이고 지하층 바닥면적 합계가 1,000㎡ 이상 지하 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "무선통신보조설비",
+      "regulations": [
+        {
+          "start_date": "1992-07-28",
+          "end_date": null,
+          "criteria": "지하층 바닥면적의 합계가 3,000㎡ 이상",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "30층 이상은 16층 이상의 층",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 층수가 3개층 이상이고 지하층 바닥면적 합계가 1,000㎡ 이상 지하 모든 층",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "건축",
+      "facility_name": "옥상출입문자동개폐장치",
+      "regulations": [
+        {
+          "start_date": "2016-02-29",
+          "end_date": null,
+          "criteria": "신규 주택건설 사업대상부터 적용(소급 없음)",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "30세대 이상부터 적용(주택재건축과 소관)",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "건축",
+      "facility_name": "피난시설",
+      "regulations": [
+        {
+          "start_date": "1992-10-26",
+          "end_date": "2005-12-01",
+          "criteria": "경량칸막이 또는 경계벽 피난구",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2005-12-02",
+          "end_date": "2010-02-17",
+          "criteria": "경량칸막이 · 경계벽 피난구 · 대피공간",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2010-02-18",
+          "end_date": "2014-08-26",
+          "criteria": "경량칸막이 · 경계벽 피난구 · 대피공간 · 하향식 피난구",
+          "applicable_to": "공동주택"
+        },
+        {
+          "start_date": "2014-08-27",
+          "end_date": null,
+          "criteria": "국토교통부장관이 인정하는 대피공간과 비슷한 시설",
+          "applicable_to": "공동주택"
+        }
+      ]
+    },
+    {
+      "category": "건축",
+      "facility_name": "헬리포트",
+      "regulations": [
+        {
+          "start_date": null,
+          "end_date": null,
+          "criteria": "층수 11층 이상인 것 중 11층 이상인 층 바닥면적 합계가 10,000㎡ 이상",
+          "applicable_to": "공동주택"
+        }
+      ]
+    }
+  ]
+}
