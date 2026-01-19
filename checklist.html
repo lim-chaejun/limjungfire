@@ -85,7 +85,7 @@
       transition: max-height 0.3s ease;
     }
     .checklist-card.open .checklist-body {
-      max-height: 1000px;
+      max-height: 2000px;
     }
     .checklist-content {
       padding: 20px;
@@ -111,20 +111,19 @@
     }
     .checklist-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       padding: 10px 12px;
       background: var(--bg-tertiary);
       border-radius: var(--radius-md);
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-secondary);
+      line-height: 1.5;
     }
     .checklist-item .emoji {
-      font-size: 18px;
-    }
-    .checklist-item.required {
-      background: var(--color-error-bg);
-      color: var(--color-error);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
     }
     .checklist-note {
       font-size: 12px;
@@ -133,6 +132,7 @@
       padding: 12px;
       background: var(--bg-tertiary);
       border-radius: var(--radius-sm);
+      line-height: 1.6;
     }
     .info-box {
       background: var(--color-primary-bg);
@@ -164,7 +164,7 @@
     </div>
 
     <div class="info-box">
-      <p>💡 아래는 일반적인 기준이며, 정확한 설치 기준은 메인 페이지에서 건물을 검색해 확인하세요.</p>
+      <p>아래는 현행 기준 요약이며, 건축허가일에 따라 다를 수 있습니다. 정확한 기준은 메인 페이지에서 건물을 검색해 확인하세요.</p>
     </div>
 
     <!-- 공동주택 -->
@@ -172,7 +172,7 @@
       <div class="checklist-header" onclick="toggleChecklist(this)">
         <div class="checklist-title">
           <span class="icon">🏢</span>
-          <h3>공동주택 (아파트)</h3>
+          <h3>공동주택 (아파트등)</h3>
         </div>
         <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"/>
@@ -183,30 +183,40 @@
           <div class="checklist-section">
             <div class="checklist-section-title">소화설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기 (각 세대 + 공용부분)</div>
-              <div class="checklist-item required"><span class="emoji">⚡</span> 자동소화장치 (주방)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전 (3,000㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (6층 이상)</div>
+              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">⚡</span> 자동소화장치: 아파트등 각 세대별 주방 (2014.07.07~)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 3,000㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 600㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 6층 이상 모든 층 (2018.01.28~)</div>
+              <div class="checklist-item"><span class="emoji">💧</span> 간이스프링클러: 연립주택·다세대주택 (2024.12.01~)</div>
             </div>
           </div>
           <div class="checklist-section">
             <div class="checklist-section-title">경보설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🔔</span> 단독경보형감지기 (각 세대)</div>
-              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비 (1,000㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비 (3,500㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">🔔</span> 단독경보형감지기: 연립·다세대주택 연동형 설치 (2024.12.01~)</div>
+              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 아파트등 모든 층 (2022.12.01~)</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
             </div>
           </div>
           <div class="checklist-section">
-            <div class="checklist-section-title">피난설비</div>
+            <div class="checklist-section-title">피난구조설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
-              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구 (3층~10층)</div>
-              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등 (5층 이상 + 3,000㎡)</div>
+              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치 (계단실형 아파트는 각 세대마다)</div>
+              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 아파트 소형유도등 (2014.08.18~)</div>
+              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">소화활동설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🚒</span> 연결송수관: 5층 이상 + 연면적 6,000㎡ 이상 또는 지하층 포함 7층 이상</div>
+              <div class="checklist-item"><span class="emoji">📻</span> 무선통신보조설비: 지하층 바닥면적 합계 3,000㎡ 이상 또는 30층 이상</div>
+              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 특별피난계단·비상용승강기 승강장</div>
             </div>
           </div>
           <div class="checklist-note">
-            ※ 2017년 이후 건축허가 건물은 세대 내 감지기, 주방자동소화장치 의무
+            ※ 2017년 이후 건축허가 건물은 세대 내 감지기, 주방자동소화장치 의무<br>
+            ※ 150세대 이상 승강기 설치 공동주택은 공기안전매트 설치 의무
           </div>
         </div>
       </div>
@@ -226,17 +236,34 @@
       <div class="checklist-body">
         <div class="checklist-content">
           <div class="checklist-section">
-            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-section-title">소화설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기 (33㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">🔔</span> 비상경보설비 (400㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전 (3,000㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (6층 이상 또는 5,000㎡ 이상)</div>
-              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상 (음식점·다중이용업소 주방 K급 소화기)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 6층 이상 모든 층 또는 지하층·무창층·4층 이상 바닥면적 1,000㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💧</span> 간이스프링클러: 바닥면적 합계 1,000㎡ 이상 / 입원실 있는 의원급</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">경보설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🔔</span> 비상경보설비: 연면적 400㎡ 이상 또는 지하층·무창층 150㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 연면적 600㎡ 이상 (목욕탕 1,000㎡) 또는 6층 이상</div>
+              <div class="checklist-item"><span class="emoji">📱</span> 자동화재속보설비: 입원실 있는 의원급, 조산원·산후조리원</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">피난구조설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치 (입원실 있는 의원·접골원·조산원은 구조대)</div>
+              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 설치 의무</div>
+              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
             </div>
           </div>
           <div class="checklist-note">
-            ※ 음식점, 의원, 학원 등 용도에 따라 추가 기준 적용
+            ※ 조산원·산후조리원: 연면적 600㎡ 이상 스프링클러, 600㎡ 미만 간이스프링클러<br>
+            ※ 의원, 체력단련장, 공연장, 종교집회장은 방염 적용 (2019.08.06~)
           </div>
         </div>
       </div>
@@ -256,18 +283,41 @@
       <div class="checklist-body">
         <div class="checklist-content">
           <div class="checklist-section">
-            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-section-title">소화설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기</div>
-              <div class="checklist-item required"><span class="emoji">🔔</span> 자동화재탐지설비</div>
-              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
-              <div class="checklist-item required"><span class="emoji">🪜</span> 피난기구 (객실마다)</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (11층 이상)</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비 (3,500㎡ 이상)</div>
+              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상 (호텔 주방 K급 소화기)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 바닥면적 합계 600㎡ 이상 모든 층 (2022.12.01~) 또는 6층 이상</div>
+              <div class="checklist-item"><span class="emoji">💧</span> 간이스프링클러: 바닥면적 합계 300㎡ 이상 600㎡ 미만</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">경보설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 모든 층 (2022.12.01~) 또는 연면적 600㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">👁️</span> 시각경보기: 자동화재탐지설비 설치 대상</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">피난구조설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 + 객실마다 완강기 또는 간이완강기</div>
+              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 관광숙박업 대형유도등, 기타 중형유도등</div>
+              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">🔦</span> 휴대용비상조명등: 객실 또는 구획된 실마다 1개 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">소화활동설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 지하층·무창층 바닥면적 합계 1,000㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">🛡️</span> 인명구조기구: 7층 이상 관광호텔 (방열복·공기호흡기·인공소생기)</div>
             </div>
           </div>
           <div class="checklist-note">
-            ※ 숙박시설은 모든 규모에서 자동화재탐지설비 필수
+            ※ 숙박시설은 방염 적용 대상<br>
+            ※ 2022.12.01 이후 건축허가: 모든 숙박시설 자동화재탐지설비 필수
           </div>
         </div>
       </div>
@@ -287,14 +337,42 @@
       <div class="checklist-body">
         <div class="checklist-content">
           <div class="checklist-section">
-            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-section-title">소화설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기</div>
-              <div class="checklist-item required"><span class="emoji">🔔</span> 자동화재탐지설비</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (수용인원 500명 이상 또는 3,000㎡ 이상)</div>
-              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
-              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비</div>
+              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">⚡</span> 자동소화장치: 대규모점포 내 일반음식점 주방 (2023.12.01~)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 바닥면적 5,000㎡ 이상 또는 수용인원 500명 이상 또는 6층 이상</div>
             </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">경보설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 연면적 1,000㎡ 이상 또는 전통시장 또는 6층 이상</div>
+              <div class="checklist-item"><span class="emoji">🔔</span> 화재알림설비: 전통시장 (2023.12.01~)</div>
+              <div class="checklist-item"><span class="emoji">📱</span> 자동화재속보설비: 전통시장 (2018.06.27~)</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">피난구조설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치</div>
+              <div class="checklist-item"><span class="emoji">🛡️</span> 인명구조기구: 대규모점포 층마다 공기호흡기 2개 이상</div>
+              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 대형유도등 적용</div>
+              <div class="checklist-item"><span class="emoji">🔦</span> 휴대용비상조명등: 대규모점포 보행거리 50m 이내마다 3개 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">소화활동설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 지하층·무창층 바닥면적 합계 1,000㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💧</span> 연결살수설비: 바닥면적 합계 1,000㎡ 이상</div>
+            </div>
+          </div>
+          <div class="checklist-note">
+            ※ 전통시장: 화재알림설비, 자동화재속보설비 필수<br>
+            ※ 대규모점포: 인명구조기구, 휴대용비상조명등 필수
           </div>
         </div>
       </div>
@@ -305,7 +383,7 @@
       <div class="checklist-header" onclick="toggleChecklist(this)">
         <div class="checklist-title">
           <span class="icon">🏬</span>
-          <h3>업무시설 (오피스)</h3>
+          <h3>업무시설 (오피스텔)</h3>
         </div>
         <svg class="checklist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"/>
@@ -314,14 +392,40 @@
       <div class="checklist-body">
         <div class="checklist-content">
           <div class="checklist-section">
-            <div class="checklist-section-title">주요 소방시설</div>
+            <div class="checklist-section-title">소화설비</div>
             <div class="checklist-items">
-              <div class="checklist-item required"><span class="emoji">🧯</span> 소화기</div>
-              <div class="checklist-item"><span class="emoji">🔔</span> 자동화재탐지설비 (1,000㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전 (3,000㎡ 이상)</div>
-              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러 (6층 이상)</div>
-              <div class="checklist-item required"><span class="emoji">🚪</span> 유도등</div>
+              <div class="checklist-item"><span class="emoji">🧯</span> 소화기구: 연면적 33㎡ 이상 (공동취사용 주방 K급 소화기)</div>
+              <div class="checklist-item"><span class="emoji">⚡</span> 자동소화장치: 오피스텔 모든 층 각실별 주방 (2022.12.01~)</div>
+              <div class="checklist-item"><span class="emoji">🔴</span> 옥내소화전: 연면적 1,500㎡ 이상 또는 지하층·무창층·4층 이상 바닥면적 300㎡ 이상</div>
+              <div class="checklist-item"><span class="emoji">💦</span> 스프링클러: 6층 이상 모든 층 또는 지하층·무창층·4층 이상 바닥면적 1,000㎡ 이상</div>
             </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">경보설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🚨</span> 자동화재탐지설비: 연면적 1,000㎡ 이상 또는 6층 이상</div>
+              <div class="checklist-item"><span class="emoji">👁️</span> 시각경보기: 자동화재탐지설비 설치 대상</div>
+              <div class="checklist-item"><span class="emoji">📢</span> 비상방송설비: 연면적 3,500㎡ 이상 또는 11층 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">피난구조설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🪜</span> 피난기구: 3층~10층 설치</div>
+              <div class="checklist-item"><span class="emoji">🚪</span> 유도등: 중형유도등 적용</div>
+              <div class="checklist-item"><span class="emoji">💡</span> 비상조명등: 지하층 포함 5층 이상 + 연면적 3,000㎡ 이상</div>
+            </div>
+          </div>
+          <div class="checklist-section">
+            <div class="checklist-section-title">소화활동설비</div>
+            <div class="checklist-items">
+              <div class="checklist-item"><span class="emoji">🚒</span> 연결송수관: 5층 이상 + 연면적 6,000㎡ 이상 또는 지하층 포함 7층 이상</div>
+              <div class="checklist-item"><span class="emoji">🌀</span> 제연설비: 특별피난계단·비상용승강기 승강장 (높이 31m 초과)</div>
+            </div>
+          </div>
+          <div class="checklist-note">
+            ※ 오피스텔: 2022.12.01 이후 건축허가 시 각실별 주방 자동소화장치 필수<br>
+            ※ 업무시설 중 무인변전소(원격조정 시)는 옥내소화전 제외
           </div>
         </div>
       </div>
