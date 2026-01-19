@@ -1,3 +1,59 @@
+// 인앱 브라우저 처리
+if (window.__inAppBrowser) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var guide = document.getElementById('inAppGuide');
+    var splash = document.getElementById('splashScreen');
+    if (guide) {
+      guide.style.display = 'flex';
+      if (splash) splash.style.display = 'none';
+      // 플랫폼별 안내 표시
+      var isIOS = /iPhone|iPad/.test(navigator.userAgent);
+      var androidGuide = document.getElementById('androidGuide');
+      var iosGuide = document.getElementById('iosGuide');
+      if (isIOS && iosGuide) {
+        iosGuide.style.display = 'block';
+      } else if (androidGuide) {
+        androidGuide.style.display = 'block';
+      }
+    }
+  });
+}
+
+// URL 복사 함수 (인앱 브라우저용)
+window.copyUrl = function() {
+  navigator.clipboard.writeText(location.href).then(function() {
+    // 토스트 메시지 표시
+    var toast = document.createElement('div');
+    toast.className = 'inapp-toast success';
+    toast.textContent = '주소가 복사되었습니다!';
+    document.body.appendChild(toast);
+    setTimeout(function() {
+      toast.remove();
+    }, 2500);
+  }).catch(function() {
+    // 클립보드 API 실패 시 fallback
+    var textArea = document.createElement('textarea');
+    textArea.value = location.href;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      var toast = document.createElement('div');
+      toast.className = 'inapp-toast success';
+      toast.textContent = '주소가 복사되었습니다!';
+      document.body.appendChild(toast);
+      setTimeout(function() {
+        toast.remove();
+      }, 2500);
+    } catch (err) {
+      alert('주소 복사에 실패했습니다. 직접 주소창에서 복사해주세요.');
+    }
+    document.body.removeChild(textArea);
+  });
+};
+
 // 전역 변수
 let selectedAddressData = null;
 let currentUser = null;
