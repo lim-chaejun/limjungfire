@@ -2135,36 +2135,36 @@ function mapPurposeToFireDataType(mainPurpose) {
 
 // ==================== 필수 소방시설 판단 ====================
 
-// 시설별 아이콘 매핑
+// 시설별 아이콘 매핑 (SVG)
 const facilityIcons = {
-  '소화기구': '🧯',
-  '옥내소화전설비': '🚿',
-  '스프링클러설비': '💦',
-  '간이스프링클러설비': '💧',
-  '물분무등소화설비': '🌊',
-  '옥외소화전설비': '🔥',
-  '자동소화장치': '⚡',
-  '자동화재탐지설비': '🔔',
-  '비상경보설비': '🚨',
-  '비상방송설비': '📢',
-  '단독경보형감지기': '🔊',
-  '시각경보장치': '💡',
-  '가스누설경보기': '⚠️',
-  '피난기구': '🪜',
-  '인명구조기구': '🦺',
-  '유도등': '🚪',
-  '비상조명등': '💡',
-  '휴대용비상조명등': '🔦',
-  '제연설비': '🌬️',
-  '연결송수관설비': '🔗',
-  '연결살수설비': '💨',
-  '비상콘센트설비': '🔌',
-  '무선통신보조설비': '📡',
-  '상수도소화용수설비': '🚰',
-  '소화수조및저수조': '🏊',
-  '옥상출입문자동개폐장치': '🚪',
-  '피난시설': '🏃',
-  '헬리포트': '🚁'
+  '소화기구': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v3m0 0a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3 3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z"/><path d="M9 5h6"/><path d="M15 8l2-2"/><path d="M10 12h4"/></svg>',
+  '옥내소화전설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="16" height="14" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M12 10v6"/><path d="M9 13h6"/><path d="M8 6V4h8v2"/></svg>',
+  '스프링클러설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="3"/><path d="M12 9v2"/><path d="M6 18l6-7 6 7"/><path d="M8 16l4-5 4 5"/><path d="M10 14l2-2.5 2 2.5"/></svg>',
+  '간이스프링클러설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><path d="M12 7v2"/><path d="M8 16l4-5 4 5"/><path d="M10 14l2-2.5 2 2.5"/></svg>',
+  '물분무등소화설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v4"/><path d="M5 14c0 4 3 7 7 7s7-3 7-7c0-3-2-5-4-7l-3 3-3-3c-2 2-4 4-4 7z"/></svg>',
+  '옥외소화전설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3a4 4 0 0 1 4 4v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1V7a4 4 0 0 1 4-4z"/><circle cx="12" cy="15" r="2"/></svg>',
+  '자동소화장치': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="10" width="12" height="10" rx="1"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M12 14v3"/><circle cx="12" cy="15" r="1"/></svg>',
+  '자동화재탐지설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/><path d="M12 18v2"/><path d="M4 12h2"/><path d="M18 12h2"/></svg>',
+  '비상경보설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M12 2v2"/></svg>',
+  '비상방송설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12"/><path d="M6 9v6"/><path d="M18 9v6"/><path d="M3 12h3"/><path d="M18 12h3"/><rect x="9" y="4" width="6" height="16" rx="1"/></svg>',
+  '단독경보형감지기': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v4"/><circle cx="12" cy="15" r="1"/></svg>',
+  '시각경보장치': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>',
+  '가스누설경보기': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+  '피난기구': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v18"/><path d="M16 3v18"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h8"/><path d="M8 19h8"/></svg>',
+  '인명구조기구': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v5"/><path d="M12 16v5"/><path d="M3 12h5"/><path d="M16 12h5"/></svg>',
+  '유도등': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 12h4"/><path d="M12 9l3 3-3 3"/><path d="M8 9v6"/></svg>',
+  '비상조명등': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>',
+  '휴대용비상조명등': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4"/><rect x="8" y="6" width="8" height="14" rx="2"/><path d="M12 10v6"/><circle cx="12" cy="8" r="1"/></svg>',
+  '제연설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14c0-4 3-8 8-8s8 4 8 8"/><path d="M7 14a5 5 0 0 1 10 0"/><path d="M9 18h6"/><path d="M12 14v4"/></svg>',
+  '연결송수관설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h16"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M12 6v12"/></svg>',
+  '연결살수설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4v4"/><path d="M8 12l4-4 4 4"/><path d="M6 16l6-4 6 4"/><path d="M4 20l8-4 8 4"/></svg>',
+  '비상콘센트설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="14" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><circle cx="15" cy="10" r="1.5"/><path d="M9 15h6"/></svg>',
+  '무선통신보조설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-8"/><path d="M8 16l4-4 4 4"/><path d="M6 10a6 6 0 0 1 12 0"/><path d="M3 7a10 10 0 0 1 18 0"/></svg>',
+  '상수도소화용수설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2c3 4 6 6 6 10a6 6 0 0 1-12 0c0-4 3-6 6-10z"/><path d="M12 18v3"/><path d="M9 21h6"/></svg>',
+  '소화수조및저수조': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M6 14h12"/><path d="M6 17h12"/></svg>',
+  '옥상출입문자동개폐장치': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16"/><circle cx="7" cy="12" r="1"/><path d="M14 8l3 4-3 4"/></svg>',
+  '피난시설': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="5" r="2"/><path d="M4 21l4-9"/><path d="M8 12l6 9"/><path d="M13 12l5-2"/><path d="M10 7v5l3 3"/></svg>',
+  '헬리포트': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M8 8v8"/><path d="M16 8v8"/><path d="M8 12h8"/></svg>'
 };
 
 // 허가일 기준 필수 소방시설 판단 (JSON 데이터 기반)
@@ -2664,11 +2664,11 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 
   // 카테고리별 시설 그룹핑
   const categories = {
-    '소화설비': { color: '#f04452', icon: '🔥', facilities: [] },
-    '경보설비': { color: '#f59f00', icon: '🚨', facilities: [] },
-    '피난구조설비': { color: '#00c471', icon: '🚪', facilities: [] },
-    '소화활동설비': { color: '#3182f6', icon: '🚒', facilities: [] },
-    '건축': { color: '#8b95a1', icon: '🏗️', facilities: [] }
+    '소화설비': { color: '#f04452', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/></svg>', facilities: [] },
+    '경보설비': { color: '#f59f00', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>', facilities: [] },
+    '피난구조설비': { color: '#00c471', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 12h4"/><path d="M12 9l3 3-3 3"/></svg>', facilities: [] },
+    '소화활동설비': { color: '#3182f6', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="20" height="10" rx="2"/><path d="M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/></svg>', facilities: [] },
+    '건축': { color: '#8b95a1', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>', facilities: [] }
   };
 
   // 시설별로 적용 가능한 규정 필터링

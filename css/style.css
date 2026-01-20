@@ -2171,14 +2171,22 @@ footer {
 }
 
 .facility-icon {
-  font-size: 24px;
-  width: 32px;
-  height: 32px;
-  text-align: center;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-secondary);
+}
+
+.facility-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.facility-item.required .facility-icon {
+  color: var(--color-error);
 }
 
 .facility-info {
@@ -2505,7 +2513,16 @@ footer {
 }
 
 .category-icon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .standards-category-header h3 {
@@ -2850,10 +2867,22 @@ footer {
 }
 
 .accordion-icon {
-  font-size: 20px;
-  width: 28px;
-  text-align: center;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.accordion-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.accordion-item.required .accordion-icon {
+  color: var(--color-error);
 }
 
 .accordion-name {
