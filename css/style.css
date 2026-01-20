@@ -522,7 +522,7 @@ header h1 {
 }
 
 [data-theme="dark"] .btn-history-small svg {
-  stroke: var(--text-secondary);
+  stroke: var(--text-primary);
 }
 
 .btn-history-small:hover svg {
@@ -2142,8 +2142,9 @@ footer {
 
 .facilities-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
 }
 
 /* 모바일에서도 3열 유지 */
@@ -2207,6 +2208,9 @@ footer {
   color: var(--text-primary);
   line-height: 1.3;
   word-break: keep-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .facility-item.required .facility-name {
