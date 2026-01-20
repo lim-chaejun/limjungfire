@@ -2883,7 +2883,14 @@ window.shareBuilding = async function() {
   const mainPurpose = general.mainPurpsCdNm || title.mainPurpsCdNm || '-';
   const totalArea = general.totArea || title.totArea || '-';
 
-  const shareUrl = window.location.href;
+  // URL 파라미터 직접 생성 (공유 링크용)
+  const params = new URLSearchParams();
+  if (selectedAddressData?.address) params.set('addr', selectedAddressData.address);
+  if (selectedAddressData?.jibunAddress) params.set('jibun', selectedAddressData.jibunAddress);
+  if (selectedAddressData?.bcode) params.set('bcode', selectedAddressData.bcode);
+  if (selectedAddressData?.buildingName) params.set('bldg', selectedAddressData.buildingName);
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   const shareText = `[소방용 건축물대장]
 ${buildingName}
 주소: ${address}

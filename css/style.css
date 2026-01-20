@@ -48,6 +48,9 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-slow: 0.3s ease;
+
+  /* Fire Facility Icon Color */
+  --facility-icon-color: #333333;
 }
 
 /* Dark Mode */
@@ -75,6 +78,9 @@
   --color-success-bg: rgba(0, 196, 113, 0.15);
   --color-warning-bg: rgba(245, 159, 0, 0.15);
   --color-error-bg: rgba(240, 68, 82, 0.15);
+
+  /* Fire Facility Icon Color - Dark Mode */
+  --facility-icon-color: #ffffff;
 }
 
 /* Base Reset */
@@ -2136,12 +2142,7 @@ footer {
   gap: 8px;
 }
 
-/* 모바일 반응형 - 2열 */
-@media (max-width: 400px) {
-  .facilities-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
+/* 모바일에서도 3열 유지 */
 
 .optional-list {
   margin-top: 10px;
@@ -2161,8 +2162,8 @@ footer {
 }
 
 .facility-item.required {
-  background: var(--color-error-bg);
-  border: 1px solid rgba(240, 68, 82, 0.2);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
 }
 
 .facility-item.optional {
@@ -2177,7 +2178,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--facility-icon-color);
 }
 
 .facility-icon svg {
@@ -2186,7 +2187,7 @@ footer {
 }
 
 .facility-item.required .facility-icon {
-  color: var(--color-error);
+  color: var(--facility-icon-color);
 }
 
 .facility-info {
@@ -2205,7 +2206,7 @@ footer {
 }
 
 .facility-item.required .facility-name {
-  color: var(--color-error);
+  color: var(--text-primary);
 }
 
 .facility-reason {
@@ -2631,7 +2632,7 @@ footer {
 }
 
 .facility-item.clickable.required:hover {
-  background: rgba(240, 68, 82, 0.15);
+  background: var(--color-primary-bg);
 }
 
 .facility-arrow {
@@ -2873,7 +2874,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--facility-icon-color);
 }
 
 .accordion-icon svg {
@@ -2882,7 +2883,7 @@ footer {
 }
 
 .accordion-item.required .accordion-icon {
-  color: var(--color-error);
+  color: var(--facility-icon-color);
 }
 
 .accordion-name {
@@ -2896,11 +2897,11 @@ footer {
 
 /* 필수 시설 스타일 */
 .accordion-item.required .accordion-header {
-  background: var(--color-error-bg);
+  background: var(--bg-tertiary);
 }
 
 .accordion-item.required .accordion-name {
-  color: var(--color-error);
+  color: var(--text-primary);
 }
 
 /* 아코디언 배지 */
