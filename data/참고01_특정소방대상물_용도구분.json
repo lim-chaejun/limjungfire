@@ -1,0 +1,342 @@
+{
+  "reference_id": "ref_01",
+  "title": "특정소방대상물 용도 구분",
+  "category": "용도분류",
+  "description": "소방시설법에서 정하는 특정소방대상물의 용도 분류 체계",
+  "building_types": [
+    {
+      "number": 1,
+      "name": "공동주택",
+      "effective_date": "2024-12-01",
+      "note": "연립·다세대 2024.12.1. 시행",
+      "sub_types": [
+        {"name": "아파트등", "definition": "주택으로 쓰이는 층수가 5층 이상인 주택"},
+        {"name": "연립주택", "definition": "바닥면적(지하주차장으로 연결 시 각각의 동) 합계가 660㎡를 초과하고, 층수가 4개 층 이하인 주택"},
+        {"name": "다세대주택", "definition": "바닥면적(지하주차장으로 연결 시 각각의 동) 합계가 660㎡ 이하이고, 층수가 4개 층 이하인 주택"},
+        {"name": "기숙사", "definition": "학교 또는 공장 등의 학생 또는 종업원이 사용(학생복지주택, 공공매입임대주택 포함)"}
+      ]
+    },
+    {
+      "number": 2,
+      "name": "근린생활시설",
+      "sub_types": [
+        {"name": "소매점", "definition": "슈퍼마켓과 일용품 등의 소매점 바닥면적 합계 1,000㎡ 미만"},
+        {"name": "음식점", "definition": "휴게음식점, 제과점, 일반음식점 바닥면적 합계 150㎡ 미만"},
+        {"name": "단란주점", "definition": "바닥면적 합계 150㎡ 미만"},
+        {"name": "노래연습장", "definition": "바닥면적 합계 150㎡ 미만"},
+        {"name": "의원등", "definition": "의원, 치과의원, 한의원, 침술원, 접골원, 조산원(산후조리원), 안마원"},
+        {"name": "체육시설", "definition": "탁구장, 테니스장, 체육도장, 체력단련장, 에어로빅장, 볼링장, 당구장, 실내낚시터, 골프연습장, 물놀이형 시설 바닥면적 합계 500㎡ 미만"},
+        {"name": "공연장등", "definition": "공연장, 비디오물감상실업, 비디오물소극장업, 종교집회장 바닥면적 합계 300㎡ 미만"},
+        {"name": "사무소등", "definition": "금융업소, 사무소, 부동산중개사무소, 결혼상담소 등 소개업소, 출판사, 서점 바닥면적 합계 500㎡ 미만"},
+        {"name": "제조업소", "definition": "제조업소, 수리점 바닥면적 합계 500㎡ 미만"},
+        {"name": "게임제공업", "definition": "게임제공업(청소년,일반), PC방, 복합유통게임제공업 바닥면적 합계 500㎡ 미만"},
+        {"name": "학원등", "definition": "사진관, 표구점, 학원, 독서실, 고시원 바닥면적 합계 500㎡ 미만"},
+        {"name": "판매소", "definition": "의약품 판매소, 의료기기 판매소 및 자동차영업소 바닥면적 합계 1,000㎡ 미만"}
+      ]
+    },
+    {
+      "number": 3,
+      "name": "문화 및 집회시설",
+      "sub_types": [
+        {"name": "공연장", "definition": "근생 제외"},
+        {"name": "집회장", "definition": "근생 제외"},
+        {"name": "관람장", "definition": "운동장은 관람석의 바닥면적 합계가 1,000㎡ 이상"},
+        {"name": "전시장", "definition": "견본주택 포함"},
+        {"name": "동·식물원", "definition": ""}
+      ]
+    },
+    {
+      "number": 4,
+      "name": "종교시설",
+      "sub_types": [
+        {"name": "종교집회장", "definition": "근생 제외"},
+        {"name": "봉안당", "definition": "종교집회장에 설치하는 봉안당"}
+      ]
+    },
+    {
+      "number": 5,
+      "name": "판매시설",
+      "sub_types": [
+        {"name": "도매시장", "definition": ""},
+        {"name": "소매시장", "definition": "시장, 대규모점포"},
+        {"name": "전통시장", "definition": "노점형시장 제외"},
+        {"name": "상점", "definition": "소매점 1,000㎡ 이상, PC방 등 500㎡ 이상"}
+      ]
+    },
+    {
+      "number": 6,
+      "name": "운수시설",
+      "sub_types": [
+        {"name": "여객자동차터미널", "definition": ""},
+        {"name": "철도 및 도시철도 시설", "definition": "정비창 포함"},
+        {"name": "공항시설", "definition": "항공관제탑 포함"},
+        {"name": "항만시설 및 종합여객시설", "definition": ""}
+      ]
+    },
+    {
+      "number": 7,
+      "name": "의료시설",
+      "sub_types": [
+        {"name": "병원", "definition": "종합병원, 병원, 치과병원, 한방병원, 요양병원"},
+        {"name": "격리병원", "definition": "전염병원, 마약진료소"},
+        {"name": "정신의료기관", "definition": ""},
+        {"name": "장애인 의료재활시설", "definition": ""}
+      ]
+    },
+    {
+      "number": 8,
+      "name": "교육연구시설",
+      "sub_types": [
+        {"name": "학교", "definition": "체육관, 급식시설, 합숙소 포함"},
+        {"name": "교육원", "definition": "연수원"},
+        {"name": "직업훈련소", "definition": ""},
+        {"name": "학원", "definition": "근생 제외"},
+        {"name": "연구소", "definition": "시험소, 계량계측소"},
+        {"name": "도서관", "definition": ""}
+      ]
+    },
+    {
+      "number": 9,
+      "name": "노유자시설",
+      "effective_date": "2017-05-29",
+      "sub_types": [
+        {"name": "노인관련시설", "definition": ""},
+        {"name": "아동관련시설", "definition": "병설유치원(2018.6.27)"},
+        {"name": "장애인관련시설", "definition": ""},
+        {"name": "정신질환자관련시설", "definition": "2017.5.29."},
+        {"name": "노숙인관련시설", "definition": ""},
+        {"name": "사회복지시설", "definition": "결핵환자·한센인요양시설 포함"}
+      ]
+    },
+    {
+      "number": 10,
+      "name": "수련시설",
+      "sub_types": [
+        {"name": "생활권 수련시설", "definition": "청소년수련관, 청소년문화의집, 청소년특화시설"},
+        {"name": "자연권 수련시설", "definition": "청소년수련원, 청소년야영장"},
+        {"name": "유스호스텔", "definition": ""}
+      ]
+    },
+    {
+      "number": 11,
+      "name": "운동시설",
+      "sub_types": [
+        {"name": "실내체육시설", "definition": "탁구장, 체육도장, 테니스장, 체력단련장, 에어로빅장, 볼링장, 당구장, 실내낚시터, 골프연습장, 물놀이형 시설 등 500㎡ 이상"},
+        {"name": "체육관", "definition": "관람석이 없거나 관람석의 바닥면적이 1,000㎡ 미만"},
+        {"name": "운동장", "definition": "육상장, 구기장, 볼링장, 수영장, 스케이트장, 롤러스케이트장, 승마장, 사격장, 궁도장, 골프장 등 관람석이 없거나 관람석의 바닥면적이 1,000㎡ 미만"}
+      ]
+    },
+    {
+      "number": 12,
+      "name": "업무시설",
+      "sub_types": [
+        {"name": "공공업무시설", "definition": "근생 제외"},
+        {"name": "일반업무시설", "definition": "근생 제외"},
+        {"name": "공공시설", "definition": "주민자치센터, 경찰서, 지구대, 파출소, 소방서, 119안전센터, 우체국, 보건소, 공공도서관, 국민건강보험공단"},
+        {"name": "마을시설", "definition": "마을회관, 마을공동작업소, 마을공동구판장"},
+        {"name": "기반시설", "definition": "변전소, 양수장, 정수장, 대피소, 공중화장실"}
+      ]
+    },
+    {
+      "number": 13,
+      "name": "숙박시설",
+      "sub_types": [
+        {"name": "일반형 숙박시설", "definition": ""},
+        {"name": "생활형 숙박시설", "definition": ""},
+        {"name": "고시원", "definition": "근생 제외, 500㎡ 이상"}
+      ]
+    },
+    {
+      "number": 14,
+      "name": "위락시설",
+      "sub_types": [
+        {"name": "단란주점", "definition": "근생 제외, 150㎡ 이상"},
+        {"name": "유흥주점", "definition": ""},
+        {"name": "유원시설업", "definition": ""},
+        {"name": "무도장 및 무도학원", "definition": ""},
+        {"name": "카지노영업소", "definition": ""}
+      ]
+    },
+    {
+      "number": 15,
+      "name": "공장",
+      "definition": "물품의 제조·가공 또는 수리에 계속적으로 이용되는 건축물"
+    },
+    {
+      "number": 16,
+      "name": "창고시설",
+      "sub_types": [
+        {"name": "창고", "definition": "냉장·냉동 포함"},
+        {"name": "하역장", "definition": ""},
+        {"name": "물류터미널", "definition": ""},
+        {"name": "집배송시설", "definition": ""}
+      ]
+    },
+    {
+      "number": 17,
+      "name": "위험물 저장 및 처리 시설",
+      "sub_types": [
+        {"name": "위험물 제조소등", "definition": ""},
+        {"name": "가스시설", "definition": "가스 제조시설, 가스 저장시설, 가스 취급시설"}
+      ]
+    },
+    {
+      "number": 18,
+      "name": "항공기 및 자동차 관련 시설",
+      "effective_date": "2018-01-16",
+      "sub_types": [
+        {"name": "항공기 격납고", "definition": ""},
+        {"name": "차고", "definition": ""},
+        {"name": "주차용 건축물", "definition": "철골 조립식 주차시설 및 기계장치에 의한 주차시설 포함"},
+        {"name": "세차장", "definition": ""},
+        {"name": "폐차장", "definition": ""},
+        {"name": "자동차 검사장", "definition": ""},
+        {"name": "자동차 매매장", "definition": ""},
+        {"name": "자동차 정비공장", "definition": ""},
+        {"name": "운전학원·정비학원", "definition": ""},
+        {"name": "차고 및 주기장", "definition": ""},
+        {"name": "건축물 내부 주차장", "definition": "필로티, 지하 포함(단독주택, 50세대 미만인 주택은 제외) 2018.1.16.개정"}
+      ]
+    },
+    {
+      "number": 19,
+      "name": "동물 및 식물 관련 시설",
+      "sub_types": [
+        {"name": "축사", "definition": "부화장 포함"},
+        {"name": "가축시설", "definition": ""},
+        {"name": "도축장", "definition": ""},
+        {"name": "도계장", "definition": ""},
+        {"name": "작물재배사", "definition": ""},
+        {"name": "종묘배양시설", "definition": ""},
+        {"name": "온실", "definition": "화초 및 분재 등"}
+      ]
+    },
+    {
+      "number": 20,
+      "name": "자원순환 관련 시설",
+      "sub_types": [
+        {"name": "하수 등 처리시설", "definition": ""},
+        {"name": "고물상", "definition": ""},
+        {"name": "폐기물재활용시설", "definition": ""},
+        {"name": "폐기물처분시설", "definition": ""},
+        {"name": "폐기물감량화시설", "definition": ""}
+      ]
+    },
+    {
+      "number": 21,
+      "name": "교정 및 군사시설",
+      "sub_types": [
+        {"name": "교정시설", "definition": "보호감호소, 교도소, 구치소 및 그 지소, 보호관찰소, 갱생보호시설, 치료감호시설, 소년원 및 소년분류심사원"},
+        {"name": "출입국 보호시설", "definition": ""},
+        {"name": "경찰서 유치장", "definition": ""},
+        {"name": "국방·군사시설", "definition": ""}
+      ]
+    },
+    {
+      "number": 22,
+      "name": "방송통신시설",
+      "sub_types": [
+        {"name": "방송국", "definition": "제작시설 및 송신·수신·중계시설 포함"},
+        {"name": "전신전화국", "definition": ""},
+        {"name": "촬영소", "definition": ""},
+        {"name": "통신용 시설", "definition": ""},
+        {"name": "데이터센터", "definition": ""}
+      ]
+    },
+    {
+      "number": 23,
+      "name": "발전시설",
+      "sub_types": [
+        {"name": "원자력발전소", "definition": ""},
+        {"name": "화력발전소", "definition": ""},
+        {"name": "수력(조력)발전소", "definition": ""},
+        {"name": "풍력발전소", "definition": ""},
+        {"name": "집단에너지 공급시설", "definition": ""},
+        {"name": "전기저장시설", "definition": "20kWh를 초과하는 리튬·나트륨·레독스플로우 계열의 이차전지를 이용한 전기저장장치 또는 무정전전원공급장치(UPS)의 시설"}
+      ]
+    },
+    {
+      "number": 24,
+      "name": "묘지관련시설",
+      "sub_types": [
+        {"name": "화장시설", "definition": ""},
+        {"name": "봉안당", "definition": "종교집회장 제외"},
+        {"name": "묘지부수건축물", "definition": "묘지와 자연장지에 부수되는 건축물"},
+        {"name": "동물시설", "definition": "동물화장시설, 동물건조장, 동물납골"}
+      ]
+    },
+    {
+      "number": 25,
+      "name": "관광휴게시설",
+      "sub_types": [
+        {"name": "야외음악당", "definition": ""},
+        {"name": "야외극장", "definition": ""},
+        {"name": "어린이회관", "definition": ""},
+        {"name": "관망탑", "definition": ""},
+        {"name": "휴게소", "definition": ""},
+        {"name": "공원·유원지", "definition": ""}
+      ]
+    },
+    {
+      "number": 26,
+      "name": "장례시설",
+      "sub_types": [
+        {"name": "장례식장", "definition": "의료시설의 부수시설 제외"},
+        {"name": "동물 전용의 장례식장", "definition": ""}
+      ]
+    },
+    {
+      "number": 27,
+      "name": "지하상가",
+      "definition": "지하인공구조물로 상점 등 시설이 연속하여 지하도에 면하여 설치된 것과 그 지하도를 합한 것"
+    },
+    {
+      "number": "27-2",
+      "name": "터널",
+      "sub_types": [
+        {"name": "일반터널", "definition": "차량(궤도차량 제외) 등의 통행을 목적으로 지하, 수저 또는 산을 뚫어서 만든 것"},
+        {"name": "방음터널", "definition": ""}
+      ]
+    },
+    {
+      "number": 28,
+      "name": "지하구",
+      "sub_types": [
+        {"name": "전력구", "definition": ""},
+        {"name": "통신구", "definition": ""},
+        {"name": "지하인공구조물", "definition": "폭 1.8m 이상이고 높이가 2m 이상이며 길이가 50m 이상"},
+        {"name": "공동구", "definition": ""}
+      ]
+    },
+    {
+      "number": 29,
+      "name": "국가유산",
+      "sub_types": [
+        {"name": "지정문화유산", "definition": "건축물"},
+        {"name": "천연기념물등", "definition": "건축물"}
+      ]
+    },
+    {
+      "number": 30,
+      "name": "복합건축물",
+      "sub_types": [
+        {"name": "복합건축물(가)", "definition": "하나의 건축물이 제1호부터 제27호까지의 것 중 둘 이상의 용도로 사용(주된 용도의 부수시설, 주택 안에 부대시설 및 복리시설, 대피, 설비, 위생, 주차, 구내식당, 구내운동시설은 제외)"},
+        {"name": "복합건축물(나)", "definition": "하나의 건축물이 근린생활시설, 판매시설, 업무시설, 숙박시설 또는 위락시설의 용도와 주택의 용도로 함께 사용"}
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "title": "별개 특정소방대상물 구분",
+      "content": "내화구조로 된 하나의 특정소방대상물이 개구부 및 연소 확대 우려가 없는 내화구조의 바닥과 벽으로 구획되어 있는 경우(다만, 성능위주설계를 해야 하는 범위를 정할 때에는 하나의 특정소방대상물로 봄)"
+    },
+    {
+      "title": "연결통로 연결 구분",
+      "content": "둘 이상의 대상물이 복도 또는 통로(벽×_6m이하, 벽○_10m이하 인 경우)로 연결시 하나의 대상물로 봄"
+    },
+    {
+      "title": "하나의 건축물 제외조건",
+      "content": "연결통로 또는 지하구 양쪽에 설치(연동형 자동방화셔터, 60분+방화문, 60분 방화문, 자동드렌처설비, 개방형 SP헤드)"
+    }
+  ]
+}
