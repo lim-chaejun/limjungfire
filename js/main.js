@@ -1551,23 +1551,111 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
       </div>
     </div>`;
 
-  // 2. 층별 리스트 (검색결과)
-  html += `<div class="detail-section floor-section-large">`;
+  // 동별 그룹화
+  const dongGroups = {};
+  items.forEach(item => {
+    const dongName = item.dongNm || '본동';
+    if (!dongGroups[dongName]) dongGroups[dongName] = [];
+    dongGroups[dongName].push(item);
+  });
 
-  // 정렬 모드에 따른 렌더링
+  const dongNames = Object.keys(dongGroups);
+  const hasMultipleDongs = dongNames.length > 1;
+
+  // 2. 층별 리스트 (동별 아코디언 또는 단일 동)
+  if (hasMultipleDongs) {
+    // 여러 동이 있으면 아코디언으로 표시
+    html += `<div class="dong-accordion-container">`;
+
+    dongNames.forEach((dongName, index) => {
+      const dongFloors = dongGroups[dongName];
+      const isFirstDong = index === 0;
+      const dongId = `dong-${index}`;
+
+      // 층수 요약 계산
+      const groundFloors = dongFloors.filter(f => f.flrGbCdNm !== '지하');
+      const undergroundFloors = dongFloors.filter(f => f.flrGbCdNm === '지하');
+      const maxGround = groundFloors.length > 0 ? Math.max(...groundFloors.map(f => Number(f.flrNo))) : 0;
+      const minGround = groundFloors.length > 0 ? Math.min(...groundFloors.map(f => Number(f.flrNo))) : 0;
+      const maxUnderground = undergroundFloors.length > 0 ? Math.max(...undergroundFloors.map(f => Number(f.flrNo))) : 0;
+
+      let floorSummary = '';
+      if (maxGround > 0) {
+        floorSummary += `${maxGround}F`;
+        if (minGround !== maxGround) floorSummary += `~${minGround}F`;
+      }
+      if (maxUnderground > 0) {
+        if (floorSummary) floorSummary += ', ';
+        floorSummary += `B${maxUnderground}`;
+        if (undergroundFloors.length > 1) {
+          const minUnderground = Math.min(...undergroundFloors.map(f => Number(f.flrNo)));
+          if (minUnderground !== maxUnderground) floorSummary += `~B${minUnderground}`;
+        }
+      }
+
+      html += `
+        <div class="dong-accordion-item ${isFirstDong ? 'expanded' : ''}" data-dong-id="${dongId}">
+          <div class="dong-accordion-header" onclick="toggleDongAccordion('${dongId}')">
+            <div class="dong-header-info">
+              <span class="dong-name">${dongName}</span>
+              <span class="dong-floor-summary">(${floorSummary || '-'})</span>
+            </div>
+            <svg class="dong-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          <div class="dong-accordion-content">
+            ${renderFloorListByMode(dongFloors, sortMode)}
+          </div>
+        </div>`;
+    });
+
+    html += `</div>`;
+  } else {
+    // 단일 동이면 기존처럼 표시
+    html += `<div class="detail-section floor-section-large">`;
+    html += renderFloorListByMode(items, sortMode);
+    html += `</div>`;
+  }
+
+  // 3. 용도별 면적 합계
+  const usageSummary = {};
+  items.forEach(item => {
+    const use = item.mainPurpsCdNm || '기타';
+    usageSummary[use] = (usageSummary[use] || 0) + (Number(item.area) || 0);
+  });
+
+  html += `<div class="usage-summary">`;
+  Object.entries(usageSummary).forEach(([use, area]) => {
+    html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
+  });
+  html += `</div>`;
+
+  // 4. 적용 소방법령 (최하단)
+  if (pmsDay) {
+    html += renderLawInfoCard(pmsDay);
+  }
+
+  return html;
+}
+
+// 층별 리스트 렌더링 (동별 내부용)
+function renderFloorListByMode(floors, sortMode) {
+  let html = '';
+
   if (sortMode === 'usage') {
     // 용도별 그룹화
     const usageGroups = {};
-    items.forEach(item => {
+    floors.forEach(item => {
       const use = item.mainPurpsCdNm || '기타';
       if (!usageGroups[use]) usageGroups[use] = [];
       usageGroups[use].push(item);
     });
 
-    Object.entries(usageGroups).forEach(([use, floors]) => {
+    Object.entries(usageGroups).forEach(([use, floorList]) => {
       html += `<div class="floor-group-header">${use}</div>`;
       html += `<div class="detail-floor-list">`;
-      floors.sort((a, b) => {
+      floorList.sort((a, b) => {
         const aVal = a.flrGbCdNm === '지하' ? -Number(a.flrNo) : Number(a.flrNo);
         const bVal = b.flrGbCdNm === '지하' ? -Number(b.flrNo) : Number(b.flrNo);
         return bVal - aVal;
@@ -1587,9 +1675,9 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
   } else {
     // 층수 기준 정렬 (지상/지하 분리)
     const isDesc = sortMode === 'floor-desc';
-    const groundFloors = items.filter(f => f.flrGbCdNm !== '지하')
+    const groundFloors = floors.filter(f => f.flrGbCdNm !== '지하')
       .sort((a, b) => isDesc ? Number(b.flrNo) - Number(a.flrNo) : Number(a.flrNo) - Number(b.flrNo));
-    const undergroundFloors = items.filter(f => f.flrGbCdNm === '지하')
+    const undergroundFloors = floors.filter(f => f.flrGbCdNm === '지하')
       .sort((a, b) => isDesc ? Number(a.flrNo) - Number(b.flrNo) : Number(b.flrNo) - Number(a.flrNo));
 
     // 내림차순: 지상 먼저, 오름차순: 지하 먼저
@@ -1617,28 +1705,16 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
     });
   }
 
-  html += `</div>`;
-
-  // 3. 용도별 면적 합계
-  const usageSummary = {};
-  items.forEach(item => {
-    const use = item.mainPurpsCdNm || '기타';
-    usageSummary[use] = (usageSummary[use] || 0) + (Number(item.area) || 0);
-  });
-
-  html += `<div class="usage-summary">`;
-  Object.entries(usageSummary).forEach(([use, area]) => {
-    html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
-  });
-  html += `</div>`;
-
-  // 4. 적용 소방법령 (최하단)
-  if (pmsDay) {
-    html += renderLawInfoCard(pmsDay);
-  }
-
   return html;
 }
+
+// 동별 아코디언 토글 함수
+window.toggleDongAccordion = function(dongId) {
+  const accordionItem = document.querySelector(`.dong-accordion-item[data-dong-id="${dongId}"]`);
+  if (accordionItem) {
+    accordionItem.classList.toggle('expanded');
+  }
+};
 
 // 상세 총괄표제부 카드 렌더링
 function renderDetailGeneralCard(items, permitInfo, titleItems = []) {

@@ -3042,3 +3042,102 @@ footer {
   color: var(--text-disabled);
   font-size: 12px;
 }
+
+/* ==================== 동별 아코디언 스타일 ==================== */
+.dong-accordion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dong-accordion-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.dong-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  user-select: none;
+}
+
+.dong-accordion-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.dong-accordion-header:active {
+  background: var(--bg-primary);
+}
+
+.dong-header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dong-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dong-floor-summary {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.dong-accordion-arrow {
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+/* 아코디언 콘텐츠 - 접힌 상태 */
+.dong-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background: var(--bg-tertiary);
+}
+
+/* 펼친 상태 */
+.dong-accordion-item.expanded .dong-accordion-content {
+  max-height: 2000px;
+  overflow-y: auto;
+  transition: max-height 0.5s ease-in;
+}
+
+.dong-accordion-item.expanded .dong-accordion-arrow {
+  transform: rotate(180deg);
+}
+
+.dong-accordion-item.expanded .dong-accordion-header {
+  border-bottom: 1px solid var(--border-light);
+  background: var(--color-primary-bg);
+}
+
+.dong-accordion-item.expanded .dong-name {
+  color: var(--color-primary);
+}
+
+/* 아코디언 내부 층별 리스트 스타일 조정 */
+.dong-accordion-content .floor-group-header {
+  margin-top: 0;
+  background: var(--bg-secondary);
+}
+
+.dong-accordion-content .floor-group-header:first-child {
+  border-top: none;
+}
+
+.dong-accordion-content .detail-floor-list {
+  max-height: none;
+  padding: 8px;
+}
