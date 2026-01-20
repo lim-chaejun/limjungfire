@@ -3012,31 +3012,31 @@ window.showMapModal = function(address) {
   mapModal.style.display = 'flex';
   mapAddress.textContent = address;
 
-  // 카카오 지도 API 체크
-  if (typeof kakao === 'undefined' || !kakao.maps) {
-    mapContainer.innerHTML = '<div class="map-error">카카오 지도 API를 불러올 수 없습니다.<br>API 키 설정이 필요합니다.</div>';
+  // 네이버 지도 API 체크
+  if (typeof naver === 'undefined' || !naver.maps) {
+    mapContainer.innerHTML = '<div class="map-error">네이버 지도 API를 불러올 수 없습니다.</div>';
     return;
   }
 
-  // 카카오 Geocoder로 주소→좌표 변환
-  const geocoder = new kakao.maps.services.Geocoder();
-  geocoder.addressSearch(address, function(result, status) {
-    if (status === kakao.maps.services.Status.OK) {
-      const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+  // 네이버 Geocoder로 주소→좌표 변환
+  naver.maps.Service.geocode({ query: address }, function(status, response) {
+    if (status === naver.maps.Service.Status.OK && response.v2.addresses.length > 0) {
+      const result = response.v2.addresses[0];
+      const coords = new naver.maps.LatLng(result.y, result.x);
 
-      const map = new kakao.maps.Map(mapContainer, {
+      const map = new naver.maps.Map(mapContainer, {
         center: coords,
-        level: 3
+        zoom: 17
       });
 
-      const marker = new kakao.maps.Marker({
+      const marker = new naver.maps.Marker({
         map: map,
         position: coords
       });
 
       // 인포윈도우로 장소명 표시
-      const infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;font-size:12px;">${address}</div>`
+      const infowindow = new naver.maps.InfoWindow({
+        content: `<div style="padding:10px;font-size:13px;font-weight:500;">${address}</div>`
       });
       infowindow.open(map, marker);
     } else {
