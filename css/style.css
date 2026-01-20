@@ -3147,24 +3147,31 @@ footer {
 /* 수동 검색 링크 */
 .manual-search-link {
   text-align: center;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .manual-search-link a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: inline-block;
   color: var(--text-tertiary);
   font-size: 13px;
-  text-decoration: none;
+  text-decoration: none !important;
+  border-bottom: none !important;
   padding: 8px 16px;
   border-radius: var(--radius-md);
+  background: transparent;
   transition: all var(--transition-fast);
+}
+
+.manual-search-link a:link,
+.manual-search-link a:visited {
+  text-decoration: none !important;
+  color: var(--text-tertiary);
 }
 
 .manual-search-link a:hover {
   color: var(--color-primary);
   background: var(--color-primary-bg);
+  text-decoration: none !important;
 }
 
 /* 수동 입력 모달 */
