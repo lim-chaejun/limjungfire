@@ -150,47 +150,86 @@ function hideSplashScreen() {
   }
 }
 
-// URL 파라미터로 주소 정보 업데이트
-function updateUrlWithAddress(addressData) {
+// URL 파라미터로 주소 정보 업데이트 (currentBuildingData에서 코드 추출)
+function updateUrlWithAddress() {
+  if (!currentBuildingData) return;
+
+  const { generalItems, titleItems } = currentBuildingData;
+  const general = generalItems?.[0] || {};
+  const title = titleItems?.[0] || {};
+
+  // API 응답에서 코드 직접 추출
+  const sigunguCd = general.sigunguCd || title.sigunguCd;
+  const bjdongCd = general.bjdongCd || title.bjdongCd;
+  const bun = general.bun || title.bun;
+  const ji = general.ji || title.ji;
+
+  if (!sigunguCd || !bjdongCd) return;
+
   const params = new URLSearchParams();
-  if (addressData.address) params.set('addr', addressData.address);
-  if (addressData.jibunAddress) params.set('jibun', addressData.jibunAddress);
-  if (addressData.bcode) params.set('bcode', addressData.bcode);
-  if (addressData.buildingName) params.set('bldg', addressData.buildingName);
+  params.set('sigungu', sigunguCd);
+  params.set('bjdong', bjdongCd);
+  if (bun) params.set('bun', bun);
+  if (ji) params.set('ji', ji);
 
   const newUrl = `${window.location.pathname}?${params.toString()}`;
   history.replaceState(null, '', newUrl);
 }
 
-// URL 파라미터에서 주소 정보 읽기
-function getAddressFromUrl() {
+// URL 파라미터에서 코드 정보 읽기 (새 형식: sigungu, bjdong, bun, ji)
+function getCodesFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const addr = params.get('addr');
-  const jibun = params.get('jibun');
-  const bcode = params.get('bcode');
+  const sigunguCd = params.get('sigungu');
+  const bjdongCd = params.get('bjdong');
 
-  if (addr && jibun && bcode) {
+  if (sigunguCd && bjdongCd) {
     return {
-      address: addr,
-      jibunAddress: jibun,
-      roadAddress: addr,
-      bcode: bcode,
-      sigunguCode: bcode.substring(0, 5),
-      bname: '',
-      buildingName: params.get('bldg') || ''
+      sigunguCd,
+      bjdongCd,
+      bun: params.get('bun') || '',
+      ji: params.get('ji') || ''
     };
   }
   return null;
 }
 
-// URL 파라미터 기반 자동 검색
+// URL 파라미터 기반 자동 검색 (새 형식)
 async function searchFromUrl() {
-  const addressFromUrl = getAddressFromUrl();
-  if (addressFromUrl) {
-    selectedAddressData = addressFromUrl;
-    document.getElementById('addressInput').value = addressFromUrl.address;
-    document.getElementById('searchBtn').disabled = false;
-    await window.searchBuilding();
+  const codes = getCodesFromUrl();
+  if (!codes) return;
+
+  showLoading(true);
+
+  try {
+    // jibunInfo 형식으로 변환 (bun, ji는 이미 패딩된 상태로 URL에 저장됨)
+    const jibunInfo = { bun: codes.bun, ji: codes.ji };
+
+    // 4가지 API 동시 호출
+    const [titleResult, floorResult, generalResult, permitResult] = await Promise.all([
+      fetchBrTitleInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo),
+      fetchBrFlrOulnInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo),
+      fetchBrRecapTitleInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo),
+      fetchApBasisOulnInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo)
+    ]);
+
+    displayAllResults(titleResult, floorResult, generalResult, permitResult);
+
+    // 결과에서 주소 정보 추출하여 UI 업데이트
+    const titleItems = extractItems(titleResult);
+    const generalItems = extractItems(generalResult);
+    const firstTitle = titleItems[0] || {};
+    const firstGeneral = generalItems[0] || {};
+    const address = firstGeneral.platPlc || firstTitle.platPlc || '';
+
+    if (address) {
+      document.getElementById('addressInput').value = address;
+      document.getElementById('searchBtn').disabled = false;
+    }
+  } catch (error) {
+    console.error('URL 기반 검색 오류:', error);
+    showError('조회 중 오류가 발생했습니다: ' + error.message);
+  } finally {
+    showLoading(false);
   }
 }
 
@@ -761,7 +800,7 @@ window.searchBuilding = async function() {
     displayAllResults(titleResult, floorResult, generalResult, permitResult);
 
     // URL 업데이트 (공유 링크용)
-    updateUrlWithAddress(selectedAddressData);
+    updateUrlWithAddress();
 
     // 로그인된 사용자면 검색 기록 저장
     if (currentUser) {
@@ -2883,12 +2922,18 @@ window.shareBuilding = async function() {
   const mainPurpose = general.mainPurpsCdNm || title.mainPurpsCdNm || '-';
   const totalArea = general.totArea || title.totArea || '-';
 
-  // URL 파라미터 직접 생성 (공유 링크용)
+  // API 응답에서 코드 직접 추출
+  const sigunguCd = general.sigunguCd || title.sigunguCd;
+  const bjdongCd = general.bjdongCd || title.bjdongCd;
+  const bun = general.bun || title.bun;
+  const ji = general.ji || title.ji;
+
+  // URL 파라미터 생성 (숫자만 사용하여 깔끔한 URL)
   const params = new URLSearchParams();
-  if (selectedAddressData?.address) params.set('addr', selectedAddressData.address);
-  if (selectedAddressData?.jibunAddress) params.set('jibun', selectedAddressData.jibunAddress);
-  if (selectedAddressData?.bcode) params.set('bcode', selectedAddressData.bcode);
-  if (selectedAddressData?.buildingName) params.set('bldg', selectedAddressData.buildingName);
+  if (sigunguCd) params.set('sigungu', sigunguCd);
+  if (bjdongCd) params.set('bjdong', bjdongCd);
+  if (bun) params.set('bun', bun);
+  if (ji) params.set('ji', ji);
 
   const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   const shareText = `[소방용 건축물대장]
