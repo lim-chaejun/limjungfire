@@ -277,6 +277,9 @@
         </svg>
       </button>
     </div>
+    <div class="manual-search-link">
+      <a href="#" onclick="showManualInputModal(); return false;">건축물대장 없이 직접 입력하기</a>
+    </div>
 
     <!-- 로딩 표시 -->
     <div id="loading" class="loading" style="display: none;">
@@ -481,6 +484,94 @@
         </button>
       </div>
       <div class="modal-body" id="facilityDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- 수동 입력 모달 -->
+  <div id="manualInputModal" class="modal" style="display: none;">
+    <div class="modal-content manual-input-modal-content">
+      <div class="modal-header">
+        <h2>직접 입력</h2>
+        <button class="modal-close" onclick="closeManualInputModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="manual-input-desc">건축물대장이 없는 건물의 소방시설 기준을 확인합니다.</p>
+
+        <div class="manual-input-form">
+          <div class="manual-input-group">
+            <label for="manualPermitDate">허가일 (또는 사용승인일)</label>
+            <input type="date" id="manualPermitDate" placeholder="YYYY-MM-DD">
+          </div>
+
+          <div class="manual-input-group">
+            <label for="manualPurpose">용도</label>
+            <select id="manualPurpose">
+              <option value="">선택하세요</option>
+              <optgroup label="근린생활시설">
+                <option value="제1종근린생활시설">제1종근린생활시설</option>
+                <option value="제2종근린생활시설">제2종근린생활시설</option>
+              </optgroup>
+              <optgroup label="주거시설">
+                <option value="단독주택">단독주택</option>
+                <option value="공동주택">공동주택</option>
+                <option value="공동주택(아파트)">공동주택(아파트)</option>
+              </optgroup>
+              <optgroup label="상업시설">
+                <option value="판매시설">판매시설</option>
+                <option value="운수시설">운수시설</option>
+              </optgroup>
+              <optgroup label="업무/숙박">
+                <option value="업무시설">업무시설</option>
+                <option value="숙박시설">숙박시설</option>
+              </optgroup>
+              <optgroup label="문화/집회">
+                <option value="문화및집회시설">문화및집회시설</option>
+                <option value="종교시설">종교시설</option>
+                <option value="위락시설">위락시설</option>
+              </optgroup>
+              <optgroup label="의료/교육">
+                <option value="의료시설">의료시설</option>
+                <option value="교육연구시설">교육연구시설</option>
+                <option value="노유자시설">노유자시설</option>
+              </optgroup>
+              <optgroup label="산업시설">
+                <option value="공장">공장</option>
+                <option value="창고시설">창고시설</option>
+                <option value="위험물저장및처리시설">위험물저장및처리시설</option>
+              </optgroup>
+              <optgroup label="기타">
+                <option value="자동차관련시설">자동차관련시설</option>
+                <option value="운동시설">운동시설</option>
+                <option value="방송통신시설">방송통신시설</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="manual-input-group">
+            <label for="manualArea">연면적 (㎡)</label>
+            <input type="number" id="manualArea" placeholder="예: 1500" min="0" step="0.01">
+          </div>
+
+          <div class="manual-input-row">
+            <div class="manual-input-group">
+              <label for="manualGroundFloors">지상층수</label>
+              <input type="number" id="manualGroundFloors" placeholder="예: 5" min="0" max="200">
+            </div>
+            <div class="manual-input-group">
+              <label for="manualUndergroundFloors">지하층수</label>
+              <input type="number" id="manualUndergroundFloors" placeholder="예: 2" min="0" max="20">
+            </div>
+          </div>
+
+          <button class="btn-manual-submit" onclick="submitManualInput()">
+            소방시설 기준 확인
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

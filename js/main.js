@@ -2993,6 +2993,102 @@ window.closeMapModal = function() {
   document.getElementById('mapContainer').innerHTML = '';
 };
 
+// ==================== 수동 입력 기능 ====================
+
+// 수동 입력 모달 표시
+window.showManualInputModal = function() {
+  document.getElementById('manualInputModal').style.display = 'flex';
+};
+
+// 수동 입력 모달 닫기
+window.closeManualInputModal = function() {
+  document.getElementById('manualInputModal').style.display = 'none';
+};
+
+// 수동 입력 제출
+window.submitManualInput = function() {
+  const permitDateInput = document.getElementById('manualPermitDate').value;
+  const purpose = document.getElementById('manualPurpose').value;
+  const area = parseFloat(document.getElementById('manualArea').value) || 0;
+  const groundFloors = parseInt(document.getElementById('manualGroundFloors').value) || 0;
+  const undergroundFloors = parseInt(document.getElementById('manualUndergroundFloors').value) || 0;
+
+  // 필수 입력 체크
+  if (!purpose) {
+    alert('용도를 선택해주세요.');
+    return;
+  }
+
+  // 허가일 처리 (없으면 오늘 날짜)
+  let permitDate;
+  if (permitDateInput) {
+    permitDate = permitDateInput.replace(/-/g, '');
+  } else {
+    const today = new Date();
+    permitDate = today.getFullYear().toString() +
+      (today.getMonth() + 1).toString().padStart(2, '0') +
+      today.getDate().toString().padStart(2, '0');
+  }
+
+  // 모달 닫기
+  closeManualInputModal();
+
+  // 건물 정보 객체 생성
+  const buildingInfo = {
+    mainPurpsCdNm: purpose,
+    totArea: area,
+    grndFlrCnt: groundFloors,
+    ugrndFlrCnt: undergroundFloors,
+    archPmsDay: permitDate,
+    isManualInput: true
+  };
+
+  // 결과 영역에 표시
+  displayManualResult(buildingInfo, permitDate);
+};
+
+// 수동 입력 결과 표시
+function displayManualResult(buildingInfo, permitDate) {
+  const resultContainer = document.getElementById('result');
+
+  // 요약 카드 HTML
+  let html = `
+    <div class="summary-card">
+      <div class="summary-header">
+        <div class="summary-header-left">
+          <span class="summary-building-name">직접 입력 건물</span>
+          <span class="summary-purpose-badge">${buildingInfo.mainPurpsCdNm}</span>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">허가일</span>
+          <span class="summary-grid-value">${formatPermitDate(permitDate)}</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">연면적</span>
+          <span class="summary-grid-value">${buildingInfo.totArea ? Number(buildingInfo.totArea).toLocaleString() + '㎡' : '-'}</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">지상층수</span>
+          <span class="summary-grid-value">${buildingInfo.grndFlrCnt || '-'}층</span>
+        </div>
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">지하층수</span>
+          <span class="summary-grid-value">${buildingInfo.ugrndFlrCnt || '-'}층</span>
+        </div>
+      </div>
+    </div>`;
+
+  // 소방시설 카드 렌더링
+  html += renderFireFacilitiesCard(buildingInfo);
+
+  resultContainer.innerHTML = html;
+
+  // 헤더 숨기기
+  document.querySelector('header').classList.add('hidden');
+}
+
 // ==================== 공유 기능 ====================
 
 // 건물 정보 공유
