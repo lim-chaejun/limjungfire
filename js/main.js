@@ -58,6 +58,7 @@ window.copyUrl = function() {
 let selectedAddressData = null;
 let currentUser = null;
 let fireFacilitiesData = null;
+let adSettings = null; // 광고 설정
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
 // 테마 관리
@@ -262,6 +263,9 @@ async function searchFromUrl() {
   ]);
 
   if (fb) {
+    // 광고 설정 로드
+    loadAdSettings();
+
     fb.onAuthChange((user) => {
       currentUser = user;
       updateAuthUI(user);
@@ -283,6 +287,48 @@ async function searchFromUrl() {
     }
   }
 })();
+
+// 광고 설정 로드
+async function loadAdSettings() {
+  try {
+    const fb = await loadFirebase();
+    if (fb && fb.getAdSettings) {
+      adSettings = await fb.getAdSettings();
+    }
+  } catch (error) {
+    console.error('광고 설정 로드 실패:', error);
+  }
+}
+
+// 광고 배너 렌더링
+function renderAdBanner() {
+  // 광고 설정이 없거나 비활성화된 경우 기본 배너 표시
+  if (!adSettings || !adSettings.isActive || !adSettings.imageUrl) {
+    return `
+      <div class="ad-banner">
+        <span>광고주님을 찾습니다</span>
+      </div>
+    `;
+  }
+
+  // 광고 이미지가 있는 경우
+  const linkUrl = adSettings.linkUrl || '#';
+  const hasLink = adSettings.linkUrl && adSettings.linkUrl.trim() !== '';
+
+  if (hasLink) {
+    return `
+      <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="ad-banner ad-banner-link">
+        <img src="${adSettings.imageUrl}" alt="광고" class="ad-banner-image" onerror="this.parentElement.innerHTML='<span>광고주님을 찾습니다</span>'">
+      </a>
+    `;
+  } else {
+    return `
+      <div class="ad-banner">
+        <img src="${adSettings.imageUrl}" alt="광고" class="ad-banner-image" onerror="this.innerHTML='<span>광고주님을 찾습니다</span>'">
+      </div>
+    `;
+  }
+}
 
 // 로그인/회원가입 모달 열기
 window.handleGoogleLogin = function() {
@@ -1028,11 +1074,7 @@ function renderBuildingView() {
   `;
 
   // 광고 배너 표시
-  html += `
-    <div class="ad-banner">
-      <span>광고주님을 찾습니다</span>
-    </div>
-  `;
+  html += renderAdBanner();
 
   // 총괄 요약 카드 표시 (총괄표제부 기준)
   html += renderSummaryCard(generalInfo, permitInfo, titleItems);

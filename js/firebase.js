@@ -481,5 +481,48 @@ export async function getShareLink(shortId) {
   }
 }
 
+// ==================== 광고 관리 함수 ====================
+
+// 광고 설정 저장 (admin/manager만 가능)
+export async function saveAdSettings(adData) {
+  const currentRole = await getCurrentUserRole();
+  if (currentRole !== USER_ROLES.ADMIN && currentRole !== USER_ROLES.MANAGER) {
+    console.error('권한이 없습니다.');
+    return false;
+  }
+
+  try {
+    const adRef = doc(db, 'settings', 'advertisement');
+    await setDoc(adRef, {
+      imageUrl: adData.imageUrl || '',
+      linkUrl: adData.linkUrl || '',
+      isActive: adData.isActive !== false,
+      updatedAt: serverTimestamp(),
+      updatedBy: auth.currentUser?.email || ''
+    });
+    console.log('광고 설정 저장 완료');
+    return true;
+  } catch (error) {
+    console.error('광고 설정 저장 실패:', error);
+    throw error;
+  }
+}
+
+// 광고 설정 조회 (누구나 가능)
+export async function getAdSettings() {
+  try {
+    const adRef = doc(db, 'settings', 'advertisement');
+    const adDoc = await getDoc(adRef);
+
+    if (adDoc.exists()) {
+      return adDoc.data();
+    }
+    return null;
+  } catch (error) {
+    console.error('광고 설정 조회 실패:', error);
+    return null;
+  }
+}
+
 // Firestore DB export
 export { db };
