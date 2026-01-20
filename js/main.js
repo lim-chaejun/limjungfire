@@ -3003,17 +3003,82 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 
 // ==================== 지도 기능 ====================
 
-// 네이버 지도에서 주소 검색 (새창)
+let leafletMap = null;
+
+// 지도 모달 표시 (Leaflet + OpenStreetMap)
 window.showMapModal = function(address) {
-  const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(address)}`;
-  window.open(naverMapUrl, '_blank');
+  const mapModal = document.getElementById('mapModal');
+  const mapContainer = document.getElementById('mapContainer');
+  const mapAddress = document.getElementById('mapAddress');
+
+  mapModal.style.display = 'flex';
+  mapAddress.textContent = address;
+
+  // Leaflet 체크
+  if (typeof L === 'undefined') {
+    mapContainer.innerHTML = '<div class="map-error">지도를 불러올 수 없습니다.</div>';
+    return;
+  }
+
+  // 기존 지도 제거
+  if (leafletMap) {
+    leafletMap.remove();
+    leafletMap = null;
+  }
+
+  // 로딩 표시
+  mapContainer.innerHTML = '<div class="map-loading">지도 로딩 중...</div>';
+
+  // Nominatim API로 주소 → 좌표 변환
+  const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=kr&limit=1`;
+
+  fetch(nominatimUrl, {
+    headers: { 'Accept-Language': 'ko' }
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+
+        // 컨테이너 초기화
+        mapContainer.innerHTML = '';
+
+        // Leaflet 지도 생성
+        leafletMap = L.map(mapContainer).setView([lat, lon], 17);
+
+        // OpenStreetMap 타일 레이어
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
+        }).addTo(leafletMap);
+
+        // 마커 추가
+        L.marker([lat, lon])
+          .addTo(leafletMap)
+          .bindPopup(`<b>${address}</b>`)
+          .openPopup();
+
+        // 지도 크기 재조정 (모달 표시 후)
+        setTimeout(() => leafletMap.invalidateSize(), 100);
+      } else {
+        mapContainer.innerHTML = '<div class="map-error">주소를 찾을 수 없습니다.</div>';
+      }
+    })
+    .catch(() => {
+      mapContainer.innerHTML = '<div class="map-error">지도 로딩 중 오류가 발생했습니다.</div>';
+    });
 };
 
-// 지도 모달 닫기 (하위 호환성 유지)
+// 지도 모달 닫기
 window.closeMapModal = function() {
   const mapModal = document.getElementById('mapModal');
   if (mapModal) {
     mapModal.style.display = 'none';
+  }
+  // 지도 제거
+  if (leafletMap) {
+    leafletMap.remove();
+    leafletMap = null;
   }
 };
 
