@@ -435,20 +435,6 @@ async function updateAuthUI(user) {
       if (adminMenuItem) {
         adminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
       }
-
-      // 관리자인 경우 닉네임 클릭 시 관리자 페이지로 이동
-      if (userName) {
-        if (isAdminOrManager) {
-          userName.classList.add('admin-name');
-          userName.onclick = function(e) {
-            e.stopPropagation();
-            window.location.href = '/pages/admin.html';
-          };
-        } else {
-          userName.classList.remove('admin-name');
-          userName.onclick = null;
-        }
-      }
     }
   } else {
     loginBtn.style.display = 'flex';
