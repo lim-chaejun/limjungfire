@@ -19,77 +19,95 @@
   <style>
     .page-header {
       text-align: center;
-      padding: 40px 0 30px;
+      padding: 24px 0 20px;
     }
     .page-header h1 {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--text-primary);
-      margin-bottom: 10px;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
     }
     .page-header p {
       color: var(--text-tertiary);
-      font-size: 15px;
+      font-size: 14px;
     }
+
+    /* Reference Grid */
     .reference-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
       margin-bottom: 24px;
     }
+    @media (max-width: 400px) {
+      .reference-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Reference Card */
     .reference-card {
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 20px;
+      padding: 16px;
       cursor: pointer;
       transition: all var(--transition-normal);
+      box-shadow: var(--shadow-sm);
     }
     .reference-card:hover {
       border-color: var(--color-primary);
       box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
+    }
+    .reference-card:active {
+      transform: scale(0.98);
     }
     .reference-card-icon {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       background: var(--color-primary-bg);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .reference-card-icon svg {
-      width: 24px;
-      height: 24px;
-      color: var(--color-primary);
+      width: 20px;
+      height: 20px;
+      stroke: var(--color-primary);
     }
     .reference-card h3 {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      line-height: 1.4;
     }
     .reference-card p {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.5;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .reference-card-badge {
       display: inline-block;
       background: var(--bg-tertiary);
-      color: var(--text-tertiary);
-      font-size: 11px;
-      font-weight: 500;
-      padding: 4px 8px;
-      border-radius: 12px;
-      margin-top: 12px;
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 10px;
+      margin-top: 10px;
     }
 
-    /* Reference Detail Modal */
+    /* Reference Modal */
     .reference-modal-content {
-      max-width: 600px;
+      max-width: 500px;
       max-height: 90vh;
     }
     .reference-modal-content .modal-body {
@@ -97,30 +115,31 @@
       padding: 0;
     }
     .reference-detail-header {
-      padding: 20px;
+      padding: 16px;
       background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border-light);
     }
     .reference-detail-header h3 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
     .reference-detail-header p {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
       margin: 0;
+      line-height: 1.5;
     }
     .reference-detail-body {
-      padding: 16px;
+      padding: 12px;
     }
 
     /* Building Type List */
     .building-type-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
     .building-type-item {
       background: var(--bg-tertiary);
@@ -130,8 +149,8 @@
     .building-type-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
+      gap: 10px;
+      padding: 10px 12px;
       cursor: pointer;
       transition: background var(--transition-fast);
     }
@@ -139,27 +158,28 @@
       background: var(--color-primary-bg);
     }
     .building-type-number {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--color-primary);
-      min-width: 36px;
+      min-width: 28px;
     }
     .building-type-name {
       flex: 1;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
     }
     .building-type-arrow {
       color: var(--text-tertiary);
       transition: transform var(--transition-fast);
+      flex-shrink: 0;
     }
     .building-type-item.expanded .building-type-arrow {
       transform: rotate(180deg);
     }
     .building-type-content {
       display: none;
-      padding: 0 16px 16px;
+      padding: 0 12px 12px;
     }
     .building-type-item.expanded .building-type-content {
       display: block;
@@ -167,54 +187,54 @@
     .sub-type-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
     .sub-type-item {
       background: var(--bg-secondary);
-      padding: 10px 12px;
+      padding: 8px 10px;
       border-radius: var(--radius-sm);
     }
     .sub-type-name {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .sub-type-definition {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-secondary);
       line-height: 1.5;
     }
 
     /* Facility Category */
     .facility-category {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .facility-category:last-child {
       margin-bottom: 0;
     }
     .facility-category-header {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--color-primary);
-      padding: 12px 0;
+      padding: 10px 0;
       border-bottom: 2px solid var(--color-primary);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .facility-list-item {
       background: var(--bg-tertiary);
       border-radius: var(--radius-md);
-      padding: 14px;
-      margin-bottom: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
     }
     .facility-list-item:last-child {
       margin-bottom: 0;
     }
     .facility-list-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .facility-criteria-list {
       list-style: none;
@@ -222,9 +242,9 @@
       margin: 0;
     }
     .facility-criteria-list li {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-secondary);
-      padding: 4px 0 4px 14px;
+      padding: 3px 0 3px 12px;
       position: relative;
       line-height: 1.5;
     }
@@ -232,66 +252,43 @@
       content: '';
       position: absolute;
       left: 0;
-      top: 10px;
-      width: 5px;
-      height: 5px;
+      top: 9px;
+      width: 4px;
+      height: 4px;
       background: var(--text-tertiary);
       border-radius: 50%;
-    }
-
-    /* Table Style */
-    .ref-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .ref-table th,
-    .ref-table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-light);
-    }
-    .ref-table th {
-      background: var(--bg-tertiary);
-      font-weight: 600;
-      color: var(--text-primary);
-      position: sticky;
-      top: 0;
-    }
-    .ref-table td {
-      color: var(--text-secondary);
-    }
-    .ref-table tbody tr:hover {
-      background: var(--color-primary-bg);
     }
 
     /* Info Box */
     .info-box {
       background: var(--bg-tertiary);
       border-radius: var(--radius-md);
-      padding: 14px;
-      margin-bottom: 16px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
     .info-box-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .info-box-content {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
       line-height: 1.6;
+    }
+    .info-box-content p {
+      margin: 4px 0;
     }
 
     /* Grade Badge */
     .grade-badge {
       display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
       font-weight: 600;
-      margin-right: 8px;
+      margin-right: 6px;
     }
     .grade-badge.special { background: #ff6b6b; color: #fff; }
     .grade-badge.first { background: #f59f00; color: #fff; }
@@ -301,13 +298,13 @@
 
     /* Section Accordion */
     .section-accordion {
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .section-accordion-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px;
+      padding: 12px;
       background: var(--bg-tertiary);
       border-radius: var(--radius-md);
       cursor: pointer;
@@ -317,14 +314,14 @@
       background: var(--color-primary-bg);
     }
     .section-accordion-header h4 {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
       margin: 0;
     }
     .section-accordion-content {
       display: none;
-      padding: 16px;
+      padding: 12px;
       background: var(--bg-secondary);
       border: 1px solid var(--border-light);
       border-top: none;
@@ -339,20 +336,27 @@
     .section-accordion-arrow {
       color: var(--text-tertiary);
       transition: transform var(--transition-fast);
+      flex-shrink: 0;
     }
     .section-accordion.expanded .section-accordion-arrow {
       transform: rotate(180deg);
     }
 
     /* Comparison Table */
+    .comparison-table-wrapper {
+      overflow-x: auto;
+      margin: 0 -12px;
+      padding: 0 12px;
+    }
     .comparison-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 11px;
+      min-width: 400px;
     }
     .comparison-table th,
     .comparison-table td {
-      padding: 8px 10px;
+      padding: 8px 6px;
       text-align: center;
       border: 1px solid var(--border-color);
     }
@@ -360,14 +364,17 @@
       background: var(--bg-tertiary);
       font-weight: 600;
       color: var(--text-primary);
+      white-space: nowrap;
     }
     .comparison-table td {
       color: var(--text-secondary);
+      line-height: 1.4;
     }
     .comparison-table td:first-child {
       text-align: left;
       font-weight: 500;
       color: var(--text-primary);
+      background: var(--bg-tertiary);
     }
 
     /* Loading */
@@ -377,6 +384,19 @@
       justify-content: center;
       padding: 40px;
       color: var(--text-tertiary);
+      font-size: 13px;
+    }
+
+    /* Note Text */
+    .note-text {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+    .exclusion-text {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
     }
   </style>
 </head>
@@ -395,14 +415,13 @@
 
     <div class="page-header">
       <h1>소방 참고자료</h1>
-      <p>소방시설 관련 핵심 규정을 한눈에 확인하세요</p>
+      <p>소방시설 관련 핵심 규정을 한눈에</p>
     </div>
 
     <div class="reference-grid" id="referenceGrid">
-      <!-- 참고자료 카드들이 JavaScript로 렌더링됩니다 -->
       <div class="loading-state">
         <div class="spinner"></div>
-        <span style="margin-left: 12px;">로딩 중...</span>
+        <span style="margin-left: 10px;">로딩 중...</span>
       </div>
     </div>
 
@@ -413,6 +432,8 @@
         <a href="/pages/timeline.html">법령 타임라인</a>
         <span class="footer-divider">·</span>
         <a href="/pages/checklist.html">용도별 체크리스트</a>
+        <span class="footer-divider">·</span>
+        <a href="/pages/reference.html">참고자료</a>
       </div>
       <div class="footer-links" style="margin-top: 8px;">
         <a href="/pages/about.html">서비스 소개</a>
@@ -448,7 +469,7 @@
         id: 'ref_01',
         file: '참고01_특정소방대상물_용도구분.json',
         title: '특정소방대상물 용도구분',
-        description: '소방시설법에서 정하는 30개 특정소방대상물의 용도 분류 체계',
+        description: '소방시설법 30개 특정소방대상물의 용도 분류',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
@@ -459,7 +480,7 @@
         id: 'ref_02',
         file: '참고02_소방시설_종류.json',
         title: '소방시설 종류별 설치기준',
-        description: '소화설비, 경보설비, 피난구조설비 등 소방시설별 설치 대상 기준',
+        description: '소화·경보·피난설비 등 설치 대상 기준',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
         </svg>`,
@@ -468,8 +489,8 @@
       {
         id: 'ref_03',
         file: '참고03_비상전원_설치대상별종류.json',
-        title: '비상전원 설치대상별 종류',
-        description: '소방시설별 비상전원 설치 대상 및 종류, 용량 기준',
+        title: '비상전원 설치기준',
+        description: '소방시설별 비상전원 종류 및 용량',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
         </svg>`,
@@ -479,7 +500,7 @@
         id: 'ref_04',
         file: '참고04_방화구획_관련규정.json',
         title: '방화구획 관련 규정',
-        description: '건축물 피난·방화 규칙에 따른 방화구획 기준 및 예외',
+        description: '피난·방화 규칙에 따른 방화구획 기준',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
           <line x1="12" y1="3" x2="12" y2="21"/>
@@ -491,7 +512,7 @@
         id: 'ref_05',
         file: '참고05_소방안전관리자_규정.json',
         title: '소방안전관리자 규정',
-        description: '소방안전관리자 선임, 자격, 업무 및 등급별 대상물 기준',
+        description: '선임, 자격, 업무 및 등급별 대상물',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
@@ -502,7 +523,7 @@
         id: 'ref_06',
         file: '참고06_고층건축물_기준.json',
         title: '고층건축물 기준',
-        description: '고층 및 초고층 건축물의 화재안전성능기준 및 피난시설 규정',
+        description: '고층·초고층 화재안전성능 및 피난시설',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
           <line x1="9" y1="6" x2="9" y2="6"/>
@@ -519,6 +540,11 @@
 
     // 참고자료 데이터 캐시
     const referenceDataCache = {};
+
+    // 안전한 값 반환 헬퍼 함수
+    function safeValue(value, defaultValue = '') {
+      return value !== undefined && value !== null ? value : defaultValue;
+    }
 
     // 페이지 로드 시 카드 렌더링
     document.addEventListener('DOMContentLoaded', renderReferenceCards);
@@ -546,7 +572,6 @@
       document.getElementById('referenceModal').style.display = 'flex';
 
       try {
-        // 캐시된 데이터가 있으면 사용
         if (!referenceDataCache[refId]) {
           const response = await fetch(`/data/${ref.file}`);
           if (!response.ok) throw new Error('데이터를 불러올 수 없습니다.');
@@ -587,7 +612,7 @@
           renderHighRiseBuilding(body, data);
           break;
         default:
-          body.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+          body.innerHTML = '<pre style="padding:16px;font-size:11px;">' + JSON.stringify(data, null, 2) + '</pre>';
       }
     }
 
@@ -597,8 +622,8 @@
 
       let html = `
         <div class="reference-detail-header">
-          <h3>${data.title}</h3>
-          <p>${data.description}</p>
+          <h3>${safeValue(data.title, '특정소방대상물 용도 구분')}</h3>
+          <p>${safeValue(data.description)}</p>
         </div>
         <div class="reference-detail-body">
           <div class="building-type-list">
@@ -606,13 +631,15 @@
 
       buildingTypes.forEach(type => {
         const hasSubTypes = type.sub_types && type.sub_types.length > 0;
+        const hasDefinition = type.definition && !hasSubTypes;
+
         html += `
-          <div class="building-type-item" onclick="toggleBuildingType(this)">
+          <div class="building-type-item ${hasSubTypes || hasDefinition ? '' : 'no-expand'}" ${hasSubTypes || hasDefinition ? 'onclick="toggleBuildingType(this)"' : ''}>
             <div class="building-type-header">
-              <span class="building-type-number">${type.number}</span>
-              <span class="building-type-name">${type.name}</span>
-              ${hasSubTypes ? `
-                <svg class="building-type-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <span class="building-type-number">${safeValue(type.number)}</span>
+              <span class="building-type-name">${safeValue(type.name)}</span>
+              ${hasSubTypes || hasDefinition ? `
+                <svg class="building-type-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               ` : ''}
@@ -622,17 +649,17 @@
                 <div class="sub-type-list">
                   ${type.sub_types.map(sub => `
                     <div class="sub-type-item">
-                      <div class="sub-type-name">${sub.name}</div>
+                      <div class="sub-type-name">${safeValue(sub.name)}</div>
                       ${sub.definition ? `<div class="sub-type-definition">${sub.definition}</div>` : ''}
                     </div>
                   `).join('')}
                 </div>
               </div>
-            ` : (type.definition ? `
-              <div class="building-type-content" style="display: block;">
+            ` : hasDefinition ? `
+              <div class="building-type-content">
                 <div class="sub-type-definition">${type.definition}</div>
               </div>
-            ` : '')}
+            ` : ''}
           </div>
         `;
       });
@@ -640,12 +667,10 @@
       if (data.notes && data.notes.length > 0) {
         html += `
           </div>
-          <div style="margin-top: 20px;">
-            <div class="info-box">
-              <div class="info-box-title">참고사항</div>
-              <div class="info-box-content">
-                ${data.notes.map(note => `<p><strong>${note.title}:</strong> ${note.content}</p>`).join('')}
-              </div>
+          <div class="info-box" style="margin-top: 12px;">
+            <div class="info-box-title">참고사항</div>
+            <div class="info-box-content">
+              ${data.notes.map(note => `<p><strong>${safeValue(note.title)}:</strong> ${safeValue(note.content)}</p>`).join('')}
             </div>
           </div>
         `;
@@ -665,8 +690,8 @@
 
       let html = `
         <div class="reference-detail-header">
-          <h3>${data.title}</h3>
-          <p>${data.description}</p>
+          <h3>${safeValue(data.title)}</h3>
+          <p>${safeValue(data.description)}</p>
         </div>
         <div class="reference-detail-body">
       `;
@@ -677,18 +702,24 @@
             <div class="facility-category-header">${category}</div>
             ${items.map(item => `
               <div class="facility-list-item">
-                <div class="facility-list-name">${item.name}</div>
-                ${item.exclusion ? `<div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px;">제외: ${item.exclusion}</div>` : ''}
-                ${item.criteria ? `
+                <div class="facility-list-name">${safeValue(item.name)}</div>
+                ${item.exclusion ? `<div class="exclusion-text">제외: ${item.exclusion}</div>` : ''}
+                ${item.criteria && item.criteria.length > 0 ? `
                   <ul class="facility-criteria-list">
                     ${(Array.isArray(item.criteria) ? item.criteria : [item.criteria]).map(c => {
-                      if (typeof c === 'object') {
-                        return `<li>${c.condition || c.type || ''} ${c.target || ''} ${c.effective_date ? `(${c.effective_date} 시행)` : ''}</li>`;
+                      if (typeof c === 'object' && c !== null) {
+                        const parts = [];
+                        if (c.condition) parts.push(c.condition);
+                        if (c.type) parts.push(c.type);
+                        if (c.target) parts.push(c.target);
+                        if (c.effective_date) parts.push(`(${c.effective_date} 시행)`);
+                        return `<li>${parts.join(' ') || '-'}</li>`;
                       }
-                      return `<li>${c}</li>`;
+                      return `<li>${safeValue(c, '-')}</li>`;
                     }).join('')}
                   </ul>
                 ` : ''}
+                ${item.note ? `<div class="note-text">${item.note}</div>` : ''}
               </div>
             `).join('')}
           </div>
@@ -697,10 +728,10 @@
 
       if (data.notes && data.notes.length > 0) {
         html += `
-          <div class="info-box" style="margin-top: 16px;">
+          <div class="info-box">
             <div class="info-box-title">참고사항</div>
             <div class="info-box-content">
-              ${data.notes.map(note => `<p>• ${note}</p>`).join('')}
+              ${data.notes.map(note => `<p>• ${safeValue(note)}</p>`).join('')}
             </div>
           </div>
         `;
@@ -713,18 +744,18 @@
     // 참고03: 비상전원 설치대상별 종류
     function renderEmergencyPower(body, data) {
       const facilities = data.facilities || {};
-      const specialBuildings = data.special_buildings || {};
+      const powerTypes = data.power_types?.비상전원 || [];
 
       let html = `
         <div class="reference-detail-header">
-          <h3>${data.title}</h3>
-          <p>${data.description}</p>
+          <h3>${safeValue(data.title)}</h3>
+          <p>${safeValue(data.description)}</p>
         </div>
         <div class="reference-detail-body">
-          <div class="info-box" style="margin-bottom: 16px;">
+          <div class="info-box">
             <div class="info-box-title">비상전원 종류</div>
             <div class="info-box-content">
-              ${data.power_types.비상전원.map(p => `<span class="grade-badge second">${p.name}</span>`).join('')}
+              ${powerTypes.map(p => `<span class="grade-badge second">${safeValue(p.name)}</span>`).join('')}
             </div>
           </div>
       `;
@@ -734,31 +765,37 @@
           <div class="section-accordion" onclick="toggleSectionAccordion(this)">
             <div class="section-accordion-header">
               <h4>${category}</h4>
-              <svg class="section-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg class="section-accordion-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </div>
             <div class="section-accordion-content">
-              ${items.map(item => `
-                <div class="facility-list-item">
-                  <div class="facility-list-name">${item.name}</div>
-                  ${item.target ? `
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
-                      대상: ${Array.isArray(item.target) ? item.target.join(', ') : item.target}
-                    </div>
-                  ` : ''}
-                  ${item.capacity ? `
-                    <div style="font-size: 12px; color: var(--color-primary); font-weight: 500;">
-                      용량: ${typeof item.capacity === 'object' ? Object.entries(item.capacity).map(([k, v]) => `${k}: ${v}`).join(' / ') : item.capacity}
-                    </div>
-                  ` : ''}
-                  ${item.power_options && item.power_options.length > 0 ? `
-                    <div style="margin-top: 8px;">
-                      ${item.power_options.map(p => `<span class="grade-badge third" style="font-size: 10px; padding: 2px 8px;">${p}</span>`).join('')}
-                    </div>
-                  ` : ''}
-                </div>
-              `).join('')}
+              ${items.map(item => {
+                const targetText = Array.isArray(item.target) ? item.target.join(', ') : safeValue(item.target);
+                let capacityText = '';
+                if (item.capacity) {
+                  if (typeof item.capacity === 'object') {
+                    capacityText = Object.entries(item.capacity).map(([k, v]) => `${k}: ${v}`).join(' / ');
+                  } else {
+                    capacityText = item.capacity;
+                  }
+                }
+                const powerOptions = item.power_options || [];
+
+                return `
+                  <div class="facility-list-item">
+                    <div class="facility-list-name">${safeValue(item.name)}</div>
+                    ${targetText ? `<div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">대상: ${targetText}</div>` : ''}
+                    ${capacityText ? `<div style="font-size: 11px; color: var(--color-primary); font-weight: 500;">용량: ${capacityText}</div>` : ''}
+                    ${powerOptions.length > 0 ? `
+                      <div style="margin-top: 6px;">
+                        ${powerOptions.map(p => `<span class="grade-badge third" style="font-size: 9px; padding: 2px 6px;">${p}</span>`).join('')}
+                      </div>
+                    ` : ''}
+                    ${item.note ? `<div class="note-text">${item.note}</div>` : ''}
+                  </div>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
@@ -774,53 +811,72 @@
 
     // 참고04: 방화구획 관련규정
     function renderFireCompartment(body, data) {
-      html = `
+      const compartmentTypes = data.compartment_types || [];
+      const exemptions = data.exemptions?.items || [];
+
+      let html = `
         <div class="reference-detail-header">
-          <h3>${data.title}</h3>
-          <p>${data.description}</p>
+          <h3>${safeValue(data.title)}</h3>
+          <p>${safeValue(data.description)}</p>
         </div>
         <div class="reference-detail-body">
-          <div class="info-box" style="margin-bottom: 16px;">
+          <div class="info-box">
             <div class="info-box-title">적용 대상</div>
             <div class="info-box-content">
-              <p><strong>법적 근거:</strong> ${data.legal_basis}</p>
-              <p><strong>전제조건:</strong> ${data.precondition}</p>
+              <p><strong>법적 근거:</strong> ${safeValue(data.legal_basis)}</p>
+              <p><strong>전제조건:</strong> ${safeValue(data.precondition)}</p>
             </div>
           </div>
 
           <div class="facility-category">
             <div class="facility-category-header">방화구획 유형</div>
-            ${data.compartment_types.map(type => `
-              <div class="facility-list-item">
-                <div class="facility-list-name">${type.type}별 구획</div>
-                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
-                  ${type.criteria}
-                </div>
-                ${type.sub_types ? `
-                  <ul class="facility-criteria-list" style="margin-top: 8px;">
-                    ${type.sub_types.map(st => `
-                      <li>${st.floors || ''} ${st.criteria || st.area || ''}</li>
-                    `).join('')}
+            ${compartmentTypes.map(type => {
+              let subContent = '';
+              if (type.sub_types && type.sub_types.length > 0) {
+                subContent = `
+                  <ul class="facility-criteria-list" style="margin-top: 6px;">
+                    ${type.sub_types.map(st => {
+                      const parts = [];
+                      if (st.floors) parts.push(st.floors);
+                      if (st.criteria) parts.push(st.criteria);
+                      if (st.area) parts.push(st.area);
+                      if (st.sub_criteria && st.sub_criteria.length > 0) {
+                        st.sub_criteria.forEach(sc => {
+                          parts.push(`${safeValue(sc.finish)}: ${safeValue(sc.area)}`);
+                        });
+                      }
+                      return parts.length > 0 ? `<li>${parts.join(' - ')}</li>` : '';
+                    }).filter(Boolean).join('')}
                   </ul>
-                ` : ''}
-              </div>
-            `).join('')}
+                `;
+              }
+
+              return `
+                <div class="facility-list-item">
+                  <div class="facility-list-name">${safeValue(type.type)}별 구획</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+                    ${safeValue(type.criteria)}
+                  </div>
+                  ${subContent}
+                </div>
+              `;
+            }).join('')}
           </div>
 
-          ${data.exemptions ? `
+          ${exemptions.length > 0 ? `
             <div class="section-accordion" onclick="toggleSectionAccordion(this)">
               <div class="section-accordion-header">
-                <h4>방화구획 적용 제외</h4>
-                <svg class="section-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <h4>방화구획 적용 제외 (${exemptions.length}개)</h4>
+                <svg class="section-accordion-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </div>
               <div class="section-accordion-content">
-                ${data.exemptions.items.map(item => `
+                ${exemptions.map(item => `
                   <div class="facility-list-item">
-                    <div class="facility-list-name">${item.number}. ${item.target}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${item.reason}</div>
-                    ${item.note ? `<div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">${item.note}</div>` : ''}
+                    <div class="facility-list-name">${safeValue(item.number)}. ${safeValue(item.target)}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">${safeValue(item.reason)}</div>
+                    ${item.note ? `<div class="note-text">${item.note}</div>` : ''}
                   </div>
                 `).join('')}
               </div>
@@ -833,26 +889,27 @@
 
     // 참고05: 소방안전관리자 규정
     function renderFireSafetyManager(body, data) {
-      const classification = data.classification || {};
+      const grades = data.classification?.grades || [];
+      const timeline = data.appointment?.timeline || {};
 
       let html = `
         <div class="reference-detail-header">
-          <h3>${data.title}</h3>
-          <p>${data.description}</p>
+          <h3>${safeValue(data.title)}</h3>
+          <p>${safeValue(data.description)}</p>
         </div>
         <div class="reference-detail-body">
-          <div class="info-box" style="margin-bottom: 16px;">
+          <div class="info-box">
             <div class="info-box-title">선임 기한</div>
             <div class="info-box-content">
-              <p><strong>신축:</strong> ${data.appointment.timeline.new_building}</p>
-              <p><strong>기존:</strong> ${data.appointment.timeline.existing_building}</p>
-              <p><strong>신고:</strong> ${data.appointment.timeline.report}</p>
+              <p><strong>신축:</strong> ${safeValue(timeline.new_building)}</p>
+              <p><strong>기존:</strong> ${safeValue(timeline.existing_building)}</p>
+              <p><strong>신고:</strong> ${safeValue(timeline.report)}</p>
             </div>
           </div>
 
           <div class="facility-category">
             <div class="facility-category-header">등급별 선임 대상</div>
-            ${classification.grades.map(grade => {
+            ${grades.map(grade => {
               const badgeClass = {
                 '특급': 'special',
                 '1급': 'first',
@@ -864,43 +921,46 @@
               return `
                 <div class="section-accordion" onclick="toggleSectionAccordion(this)">
                   <div class="section-accordion-header">
-                    <h4><span class="grade-badge ${badgeClass}">${grade.grade}</span> 소방안전관리자</h4>
-                    <svg class="section-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <h4><span class="grade-badge ${badgeClass}">${safeValue(grade.grade)}</span> 소방안전관리자</h4>
+                    <svg class="section-accordion-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="6 9 12 15 18 9"/>
                     </svg>
                   </div>
                   <div class="section-accordion-content">
                     <ul class="facility-criteria-list">
-                      ${grade.targets.map(t => {
-                        if (typeof t === 'object') {
-                          return `<li>${t.target} ${t.additional || ''}</li>`;
+                      ${(grade.targets || []).map(t => {
+                        if (typeof t === 'object' && t !== null) {
+                          const parts = [safeValue(t.target)];
+                          if (t.additional) parts.push(t.additional);
+                          if (t.note) parts.push(`(${t.note})`);
+                          return `<li>${parts.join(' ')}</li>`;
                         }
-                        return `<li>${t}</li>`;
+                        return `<li>${safeValue(t)}</li>`;
                       }).join('')}
                     </ul>
-                    ${grade.exclusions ? `<div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">제외: ${grade.exclusions}</div>` : ''}
+                    ${grade.exclusions ? `<div class="note-text">제외: ${grade.exclusions}</div>` : ''}
                   </div>
                 </div>
               `;
             }).join('')}
           </div>
 
-          <div class="section-accordion" onclick="toggleSectionAccordion(this)">
-            <div class="section-accordion-header">
-              <h4>소방안전관리자 업무</h4>
-              <svg class="section-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </div>
-            <div class="section-accordion-content">
-              <ul class="facility-criteria-list">
-                ${data.duties.items.map(item => `<li>${item}</li>`).join('')}
-              </ul>
-              <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 12px;">
-                ${data.duties.record_keeping}
+          ${data.duties?.items ? `
+            <div class="section-accordion" onclick="toggleSectionAccordion(this)">
+              <div class="section-accordion-header">
+                <h4>소방안전관리자 업무</h4>
+                <svg class="section-accordion-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              <div class="section-accordion-content">
+                <ul class="facility-criteria-list">
+                  ${data.duties.items.map(item => `<li>${safeValue(item)}</li>`).join('')}
+                </ul>
+                ${data.duties.record_keeping ? `<div class="note-text" style="margin-top: 8px;">${data.duties.record_keeping}</div>` : ''}
               </div>
             </div>
-          </div>
+          ` : ''}
         </div>
       `;
       body.innerHTML = html;
@@ -909,61 +969,65 @@
     // 참고06: 고층건축물 기준
     function renderHighRiseBuilding(body, data) {
       const comparisonTable = data.fire_safety_standards?.comparison_table || [];
+      const definitions = data.definitions || {};
+      const specificStandards = data.high_rise_specific_standards || [];
 
       let html = `
         <div class="reference-detail-header">
-          <h3>${data.title}</h3>
-          <p>${data.description}</p>
+          <h3>${safeValue(data.title)}</h3>
+          <p>${safeValue(data.description)}</p>
         </div>
         <div class="reference-detail-body">
-          <div class="info-box" style="margin-bottom: 16px;">
+          <div class="info-box">
             <div class="info-box-title">정의</div>
             <div class="info-box-content">
-              <p><strong>고층건축물:</strong> ${data.definitions.high_rise}</p>
-              <p><strong>초고층건축물:</strong> ${data.definitions.super_high_rise}</p>
+              <p><strong>고층건축물:</strong> ${safeValue(definitions.high_rise)}</p>
+              <p><strong>초고층건축물:</strong> ${safeValue(definitions.super_high_rise)}</p>
             </div>
           </div>
 
-          <div class="facility-category">
-            <div class="facility-category-header">층수별 비교</div>
-            <div style="overflow-x: auto;">
-              <table class="comparison-table">
-                <thead>
-                  <tr>
-                    <th>구분</th>
-                    <th>30층 미만</th>
-                    <th>30층 이상</th>
-                    <th>50층 이상</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${comparisonTable.map(row => `
+          ${comparisonTable.length > 0 ? `
+            <div class="facility-category">
+              <div class="facility-category-header">층수별 비교</div>
+              <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                  <thead>
                     <tr>
-                      <td>${row.category}</td>
-                      <td>${row.under_30floor}</td>
-                      <td>${row['30floor_above']}</td>
-                      <td>${row['50floor_above']}</td>
+                      <th>구분</th>
+                      <th>30층 미만</th>
+                      <th>30층 이상</th>
+                      <th>50층 이상</th>
                     </tr>
-                  `).join('')}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    ${comparisonTable.map(row => `
+                      <tr>
+                        <td>${safeValue(row.category)}</td>
+                        <td>${safeValue(row.under_30floor)}</td>
+                        <td>${safeValue(row['30floor_above'])}</td>
+                        <td>${safeValue(row['50floor_above'])}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          ` : ''}
 
-          ${data.high_rise_specific_standards ? `
-            <div class="section-accordion" onclick="toggleSectionAccordion(this)" style="margin-top: 16px;">
+          ${specificStandards.length > 0 ? `
+            <div class="section-accordion" onclick="toggleSectionAccordion(this)" style="margin-top: 12px;">
               <div class="section-accordion-header">
                 <h4>고층건축물 주요 기준</h4>
-                <svg class="section-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="section-accordion-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </div>
               <div class="section-accordion-content">
-                ${data.high_rise_specific_standards.map(item => `
+                ${specificStandards.map(item => `
                   <div class="facility-list-item">
-                    <div class="facility-list-name">${item.facility}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">${item.standard}</div>
-                    ${item.note ? `<div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">${item.note}</div>` : ''}
+                    <div class="facility-list-name">${safeValue(item.facility)}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">${safeValue(item.standard)}</div>
+                    ${item.note ? `<div class="note-text">${item.note}</div>` : ''}
                   </div>
                 `).join('')}
               </div>
