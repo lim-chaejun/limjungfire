@@ -521,6 +521,10 @@ header h1 {
   height: 18px;
 }
 
+[data-theme="dark"] .btn-history-small svg {
+  stroke: var(--text-secondary);
+}
+
 .btn-history-small:hover svg {
   stroke: var(--color-primary);
 }
