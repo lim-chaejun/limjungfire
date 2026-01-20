@@ -1249,9 +1249,19 @@ window.showTitleModal = function(buildingIndex) {
 
 // 표제부 동 선택 변경
 window.changeTitleBuilding = function(index) {
+  // 스크롤 위치 저장
+  const container = document.getElementById('buildingTabs');
+  const scrollLeft = container ? container.scrollLeft : 0;
+
   currentTitleData.selectedIndex = index;
   const html = renderDetailTitleCard(currentTitleData.items, index, currentTitleData.pmsDay);
   document.getElementById('detailModalBody').innerHTML = html;
+
+  // 스크롤 위치 복원
+  const newContainer = document.getElementById('buildingTabs');
+  if (newContainer) {
+    newContainer.scrollLeft = scrollLeft;
+  }
 };
 
 // 표제부 동 탭 스크롤
