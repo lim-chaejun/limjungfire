@@ -1865,41 +1865,26 @@ footer {
   padding: 20px;
 }
 
-.map-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.map-area {
   flex: 1;
+  min-height: 200px;
   background: var(--bg-tertiary);
+}
+
+.map-detail-link {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  background: var(--color-primary);
+  color: #fff;
   text-decoration: none;
-  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 500;
   transition: all var(--transition-fast);
 }
 
-.map-preview:hover {
-  background: var(--color-primary-bg);
-}
-
-.map-preview-icon {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 12px;
-}
-
-.map-preview-icon svg {
-  width: 100%;
-  height: 100%;
-  stroke: var(--color-primary);
-}
-
-.map-preview-text {
-  font-size: 14px;
-  font-weight: 500;
-  padding: 10px 20px;
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: var(--radius-md);
+.map-detail-link:hover {
+  background: var(--color-primary-dark);
 }
 
 .map-nav-buttons {

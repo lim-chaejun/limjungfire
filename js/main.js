@@ -3003,6 +3003,8 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 
 // ==================== 지도 기능 ====================
 
+let naverMap = null;
+
 // 지도/내비 모달 표시
 window.showMapModal = function(address) {
   const mapModal = document.getElementById('mapModal');
@@ -3015,16 +3017,11 @@ window.showMapModal = function(address) {
   const encodedAddress = encodeURIComponent(address);
   const naverMapUrl = `https://map.naver.com/v5/search/${encodedAddress}`;
 
-  // 지도 미리보기 + 네비앱 버튼
+  // 컨테이너 구성
   mapContainer.innerHTML = `
-    <a href="${naverMapUrl}" target="_blank" class="map-preview">
-      <div class="map-preview-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <circle cx="12" cy="9" r="2.5"/>
-        </svg>
-      </div>
-      <span class="map-preview-text">지도를 자세히 보려면 여기를 눌러주세요</span>
+    <div id="naverMapArea" class="map-area"></div>
+    <a href="${naverMapUrl}" target="_blank" class="map-detail-link">
+      지도를 자세히 보려면 여기를 눌러주세요
     </a>
     <div class="map-nav-buttons">
       <a href="https://map.kakao.com/link/to/${encodedAddress}" target="_blank" class="map-nav-btn kakao">
@@ -3041,6 +3038,39 @@ window.showMapModal = function(address) {
       </a>
     </div>
   `;
+
+  const mapArea = document.getElementById('naverMapArea');
+
+  // 네이버 지도 API 체크
+  if (typeof naver === 'undefined' || !naver.maps || !naver.maps.Service) {
+    mapArea.innerHTML = '<div class="map-error">지도를 불러올 수 없습니다.</div>';
+    return;
+  }
+
+  // 주소 → 좌표 변환
+  naver.maps.Service.geocode({ query: address }, function(status, response) {
+    if (status === naver.maps.Service.Status.OK && response.v2.addresses.length > 0) {
+      const result = response.v2.addresses[0];
+      const lat = parseFloat(result.y);
+      const lon = parseFloat(result.x);
+
+      // 지도 생성
+      naverMap = new naver.maps.Map(mapArea, {
+        center: new naver.maps.LatLng(lat, lon),
+        zoom: 17
+      });
+
+      // 마커 추가
+      new naver.maps.Marker({
+        position: new naver.maps.LatLng(lat, lon),
+        map: naverMap
+      });
+
+      setTimeout(() => naverMap.autoResize(), 100);
+    } else {
+      mapArea.innerHTML = '<div class="map-error">주소를 찾을 수 없습니다.</div>';
+    }
+  });
 };
 
 // 지도 모달 닫기
