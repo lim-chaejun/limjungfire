@@ -150,6 +150,50 @@ function hideSplashScreen() {
   }
 }
 
+// URL 파라미터로 주소 정보 업데이트
+function updateUrlWithAddress(addressData) {
+  const params = new URLSearchParams();
+  if (addressData.address) params.set('addr', addressData.address);
+  if (addressData.jibunAddress) params.set('jibun', addressData.jibunAddress);
+  if (addressData.bcode) params.set('bcode', addressData.bcode);
+  if (addressData.buildingName) params.set('bldg', addressData.buildingName);
+
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  history.replaceState(null, '', newUrl);
+}
+
+// URL 파라미터에서 주소 정보 읽기
+function getAddressFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const addr = params.get('addr');
+  const jibun = params.get('jibun');
+  const bcode = params.get('bcode');
+
+  if (addr && jibun && bcode) {
+    return {
+      address: addr,
+      jibunAddress: jibun,
+      roadAddress: addr,
+      bcode: bcode,
+      sigunguCode: bcode.substring(0, 5),
+      bname: '',
+      buildingName: params.get('bldg') || ''
+    };
+  }
+  return null;
+}
+
+// URL 파라미터 기반 자동 검색
+async function searchFromUrl() {
+  const addressFromUrl = getAddressFromUrl();
+  if (addressFromUrl) {
+    selectedAddressData = addressFromUrl;
+    document.getElementById('addressInput').value = addressFromUrl.address;
+    document.getElementById('searchBtn').disabled = false;
+    await window.searchBuilding();
+  }
+}
+
 // 초기화
 (async function init() {
   // Firebase와 소방시설 데이터 병렬 로드
@@ -164,10 +208,20 @@ function hideSplashScreen() {
       updateAuthUI(user);
       // 인증 상태 확인 후 스플래시 화면 숨기기
       hideSplashScreen();
+      // URL 파라미터가 있으면 자동 검색 (최초 1회만)
+      if (!window.__urlSearched) {
+        window.__urlSearched = true;
+        searchFromUrl();
+      }
     });
   } else {
     // Firebase 로드 실패해도 스플래시 숨기기
     hideSplashScreen();
+    // URL 파라미터 검색
+    if (!window.__urlSearched) {
+      window.__urlSearched = true;
+      searchFromUrl();
+    }
   }
 })();
 
@@ -192,6 +246,8 @@ window.handleLogin = async function() {
   try {
     await fb.signInWithGoogle();
   } catch (error) {
+    // 사용자가 팝업을 닫은 경우 무시
+    if (error.code === 'auth/popup-closed-by-user') return;
     alert('로그인에 실패했습니다: ' + error.message);
   }
 };
@@ -212,6 +268,8 @@ window.handleSignup = async function() {
     }
     alert('회원가입이 완료되었습니다!');
   } catch (error) {
+    // 사용자가 팝업을 닫은 경우 무시
+    if (error.code === 'auth/popup-closed-by-user') return;
     alert('회원가입에 실패했습니다: ' + error.message);
   }
 };
@@ -701,6 +759,9 @@ window.searchBuilding = async function() {
     ]);
 
     displayAllResults(titleResult, floorResult, generalResult, permitResult);
+
+    // URL 업데이트 (공유 링크용)
+    updateUrlWithAddress(selectedAddressData);
 
     // 로그인된 사용자면 검색 기록 저장
     if (currentUser) {
@@ -2822,11 +2883,14 @@ window.shareBuilding = async function() {
   const mainPurpose = general.mainPurpsCdNm || title.mainPurpsCdNm || '-';
   const totalArea = general.totArea || title.totArea || '-';
 
+  const shareUrl = window.location.href;
   const shareText = `[소방용 건축물대장]
 ${buildingName}
 주소: ${address}
 주용도: ${mainPurpose}
-연면적: ${totalArea !== '-' ? Number(totalArea).toLocaleString() + '㎡' : '-'}`;
+연면적: ${totalArea !== '-' ? Number(totalArea).toLocaleString() + '㎡' : '-'}
+
+${shareUrl}`;
 
   try {
     if (navigator.share) {
@@ -2834,12 +2898,12 @@ ${buildingName}
       await navigator.share({
         title: buildingName,
         text: shareText,
-        url: window.location.href
+        url: shareUrl
       });
     } else {
-      // 클립보드 복사
+      // 클립보드 복사 (URL 포함)
       await navigator.clipboard.writeText(shareText);
-      showToast('클립보드에 복사되었습니다.');
+      showToast('링크가 복사되었습니다.');
     }
   } catch (error) {
     console.error('공유 실패:', error);
