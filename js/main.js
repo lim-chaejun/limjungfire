@@ -3041,12 +3041,14 @@ window.submitManualInput = function() {
   // 모달 닫기
   closeManualInputModal();
 
-  // 건물 정보 객체 생성
+  // 건물 정보 객체 생성 (getRequiredFireFacilities 함수가 기대하는 필드명 사용)
   const buildingInfo = {
     mainPurpsCdNm: purpose,
+    mainPurpose: purpose,      // 소방시설 판정용
     totArea: area,
     grndFlrCnt: groundFloors,
     ugrndFlrCnt: undergroundFloors,
+    pmsDay: permitDate,        // 소방시설 판정용
     archPmsDay: permitDate,
     isManualInput: true
   };
