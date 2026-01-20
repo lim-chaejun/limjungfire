@@ -3041,9 +3041,22 @@ window.showMapModal = function(address) {
 
   const mapArea = document.getElementById('naverMapArea');
 
+  // Fallback 표시 함수
+  const showFallback = () => {
+    mapArea.innerHTML = `
+      <a href="${naverMapUrl}" target="_blank" class="map-fallback">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+        <span>지도 보기</span>
+      </a>
+    `;
+  };
+
   // 네이버 지도 API 체크
   if (typeof naver === 'undefined' || !naver.maps || !naver.maps.Service) {
-    mapArea.innerHTML = '<div class="map-error">지도를 불러올 수 없습니다.</div>';
+    showFallback();
     return;
   }
 
@@ -3068,7 +3081,7 @@ window.showMapModal = function(address) {
 
       setTimeout(() => naverMap.autoResize(), 100);
     } else {
-      mapArea.innerHTML = '<div class="map-error">주소를 찾을 수 없습니다.</div>';
+      showFallback();
     }
   });
 };

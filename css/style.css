@@ -1887,6 +1887,35 @@ footer {
   background: var(--color-primary-dark);
 }
 
+.map-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: var(--color-primary);
+  background: var(--bg-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.map-fallback:hover {
+  background: var(--color-primary-bg);
+}
+
+.map-fallback svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  stroke: var(--color-primary);
+}
+
+.map-fallback span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .map-nav-buttons {
   display: flex;
   gap: 8px;
