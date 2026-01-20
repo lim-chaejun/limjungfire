@@ -3013,21 +3013,31 @@ window.showMapModal = function(address) {
   mapAddress.textContent = address;
 
   const encodedAddress = encodeURIComponent(address);
+  const naverMapUrl = `https://map.naver.com/v5/search/${encodedAddress}`;
 
-  // 지도 앱 연결 버튼들
+  // 지도 미리보기 + 네비앱 버튼
   mapContainer.innerHTML = `
+    <a href="${naverMapUrl}" target="_blank" class="map-preview">
+      <div class="map-preview-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+      </div>
+      <span class="map-preview-text">지도를 자세히 보려면 여기를 눌러주세요</span>
+    </a>
     <div class="map-nav-buttons">
-      <a href="https://map.naver.com/v5/search/${encodedAddress}" target="_blank" class="map-nav-btn naver">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/></svg>
-        <span>네이버 지도</span>
+      <a href="https://map.kakao.com/link/to/${encodedAddress}" target="_blank" class="map-nav-btn kakao">
+        <img src="https://t1.daumcdn.net/localimg/localimages/07/2018/pc/common/logo_kakaomap.png" alt="카카오" onerror="this.style.display='none'">
+        <span>카카오내비</span>
       </a>
-      <a href="https://map.kakao.com/?q=${encodedAddress}" target="_blank" class="map-nav-btn kakao">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c5.8 0 10.5 3.66 10.5 8.18 0 4.52-4.7 8.18-10.5 8.18-.92 0-1.81-.08-2.67-.24l-4.45 3.04c-.33.23-.78-.05-.7-.44l.8-4.26C2.56 15.65 1.5 13.54 1.5 11.18 1.5 6.66 6.2 3 12 3z"/></svg>
-        <span>카카오맵</span>
-      </a>
-      <a href="https://apis.openapi.sk.com/tmap/app/routes?appKey=tmap&name=${encodedAddress}&goalname=${encodedAddress}" target="_blank" class="map-nav-btn tmap">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <a href="tmap://route?goalname=${encodedAddress}" class="map-nav-btn tmap">
+        <span class="tmap-icon">T</span>
         <span>티맵</span>
+      </a>
+      <a href="${naverMapUrl}" target="_blank" class="map-nav-btn naver">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/></svg>
+        <span>네이버지도</span>
       </a>
     </div>
   `;

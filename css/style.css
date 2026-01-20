@@ -1865,50 +1865,104 @@ footer {
   padding: 20px;
 }
 
-.map-nav-buttons {
+.map-preview {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  height: 100%;
+  align-items: center;
   justify-content: center;
+  flex: 1;
+  background: var(--bg-tertiary);
+  text-decoration: none;
+  color: var(--color-primary);
+  transition: all var(--transition-fast);
+}
+
+.map-preview:hover {
+  background: var(--color-primary-bg);
+}
+
+.map-preview-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 12px;
+}
+
+.map-preview-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: var(--color-primary);
+}
+
+.map-preview-text {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+}
+
+.map-nav-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
 }
 
 .map-nav-btn {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-radius: var(--radius-lg);
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
   text-decoration: none;
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 600;
-  color: #fff;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   transition: all var(--transition-fast);
 }
 
 .map-nav-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
 }
 
 .map-nav-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
-.map-nav-btn.naver {
-  background: #03C75A;
+.map-nav-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
-.map-nav-btn.kakao {
-  background: #FEE500;
-  color: #000;
+.map-nav-btn.naver svg {
+  fill: #03C75A;
 }
 
-.map-nav-btn.tmap {
+.map-nav-btn.kakao img {
+  filter: none;
+}
+
+.tmap-icon {
+  width: 20px;
+  height: 20px;
   background: #EF4123;
+  color: #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 /* ==================== 요약 카드 액션 버튼 ==================== */
