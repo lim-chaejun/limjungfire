@@ -1924,30 +1924,10 @@ footer {
 }
 
 .map-nav-btn img {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-}
-
-.map-nav-btn.naver svg {
-  fill: #03C75A;
-}
-
-.map-nav-btn.kakao img {
-  filter: none;
-}
-
-.tmap-icon {
-  width: 20px;
-  height: 20px;
-  background: #EF4123;
-  color: #fff;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 6px;
 }
 
 /* ==================== 요약 카드 액션 버튼 ==================== */

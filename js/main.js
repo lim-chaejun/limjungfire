@@ -3024,16 +3024,16 @@ window.showMapModal = function(address) {
       지도를 자세히 보려면 여기를 눌러주세요
     </a>
     <div class="map-nav-buttons">
-      <a href="https://map.kakao.com/link/to/${encodedAddress}" target="_blank" class="map-nav-btn kakao">
-        <img src="https://t1.daumcdn.net/localimg/localimages/07/2018/pc/common/logo_kakaomap.png" alt="카카오" onerror="this.style.display='none'">
+      <a href="https://map.kakao.com/link/to/${encodedAddress}" target="_blank" class="map-nav-btn">
+        <img src="/assets/kakaonavi.png" alt="카카오내비">
         <span>카카오내비</span>
       </a>
-      <a href="tmap://route?goalname=${encodedAddress}" class="map-nav-btn tmap">
-        <span class="tmap-icon">T</span>
+      <a href="tmap://route?goalname=${encodedAddress}" class="map-nav-btn">
+        <img src="/assets/tmap.png" alt="티맵">
         <span>티맵</span>
       </a>
-      <a href="${naverMapUrl}" target="_blank" class="map-nav-btn naver">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/></svg>
+      <a href="${naverMapUrl}" target="_blank" class="map-nav-btn">
+        <img src="/assets/navermap.png" alt="네이버지도">
         <span>네이버지도</span>
       </a>
     </div>
