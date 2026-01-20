@@ -3315,6 +3315,46 @@ footer {
   -moz-appearance: textfield;
 }
 
+/* ==================== 사용자 등급 배지 ==================== */
+.user-role-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.role-free {
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+}
+
+.role-freeBusiness {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.role-paid {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+  color: #664d00;
+}
+
+.role-paidBusiness {
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+  color: #fff;
+}
+
+.role-manager {
+  background: linear-gradient(135deg, #00c471 0%, #00a65a 100%);
+  color: #fff;
+}
+
+.role-admin {
+  background: linear-gradient(135deg, #f04452 0%, #e02d3c 100%);
+  color: #fff;
+}
+
 /* ==================== 광고 배너 ==================== */
 .ad-banner {
   display: flex;

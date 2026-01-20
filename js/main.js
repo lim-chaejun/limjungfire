@@ -345,7 +345,7 @@ window.handleLogout = async function() {
 };
 
 // 인증 UI 업데이트
-function updateAuthUI(user) {
+async function updateAuthUI(user) {
   const authSection = document.getElementById('authSection');
   const loginBtn = document.getElementById('loginBtn');
   const userInfo = document.getElementById('userInfo');
@@ -354,6 +354,8 @@ function updateAuthUI(user) {
   const menuUserPhoto = document.getElementById('menuUserPhoto');
   const menuUserName = document.getElementById('menuUserName');
   const menuUserEmail = document.getElementById('menuUserEmail');
+  const menuUserRole = document.getElementById('menuUserRole');
+  const adminMenuItem = document.getElementById('adminMenuItem');
 
   if (user) {
     loginBtn.style.display = 'none';
@@ -364,10 +366,33 @@ function updateAuthUI(user) {
     if (menuUserPhoto) menuUserPhoto.src = user.photoURL || '';
     if (menuUserName) menuUserName.textContent = user.displayName || '';
     if (menuUserEmail) menuUserEmail.textContent = user.email || '';
+
+    // 사용자 등급 정보 가져오기
+    const fb = await loadFirebase();
+    if (fb && fb.getCurrentUserInfo) {
+      const userInfo = await fb.getCurrentUserInfo();
+      const role = userInfo?.role || 'free';
+      const roleLabel = fb.ROLE_LABELS?.[role] || '무료이용자';
+
+      // 등급 배지 표시
+      if (menuUserRole) {
+        menuUserRole.textContent = roleLabel;
+        menuUserRole.className = 'user-role-badge role-' + role;
+      }
+
+      // 관리자 메뉴 표시/숨김
+      if (adminMenuItem) {
+        const isAdminOrManager = role === 'admin' || role === 'manager';
+        adminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
+      }
+    }
   } else {
     loginBtn.style.display = 'flex';
     userInfo.style.display = 'none';
     closeProfileMenu();
+    // 등급 배지 숨김
+    if (menuUserRole) menuUserRole.textContent = '';
+    if (adminMenuItem) adminMenuItem.style.display = 'none';
   }
   // 인증 상태 확인 완료 - 로그인 영역 표시
   if (authSection) {
@@ -379,6 +404,12 @@ function updateAuthUI(user) {
     historyBtn.style.display = user ? 'inline-flex' : 'none';
   }
 }
+
+// 관리자 페이지로 이동
+window.goToAdminPage = function() {
+  closeProfileMenu();
+  window.location.href = '/pages/admin.html';
+};
 
 // 프로필 메뉴 토글
 window.toggleProfileMenu = function() {
