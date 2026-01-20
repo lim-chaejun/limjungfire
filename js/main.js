@@ -996,39 +996,12 @@ function renderBuildingView() {
     </div>
   `;
 
-  // 여러 건물이 있을 경우 건물 선택 탭 표시 (클릭 시 동별표제부 모달 열기)
-  if (buildingCount > 1) {
-    html += `
-      <div class="building-selector-wrapper">
-        <button class="scroll-btn scroll-left" onclick="scrollBuildingSelector(-1)" aria-label="왼쪽">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-        <div class="building-selector" id="buildingSelector">
-    `;
-    sortedIndices.forEach((originalIndex, sortedIdx) => {
-      const item = titleItems[originalIndex];
-      const buildingName = item.dongNm || item.bldNm || `건물 ${sortedIdx + 1}`;
-      const area = item.totArea ? Number(item.totArea).toLocaleString() : '-';
-      html += `
-          <button class="building-tab" onclick="showTitleModal(${originalIndex})">
-            <span class="tab-name">${buildingName}</span>
-            <span class="tab-area">${area}㎡</span>
-            ${sortedIdx === 0 ? '<span class="tab-badge">메인</span>' : ''}
-          </button>
-      `;
-    });
-    html += `
-        </div>
-        <button class="scroll-btn scroll-right" onclick="scrollBuildingSelector(1)" aria-label="오른쪽">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
-      </div>
-    `;
-  }
+  // 광고 배너 표시
+  html += `
+    <div class="ad-banner">
+      <span>광고주님을 찾습니다</span>
+    </div>
+  `;
 
   // 총괄 요약 카드 표시 (총괄표제부 기준)
   html += renderSummaryCard(generalInfo, permitInfo, titleItems);
