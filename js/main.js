@@ -420,9 +420,10 @@ async function updateAuthUI(user) {
     // 사용자 등급 정보 가져오기
     const fb = await loadFirebase();
     if (fb && fb.getCurrentUserInfo) {
-      const userInfo = await fb.getCurrentUserInfo();
-      const role = userInfo?.role || 'free';
+      const userInfoData = await fb.getCurrentUserInfo();
+      const role = userInfoData?.role || 'free';
       const roleLabel = fb.ROLE_LABELS?.[role] || '무료이용자';
+      const isAdminOrManager = role === 'admin' || role === 'manager';
 
       // 등급 배지 표시
       if (menuUserRole) {
@@ -432,8 +433,21 @@ async function updateAuthUI(user) {
 
       // 관리자 메뉴 표시/숨김
       if (adminMenuItem) {
-        const isAdminOrManager = role === 'admin' || role === 'manager';
         adminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
+      }
+
+      // 관리자인 경우 닉네임 클릭 시 관리자 페이지로 이동
+      if (userName) {
+        if (isAdminOrManager) {
+          userName.classList.add('admin-name');
+          userName.onclick = function(e) {
+            e.stopPropagation();
+            window.location.href = '/pages/admin.html';
+          };
+        } else {
+          userName.classList.remove('admin-name');
+          userName.onclick = null;
+        }
       }
     }
   } else {

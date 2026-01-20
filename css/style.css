@@ -3355,6 +3355,23 @@ footer {
   color: #fff;
 }
 
+/* 관리자 닉네임 스타일 */
+.admin-name {
+  cursor: pointer;
+  position: relative;
+}
+
+.admin-name::after {
+  content: '⚙';
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.admin-name:hover {
+  color: var(--color-primary);
+}
+
 /* ==================== 광고 배너 ==================== */
 .ad-banner {
   display: flex;
