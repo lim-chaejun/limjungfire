@@ -3147,62 +3147,76 @@ footer {
 /* 수동 검색 링크 */
 .manual-search-link {
   text-align: center;
-  margin-top: 12px;
-  margin-bottom: 16px;
+  margin-top: 8px;
 }
 
 .manual-search-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-tertiary);
   font-size: 13px;
   text-decoration: none;
-  transition: color var(--transition-fast);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
 }
 
 .manual-search-link a:hover {
   color: var(--color-primary);
-  text-decoration: underline;
+  background: var(--color-primary-bg);
 }
 
 /* 수동 입력 모달 */
 .manual-input-modal-content {
-  max-width: 400px;
+  max-width: 380px;
   width: 100%;
+}
+
+.manual-input-modal-content .modal-body {
+  padding: 20px;
 }
 
 .manual-input-desc {
   font-size: 13px;
   color: var(--text-tertiary);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   line-height: 1.5;
+  text-align: center;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
 }
 
 .manual-input-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .manual-input-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .manual-input-group label {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
+  padding-left: 2px;
 }
 
 .manual-input-group input,
 .manual-input-group select {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 15px;
   transition: all var(--transition-fast);
+  -webkit-appearance: none;
 }
 
 .manual-input-group input:focus,
@@ -3210,19 +3224,43 @@ footer {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-bg);
+  background: var(--bg-elevated);
 }
 
 .manual-input-group input::placeholder {
   color: var(--text-disabled);
 }
 
+/* 날짜 입력 스타일 개선 */
+.manual-input-group input[type="date"] {
+  color-scheme: dark;
+}
+
+[data-theme="light"] .manual-input-group input[type="date"] {
+  color-scheme: light;
+}
+
+/* 셀렉트 박스 스타일 */
 .manual-input-group select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7684' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238b95a1' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
+  background-position: right 14px center;
+  padding-right: 44px;
+}
+
+.manual-input-group select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 12px;
+}
+
+.manual-input-group select optgroup {
+  font-weight: 700;
+  color: var(--text-tertiary);
 }
 
 .manual-input-row {
@@ -3235,8 +3273,8 @@ footer {
 }
 
 .btn-manual-submit {
-  margin-top: 8px;
-  padding: 14px 20px;
+  margin-top: 12px;
+  padding: 16px 24px;
   background: var(--color-primary);
   color: #fff;
   border: none;
@@ -3245,12 +3283,27 @@ footer {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.3);
 }
 
 .btn-manual-submit:hover {
   background: var(--color-primary-dark);
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.4);
+  transform: translateY(-1px);
 }
 
 .btn-manual-submit:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 4px rgba(49, 130, 246, 0.3);
+}
+
+/* 숫자 입력 스피너 숨기기 */
+.manual-input-group input[type="number"]::-webkit-outer-spin-button,
+.manual-input-group input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.manual-input-group input[type="number"] {
+  -moz-appearance: textfield;
 }

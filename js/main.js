@@ -453,6 +453,10 @@ window.goHome = function() {
 
   // 헤더 다시 표시
   document.getElementById('mainHeader').classList.remove('hidden');
+
+  // 직접 입력 링크 다시 표시
+  const manualLink = document.querySelector('.manual-search-link');
+  if (manualLink) manualLink.style.display = '';
 };
 
 // 검색기록 모달 상태
@@ -962,6 +966,10 @@ function displayAllResults(titleData, floorData, generalData, permitData) {
   // 헤더 숨기기
   const header = document.getElementById('mainHeader');
   if (header) header.classList.add('hidden');
+
+  // 직접 입력 링크 숨기기
+  const manualLink = document.querySelector('.manual-search-link');
+  if (manualLink) manualLink.style.display = 'none';
 
   renderBuildingView();
 }
@@ -3087,6 +3095,10 @@ function displayManualResult(buildingInfo, permitDate) {
 
   // 헤더 숨기기
   document.querySelector('header').classList.add('hidden');
+
+  // 직접 입력 링크 숨기기
+  const manualLink = document.querySelector('.manual-search-link');
+  if (manualLink) manualLink.style.display = 'none';
 }
 
 // ==================== 공유 기능 ====================
