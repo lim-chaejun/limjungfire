@@ -1559,7 +1559,22 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
     dongGroups[dongName].push(item);
   });
 
-  const dongNames = Object.keys(dongGroups);
+  // 동 이름 정렬: 숫자 동(6501동, 6502동...) 먼저, 그 다음 부대시설
+  const dongNames = Object.keys(dongGroups).sort((a, b) => {
+    const aMatch = a.match(/^(\d+)동$/);
+    const bMatch = b.match(/^(\d+)동$/);
+
+    // 둘 다 숫자동이면 숫자 순서로
+    if (aMatch && bMatch) {
+      return Number(aMatch[1]) - Number(bMatch[1]);
+    }
+    // 숫자동이 먼저
+    if (aMatch) return -1;
+    if (bMatch) return 1;
+    // 둘 다 부대시설이면 가나다 순
+    return a.localeCompare(b, 'ko');
+  });
+
   const hasMultipleDongs = dongNames.length > 1;
 
   // 2. 층별 리스트 (동별 아코디언 또는 단일 동)
