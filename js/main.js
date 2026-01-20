@@ -3003,53 +3003,18 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 
 // ==================== 지도 기능 ====================
 
-// 지도 모달 표시
+// 네이버 지도에서 주소 검색 (새창)
 window.showMapModal = function(address) {
-  const mapModal = document.getElementById('mapModal');
-  const mapContainer = document.getElementById('mapContainer');
-  const mapAddress = document.getElementById('mapAddress');
-
-  mapModal.style.display = 'flex';
-  mapAddress.textContent = address;
-
-  // 네이버 지도 API 체크
-  if (typeof naver === 'undefined' || !naver.maps) {
-    mapContainer.innerHTML = '<div class="map-error">네이버 지도 API를 불러올 수 없습니다.</div>';
-    return;
-  }
-
-  // 네이버 Geocoder로 주소→좌표 변환
-  naver.maps.Service.geocode({ query: address }, function(status, response) {
-    if (status === naver.maps.Service.Status.OK && response.v2.addresses.length > 0) {
-      const result = response.v2.addresses[0];
-      const coords = new naver.maps.LatLng(result.y, result.x);
-
-      const map = new naver.maps.Map(mapContainer, {
-        center: coords,
-        zoom: 17
-      });
-
-      const marker = new naver.maps.Marker({
-        map: map,
-        position: coords
-      });
-
-      // 인포윈도우로 장소명 표시
-      const infowindow = new naver.maps.InfoWindow({
-        content: `<div style="padding:10px;font-size:13px;font-weight:500;">${address}</div>`
-      });
-      infowindow.open(map, marker);
-    } else {
-      mapContainer.innerHTML = '<div class="map-error">주소를 찾을 수 없습니다.</div>';
-    }
-  });
+  const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(address)}`;
+  window.open(naverMapUrl, '_blank');
 };
 
-// 지도 모달 닫기
+// 지도 모달 닫기 (하위 호환성 유지)
 window.closeMapModal = function() {
-  document.getElementById('mapModal').style.display = 'none';
-  // 지도 컨테이너 초기화
-  document.getElementById('mapContainer').innerHTML = '';
+  const mapModal = document.getElementById('mapModal');
+  if (mapModal) {
+    mapModal.style.display = 'none';
+  }
 };
 
 // ==================== 수동 입력 기능 ====================
