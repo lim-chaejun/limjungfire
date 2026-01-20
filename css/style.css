@@ -522,7 +522,11 @@ header h1 {
 }
 
 [data-theme="dark"] .btn-history-small svg {
-  stroke: var(--text-primary);
+  stroke: #ffffff;
+}
+
+[data-theme="dark"] .btn-history-small {
+  border-color: var(--text-tertiary);
 }
 
 .btn-history-small:hover svg {

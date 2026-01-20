@@ -111,18 +111,19 @@ async function loadFirebase() {
 // 소방시설 법규 데이터 로드
 async function loadFireFacilitiesData() {
   const files = [
-    '01_공동주택', '02_근린생활시설', '03_문화및집회시설',
-    '04_종교시설', '05_판매시설', '06_운수시설', '07_의료시설',
-    '08_교육연구시설', '09_노유자시설', '10_수련시설', '11_운동시설',
-    '12_업무시설', '13_숙박시설', '14_위락시설', '15_공장',
-    '16_창고시설', '17_위험물저장및처리시설', '18_항공기및자동차관련시설',
-    '19_동물및식물관련시설', '20_자원순환관련시설', '21_교정및군사시설',
-    '22_방송통신시설', '23_발전시설', '24_묘지관련시설', '25_관광휴게시설',
-    '26_장례시설', '27_지하상가터널', '28_지하구', '29_국가유산'
+    '01_residential_complex', '02_neighborhood_facilities', '03_cultural_assembly',
+    '04_religious', '05_retail', '06_transportation', '07_medical',
+    '08_education_research', '09_elderly_childcare', '10_training', '11_sports',
+    '12_office', '13_accommodation', '14_entertainment', '15_factory',
+    '16_warehouse', '17_hazardous_materials', '18_aviation_automotive',
+    '19_animal_plant', '20_resource_recycling', '21_correctional_military',
+    '22_broadcasting', '23_power_generation', '24_cemetery', '25_tourism_leisure',
+    '26_funeral', '27_underground_mall', '28_underground_passage', '29_national_heritage'
   ];
   const data = {};
   try {
-    await Promise.all(files.map(async (file) => {
+    // 순차적으로 로드하여 동시 요청 문제 방지
+    for (const file of files) {
       try {
         const res = await fetch(`/data/${file}.json`);
         if (res.ok) {
@@ -132,7 +133,7 @@ async function loadFireFacilitiesData() {
       } catch (e) {
         console.warn(`소방시설 데이터 로드 실패: ${file}`, e);
       }
-    }));
+    }
     console.log('소방시설 법규 데이터 로드 완료:', Object.keys(data).length, '개');
     return data;
   } catch (error) {
