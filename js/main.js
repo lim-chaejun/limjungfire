@@ -176,9 +176,29 @@ function updateUrlWithAddress() {
   history.replaceState(null, '', newUrl);
 }
 
-// URL 파라미터에서 코드 정보 읽기 (새 형식: sigungu, bjdong, bun, ji)
-function getCodesFromUrl() {
+// URL 파라미터에서 코드 정보 읽기 (새 형식: sigungu, bjdong, bun, ji 또는 s=shortId)
+async function getCodesFromUrl() {
   const params = new URLSearchParams(window.location.search);
+
+  // 짧은 링크 형식 (?s=xxx)
+  const shortId = params.get('s');
+  if (shortId) {
+    const fb = await loadFirebase();
+    if (fb) {
+      const shareData = await fb.getShareLink(shortId);
+      if (shareData) {
+        return {
+          sigunguCd: shareData.sigunguCd,
+          bjdongCd: shareData.bjdongCd,
+          bun: shareData.bun || '',
+          ji: shareData.ji || ''
+        };
+      }
+    }
+    return null;
+  }
+
+  // 기존 형식 (?sigungu=xxx&bjdong=xxx)
   const sigunguCd = params.get('sigungu');
   const bjdongCd = params.get('bjdong');
 
@@ -193,9 +213,9 @@ function getCodesFromUrl() {
   return null;
 }
 
-// URL 파라미터 기반 자동 검색 (새 형식)
+// URL 파라미터 기반 자동 검색
 async function searchFromUrl() {
-  const codes = getCodesFromUrl();
+  const codes = await getCodesFromUrl();
   if (!codes) return;
 
   showLoading(true);
@@ -2928,14 +2948,34 @@ window.shareBuilding = async function() {
   const bun = general.bun || title.bun;
   const ji = general.ji || title.ji;
 
-  // URL 파라미터 생성 (숫자만 사용하여 깔끔한 URL)
-  const params = new URLSearchParams();
-  if (sigunguCd) params.set('sigungu', sigunguCd);
-  if (bjdongCd) params.set('bjdong', bjdongCd);
-  if (bun) params.set('bun', bun);
-  if (ji) params.set('ji', ji);
+  let shareUrl;
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  try {
+    // Firebase에 공유 링크 생성 (짧은 URL)
+    const fb = await loadFirebase();
+    if (fb && sigunguCd && bjdongCd) {
+      const shortId = await fb.createShareLink({ sigunguCd, bjdongCd, bun, ji });
+      shareUrl = `${window.location.origin}${window.location.pathname}?s=${shortId}`;
+    } else {
+      // 폴백: 기존 파라미터 방식
+      const params = new URLSearchParams();
+      if (sigunguCd) params.set('sigungu', sigunguCd);
+      if (bjdongCd) params.set('bjdong', bjdongCd);
+      if (bun) params.set('bun', bun);
+      if (ji) params.set('ji', ji);
+      shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    }
+  } catch (error) {
+    console.error('짧은 링크 생성 실패, 기존 방식 사용:', error);
+    // 폴백: 기존 파라미터 방식
+    const params = new URLSearchParams();
+    if (sigunguCd) params.set('sigungu', sigunguCd);
+    if (bjdongCd) params.set('bjdong', bjdongCd);
+    if (bun) params.set('bun', bun);
+    if (ji) params.set('ji', ji);
+    shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  }
+
   const shareText = `[소방용 건축물대장]
 ${buildingName}
 주소: ${address}

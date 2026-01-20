@@ -6,6 +6,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   doc,
   setDoc,
   deleteDoc,
@@ -282,6 +283,55 @@ export async function updateFavoriteMemo(docId, memo) {
   } catch (error) {
     console.error('메모 업데이트 실패:', error);
     throw error;
+  }
+}
+
+// ==================== 공유 링크 함수 ====================
+
+// 짧은 ID 생성 (6자리)
+function generateShortId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// 공유 링크 생성
+export async function createShareLink(data) {
+  try {
+    const shortId = generateShortId();
+    const shareRef = doc(db, 'shares', shortId);
+
+    await setDoc(shareRef, {
+      sigunguCd: data.sigunguCd,
+      bjdongCd: data.bjdongCd,
+      bun: data.bun || '',
+      ji: data.ji || '',
+      createdAt: serverTimestamp()
+    });
+
+    return shortId;
+  } catch (error) {
+    console.error('공유 링크 생성 실패:', error);
+    throw error;
+  }
+}
+
+// 공유 링크 조회
+export async function getShareLink(shortId) {
+  try {
+    const shareRef = doc(db, 'shares', shortId);
+    const shareDoc = await getDoc(shareRef);
+
+    if (shareDoc.exists()) {
+      return shareDoc.data();
+    }
+    return null;
+  } catch (error) {
+    console.error('공유 링크 조회 실패:', error);
+    return null;
   }
 }
 
