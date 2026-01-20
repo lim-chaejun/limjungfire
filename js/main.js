@@ -3003,9 +3003,7 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 
 // ==================== 지도 기능 ====================
 
-let leafletMap = null;
-
-// 지도 모달 표시 (Leaflet + OpenStreetMap)
+// 지도/내비 모달 표시
 window.showMapModal = function(address) {
   const mapModal = document.getElementById('mapModal');
   const mapContainer = document.getElementById('mapContainer');
@@ -3014,59 +3012,25 @@ window.showMapModal = function(address) {
   mapModal.style.display = 'flex';
   mapAddress.textContent = address;
 
-  // Leaflet 체크
-  if (typeof L === 'undefined') {
-    mapContainer.innerHTML = '<div class="map-error">지도를 불러올 수 없습니다.</div>';
-    return;
-  }
+  const encodedAddress = encodeURIComponent(address);
 
-  // 기존 지도 제거
-  if (leafletMap) {
-    leafletMap.remove();
-    leafletMap = null;
-  }
-
-  // 로딩 표시
-  mapContainer.innerHTML = '<div class="map-loading">지도 로딩 중...</div>';
-
-  // Nominatim API로 주소 → 좌표 변환
-  const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=kr&limit=1`;
-
-  fetch(nominatimUrl, {
-    headers: { 'Accept-Language': 'ko' }
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-
-        // 컨테이너 초기화
-        mapContainer.innerHTML = '';
-
-        // Leaflet 지도 생성
-        leafletMap = L.map(mapContainer).setView([lat, lon], 17);
-
-        // OpenStreetMap 타일 레이어
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap'
-        }).addTo(leafletMap);
-
-        // 마커 추가
-        L.marker([lat, lon])
-          .addTo(leafletMap)
-          .bindPopup(`<b>${address}</b>`)
-          .openPopup();
-
-        // 지도 크기 재조정 (모달 표시 후)
-        setTimeout(() => leafletMap.invalidateSize(), 100);
-      } else {
-        mapContainer.innerHTML = '<div class="map-error">주소를 찾을 수 없습니다.</div>';
-      }
-    })
-    .catch(() => {
-      mapContainer.innerHTML = '<div class="map-error">지도 로딩 중 오류가 발생했습니다.</div>';
-    });
+  // 지도 앱 연결 버튼들
+  mapContainer.innerHTML = `
+    <div class="map-nav-buttons">
+      <a href="https://map.naver.com/v5/search/${encodedAddress}" target="_blank" class="map-nav-btn naver">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/></svg>
+        <span>네이버 지도</span>
+      </a>
+      <a href="https://map.kakao.com/?q=${encodedAddress}" target="_blank" class="map-nav-btn kakao">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c5.8 0 10.5 3.66 10.5 8.18 0 4.52-4.7 8.18-10.5 8.18-.92 0-1.81-.08-2.67-.24l-4.45 3.04c-.33.23-.78-.05-.7-.44l.8-4.26C2.56 15.65 1.5 13.54 1.5 11.18 1.5 6.66 6.2 3 12 3z"/></svg>
+        <span>카카오맵</span>
+      </a>
+      <a href="https://apis.openapi.sk.com/tmap/app/routes?appKey=tmap&name=${encodedAddress}&goalname=${encodedAddress}" target="_blank" class="map-nav-btn tmap">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <span>티맵</span>
+      </a>
+    </div>
+  `;
 };
 
 // 지도 모달 닫기
@@ -3074,11 +3038,6 @@ window.closeMapModal = function() {
   const mapModal = document.getElementById('mapModal');
   if (mapModal) {
     mapModal.style.display = 'none';
-  }
-  // 지도 제거
-  if (leafletMap) {
-    leafletMap.remove();
-    leafletMap = null;
   }
 };
 

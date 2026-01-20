@@ -1865,6 +1865,52 @@ footer {
   padding: 20px;
 }
 
+.map-nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  height: 100%;
+  justify-content: center;
+}
+
+.map-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  transition: all var(--transition-fast);
+}
+
+.map-nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.map-nav-btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.map-nav-btn.naver {
+  background: #03C75A;
+}
+
+.map-nav-btn.kakao {
+  background: #FEE500;
+  color: #000;
+}
+
+.map-nav-btn.tmap {
+  background: #EF4123;
+}
+
 /* ==================== 요약 카드 액션 버튼 ==================== */
 .summary-actions {
   display: flex;
