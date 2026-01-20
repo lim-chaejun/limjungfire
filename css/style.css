@@ -733,17 +733,37 @@ header h1 {
 
 .summary-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 14px 16px;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-light);
+  gap: 12px;
+}
+
+.summary-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .summary-building-name {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.summary-purpose-badge {
+  display: inline-block;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
 }
 
 .summary-purpose {

@@ -998,7 +998,10 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   return `
     <div class="summary-card">
       <div class="summary-header">
-        <div class="summary-building-name">${buildingName}</div>
+        <div class="summary-header-left">
+          <div class="summary-building-name">${buildingName}</div>
+          <span class="summary-purpose-badge">${mainPurpose}</span>
+        </div>
         <div class="summary-actions">
           <button class="action-btn" onclick="showMapModal('${escapedAddress}')" title="지도">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1018,13 +1021,9 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         </div>
       </div>
       <div class="summary-grid">
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">주용도</span>
-          <span class="summary-grid-value">${mainPurpose}</span>
-        </div>
-        <div class="summary-grid-item">
+        <div class="summary-grid-item full-width">
           <span class="summary-grid-label">기타용도</span>
-          <span class="summary-grid-value">${etcPurpose}</span>
+          <span class="summary-grid-value">${etcPurpose || '-'}</span>
         </div>
         <div class="summary-grid-item full-width">
           <span class="summary-grid-label">주소</span>
@@ -1051,16 +1050,16 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
           <span class="summary-grid-value">${households || '-'}</span>
         </div>
         <div class="summary-grid-item">
+          <span class="summary-grid-label">높이</span>
+          <span class="summary-grid-value">${fmtHeight(height)}</span>
+        </div>
+        <div class="summary-grid-item">
           <span class="summary-grid-label">지상층수</span>
           <span class="summary-grid-value">${groundFloors || '-'}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">지하층수</span>
           <span class="summary-grid-value">${undergroundFloors || '-'}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">높이</span>
-          <span class="summary-grid-value">${fmtHeight(height)}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">건축물구조</span>
