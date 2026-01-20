@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://limjungfire.pages.dev/sitemap.xml
+Sitemap: https://sobangcheck.com/sitemap.xml
