@@ -1542,12 +1542,6 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
           </svg>
           낮은층
         </button>
-        <button class="floor-sort-btn ${sortMode === 'usage' ? 'active' : ''}" onclick="changeFloorSortMode('usage')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M3 12h12M3 18h6"/>
-          </svg>
-          용도별
-        </button>
       </div>
     </div>`;
 
@@ -1658,23 +1652,23 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
 function renderFloorListByMode(floors, sortMode) {
   let html = '';
 
-  if (sortMode === 'usage') {
-    // 용도별 그룹화
-    const usageGroups = {};
-    floors.forEach(item => {
-      const use = item.mainPurpsCdNm || '기타';
-      if (!usageGroups[use]) usageGroups[use] = [];
-      usageGroups[use].push(item);
-    });
+  // 층수 기준 정렬 (지상/지하 분리)
+  const isDesc = sortMode === 'floor-desc';
+  const groundFloors = floors.filter(f => f.flrGbCdNm !== '지하')
+    .sort((a, b) => isDesc ? Number(b.flrNo) - Number(a.flrNo) : Number(a.flrNo) - Number(b.flrNo));
+  const undergroundFloors = floors.filter(f => f.flrGbCdNm === '지하')
+    .sort((a, b) => isDesc ? Number(a.flrNo) - Number(b.flrNo) : Number(b.flrNo) - Number(a.flrNo));
 
-    Object.entries(usageGroups).forEach(([use, floorList]) => {
-      html += `<div class="floor-group-header">${use}</div>`;
+  // 내림차순: 지상 먼저, 오름차순: 지하 먼저
+  const sections = isDesc
+    ? [{ name: '지상층', floors: groundFloors }, { name: '지하층', floors: undergroundFloors }]
+    : [{ name: '지하층', floors: undergroundFloors }, { name: '지상층', floors: groundFloors }];
+
+  sections.forEach(section => {
+    if (section.floors.length > 0) {
+      html += `<div class="floor-group-header">${section.name}</div>`;
       html += `<div class="detail-floor-list">`;
-      floorList.sort((a, b) => {
-        const aVal = a.flrGbCdNm === '지하' ? -Number(a.flrNo) : Number(a.flrNo);
-        const bVal = b.flrGbCdNm === '지하' ? -Number(b.flrNo) : Number(b.flrNo);
-        return bVal - aVal;
-      }).forEach(item => {
+      section.floors.forEach(item => {
         const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
         const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
         html += `
@@ -1686,39 +1680,8 @@ function renderFloorListByMode(floors, sortMode) {
           </div>`;
       });
       html += `</div>`;
-    });
-  } else {
-    // 층수 기준 정렬 (지상/지하 분리)
-    const isDesc = sortMode === 'floor-desc';
-    const groundFloors = floors.filter(f => f.flrGbCdNm !== '지하')
-      .sort((a, b) => isDesc ? Number(b.flrNo) - Number(a.flrNo) : Number(a.flrNo) - Number(b.flrNo));
-    const undergroundFloors = floors.filter(f => f.flrGbCdNm === '지하')
-      .sort((a, b) => isDesc ? Number(a.flrNo) - Number(b.flrNo) : Number(b.flrNo) - Number(a.flrNo));
-
-    // 내림차순: 지상 먼저, 오름차순: 지하 먼저
-    const sections = isDesc
-      ? [{ name: '지상층', floors: groundFloors }, { name: '지하층', floors: undergroundFloors }]
-      : [{ name: '지하층', floors: undergroundFloors }, { name: '지상층', floors: groundFloors }];
-
-    sections.forEach(section => {
-      if (section.floors.length > 0) {
-        html += `<div class="floor-group-header">${section.name}</div>`;
-        html += `<div class="detail-floor-list">`;
-        section.floors.forEach(item => {
-          const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
-          const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
-          html += `
-            <div class="detail-floor-item">
-              <span class="floor-num">${floorLabel}</span>
-              <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
-              ${etcPurps}
-              <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
-            </div>`;
-        });
-        html += `</div>`;
-      }
-    });
-  }
+    }
+  });
 
   return html;
 }
