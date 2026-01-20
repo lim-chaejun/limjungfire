@@ -349,7 +349,11 @@ window.handleLogin = async function() {
     return;
   }
   try {
-    await fb.signInWithGoogle();
+    const user = await fb.signInWithGoogle();
+    // Firestore에 사용자 정보 저장 (등급 정보 포함)
+    if (user && fb.saveUserInfo) {
+      await fb.saveUserInfo(user);
+    }
   } catch (error) {
     // 사용자가 팝업을 닫은 경우 무시
     if (error.code === 'auth/popup-closed-by-user') return;

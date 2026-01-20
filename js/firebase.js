@@ -95,7 +95,7 @@ export function getCurrentUser() {
 
 // ==================== Firestore 함수 ====================
 
-// 사용자 정보 저장 (회원가입 시)
+// 사용자 정보 저장 (로그인/회원가입 시)
 export async function saveUserInfo(user) {
   if (!user) return null;
 
@@ -104,26 +104,37 @@ export async function saveUserInfo(user) {
 
     // 기존 사용자 정보 확인
     const existingDoc = await getDoc(userRef);
-    const isNewUser = !existingDoc.exists();
+    const existingData = existingDoc.exists() ? existingDoc.data() : null;
 
-    // 등급 결정: 신규 사용자이고 admin 이메일이면 admin, 아니면 기존 등급 유지 또는 free
-    let role = USER_ROLES.FREE;
-    if (isNewUser) {
-      role = (user.email === ADMIN_EMAIL) ? USER_ROLES.ADMIN : USER_ROLES.FREE;
-    } else if (existingDoc.data()?.role) {
-      role = existingDoc.data().role;
+    // 등급 결정:
+    // 1. 관리자 이메일은 항상 admin 등급 (기존/신규 상관없이)
+    // 2. 기존 사용자는 기존 등급 유지
+    // 3. 신규 사용자는 free 등급
+    let role;
+    if (user.email === ADMIN_EMAIL) {
+      role = USER_ROLES.ADMIN;
+    } else if (existingData?.role) {
+      role = existingData.role;
+    } else {
+      role = USER_ROLES.FREE;
     }
 
-    await setDoc(userRef, {
+    const userData = {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
       role: role,
-      createdAt: serverTimestamp(),
       lastLoginAt: serverTimestamp()
-    }, { merge: true });
-    console.log('사용자 정보 저장 완료');
+    };
+
+    // 신규 사용자인 경우에만 createdAt 추가
+    if (!existingData) {
+      userData.createdAt = serverTimestamp();
+    }
+
+    await setDoc(userRef, userData, { merge: true });
+    console.log('사용자 정보 저장 완료:', user.email, '등급:', role);
     return true;
   } catch (error) {
     console.error('사용자 정보 저장 실패:', error);
