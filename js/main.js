@@ -3241,10 +3241,15 @@ window.showMapModal = function(address) {
   mapContainer.innerHTML = `
     <div id="naverMapArea" class="map-area"></div>
     <a href="${naverMapUrl}" target="_blank" class="map-detail-link">
-      지도를 자세히 보려면 여기를 눌러주세요
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      네이버 지도에서 크게 보기
     </a>
     <div class="map-nav-buttons">
-      <a href="https://map.kakao.com/link/to/${encodedAddress}" target="_blank" class="map-nav-btn">
+      <a href="kakaomap://route?ep=${encodedAddress}&by=CAR" class="map-nav-btn">
         <img src="/assets/kakaonavi.png" alt="카카오내비">
         <span>카카오내비</span>
       </a>
@@ -3252,7 +3257,7 @@ window.showMapModal = function(address) {
         <img src="/assets/tmap.png" alt="티맵">
         <span>티맵</span>
       </a>
-      <a href="${naverMapUrl}" target="_blank" class="map-nav-btn">
+      <a href="nmap://place?query=${encodedAddress}" class="map-nav-btn">
         <img src="/assets/navermap.png" alt="네이버지도">
         <span>네이버지도</span>
       </a>
@@ -3274,13 +3279,8 @@ window.showMapModal = function(address) {
     `;
   };
 
-  // 네이버 지도 API 체크 (디버깅)
-  console.log('naver:', typeof naver);
-  console.log('naver.maps:', typeof naver !== 'undefined' ? naver.maps : 'undefined');
-  console.log('naver.maps.Service:', typeof naver !== 'undefined' && naver.maps ? naver.maps.Service : 'undefined');
-
+  // 네이버 지도 API 체크
   if (typeof naver === 'undefined' || !naver.maps || !naver.maps.Service) {
-    console.log('지도 API 로드 실패 - fallback 표시');
     showFallback();
     return;
   }
