@@ -499,6 +499,7 @@ async function updateAuthUI(user) {
   const menuUserEmail = document.getElementById('menuUserEmail');
   const menuUserRole = document.getElementById('menuUserRole');
   const adminMenuItem = document.getElementById('adminMenuItem');
+  const adAdminMenuItem = document.getElementById('adAdminMenuItem');
 
   if (user) {
     loginBtn.style.display = 'none';
@@ -528,6 +529,9 @@ async function updateAuthUI(user) {
       if (adminMenuItem) {
         adminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
       }
+      if (adAdminMenuItem) {
+        adAdminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
+      }
     }
   } else {
     loginBtn.style.display = 'flex';
@@ -536,6 +540,7 @@ async function updateAuthUI(user) {
     // 등급 배지 숨김
     if (menuUserRole) menuUserRole.textContent = '';
     if (adminMenuItem) adminMenuItem.style.display = 'none';
+    if (adAdminMenuItem) adAdminMenuItem.style.display = 'none';
   }
   // 인증 상태 확인 완료 - 로그인 영역 표시
   if (authSection) {
@@ -552,6 +557,12 @@ async function updateAuthUI(user) {
 window.goToAdminPage = function() {
   closeProfileMenu();
   window.location.href = '/pages/admin.html';
+};
+
+// 광고 관리 페이지로 이동
+window.goToAdAdminPage = function() {
+  closeProfileMenu();
+  window.location.href = '/pages/ad-admin.html';
 };
 
 // 프로필 메뉴 토글

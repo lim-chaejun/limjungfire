@@ -6,7 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-  <title>회원 관리 | 소방체크</title>
+  <title>광고 관리 | 소방체크</title>
   <meta name="robots" content="noindex, nofollow">
 
   <link rel="stylesheet" href="/css/style.css">
@@ -24,112 +24,6 @@
     .page-header p {
       color: var(--text-tertiary);
       font-size: 15px;
-    }
-    .admin-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .stat-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      text-align: center;
-    }
-    .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--color-primary);
-      margin-bottom: 4px;
-    }
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-tertiary);
-    }
-    .user-list {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-    .user-list-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      background: var(--bg-tertiary);
-      border-bottom: 1px solid var(--border-color);
-    }
-    .user-list-header h3 {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0;
-    }
-    .user-count {
-      font-size: 13px;
-      color: var(--text-tertiary);
-    }
-    .user-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border-light);
-      transition: background 0.2s;
-    }
-    .user-item:last-child {
-      border-bottom: none;
-    }
-    .user-item:hover {
-      background: var(--bg-tertiary);
-    }
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-    .user-details {
-      flex: 1;
-      min-width: 0;
-    }
-    .user-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .user-email {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .user-meta {
-      font-size: 11px;
-      color: var(--text-disabled);
-      margin-top: 2px;
-    }
-    .role-select {
-      padding: 8px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      font-size: 13px;
-      cursor: pointer;
-      min-width: 120px;
-    }
-    .role-select:focus {
-      outline: none;
-      border-color: var(--color-primary);
     }
     .loading-state {
       padding: 60px 20px;
@@ -176,11 +70,6 @@
     .btn-back:hover {
       background: var(--color-primary-dark);
     }
-    .empty-state {
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--text-tertiary);
-    }
     .toast {
       position: fixed;
       bottom: 80px;
@@ -205,6 +94,145 @@
       background: var(--color-error);
       color: #fff;
       border-color: var(--color-error);
+    }
+    /* 광고 관리 섹션 */
+    .admin-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .admin-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .admin-section-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .admin-section-header svg {
+      width: 20px;
+      height: 20px;
+      color: var(--color-primary);
+    }
+    .admin-section-body {
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .form-input::placeholder {
+      color: var(--text-disabled);
+    }
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+    }
+    .ad-preview {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+    }
+    .ad-preview-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .ad-preview-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 320px;
+      height: 50px;
+      margin: 0 auto;
+      background: var(--bg-secondary);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .ad-preview-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .ad-preview-placeholder {
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .form-checkbox input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .form-checkbox span {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .btn-save {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 20px;
+    }
+    .btn-save:hover {
+      background: var(--color-primary-dark);
+    }
+    .btn-save:disabled {
+      background: var(--text-disabled);
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -258,14 +286,14 @@
     </div>
 
     <div class="page-header">
-      <h1>회원 관리</h1>
-      <p>사용자 등급을 관리합니다</p>
+      <h1>광고 관리</h1>
+      <p>광고 배너 설정을 관리합니다</p>
     </div>
 
     <!-- 로딩 상태 -->
     <div id="loadingState" class="loading-state">
       <div class="spinner"></div>
-      <p>회원 정보를 불러오는 중...</p>
+      <p>광고 설정을 불러오는 중...</p>
     </div>
 
     <!-- 접근 거부 -->
@@ -281,33 +309,49 @@
 
     <!-- 메인 콘텐츠 -->
     <div id="mainContent" style="display: none;">
-      <!-- 통계 카드 -->
-      <div class="admin-stats">
-        <div class="stat-card">
-          <div id="totalUsers" class="stat-value">0</div>
-          <div class="stat-label">전체 회원</div>
+      <!-- 광고 관리 -->
+      <div class="admin-section">
+        <div class="admin-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+          </svg>
+          <h3>광고 배너 관리</h3>
         </div>
-        <div class="stat-card">
-          <div id="paidUsers" class="stat-value">0</div>
-          <div class="stat-label">유료 회원</div>
-        </div>
-        <div class="stat-card">
-          <div id="adminUsers" class="stat-value">0</div>
-          <div class="stat-label">관리자</div>
+        <div class="admin-section-body">
+          <div class="form-group">
+            <label class="form-label">광고 이미지 URL</label>
+            <input type="url" id="adImageUrl" class="form-input" placeholder="https://example.com/ad-image.png" oninput="updateAdPreview()">
+            <p class="form-hint">권장 사이즈: 320x50px (모바일 배너)</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">클릭 시 이동 URL</label>
+            <input type="url" id="adLinkUrl" class="form-input" placeholder="https://example.com">
+            <p class="form-hint">광고 클릭 시 이동할 주소 (비워두면 클릭 불가)</p>
+          </div>
+          <div class="form-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="adIsActive" checked>
+              <span>광고 활성화</span>
+            </label>
+          </div>
+          <div class="ad-preview">
+            <div class="ad-preview-label">미리보기</div>
+            <div id="adPreviewBanner" class="ad-preview-banner">
+              <span class="ad-preview-placeholder">광고주님을 찾습니다</span>
+            </div>
+          </div>
+          <button class="btn-save" onclick="saveAdSettings()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            광고 설정 저장
+          </button>
         </div>
       </div>
-
-      <!-- 회원 목록 -->
-      <div class="user-list">
-        <div class="user-list-header">
-          <h3>회원 목록</h3>
-          <span id="userCount" class="user-count"></span>
-        </div>
-        <div id="userListContainer">
-          <div class="empty-state">회원 정보가 없습니다.</div>
-        </div>
-      </div>
-
     </div>
 
     <footer>
@@ -322,14 +366,11 @@
       signInWithGoogle,
       logout,
       isManager,
-      getAllUsers,
-      updateUserRole,
-      USER_ROLES,
-      ROLE_LABELS
+      getAdSettings,
+      saveAdSettings as saveAdSettingsToDb
     } from '/js/firebase.js';
 
-    let currentUserRole = null;
-    let allUsers = [];
+    let currentAdSettings = null;
 
     // 페이지 초기화
     onAuthChange(async (user) => {
@@ -347,94 +388,27 @@
         return;
       }
 
-      // 회원 목록 로드
-      await loadUsers();
+      // 광고 설정 로드
+      await loadAdSettings();
     });
 
-    // 회원 목록 로드
-    async function loadUsers() {
+    // 광고 설정 로드
+    async function loadAdSettings() {
       try {
-        allUsers = await getAllUsers();
-        renderStats();
-        renderUserList();
+        currentAdSettings = await getAdSettings();
+        if (currentAdSettings) {
+          document.getElementById('adImageUrl').value = currentAdSettings.imageUrl || '';
+          document.getElementById('adLinkUrl').value = currentAdSettings.linkUrl || '';
+          document.getElementById('adIsActive').checked = currentAdSettings.isActive !== false;
+          updateAdPreview();
+        }
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
       } catch (error) {
-        console.error('회원 목록 로드 실패:', error);
-        showToast('회원 목록을 불러오는데 실패했습니다.', 'error');
+        console.error('광고 설정 로드 실패:', error);
+        showToast('광고 설정을 불러오는데 실패했습니다.', 'error');
       }
     }
-
-    // 통계 렌더링
-    function renderStats() {
-      const total = allUsers.length;
-      const paid = allUsers.filter(u => u.role === 'paid' || u.role === 'paidBusiness').length;
-      const admin = allUsers.filter(u => u.role === 'admin' || u.role === 'manager').length;
-
-      document.getElementById('totalUsers').textContent = total;
-      document.getElementById('paidUsers').textContent = paid;
-      document.getElementById('adminUsers').textContent = admin;
-    }
-
-    // 회원 목록 렌더링
-    function renderUserList() {
-      const container = document.getElementById('userListContainer');
-      const countEl = document.getElementById('userCount');
-
-      if (allUsers.length === 0) {
-        container.innerHTML = '<div class="empty-state">등록된 회원이 없습니다.</div>';
-        countEl.textContent = '';
-        return;
-      }
-
-      countEl.textContent = `${allUsers.length}명`;
-
-      const html = allUsers.map(user => {
-        const roleLabel = ROLE_LABELS[user.role] || '무료이용자';
-        const createdAt = user.createdAt?.toDate?.() || new Date();
-        const dateStr = createdAt.toLocaleDateString('ko-KR');
-
-        return `
-          <div class="user-item" data-uid="${user.uid}">
-            <img class="user-avatar" src="${user.photoURL || '/assets/default-avatar.png'}" alt="프로필" onerror="this.src='/assets/favicon.svg'">
-            <div class="user-details">
-              <div class="user-name">${user.displayName || '이름 없음'}</div>
-              <div class="user-email">${user.email || '-'}</div>
-              <div class="user-meta">가입일: ${dateStr}</div>
-            </div>
-            <select class="role-select" onchange="handleRoleChange('${user.uid}', this.value)">
-              ${Object.entries(ROLE_LABELS).map(([key, label]) => `
-                <option value="${key}" ${user.role === key ? 'selected' : ''}>${label}</option>
-              `).join('')}
-            </select>
-          </div>
-        `;
-      }).join('');
-
-      container.innerHTML = html;
-    }
-
-    // 등급 변경 처리
-    window.handleRoleChange = async function(uid, newRole) {
-      try {
-        const success = await updateUserRole(uid, newRole);
-        if (success) {
-          // 로컬 데이터 업데이트
-          const user = allUsers.find(u => u.uid === uid);
-          if (user) user.role = newRole;
-          renderStats();
-          showToast('등급이 변경되었습니다.', 'success');
-        } else {
-          showToast('등급 변경 권한이 없습니다.', 'error');
-          // 셀렉트 원복
-          await loadUsers();
-        }
-      } catch (error) {
-        console.error('등급 변경 실패:', error);
-        showToast('등급 변경에 실패했습니다.', 'error');
-        await loadUsers();
-      }
-    };
 
     // 접근 거부 표시
     function showAccessDenied() {
@@ -514,6 +488,42 @@
         window.location.href = '/';
       } catch (error) {
         alert('로그아웃에 실패했습니다: ' + error.message);
+      }
+    };
+
+    // 광고 미리보기 업데이트
+    window.updateAdPreview = function() {
+      const imageUrl = document.getElementById('adImageUrl').value.trim();
+      const previewBanner = document.getElementById('adPreviewBanner');
+
+      if (imageUrl) {
+        previewBanner.innerHTML = `<img src="${imageUrl}" alt="광고 미리보기" onerror="this.parentElement.innerHTML='<span class=\\'ad-preview-placeholder\\'>이미지를 불러올 수 없습니다</span>'">`;
+      } else {
+        previewBanner.innerHTML = '<span class="ad-preview-placeholder">광고주님을 찾습니다</span>';
+      }
+    };
+
+    // 광고 설정 저장
+    window.saveAdSettings = async function() {
+      const imageUrl = document.getElementById('adImageUrl').value.trim();
+      const linkUrl = document.getElementById('adLinkUrl').value.trim();
+      const isActive = document.getElementById('adIsActive').checked;
+
+      try {
+        const success = await saveAdSettingsToDb({
+          imageUrl,
+          linkUrl,
+          isActive
+        });
+
+        if (success) {
+          showToast('광고 설정이 저장되었습니다.', 'success');
+        } else {
+          showToast('광고 설정 저장 권한이 없습니다.', 'error');
+        }
+      } catch (error) {
+        console.error('광고 설정 저장 실패:', error);
+        showToast('광고 설정 저장에 실패했습니다.', 'error');
       }
     };
   </script>
