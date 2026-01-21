@@ -128,43 +128,24 @@ initTheme();
 
 // 광고 차단 감지
 async function detectAdBlock() {
-  // 방법 1: 여러 광고 관련 클래스명으로 테스트
-  const testClasses = ['adsbox', 'ad-banner', 'ad-placeholder', 'adsbygoogle'];
-  let blocked = false;
+  // 광고 차단기가 숨기는 전형적인 요소 테스트
+  const testAd = document.createElement('div');
+  testAd.innerHTML = '&nbsp;';
+  testAd.className = 'adsbox ad-test';
+  testAd.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;background:transparent;';
+  document.body.appendChild(testAd);
 
-  for (const className of testClasses) {
-    const testAd = document.createElement('div');
-    testAd.className = className;
-    testAd.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
-    testAd.innerHTML = '&nbsp;';
-    document.body.appendChild(testAd);
+  // 광고 차단기가 요소를 처리할 시간을 줌
+  await new Promise(r => setTimeout(r, 100));
 
-    await new Promise(r => setTimeout(r, 100));
-    if (testAd.offsetHeight === 0 || testAd.clientHeight === 0 ||
-        window.getComputedStyle(testAd).display === 'none') {
-      blocked = true;
-    }
-    testAd.remove();
-    if (blocked) break;
-  }
+  // 요소가 숨겨졌는지 확인
+  const style = window.getComputedStyle(testAd);
+  const blocked = testAd.offsetHeight === 0 ||
+                  testAd.offsetParent === null ||
+                  style.display === 'none' ||
+                  style.visibility === 'hidden';
 
-  // 방법 2: Google AdSense 스크립트 로드 테스트
-  if (!blocked) {
-    try {
-      await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
-        method: 'HEAD',
-        mode: 'no-cors'
-      });
-      // 요청은 성공해도 adsbygoogle 객체가 없으면 차단된 것
-      await new Promise(r => setTimeout(r, 200));
-      if (typeof window.adsbygoogle === 'undefined') {
-        blocked = true;
-      }
-    } catch (e) {
-      blocked = true;
-    }
-  }
-
+  testAd.remove();
   return blocked;
 }
 
@@ -176,6 +157,15 @@ function showAdBlockModal() {
     document.body.style.overflow = 'hidden';
   }
 }
+
+// 광고 차단 모달 닫기
+window.closeAdBlockModal = function() {
+  const modal = document.getElementById('adBlockModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+};
 
 // Firebase 함수들 (동적 로드)
 let firebaseModule = null;
@@ -356,12 +346,10 @@ async function searchFromUrl() {
 
 // 초기화
 (async function init() {
-  // 광고 차단 감지
+  // 광고 차단 감지 (차단해도 계속 진행, 안내만 표시)
   const adBlockDetected = await detectAdBlock();
   if (adBlockDetected) {
     showAdBlockModal();
-    hideSplashScreen();
-    return; // 광고 차단 시 초기화 중단
   }
 
   // Firebase만 초기화 (소방시설/면제기준 데이터는 필요할 때 지연 로드)

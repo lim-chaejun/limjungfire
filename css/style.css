@@ -3522,7 +3522,7 @@ footer {
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--bg-primary);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3531,6 +3531,7 @@ footer {
 }
 
 .adblock-modal-content {
+  position: relative;
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -3541,8 +3542,30 @@ footer {
   box-shadow: var(--shadow-xl);
 }
 
+.adblock-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-tertiary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.adblock-close:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 .adblock-icon {
-  color: var(--color-error);
+  color: var(--color-warning);
   margin-bottom: 24px;
 }
 
@@ -3562,25 +3585,44 @@ footer {
   font-size: 15px;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+}
+
+.adblock-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .adblock-btn {
   width: 100%;
-  padding: 16px 24px;
-  background: var(--color-primary);
-  color: white;
+  padding: 14px 24px;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
-.adblock-btn:hover {
+.adblock-btn.primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.adblock-btn.primary:hover {
   background: var(--color-primary-dark);
   transform: translateY(-1px);
+}
+
+.adblock-btn.secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.adblock-btn.secondary:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .adblock-btn:active {
