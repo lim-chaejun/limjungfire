@@ -3628,3 +3628,46 @@ footer {
 .adblock-btn:active {
   transform: translateY(0);
 }
+
+/* ==================== GEO 최적화 스타일 ==================== */
+.geo-summary-box {
+  background: var(--bg-secondary);
+  border-left: 4px solid var(--color-primary);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.geo-summary-box p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.geo-summary-box ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.geo-summary-box li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 4px 0;
+}
+
+.geo-summary-box strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.last-updated {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}

@@ -20,6 +20,63 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="건물 용도별 소방시설 체크리스트">
     <meta name="twitter:description" content="30개 건물 용도별 소방시설 설치 기준 체크리스트">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "홈", "item": "https://sobangcheck.com/"},
+            {"@type": "ListItem", "position": 2, "name": "건물 용도별 소방시설 체크리스트"}
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "건물 용도별 소방시설 체크리스트 - 30개 용도별 설치 기준",
+        "description": "공동주택, 근린생활시설, 의료시설, 숙박시설 등 30개 건물 용도별 소방시설 설치 기준 체크리스트. 소화설비, 경보설비, 피난구조설비, 소화활동설비 기준을 한눈에 확인하세요.",
+        "author": {"@type": "Organization", "name": "소방체크"},
+        "publisher": {"@type": "Organization", "name": "소방체크", "logo": {"@type": "ImageObject", "url": "https://sobangcheck.com/assets/favicon.svg"}},
+        "datePublished": "2025-01-01",
+        "dateModified": "2025-01-21",
+        "mainEntityOfPage": "https://sobangcheck.com/pages/checklist"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "건물 용도별 소방시설 설치 기준은 어떻게 다른가요?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "건물 용도에 따라 필요한 소방시설과 설치 기준 면적이 다릅니다. 예를 들어 의료시설은 종합병원·요양병원의 경우 모든 층에 스프링클러가 필요하지만, 일반 업무시설은 6층 이상부터 스프링클러가 필요합니다."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "복합건축물의 소방시설 기준은 어떻게 적용되나요?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "복합건축물은 둘 이상의 용도가 함께 있는 건물로, 각 용도별 기준 중 더 엄격한 기준을 적용합니다. 일반적으로 연면적 1,500㎡ 이상이면 옥내소화전, 6층 이상 또는 연면적 5,000㎡ 이상이면 스프링클러 설치가 필요합니다."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "노유자시설의 스프링클러 설치 기준은?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "노유자시설(노인복지시설, 아동시설, 장애인시설)은 특히 엄격한 기준이 적용됩니다. 노인요양시설, 장애인복지시설, 정신요양시설은 400㎡ 이상부터 스프링클러, 300㎡ 이상 600㎡ 미만은 간이스프링클러 설치가 필요합니다."
+                }
+            }
+        ]
+    }
+    </script>
+
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <style>
@@ -115,6 +172,11 @@
             <h1>건물 용도별 소방시설 체크리스트</h1>
             <p>30개 용도별 소방시설 설치 기준</p>
         </div>
+
+        <div class="geo-summary-box">
+            <p><strong>핵심 요약:</strong> 건물 용도에 따라 소방시설 설치 기준이 다릅니다. 공동주택, 근린생활시설, 의료시설, 숙박시설, 노유자시설 등 30개 용도별로 소화설비, 경보설비, 피난구조설비, 소화활동설비 기준을 확인하세요.</p>
+        </div>
+
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="용도 검색 (예: 공동주택, 의료시설...)">
         </div>
@@ -210,6 +272,8 @@
             <div class="building-card" data-type="복합건축물"><div class="building-header" onclick="toggleCard(this)"><div><div class="building-title">30. 복합건축물</div><div class="building-def">둘 이상의 용도로 사용되는 건축물</div></div><span class="building-arrow">▼</span></div><div class="building-content"><div class="facility-section"><div class="facility-section-title">소화설비</div><div class="facility-item"><div class="facility-name">옥내소화전설비</div><ul class="facility-criteria"><li>연면적 1,500㎡ 이상</li><li>지하층·무창층·4층 이상 바닥면적 300㎡ 이상</li></ul></div><div class="facility-item"><div class="facility-name">스프링클러설비</div><ul class="facility-criteria"><li>6층 이상 모든 층</li><li>11층 이상 전층</li><li>연면적 5,000㎡ 이상 전층</li></ul></div></div><div class="facility-section"><div class="facility-section-title">경보설비</div><div class="facility-item"><div class="facility-name">자동화재탐지설비</div><ul class="facility-criteria"><li>연면적 600㎡ 이상</li></ul></div></div><div class="facility-section"><div class="facility-section-title">건축</div><div class="facility-item"><div class="facility-name">방화구획</div><ul class="facility-criteria"><li>면적별 1,000㎡ 마다 (11층 이상 200㎡)</li><li>층별 방화구획: 매 층마다</li></ul></div><div class="facility-item"><div class="facility-name">특별피난계단</div><ul class="facility-criteria"><li>지상 11층 이상 층 (바닥 400㎡ 미만 제외)</li><li>지하 3층 이하 층 (바닥 400㎡ 미만 제외)</li></ul></div><div class="facility-item"><div class="facility-name">비상용 승강기</div><ul class="facility-criteria"><li>높이 31m 초과</li></ul></div></div></div></div>
 
         </div>
+
+        <p class="last-updated">마지막 업데이트: 2025년 1월 21일</p>
 
         <footer>
             <div class="footer-links">
