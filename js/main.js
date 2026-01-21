@@ -468,7 +468,6 @@ window.handleSignup = async function() {
     if (user && fb.saveUserInfo) {
       await fb.saveUserInfo(user);
     }
-    alert('회원가입이 완료되었습니다!');
   } catch (error) {
     // 사용자가 팝업을 닫은 경우 무시
     if (error.code === 'auth/popup-closed-by-user') return;
