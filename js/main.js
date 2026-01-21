@@ -3224,6 +3224,8 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 // ==================== 지도 기능 ====================
 
 let naverMap = null;
+let naverPano = null;
+let mapCoords = null;
 
 // 지도/내비 모달 표시
 window.showMapModal = function(address) {
@@ -3237,9 +3239,14 @@ window.showMapModal = function(address) {
   const encodedAddress = encodeURIComponent(address);
   const naverMapUrl = `https://map.naver.com/v5/search/${encodedAddress}`;
 
-  // 컨테이너 구성
+  // 컨테이너 구성 (탭 추가)
   mapContainer.innerHTML = `
+    <div class="map-tabs">
+      <button class="map-tab active" data-tab="map">지도</button>
+      <button class="map-tab" data-tab="roadview">로드뷰</button>
+    </div>
     <div id="naverMapArea" class="map-area"></div>
+    <div id="naverPanoArea" class="map-area" style="display:none;"></div>
     <a href="${naverMapUrl}" target="_blank" class="map-detail-link">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -3265,6 +3272,29 @@ window.showMapModal = function(address) {
   `;
 
   const mapArea = document.getElementById('naverMapArea');
+  const panoArea = document.getElementById('naverPanoArea');
+
+  // 탭 클릭 이벤트
+  document.querySelectorAll('.map-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+
+      if (this.dataset.tab === 'map') {
+        mapArea.style.display = 'block';
+        panoArea.style.display = 'none';
+        if (naverMap) setTimeout(() => naverMap.autoResize(), 100);
+      } else {
+        mapArea.style.display = 'none';
+        panoArea.style.display = 'block';
+        if (!naverPano && mapCoords) {
+          initPanorama(panoArea, mapCoords.lat, mapCoords.lon);
+        } else if (naverPano) {
+          setTimeout(() => naverPano.setSize(new naver.maps.Size(panoArea.offsetWidth, panoArea.offsetHeight)), 100);
+        }
+      }
+    });
+  });
 
   // Fallback 표시 함수
   const showFallback = () => {
@@ -3291,6 +3321,7 @@ window.showMapModal = function(address) {
       const result = response.v2.addresses[0];
       const lat = parseFloat(result.y);
       const lon = parseFloat(result.x);
+      mapCoords = { lat, lon };
 
       // 지도 생성
       naverMap = new naver.maps.Map(mapArea, {
@@ -3311,12 +3342,32 @@ window.showMapModal = function(address) {
   });
 };
 
+// 파노라마(로드뷰) 초기화
+function initPanorama(container, lat, lon) {
+  if (!naver.maps.Panorama) {
+    container.innerHTML = '<div class="map-fallback"><span>로드뷰를 사용할 수 없습니다</span></div>';
+    return;
+  }
+
+  naverPano = new naver.maps.Panorama(container, {
+    position: new naver.maps.LatLng(lat, lon),
+    pov: { pan: 0, tilt: 0, fov: 100 }
+  });
+
+  naver.maps.Event.addListener(naverPano, 'error', function() {
+    container.innerHTML = '<div class="map-fallback"><span>이 위치의 로드뷰가 없습니다</span></div>';
+  });
+}
+
 // 지도 모달 닫기
 window.closeMapModal = function() {
   const mapModal = document.getElementById('mapModal');
   if (mapModal) {
     mapModal.style.display = 'none';
   }
+  naverMap = null;
+  naverPano = null;
+  mapCoords = null;
 };
 
 // ==================== 수동 입력 기능 ====================

@@ -1828,6 +1828,42 @@ footer {
 }
 
 /* ==================== 지도 모달 ==================== */
+.map-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.map-tab {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.map-tab.active {
+  color: var(--color-primary);
+}
+
+.map-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary);
+}
+
+.map-tab:hover:not(.active) {
+  color: var(--text-secondary);
+}
+
 .map-modal-content {
   max-width: 420px;
   width: 100%;
