@@ -3247,27 +3247,12 @@ window.showMapModal = function(address) {
     </div>
     <div id="naverMapArea" class="map-area"></div>
     <div id="naverPanoArea" class="map-area" style="display:none;"></div>
-    <a href="${naverMapUrl}" target="_blank" class="map-detail-link">
+    <div class="map-address-bar" onclick="copyAddress('${address.replace(/'/g, "\\'")}')">
+      <span class="map-address-text">${address}</span>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-        <polyline points="15 3 21 3 21 9"/>
-        <line x1="10" y1="14" x2="21" y2="3"/>
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
-      네이버 지도에서 크게 보기
-    </a>
-    <div class="map-nav-buttons">
-      <a href="kakaomap://route?ep=${encodedAddress}&by=CAR" class="map-nav-btn">
-        <img src="/assets/kakaonavi.png" alt="카카오내비">
-        <span>카카오내비</span>
-      </a>
-      <a href="tmap://route?goalname=${encodedAddress}" class="map-nav-btn">
-        <img src="/assets/tmap.png" alt="티맵">
-        <span>티맵</span>
-      </a>
-      <a href="nmap://place?query=${encodedAddress}" class="map-nav-btn">
-        <img src="/assets/navermap.png" alt="네이버지도">
-        <span>네이버지도</span>
-      </a>
     </div>
   `;
 
@@ -3368,6 +3353,22 @@ window.closeMapModal = function() {
   naverMap = null;
   naverPano = null;
   mapCoords = null;
+};
+
+// 주소 복사
+window.copyAddress = function(address) {
+  navigator.clipboard.writeText(address).then(() => {
+    showToast('주소가 복사되었습니다');
+  }).catch(() => {
+    // fallback
+    const textarea = document.createElement('textarea');
+    textarea.value = address;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showToast('주소가 복사되었습니다');
+  });
 };
 
 // ==================== 수동 입력 기능 ====================
