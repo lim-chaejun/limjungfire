@@ -3630,9 +3630,14 @@ footer {
 }
 
 /* ==================== 주소 검색 모달 (다음 포스트코드) ==================== */
+#addressModal {
+  align-items: center;
+}
+
 .address-modal-content {
   max-width: 500px;
   width: 100%;
+  margin: auto;
 }
 
 .address-modal-body {
@@ -3645,11 +3650,15 @@ footer {
 }
 
 @media (max-width: 480px) {
+  #addressModal {
+    align-items: center;
+  }
+
   .address-modal-content {
-    max-width: 100%;
-    width: 100%;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    margin-top: auto;
+    max-width: 95%;
+    width: 95%;
+    margin: auto;
+    border-radius: var(--radius-lg);
   }
 
   #addressEmbedLayer {
