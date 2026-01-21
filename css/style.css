@@ -1977,10 +1977,16 @@ footer {
 }
 
 .map-nav-buttons {
-  display: flex;
+  display: none;
   gap: 6px;
   padding: 10px 12px;
   background: var(--bg-primary);
+}
+
+@media (max-width: 768px) {
+  .map-nav-buttons {
+    display: flex;
+  }
 }
 
 .map-nav-btn {
