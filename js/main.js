@@ -2887,7 +2887,10 @@ window.showFacilityDetailModal = async function(facilityIndex) {
             <span>${formatPeriod(rule)}</span>
           </div>
           <div class="regulation-criteria">${rule.criteria}</div>
-          ${rule.source ? `<div class="regulation-source">출처: ${rule.source}</div>` : ''}
+          ${rule.source ? `<div class="regulation-source">출처: ${{
+            '별표5': '[별표5] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련)',
+            '별표6': '[별표6] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련)'
+          }[rule.source] || rule.source}</div>` : ''}
         </div>
       `;
     });
