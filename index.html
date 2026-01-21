@@ -585,6 +585,27 @@
     </div>
   </div>
 
+  <!-- 광고 차단 감지 모달 -->
+  <div id="adBlockModal" class="adblock-modal" style="display: none;">
+    <div class="adblock-modal-content">
+      <div class="adblock-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
+          <path d="M8 8L16 16M16 8L8 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="adblock-title">광고 차단이 감지되었습니다</h2>
+      <p class="adblock-message">
+        소방체크는 광고 수익으로 운영됩니다.<br>
+        서비스를 이용하시려면 광고 차단 프로그램을 해제해 주세요.
+      </p>
+      <button class="adblock-btn" onclick="location.reload()">
+        광고 차단 해제 후 새로고침
+      </button>
+    </div>
+  </div>
+
   <script type="module" src="/js/main.js"></script>
 </body>
 </html>

@@ -93,6 +93,31 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)
 // 초기 테마 설정
 initTheme();
 
+// 광고 차단 감지
+async function detectAdBlock() {
+  // 방법 1: 테스트 광고 요소 생성
+  const testAd = document.createElement('div');
+  testAd.className = 'adsbox';
+  testAd.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
+  testAd.innerHTML = '&nbsp;';
+  document.body.appendChild(testAd);
+
+  await new Promise(r => setTimeout(r, 100));
+  const blocked = testAd.offsetHeight === 0 || testAd.clientHeight === 0;
+  testAd.remove();
+
+  return blocked;
+}
+
+// 광고 차단 모달 표시
+function showAdBlockModal() {
+  const modal = document.getElementById('adBlockModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
 // Firebase 함수들 (동적 로드)
 let firebaseModule = null;
 
@@ -273,6 +298,14 @@ async function searchFromUrl() {
 
 // 초기화
 (async function init() {
+  // 광고 차단 감지
+  const adBlockDetected = await detectAdBlock();
+  if (adBlockDetected) {
+    showAdBlockModal();
+    hideSplashScreen();
+    return; // 광고 차단 시 초기화 중단
+  }
+
   // Firebase와 소방시설 데이터 병렬 로드
   const [fb] = await Promise.all([
     loadFirebase(),

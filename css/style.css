@@ -3513,3 +3513,76 @@ footer {
   object-fit: cover;
   border-radius: var(--radius-md);
 }
+
+
+/* ==================== 광고 차단 모달 ==================== */
+.adblock-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 20px;
+}
+
+.adblock-modal-content {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+}
+
+.adblock-icon {
+  color: var(--color-error);
+  margin-bottom: 24px;
+}
+
+.adblock-icon svg {
+  width: 64px;
+  height: 64px;
+}
+
+.adblock-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.adblock-message {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.adblock-btn {
+  width: 100%;
+  padding: 16px 24px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.adblock-btn:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.adblock-btn:active {
+  transform: translateY(0);
+}
