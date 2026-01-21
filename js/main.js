@@ -3274,8 +3274,13 @@ window.showMapModal = function(address) {
     `;
   };
 
-  // 네이버 지도 API 체크
+  // 네이버 지도 API 체크 (디버깅)
+  console.log('naver:', typeof naver);
+  console.log('naver.maps:', typeof naver !== 'undefined' ? naver.maps : 'undefined');
+  console.log('naver.maps.Service:', typeof naver !== 'undefined' && naver.maps ? naver.maps.Service : 'undefined');
+
   if (typeof naver === 'undefined' || !naver.maps || !naver.maps.Service) {
+    console.log('지도 API 로드 실패 - fallback 표시');
     showFallback();
     return;
   }
