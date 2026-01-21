@@ -38,6 +38,23 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "소방체크",
+    "url": "https://sobangcheck.com/",
+    "description": "소방점검 실무자를 위한 소방시설 설치기준 조회 서비스",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://sobangcheck.com/?address={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "소방체크 - 소방시설 설치기준 조회",
     "description": "소방점검 실무자를 위한 소방시설 설치기준 조회 서비스. 주소 검색으로 건축물대장 정보와 적용 법령을 빠르게 확인할 수 있습니다.",
@@ -53,6 +70,50 @@
       "@type": "Organization",
       "name": "소방체크",
       "url": "https://sobangcheck.com/"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "소방시설 설치기준 조회 서비스",
+    "description": "건축물대장 검색으로 건축허가일 기준 소방시설 설치기준을 빠르게 확인할 수 있는 무료 서비스",
+    "provider": {
+      "@type": "Organization",
+      "name": "소방체크"
+    },
+    "serviceType": "소방시설 설치기준 조회",
+    "areaServed": {
+      "@type": "Country",
+      "name": "대한민국"
+    },
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "소방체크 서비스",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "건축물대장 검색"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "소방시설 설치기준 확인"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "법령연혁 조회"
+          }
+        }
+      ]
     }
   }
   </script>
@@ -182,8 +243,29 @@
     "@type": "Organization",
     "name": "소방체크",
     "url": "https://sobangcheck.com/",
-    "logo": "https://sobangcheck.com/assets/favicon.svg",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://sobangcheck.com/assets/favicon.svg",
+      "width": 512,
+      "height": 512
+    },
     "description": "소방점검 실무자를 위한 소방시설 설치기준 조회 서비스",
+    "foundingDate": "2025",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "email": "contact@sobangcheck.com",
+      "availableLanguage": "Korean"
+    },
+    "knowsAbout": [
+      "소방시설 설치기준",
+      "건축물대장",
+      "소방법령",
+      "스프링클러 설치기준",
+      "자동화재탐지설비",
+      "소화기 설치기준",
+      "옥내소화전"
+    ],
     "sameAs": []
   }
   </script>
