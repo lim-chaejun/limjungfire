@@ -373,18 +373,6 @@
     },
     {
       "category": "건축",
-      "facility_name": "헬리포트",
-      "regulations": [
-        {
-          "start_date": null,
-          "end_date": null,
-          "criteria": "층수 11층 이상인 것 중 11층 이상인 층 바닥면적의 합계가 1만㎡ 이상",
-          "note": "헬리패드 및 경사지붕아래에 대피공간 설치로 대체 가능"
-        }
-      ]
-    },
-    {
-      "category": "건축",
       "facility_name": "비상용 승강기",
       "regulations": [
         {

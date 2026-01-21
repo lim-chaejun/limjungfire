@@ -58,6 +58,7 @@ window.copyUrl = function() {
 let selectedAddressData = null;
 let currentUser = null;
 let fireFacilitiesData = null;
+let exemptionCriteriaData = null; // 면제기준 데이터
 let adSettings = null; // 광고 설정
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
@@ -140,6 +141,21 @@ async function loadFireFacilitiesData() {
     console.error('소방시설 법규 데이터 로드 실패:', error);
     return {};
   }
+}
+
+// 면제기준 데이터 로드
+async function loadExemptionCriteriaData() {
+  try {
+    const res = await fetch('/data/exemption_criteria.json');
+    if (res.ok) {
+      const data = await res.json();
+      console.log('면제기준 데이터 로드 완료');
+      return data;
+    }
+  } catch (e) {
+    console.warn('면제기준 데이터 로드 실패:', e);
+  }
+  return null;
 }
 
 // 스플래시 화면 숨기기
@@ -260,7 +276,8 @@ async function searchFromUrl() {
   // Firebase와 소방시설 데이터 병렬 로드
   const [fb] = await Promise.all([
     loadFirebase(),
-    loadFireFacilitiesData().then(d => { fireFacilitiesData = d; })
+    loadFireFacilitiesData().then(d => { fireFacilitiesData = d; }),
+    loadExemptionCriteriaData().then(d => { exemptionCriteriaData = d; })
   ]);
 
   if (fb) {
@@ -2405,9 +2422,7 @@ const facilityIcons = {
   '무선통신보조설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-8"/><path d="M8 16l4-4 4 4"/><path d="M6 10a6 6 0 0 1 12 0"/><path d="M3 7a10 10 0 0 1 18 0"/></svg>',
   '상수도소화용수설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2c3 4 6 6 6 10a6 6 0 0 1-12 0c0-4 3-6 6-10z"/><path d="M12 18v3"/><path d="M9 21h6"/></svg>',
   '소화수조및저수조': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M6 14h12"/><path d="M6 17h12"/></svg>',
-  '옥상출입문자동개폐장치': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16"/><circle cx="7" cy="12" r="1"/><path d="M14 8l3 4-3 4"/></svg>',
-  '피난시설': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="5" r="2"/><path d="M4 21l4-9"/><path d="M8 12l6 9"/><path d="M13 12l5-2"/><path d="M10 7v5l3 3"/></svg>',
-  '헬리포트': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M8 8v8"/><path d="M16 8v8"/><path d="M8 12h8"/></svg>'
+  '피난시설': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="5" r="2"/><path d="M4 21l4-9"/><path d="M8 12l6 9"/><path d="M13 12l5-2"/><path d="M10 7v5l3 3"/></svg>'
 };
 
 // 허가일 기준 필수 소방시설 판단 (JSON 데이터 기반)
@@ -2488,9 +2503,8 @@ function getRequiredFireFacilities(buildingInfo) {
     classification,
     buildingType,
     facilities,
-    permitDate: pmsDay,
-    effectiveDate,         // 실제 사용된 날짜 (허가일 또는 사용승인일)
-    usedApprovalDate,      // 사용승인일 사용 여부
+    permitDate: effectiveDate,  // 실제 사용된 날짜 (허가일 우선, 없으면 사용승인일)
+    usedApprovalDate,           // 사용승인일 사용 여부
     summary: {
       totalArea,
       groundFloors,
@@ -2530,7 +2544,7 @@ function renderFireFacilitiesCard(buildingInfo) {
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 6v6l4 2"/>
           </svg>
-          ${lawPeriod}
+          건축허가일: ${formatPermitDate(permitDate)}
         </div>
       </div>
 
@@ -2766,6 +2780,28 @@ window.showFacilityDetailModal = function(facilityIndex) {
     `;
   }
 
+  // 면제기준 섹션 추가
+  const exemptionRules = getExemptionRulesForFacility(facility.name, permitDate);
+  if (exemptionRules.length > 0) {
+    html += `<div class="facility-detail-section exemption-section"><h4 class="exemption-title">면제 기준</h4><div class="regulations-list">`;
+    exemptionRules.forEach(rule => {
+      html += `
+        <div class="regulation-item exemption">
+          <div class="regulation-period exemption-period">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>${formatPeriod(rule)}</span>
+          </div>
+          <div class="regulation-criteria">${rule.criteria}</div>
+          ${rule.source ? `<div class="regulation-source">출처: ${rule.source}</div>` : ''}
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  }
+
   html += `
     <div class="facility-detail-footer">
       <p>건축허가일: ${formatPermitDate(permitDate) || '-'}</p>
@@ -2781,6 +2817,67 @@ window.showFacilityDetailModal = function(facilityIndex) {
 window.closeFacilityDetailModal = function() {
   document.getElementById('facilityDetailModal').style.display = 'none';
 };
+
+// 시설명으로 면제기준 찾기
+function getExemptionRulesForFacility(facilityName, permitDate) {
+  if (!exemptionCriteriaData || !exemptionCriteriaData.exemption_rules) {
+    return [];
+  }
+
+  const permitNum = parseInt(permitDate) || 0;
+
+  // 시설명 매핑 (UI 표시명 → 데이터 시설명)
+  const nameMapping = {
+    '소화기구': '소화기구',
+    '간이스프링클러설비': '간이스프링클러설비',
+    '간이스프링클러': '간이스프링클러설비',
+    '스프링클러설비': '스프링클러설비',
+    '스프링클러': '스프링클러설비',
+    '옥내소화전설비': '옥내소화전설비',
+    '옥내소화전': '옥내소화전설비',
+    '옥외소화전설비': '옥외소화전설비',
+    '옥외소화전': '옥외소화전설비',
+    '물분무등소화설비': '물분무등소화설비',
+    '물분무소화설비': '물분무등소화설비',
+    '자동화재탐지설비': '자동화재탐지설비',
+    '비상경보설비': '비상경보설비',
+    '비상방송설비': '비상방송설비',
+    '누전경보기': '누전경보기',
+    '자동소화장치': '자동소화장치',
+    '제연설비': '제연설비',
+    '연결송수관설비': '연결송수관설비',
+    '연결살수설비': '연결살수설비',
+    '비상조명등': '비상조명등',
+    '피난구조설비': '피난구조설비',
+    '무선통신보조설비': '무선통신보조설비',
+    '연소방지설비': '연소방지설비',
+    '상수도소화용수설비': '상수도소화용수설비',
+    '화재알림설비': '화재알림설비'
+  };
+
+  const dataFacilityName = nameMapping[facilityName] || facilityName;
+
+  // 해당 시설의 면제기준 찾기
+  const facilityRule = exemptionCriteriaData.exemption_rules.find(
+    rule => rule.facility_name === dataFacilityName
+  );
+
+  if (!facilityRule || !facilityRule.regulations) {
+    return [];
+  }
+
+  // 허가일 기준 필터링
+  return facilityRule.regulations.filter(reg => {
+    const start = parseInt(reg.start_date?.replace(/-/g, '')) || 0;
+    const end = parseInt(reg.end_date?.replace(/-/g, '')) || 99999999;
+
+    if (permitNum > 0) {
+      return permitNum >= start && permitNum <= end;
+    }
+    // 허가일이 없으면 현재 유효한 규정만
+    return !reg.end_date;
+  });
+}
 
 // 적용되는 규정만 필터링
 function getApplicableRegulations(regulations, permitDate) {

@@ -2847,8 +2847,36 @@ footer {
   background: var(--color-error-bg);
 }
 
+.regulation-item.exemption {
+  border-left-color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
 .regulation-item.not-applicable {
   opacity: 0.6;
+}
+
+/* 면제기준 섹션 스타일 */
+.exemption-section {
+  margin-top: 16px;
+}
+
+.exemption-title {
+  color: var(--color-primary) !important;
+}
+
+.exemption-period {
+  color: var(--color-primary) !important;
+}
+
+.exemption-period svg {
+  stroke: var(--color-primary);
+}
+
+.regulation-source {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
 }
 
 .regulation-period {

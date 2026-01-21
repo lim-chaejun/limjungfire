@@ -428,24 +428,6 @@
     },
     {
       "category": "건축",
-      "facility_name": "옥상출입문자동개폐장치",
-      "regulations": [
-        {
-          "start_date": "2016-02-29",
-          "end_date": null,
-          "criteria": "신규 주택건설 사업대상부터 적용(소급 없음)",
-          "applicable_to": "공동주택"
-        },
-        {
-          "start_date": null,
-          "end_date": null,
-          "criteria": "30세대 이상부터 적용(주택재건축과 소관)",
-          "applicable_to": "공동주택"
-        }
-      ]
-    },
-    {
-      "category": "건축",
       "facility_name": "피난시설",
       "regulations": [
         {
@@ -470,18 +452,6 @@
           "start_date": "2014-08-27",
           "end_date": null,
           "criteria": "국토교통부장관이 인정하는 대피공간과 비슷한 시설",
-          "applicable_to": "공동주택"
-        }
-      ]
-    },
-    {
-      "category": "건축",
-      "facility_name": "헬리포트",
-      "regulations": [
-        {
-          "start_date": null,
-          "end_date": null,
-          "criteria": "층수 11층 이상인 것 중 11층 이상인 층 바닥면적 합계가 10,000㎡ 이상",
           "applicable_to": "공동주택"
         }
       ]

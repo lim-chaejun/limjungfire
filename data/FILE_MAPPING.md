@@ -45,3 +45,4 @@
 | ref04_fire_compartment | 방화구획 관련규정 |
 | ref05_fire_safety_manager | 소방안전관리자 규정 |
 | ref06_high_rise_building | 고층건축물 기준 |
+| exemption_criteria | 면제기준 |
