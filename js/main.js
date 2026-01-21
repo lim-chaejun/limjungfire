@@ -57,10 +57,43 @@ window.copyUrl = function() {
 // 전역 변수
 let selectedAddressData = null;
 let currentUser = null;
-let fireFacilitiesData = null;
-let exemptionCriteriaData = null; // 면제기준 데이터
+let fireFacilitiesCache = {}; // 지연 로딩 캐시 (건물유형별)
+let exemptionCriteriaData = null; // 면제기준 데이터 (지연 로딩)
 let adSettings = null; // 광고 설정
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
+
+// 건물 유형 → 파일명 매핑
+const BUILDING_TYPE_TO_FILE = {
+  '공동주택': '01_residential_complex',
+  '근린생활시설': '02_neighborhood_facilities',
+  '문화및집회시설': '03_cultural_assembly',
+  '종교시설': '04_religious',
+  '판매시설': '05_retail',
+  '운수시설': '06_transportation',
+  '의료시설': '07_medical',
+  '교육연구시설': '08_education_research',
+  '노유자시설': '09_elderly_childcare',
+  '수련시설': '10_training',
+  '운동시설': '11_sports',
+  '업무시설': '12_office',
+  '숙박시설': '13_accommodation',
+  '위락시설': '14_entertainment',
+  '공장': '15_factory',
+  '창고시설': '16_warehouse',
+  '위험물저장및처리시설': '17_hazardous_materials',
+  '항공기및자동차관련시설': '18_aviation_automotive',
+  '동물및식물관련시설': '19_animal_plant',
+  '자원순환관련시설': '20_resource_recycling',
+  '교정및군사시설': '21_correctional_military',
+  '방송통신시설': '22_broadcasting',
+  '발전시설': '23_power_generation',
+  '묘지관련시설': '24_cemetery',
+  '관광휴게시설': '25_tourism_leisure',
+  '장례시설': '26_funeral',
+  '지하상가': '27_underground_mall',
+  '지하연결통로': '28_underground_passage',
+  '문화재': '29_national_heritage'
+};
 
 // 테마 관리
 function initTheme() {
@@ -134,48 +167,47 @@ async function loadFirebase() {
   }
 }
 
-// 소방시설 법규 데이터 로드
-async function loadFireFacilitiesData() {
-  const files = [
-    '01_residential_complex', '02_neighborhood_facilities', '03_cultural_assembly',
-    '04_religious', '05_retail', '06_transportation', '07_medical',
-    '08_education_research', '09_elderly_childcare', '10_training', '11_sports',
-    '12_office', '13_accommodation', '14_entertainment', '15_factory',
-    '16_warehouse', '17_hazardous_materials', '18_aviation_automotive',
-    '19_animal_plant', '20_resource_recycling', '21_correctional_military',
-    '22_broadcasting', '23_power_generation', '24_cemetery', '25_tourism_leisure',
-    '26_funeral', '27_underground_mall', '28_underground_passage', '29_national_heritage'
-  ];
-  const data = {};
-  try {
-    // 순차적으로 로드하여 동시 요청 문제 방지
-    for (const file of files) {
-      try {
-        const res = await fetch(`/data/${file}.json`);
-        if (res.ok) {
-          const json = await res.json();
-          data[json.building_type] = json;
-        }
-      } catch (e) {
-        console.warn(`소방시설 데이터 로드 실패: ${file}`, e);
-      }
-    }
-    console.log('소방시설 법규 데이터 로드 완료:', Object.keys(data).length, '개');
-    return data;
-  } catch (error) {
-    console.error('소방시설 법규 데이터 로드 실패:', error);
-    return {};
+// 소방시설 법규 데이터 지연 로드 (건물 유형별)
+async function getFireFacilityData(buildingType) {
+  // 캐시 확인
+  if (fireFacilitiesCache[buildingType]) {
+    return fireFacilitiesCache[buildingType];
   }
+
+  // 파일명 매핑
+  const fileName = BUILDING_TYPE_TO_FILE[buildingType];
+  if (!fileName) {
+    console.warn(`알 수 없는 건물 유형: ${buildingType}`);
+    return null;
+  }
+
+  try {
+    const res = await fetch(`/data/${fileName}.json`);
+    if (res.ok) {
+      const data = await res.json();
+      fireFacilitiesCache[buildingType] = data;
+      console.log(`소방시설 데이터 로드: ${buildingType}`);
+      return data;
+    }
+  } catch (e) {
+    console.warn(`소방시설 데이터 로드 실패: ${buildingType}`, e);
+  }
+  return null;
 }
 
-// 면제기준 데이터 로드
-async function loadExemptionCriteriaData() {
+// 면제기준 데이터 지연 로드
+async function getExemptionCriteriaData() {
+  // 캐시 확인
+  if (exemptionCriteriaData) {
+    return exemptionCriteriaData;
+  }
+
   try {
     const res = await fetch('/data/exemption_criteria.json');
     if (res.ok) {
-      const data = await res.json();
+      exemptionCriteriaData = await res.json();
       console.log('면제기준 데이터 로드 완료');
-      return data;
+      return exemptionCriteriaData;
     }
   } catch (e) {
     console.warn('면제기준 데이터 로드 실패:', e);
@@ -306,12 +338,8 @@ async function searchFromUrl() {
     return; // 광고 차단 시 초기화 중단
   }
 
-  // Firebase와 소방시설 데이터 병렬 로드
-  const [fb] = await Promise.all([
-    loadFirebase(),
-    loadFireFacilitiesData().then(d => { fireFacilitiesData = d; }),
-    loadExemptionCriteriaData().then(d => { exemptionCriteriaData = d; })
-  ]);
+  // Firebase만 초기화 (소방시설/면제기준 데이터는 필요할 때 지연 로드)
+  const fb = await loadFirebase();
 
   if (fb) {
     // 광고 설정 로드
@@ -1107,7 +1135,7 @@ function displayAllResults(titleData, floorData, generalData, permitData) {
 }
 
 // 건물 뷰 렌더링 (선택된 건물만 표시)
-function renderBuildingView() {
+async function renderBuildingView() {
   const resultDiv = document.getElementById('result');
   const { titleItems, generalItems, permitItems, sortedIndices } = currentBuildingData;
   const buildingCount = titleItems.length;
@@ -1131,8 +1159,8 @@ function renderBuildingView() {
   // 광고 배너 표시
   html += renderAdBanner();
 
-  // 총괄 요약 카드 표시 (총괄표제부 기준)
-  html += renderSummaryCard(generalInfo, permitInfo, titleItems);
+  // 총괄 요약 카드 표시 (총괄표제부 기준) - 지연 로드
+  html += await renderSummaryCard(generalInfo, permitInfo, titleItems);
 
   resultDiv.innerHTML = html;
 }
@@ -1150,7 +1178,7 @@ window.scrollBuildingSelector = function(direction) {
 }
 
 // 요약 카드 렌더링 (총괄표제부 + 표제부 통합)
-function renderSummaryCard(generalInfo, permitInfo, titleItems) {
+async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   // 건물명: 첫 번째 표제부 또는 총괄표제부에서 가져오기
   const mainTitle = titleItems && titleItems.length > 0 ? titleItems[0] : {};
   const buildingName = mainTitle.bldNm || generalInfo.bldNm || selectedAddressData?.buildingName || '건축물 정보';
@@ -1224,7 +1252,7 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   // 주소 escape (onclick 속성용)
   const escapedAddress = address.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-  return `
+  let html = `
     <div class="summary-card">
       <div class="summary-header">
         <div class="summary-header-left">
@@ -1313,16 +1341,20 @@ function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         <button class="btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
       </div>
     </div>
-    ${renderFireFacilitiesCard({
-      pmsDay: permitDate,
-      useAprDay: approvalDate,
-      totArea: totalArea,
-      grndFlrCnt: groundFloors,
-      ugrndFlrCnt: undergroundFloors,
-      mainPurpose: mainPurpose,
-      heit: height
-    })}
   `;
+
+  // 소방시설 카드 지연 로드
+  const fireCard = await renderFireFacilitiesCard({
+    pmsDay: permitDate,
+    useAprDay: approvalDate,
+    totArea: totalArea,
+    grndFlrCnt: groundFloors,
+    ugrndFlrCnt: undergroundFloors,
+    mainPurpose: mainPurpose,
+    heit: height
+  });
+
+  return html + fireCard;
 }
 
 
@@ -2459,7 +2491,7 @@ const facilityIcons = {
 };
 
 // 허가일 기준 필수 소방시설 판단 (JSON 데이터 기반)
-function getRequiredFireFacilities(buildingInfo) {
+async function getRequiredFireFacilities(buildingInfo) {
   const {
     pmsDay,           // 허가일 (YYYYMMDD)
     useAprDay,        // 사용승인일 (YYYYMMDD)
@@ -2486,9 +2518,11 @@ function getRequiredFireFacilities(buildingInfo) {
 
   const facilities = [];
 
+  // 건물 유형에 맞는 데이터 지연 로드
+  const fireData = buildingType ? await getFireFacilityData(buildingType) : null;
+
   // JSON 데이터가 있으면 해당 데이터 사용
-  if (fireFacilitiesData && buildingType && fireFacilitiesData[buildingType]) {
-    const fireData = fireFacilitiesData[buildingType];
+  if (fireData) {
 
     fireData.fire_facilities.forEach(facility => {
       // 허가일에 맞는 규정만 필터링
@@ -2551,8 +2585,8 @@ function getRequiredFireFacilities(buildingInfo) {
 let currentFacilitiesResult = null;
 
 // 소방시설 카드 렌더링
-function renderFireFacilitiesCard(buildingInfo) {
-  const result = getRequiredFireFacilities(buildingInfo);
+async function renderFireFacilitiesCard(buildingInfo) {
+  const result = await getRequiredFireFacilities(buildingInfo);
   const { classification, facilities, permitDate, usedApprovalDate, effectiveDate } = result;
 
   // 모달에서 사용할 수 있도록 저장
@@ -2718,16 +2752,18 @@ let currentFireStandardsData = {
 };
 
 // 소방기준 모달 표시
-window.showFireStandardsModal = function(purpose, permitDate, buildingInfo) {
-  if (!fireFacilitiesData) {
-    showToast('소방시설 데이터를 불러오는 중입니다...');
+window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo) {
+  // 용도를 JSON building_type으로 매핑
+  const buildingType = mapPurposeToFireDataType(purpose);
+  if (!buildingType) {
+    showToast('해당 용도의 소방시설 기준을 찾을 수 없습니다.');
     return;
   }
 
-  // 용도를 JSON building_type으로 매핑
-  const buildingType = mapPurposeToFireDataType(purpose);
-  if (!buildingType || !fireFacilitiesData[buildingType]) {
-    showToast('해당 용도의 소방시설 기준을 찾을 수 없습니다.');
+  // 데이터 지연 로드
+  const data = await getFireFacilityData(buildingType);
+  if (!data) {
+    showToast('소방시설 데이터를 불러올 수 없습니다.');
     return;
   }
 
@@ -2738,7 +2774,6 @@ window.showFireStandardsModal = function(purpose, permitDate, buildingInfo) {
     buildingInfo
   };
 
-  const data = fireFacilitiesData[buildingType];
   const html = renderFireStandardsModalContent(data, permitDate, buildingInfo);
 
   document.getElementById('fireStandardsBody').innerHTML = html;
@@ -2751,7 +2786,7 @@ window.closeFireStandardsModal = function() {
 };
 
 // 시설 상세 모달 표시 (클릭한 시설만 표시)
-window.showFacilityDetailModal = function(facilityIndex) {
+window.showFacilityDetailModal = async function(facilityIndex) {
   if (!currentFacilitiesResult || !currentFacilitiesResult.facilities[facilityIndex]) {
     showToast('시설 정보를 찾을 수 없습니다.');
     return;
@@ -2813,8 +2848,8 @@ window.showFacilityDetailModal = function(facilityIndex) {
     `;
   }
 
-  // 면제기준 섹션 추가
-  const exemptionRules = getExemptionRulesForFacility(facility.name, permitDate);
+  // 면제기준 섹션 추가 (지연 로드)
+  const exemptionRules = await getExemptionRulesForFacility(facility.name, permitDate);
   if (exemptionRules.length > 0) {
     html += `<div class="facility-detail-section exemption-section"><h4 class="exemption-title">면제 기준</h4><div class="regulations-list">`;
     exemptionRules.forEach(rule => {
@@ -2851,9 +2886,11 @@ window.closeFacilityDetailModal = function() {
   document.getElementById('facilityDetailModal').style.display = 'none';
 };
 
-// 시설명으로 면제기준 찾기
-function getExemptionRulesForFacility(facilityName, permitDate) {
-  if (!exemptionCriteriaData || !exemptionCriteriaData.exemption_rules) {
+// 시설명으로 면제기준 찾기 (지연 로드)
+async function getExemptionRulesForFacility(facilityName, permitDate) {
+  // 면제기준 데이터 지연 로드
+  const data = await getExemptionCriteriaData();
+  if (!data || !data.exemption_rules) {
     return [];
   }
 
@@ -2891,7 +2928,7 @@ function getExemptionRulesForFacility(facilityName, permitDate) {
   const dataFacilityName = nameMapping[facilityName] || facilityName;
 
   // 해당 시설의 면제기준 찾기
-  const facilityRule = exemptionCriteriaData.exemption_rules.find(
+  const facilityRule = data.exemption_rules.find(
     rule => rule.facility_name === dataFacilityName
   );
 
@@ -3281,7 +3318,7 @@ window.submitManualInput = function() {
 };
 
 // 수동 입력 결과 표시
-function displayManualResult(buildingInfo, permitDate) {
+async function displayManualResult(buildingInfo, permitDate) {
   const resultContainer = document.getElementById('result');
 
   // 요약 카드 HTML
@@ -3313,8 +3350,8 @@ function displayManualResult(buildingInfo, permitDate) {
       </div>
     </div>`;
 
-  // 소방시설 카드 렌더링
-  html += renderFireFacilitiesCard(buildingInfo);
+  // 소방시설 카드 렌더링 - 지연 로드
+  html += await renderFireFacilitiesCard(buildingInfo);
 
   resultContainer.innerHTML = html;
 
