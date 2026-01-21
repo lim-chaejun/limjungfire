@@ -969,31 +969,34 @@ window.searchAddress = function() {
   // 기존 내용 초기화
   embedLayer.innerHTML = '';
 
-  new daum.Postcode({
-    oncomplete: function(data) {
-      // 선택한 주소 정보 저장
-      selectedAddressData = {
-        address: data.address,
-        jibunAddress: data.jibunAddress || data.autoJibunAddress,
-        roadAddress: data.roadAddress,
-        bcode: data.bcode,
-        sigunguCode: data.sigunguCode,
-        bname: data.bname,
-        buildingName: data.buildingName
-      };
+  // 모달이 렌더링된 후 embed 호출 (모바일 호환성)
+  setTimeout(function() {
+    new daum.Postcode({
+      oncomplete: function(data) {
+        // 선택한 주소 정보 저장
+        selectedAddressData = {
+          address: data.address,
+          jibunAddress: data.jibunAddress || data.autoJibunAddress,
+          roadAddress: data.roadAddress,
+          bcode: data.bcode,
+          sigunguCode: data.sigunguCode,
+          bname: data.bname,
+          buildingName: data.buildingName
+        };
 
-      // 주소 표시
-      document.getElementById('addressInput').value = data.address;
+        // 주소 표시
+        document.getElementById('addressInput').value = data.address;
 
-      // 조회 버튼 활성화
-      document.getElementById('searchBtn').disabled = false;
+        // 조회 버튼 활성화
+        document.getElementById('searchBtn').disabled = false;
 
-      // 모달 닫기
-      closeAddressModal();
-    },
-    width: '100%',
-    height: '100%'
-  }).embed(embedLayer);
+        // 모달 닫기
+        closeAddressModal();
+      },
+      width: '100%',
+      height: '100%'
+    }).embed(embedLayer);
+  }, 100);
 };
 
 // 주소 검색 모달 닫기
