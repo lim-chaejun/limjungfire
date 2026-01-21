@@ -1870,15 +1870,18 @@ footer {
   overflow: hidden;
 }
 
+.map-modal-content {
+  position: relative;
+}
+
 .map-modal-content .modal-header {
-  padding: 0;
-  border-bottom: none;
-  background: transparent;
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 100;
-  width: auto;
+  padding: 0;
+  border-bottom: none;
+  background: transparent;
 }
 
 .map-modal-content .modal-header h2 {
@@ -1894,6 +1897,8 @@ footer {
   align-items: center;
   justify-content: center;
   color: #fff;
+  border: none;
+  cursor: pointer;
 }
 
 .map-modal-content .modal-close:hover {
