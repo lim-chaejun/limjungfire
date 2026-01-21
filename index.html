@@ -79,6 +79,17 @@
     ]
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "소방체크",
+    "url": "https://sobangcheck.com/",
+    "logo": "https://sobangcheck.com/assets/favicon.svg",
+    "description": "소방점검 실무자를 위한 소방시설 설치기준 조회 서비스",
+    "sameAs": []
+  }
+  </script>
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -182,6 +193,7 @@
     </div>
   </div>
 
+  <main>
   <div class="container">
     <!-- 상단 바 (홈 버튼 + 로그인) -->
     <div class="top-bar">
@@ -309,25 +321,28 @@
     <div id="result" class="result-container"></div>
 
     <footer>
-      <div class="footer-links">
-        <a href="/guide/">시설가이드</a>
-        <span class="footer-divider">·</span>
-        <a href="/pages/timeline.html">법령연혁</a>
-        <span class="footer-divider">·</span>
-        <a href="/pages/checklist.html">용도체크</a>
-        <span class="footer-divider">·</span>
-        <a href="/pages/reference.html">자료실</a>
-      </div>
-      <div class="footer-links" style="margin-top: 8px;">
-        <a href="/pages/about.html">서비스 소개</a>
-        <span class="footer-divider">·</span>
-        <a href="/pages/terms.html">이용약관</a>
-        <span class="footer-divider">·</span>
-        <a href="/pages/privacy.html">개인정보처리방침</a>
-      </div>
+      <nav aria-label="사이트 네비게이션">
+        <div class="footer-links">
+          <a href="/guide/">시설가이드</a>
+          <span class="footer-divider">·</span>
+          <a href="/pages/timeline.html">법령연혁</a>
+          <span class="footer-divider">·</span>
+          <a href="/pages/checklist.html">용도체크</a>
+          <span class="footer-divider">·</span>
+          <a href="/pages/reference.html">자료실</a>
+        </div>
+        <div class="footer-links" style="margin-top: 8px;">
+          <a href="/pages/about.html">서비스 소개</a>
+          <span class="footer-divider">·</span>
+          <a href="/pages/terms.html">이용약관</a>
+          <span class="footer-divider">·</span>
+          <a href="/pages/privacy.html">개인정보처리방침</a>
+        </div>
+      </nav>
       <p>국토교통부 건축물대장정보 서비스 API 사용</p>
     </footer>
   </div>
+  </main>
 
   <!-- 로그인/회원가입 모달 -->
   <div id="authModal" class="modal" style="display: none;">
