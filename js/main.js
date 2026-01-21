@@ -957,8 +957,18 @@ window.closeHistoryModal = function() {
   if (tabs) tabs.remove();
 };
 
-// 주소 검색 (카카오 우편번호 서비스)
+// 주소 검색 (카카오 우편번호 서비스) - embed 방식 (모바일 호환성 개선)
 window.searchAddress = function() {
+  const modal = document.getElementById('addressModal');
+  const embedLayer = document.getElementById('addressEmbedLayer');
+
+  // 모달 표시
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // 기존 내용 초기화
+  embedLayer.innerHTML = '';
+
   new daum.Postcode({
     oncomplete: function(data) {
       // 선택한 주소 정보 저장
@@ -977,9 +987,22 @@ window.searchAddress = function() {
 
       // 조회 버튼 활성화
       document.getElementById('searchBtn').disabled = false;
-    }
-  }).open();
-}
+
+      // 모달 닫기
+      closeAddressModal();
+    },
+    width: '100%',
+    height: '100%'
+  }).embed(embedLayer);
+};
+
+// 주소 검색 모달 닫기
+window.closeAddressModal = function() {
+  const modal = document.getElementById('addressModal');
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('addressEmbedLayer').innerHTML = '';
+};
 
 // 건축물대장 조회 (4가지 동시 조회)
 window.searchBuilding = async function() {

@@ -818,6 +818,23 @@
     </div>
   </div>
 
+  <!-- 주소 검색 모달 (다음 포스트코드 embed용) -->
+  <div id="addressModal" class="modal" style="display: none;">
+    <div class="modal-content address-modal-content">
+      <div class="modal-header">
+        <h2>주소 검색</h2>
+        <button class="modal-close" onclick="closeAddressModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body address-modal-body">
+        <div id="addressEmbedLayer"></div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="/js/main.js"></script>
 </body>
 </html>
