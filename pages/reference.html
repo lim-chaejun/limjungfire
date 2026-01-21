@@ -397,16 +397,8 @@
 </head>
 <body>
   <div class="container">
-    <!-- 상단 바 -->
-    <div class="top-bar">
-      <a href="/" class="home-btn" aria-label="홈으로">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
-          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
-          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
-        </svg>
-      </a>
-    </div>
+    <!-- 공통 헤더 -->
+    <div id="header-container"></div>
 
     <div class="page-header">
       <h1>소방 참고자료</h1>
@@ -456,6 +448,13 @@
       </div>
     </div>
   </div>
+
+  <!-- 공통 컴포넌트 -->
+  <script type="module">
+    import { renderHeader, initComponents } from '/js/components.js';
+    renderHeader('header-container');
+    initComponents();
+  </script>
 
   <script>
     // 참고자료 목록 정의
