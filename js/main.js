@@ -128,16 +128,42 @@ initTheme();
 
 // 광고 차단 감지
 async function detectAdBlock() {
-  // 방법 1: 테스트 광고 요소 생성
-  const testAd = document.createElement('div');
-  testAd.className = 'adsbox';
-  testAd.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
-  testAd.innerHTML = '&nbsp;';
-  document.body.appendChild(testAd);
+  // 방법 1: 여러 광고 관련 클래스명으로 테스트
+  const testClasses = ['adsbox', 'ad-banner', 'ad-placeholder', 'adsbygoogle'];
+  let blocked = false;
 
-  await new Promise(r => setTimeout(r, 100));
-  const blocked = testAd.offsetHeight === 0 || testAd.clientHeight === 0;
-  testAd.remove();
+  for (const className of testClasses) {
+    const testAd = document.createElement('div');
+    testAd.className = className;
+    testAd.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
+    testAd.innerHTML = '&nbsp;';
+    document.body.appendChild(testAd);
+
+    await new Promise(r => setTimeout(r, 100));
+    if (testAd.offsetHeight === 0 || testAd.clientHeight === 0 ||
+        window.getComputedStyle(testAd).display === 'none') {
+      blocked = true;
+    }
+    testAd.remove();
+    if (blocked) break;
+  }
+
+  // 방법 2: Google AdSense 스크립트 로드 테스트
+  if (!blocked) {
+    try {
+      await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
+        method: 'HEAD',
+        mode: 'no-cors'
+      });
+      // 요청은 성공해도 adsbygoogle 객체가 없으면 차단된 것
+      await new Promise(r => setTimeout(r, 200));
+      if (typeof window.adsbygoogle === 'undefined') {
+        blocked = true;
+      }
+    } catch (e) {
+      blocked = true;
+    }
+  }
 
   return blocked;
 }
