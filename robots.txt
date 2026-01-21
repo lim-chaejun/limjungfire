@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /pages/admin.html
+Disallow: /pages/ad-admin.html
 
 Sitemap: https://sobangcheck.com/sitemap.xml
