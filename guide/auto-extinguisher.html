@@ -3,6 +3,14 @@
 <head>
   <!-- 다크모드 깜빡임 방지 -->
   <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})();</script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "v48dmfyli0");
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
@@ -78,7 +86,8 @@
   <link rel="stylesheet" href="../css/style.css">
   <style>
     .page-header { text-align: center; padding: 40px 0 30px; }
-    .page-header .icon { font-size: 48px; margin-bottom: 16px; }
+    .page-header .icon { width: 48px; height: 48px; margin: 0 auto 16px; color: var(--color-primary); }
+    .page-header .icon svg { width: 100%; height: 100%; }
     .page-header h1 { font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
     .page-header p { color: var(--text-tertiary); font-size: 15px; }
     .content-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; }
@@ -151,7 +160,7 @@
       </div>
     </div>
     <div class="page-header">
-      <div class="icon">⚡</div>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v3H4z"/><path d="M6 7v2"/><path d="M18 7v2"/><path d="M8 7v4"/><path d="M16 7v4"/><path d="M12 7v6"/><path d="M10 14l-2 4"/><path d="M14 14l2 4"/><path d="M12 14v5"/><path d="M9 20h6"/></svg></div>
       <h1>자동소화장치 설치기준</h1>
       <p>주방용 자동소화장치</p>
     </div>

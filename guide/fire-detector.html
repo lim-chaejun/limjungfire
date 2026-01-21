@@ -3,6 +3,14 @@
 <head>
   <!-- 다크모드 깜빡임 방지 -->
   <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})();</script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "v48dmfyli0");
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
@@ -78,7 +86,8 @@
   <link rel="stylesheet" href="../css/style.css">
   <style>
     .page-header { text-align: center; padding: 40px 0 30px; }
-    .page-header .icon { font-size: 48px; margin-bottom: 16px; }
+    .page-header .icon { width: 48px; height: 48px; margin: 0 auto 16px; color: var(--color-primary); }
+    .page-header .icon svg { width: 100%; height: 100%; }
     .page-header h1 { font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
     .page-header p { color: var(--text-tertiary); font-size: 15px; }
     .content-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; }
@@ -163,7 +172,7 @@
     </div>
 
     <div class="page-header">
-      <div class="icon">🔔</div>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v3"/><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v4c0 1.66 3.58 3 8 3s8-1.34 8-3V9"/><circle cx="12" cy="12" r="1.5"/><path d="M8 17c-1.5.5-2.5 1.2-2.5 2 0 1.38 2.91 2.5 6.5 2.5s6.5-1.12 6.5-2.5c0-.8-1-1.5-2.5-2"/></svg></div>
       <h1>자동화재탐지설비</h1>
       <p>화재를 자동으로 감지하여 경보하는 설비</p>
     </div>
