@@ -1867,32 +1867,23 @@ footer {
 .map-modal-content {
   max-width: 700px;
   width: 95%;
-  overflow: hidden;
-}
-
-.map-modal-content {
+  overflow: visible;
   position: relative;
 }
 
 .map-modal-content .modal-header {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 100;
-  padding: 0;
-  border-bottom: none;
-  background: transparent;
-}
-
-.map-modal-content .modal-header h2 {
   display: none;
 }
 
-.map-modal-content .modal-close {
-  background: rgba(0,0,0,0.5);
+.map-modal-content .map-close-btn {
+  position: absolute;
+  top: 50px;
+  right: 8px;
+  z-index: 100;
+  background: rgba(0,0,0,0.6);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1901,29 +1892,19 @@ footer {
   cursor: pointer;
 }
 
-.map-modal-content .modal-close:hover {
-  background: rgba(0,0,0,0.7);
+.map-modal-content .map-close-btn:hover {
+  background: rgba(0,0,0,0.8);
 }
 
 .map-modal-body {
   padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
 }
 
 .map-container {
   width: 100%;
   background: var(--bg-tertiary);
-  border-radius: 0;
-}
-
-.map-address {
-  padding: 8px 12px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  background: var(--bg-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .map-error {
@@ -2004,18 +1985,35 @@ footer {
   font-weight: 500;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .map-modal-content {
     max-width: 95%;
+    width: 95%;
+  }
+
+  .map-modal-content .map-close-btn {
+    top: 48px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .map-modal-content .map-close-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   .map-area {
-    height: 55vh;
+    height: 60vh;
     min-height: 300px;
   }
 
   .map-address-text {
     font-size: 12px;
+  }
+
+  .map-address-bar {
+    padding: 10px 12px;
   }
 }
 

@@ -659,14 +659,11 @@
   <!-- 지도 모달 -->
   <div id="mapModal" class="modal" style="display: none;">
     <div class="modal-content map-modal-content">
-      <div class="modal-header">
-        <h2 id="mapModalTitle">위치 확인</h2>
-        <button class="modal-close" onclick="closeMapModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
+      <button class="map-close-btn" onclick="closeMapModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
       <div class="modal-body map-modal-body">
         <div id="mapContainer" class="map-container"></div>
         <div id="mapAddress" class="map-address-bar">
