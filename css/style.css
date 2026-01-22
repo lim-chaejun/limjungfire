@@ -1100,6 +1100,21 @@ header h1 {
   line-height: 1.5;
 }
 
+.auth-modal-terms {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 12px 0 0;
+}
+
+.auth-modal-terms a {
+  color: var(--text-tertiary);
+  text-decoration: underline;
+}
+
+.auth-modal-terms a:hover {
+  color: var(--text-secondary);
+}
+
 /* History Tabs */
 .history-tabs {
   display: flex;
@@ -1831,6 +1846,7 @@ footer {
 .map-tabs {
   display: flex;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .map-tab {
@@ -1867,6 +1883,7 @@ footer {
 .map-modal-content {
   max-width: 700px;
   width: 95%;
+  max-height: none;
   overflow: visible;
   position: relative;
 }
@@ -1877,7 +1894,7 @@ footer {
 
 .map-modal-content .map-close-btn {
   position: absolute;
-  top: 50px;
+  top: 8px;
   right: 8px;
   z-index: 100;
   background: rgba(0,0,0,0.6);
@@ -1900,11 +1917,19 @@ footer {
   padding: 0;
   overflow: hidden;
   border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  max-height: none;
+  height: auto;
 }
 
 .map-container {
   width: 100%;
   background: var(--bg-tertiary);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .map-error {
@@ -1935,6 +1960,7 @@ footer {
   background: var(--bg-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .map-address-bar:hover {
@@ -1989,10 +2015,12 @@ footer {
   .map-modal-content {
     max-width: 95%;
     width: 95%;
+    height: 85vh;
+    max-height: 85vh;
   }
 
   .map-modal-content .map-close-btn {
-    top: 48px;
+    top: 6px;
     right: 6px;
     width: 32px;
     height: 32px;
@@ -2003,9 +2031,14 @@ footer {
     height: 16px;
   }
 
+  .map-modal-body {
+    height: 100%;
+  }
+
   .map-area {
-    height: 60vh;
-    min-height: 300px;
+    flex: 1;
+    min-height: 200px;
+    height: auto;
   }
 
   .map-address-text {
@@ -2014,6 +2047,7 @@ footer {
 
   .map-address-bar {
     padding: 10px 12px;
+    flex-shrink: 0;
   }
 }
 
