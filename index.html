@@ -859,8 +859,95 @@
     </div>
   </div>
 
+  <!-- PWA 설치 배너 -->
+  <div id="pwaInstallBanner" class="pwa-install-banner">
+    <div class="pwa-banner-content">
+      <div class="pwa-banner-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
+          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
+          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="pwa-banner-text">
+        <strong>소방체크</strong>
+        <span>홈 화면에 추가하고 빠르게 접속하세요</span>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="pwa-btn-install" onclick="installPWA()">설치</button>
+      <button class="pwa-btn-close" onclick="dismissInstallBanner()">닫기</button>
+    </div>
+  </div>
+
   <script type="module" src="/js/main.js"></script>
   <script>
+    // PWA 설치 프롬프트 관리
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallBanner();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      hideInstallBanner();
+      deferredPrompt = null;
+      console.log('PWA 설치 완료');
+    });
+
+    function showInstallBanner() {
+      // 이미 설치된 경우 (standalone 모드) 표시하지 않음
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        return;
+      }
+      // iOS standalone 체크
+      if (window.navigator.standalone === true) {
+        return;
+      }
+      // 사용자가 닫기를 눌렀는지 확인 (7일간 숨김)
+      const dismissedTime = localStorage.getItem('pwaInstallDismissed');
+      if (dismissedTime) {
+        const daysSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60 * 24);
+        if (daysSinceDismissed < 7) {
+          return;
+        }
+      }
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) {
+        banner.classList.add('show');
+      }
+    }
+
+    function hideInstallBanner() {
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) {
+        banner.classList.remove('show');
+      }
+    }
+
+    function installPWA() {
+      if (!deferredPrompt) {
+        return;
+      }
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('사용자가 PWA 설치를 수락했습니다');
+        } else {
+          console.log('사용자가 PWA 설치를 거부했습니다');
+        }
+        deferredPrompt = null;
+        hideInstallBanner();
+      });
+    }
+
+    function dismissInstallBanner() {
+      localStorage.setItem('pwaInstallDismissed', Date.now().toString());
+      hideInstallBanner();
+    }
+
     // Service Worker 등록
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
