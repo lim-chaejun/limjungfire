@@ -1714,11 +1714,6 @@ function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
       </div>
     </div>`;
 
-  // 7. 적용 소방법령
-  if (pmsDay) {
-    html += renderLawInfoCard(pmsDay);
-  }
-
   return html;
 }
 
@@ -1840,11 +1835,6 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
     html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
   });
   html += `</div>`;
-
-  // 4. 적용 소방법령 (최하단)
-  if (pmsDay) {
-    html += renderLawInfoCard(pmsDay);
-  }
 
   return html;
 }
@@ -2047,11 +2037,6 @@ function renderDetailGeneralCard(items, permitInfo, titleItems = []) {
         </div>
       </div>
     </div>`;
-
-  // 6. 적용 소방법령
-  if (permitDate) {
-    html += renderLawInfoCard(permitDate);
-  }
 
   return html;
 }
@@ -2350,6 +2335,10 @@ function mapPurposeToFireDataType(mainPurpose) {
     '다세대주택': '공동주택',
     '기숙사': '공동주택',
     '공동주택': '공동주택',
+    '공동주택(아파트)': '공동주택',
+
+    // 단독주택 (소방시설 기준 데이터 없음 - 근린생활시설 기준 참고)
+    '단독주택': '근린생활시설',
 
     // 근린생활시설
     '제1종근린생활시설': '근린생활시설',
@@ -3427,6 +3416,16 @@ window.submitManualInput = function() {
 // 수동 입력 결과 표시
 async function displayManualResult(buildingInfo, permitDate) {
   const resultContainer = document.getElementById('result');
+
+  // 전역 변수에 수동 입력 데이터 저장 (전체 소방기준 보기용)
+  currentBuildingData = {
+    titleItems: [],
+    floorItems: [],
+    generalItems: [{ mainPurpsCdNm: buildingInfo.mainPurpsCdNm }],
+    permitItems: [{ archPmsDay: permitDate }],
+    sortedIndices: [],
+    isManualInput: true
+  };
 
   // 요약 카드 HTML
   let html = `
