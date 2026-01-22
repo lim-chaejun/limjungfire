@@ -3235,13 +3235,6 @@ window.showMapModal = function(address) {
 
   mapModal.style.display = 'flex';
 
-  // 모달 바깥 클릭 시 닫기
-  mapModal.onclick = function(e) {
-    if (e.target === mapModal) {
-      closeMapModal();
-    }
-  };
-
   // 주소 바 설정
   const addressText = mapAddress.querySelector('.map-address-text');
   if (addressText) addressText.textContent = address;
