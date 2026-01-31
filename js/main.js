@@ -2409,13 +2409,13 @@ window.handleQuickBookmark = async function(address) {
 };
 
 // PDF 다운로드 (window.print 기반)
-window.handlePdfDownload = async function() {
+window.handlePdfDownload = function() {
   if (!currentUser) {
     showLoginRequiredToast('PDF 다운로드는 로그인 후 이용할 수 있습니다');
     return;
   }
 
-  // 무료사용자 일일 5회 제한
+  // 무료사용자 일일 5회 제한 확인
   const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
   const pdfKey = 'pdf_download_count';
   const pdfData = JSON.parse(localStorage.getItem(pdfKey) || '{}');
@@ -2423,9 +2423,60 @@ window.handlePdfDownload = async function() {
     pdfData.date = today;
     pdfData.count = 0;
   }
+
   if (pdfData.count >= 5) {
     showToast('일일 PDF 다운로드 한도(5회)를 초과했습니다');
     return;
+  }
+
+  const used = pdfData.count;
+  const remaining = 5 - used;
+
+  // 확인 모달 표시
+  const overlay = document.createElement('div');
+  overlay.className = 'modal';
+  overlay.id = 'pdfConfirmModal';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:340px;">
+      <div class="modal-header">
+        <h2>PDF 다운로드</h2>
+        <button class="modal-close" onclick="document.getElementById('pdfConfirmModal').remove()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:24px 20px;">
+        <div style="font-size:36px;margin-bottom:12px;">📄</div>
+        <div style="font-size:15px;color:var(--text-primary);font-weight:600;margin-bottom:6px;">
+          오늘 ${used}회 사용 / 5회 중
+        </div>
+        <div style="font-size:13px;color:var(--text-tertiary);margin-bottom:20px;">
+          다운로드 시 <strong>${remaining}회</strong> 남습니다
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="document.getElementById('pdfConfirmModal').remove()"
+            style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-secondary);font-size:14px;font-weight:600;cursor:pointer;">
+            취소
+          </button>
+          <button onclick="document.getElementById('pdfConfirmModal').remove(); _executePdfDownload();"
+            style="flex:1;padding:12px;border-radius:10px;border:none;background:#3182f6;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+            다운로드
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+};
+
+// 실제 PDF 생성 실행
+window._executePdfDownload = async function() {
+  const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const pdfKey = 'pdf_download_count';
+  const pdfData = JSON.parse(localStorage.getItem(pdfKey) || '{}');
+  if (pdfData.date !== today) {
+    pdfData.date = today;
+    pdfData.count = 0;
   }
   pdfData.count++;
   localStorage.setItem(pdfKey, JSON.stringify(pdfData));
