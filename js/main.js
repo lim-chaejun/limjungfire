@@ -460,53 +460,86 @@ async function searchFromUrl() {
   }
 }
 
-// ticker: step-based scroll with seamless loop
+// ticker: step-based scroll, long items scroll slowly before advancing
 (function initTicker() {
-  const track = document.querySelector('.tips-ticker-track');
-  const ticker = document.getElementById('tipsTicker');
-  const viewport = document.querySelector('.tips-ticker-viewport');
+  var track = document.querySelector('.tips-ticker-track');
+  var ticker = document.getElementById('tipsTicker');
+  var viewport = document.querySelector('.tips-ticker-viewport');
   if (!track || !ticker || !viewport) return;
 
-  const originalItems = track.querySelectorAll('.tips-ticker-item');
-  const itemCount = originalItems.length;
+  var itemCount = track.querySelectorAll('.tips-ticker-item').length;
   if (itemCount === 0) return;
 
-  // set each item width = viewport width so one item fills the view
+  // duplicate for seamless loop
+  track.innerHTML += track.innerHTML;
+  var allItems = track.querySelectorAll('.tips-ticker-item');
+
+  // each item at least viewport width so short tips fill the view
   function sizeItems() {
-    const w = viewport.offsetWidth;
-    const items = track.querySelectorAll('.tips-ticker-item');
-    for (let i = 0; i < items.length; i++) {
-      items[i].style.width = w + 'px';
+    var w = viewport.offsetWidth;
+    for (var i = 0; i < allItems.length; i++) {
+      allItems[i].style.minWidth = w + 'px';
     }
   }
-
-  // duplicate items for seamless loop
-  track.innerHTML = track.innerHTML + track.innerHTML;
   sizeItems();
 
-  let currentIndex = 0;
-  let paused = false;
+  var currentIndex = 0;
+  var paused = false;
+  var timer = null;
 
-  function step() {
-    if (paused) return;
-    currentIndex++;
-    if (currentIndex >= itemCount) {
-      // jump back to start without transition
-      track.style.transition = 'none';
-      currentIndex = 0;
-      track.style.transform = 'translateX(0)';
-      void track.offsetWidth;
-      // then slide to item 1
-      currentIndex = 1;
-      track.style.transition = 'transform 0.5s ease';
-      track.style.transform = 'translateX(-' + (viewport.offsetWidth * currentIndex) + 'px)';
+  function show(index, onDone) {
+    var vpWidth = viewport.offsetWidth;
+    var item = allItems[index];
+    var itemLeft = item.offsetLeft;
+    var itemWidth = item.offsetWidth;
+
+    // slide to item's left edge
+    track.style.transition = 'transform 0.5s ease';
+    track.style.transform = 'translateX(-' + itemLeft + 'px)';
+
+    clearTimeout(timer);
+
+    if (itemWidth > vpWidth) {
+      // long item: after slide-in, slowly scroll to reveal the rest
+      var overflow = itemWidth - vpWidth;
+      var dur = overflow / 40; // 40px per second
+      timer = setTimeout(function doScroll() {
+        if (paused) { timer = setTimeout(doScroll, 300); return; }
+        track.style.transition = 'transform ' + dur + 's linear';
+        track.style.transform = 'translateX(-' + (itemLeft + overflow) + 'px)';
+        timer = setTimeout(function afterScroll() {
+          if (paused) { timer = setTimeout(afterScroll, 300); return; }
+          onDone();
+        }, dur * 1000 + 1500);
+      }, 1500);
     } else {
-      track.style.transition = 'transform 0.5s ease';
-      track.style.transform = 'translateX(-' + (viewport.offsetWidth * currentIndex) + 'px)';
+      // short item: wait 4s then advance
+      timer = setTimeout(function afterWait() {
+        if (paused) { timer = setTimeout(afterWait, 300); return; }
+        onDone();
+      }, 4000);
     }
   }
 
-  setInterval(step, 4000);
+  function next() {
+    currentIndex++;
+    if (currentIndex >= itemCount) {
+      // show duplicate of first item (smooth transition from last)
+      show(currentIndex, function() {
+        // jump back to real first item position
+        track.style.transition = 'none';
+        currentIndex = 0;
+        track.style.transform = 'translateX(-' + allItems[0].offsetLeft + 'px)';
+        void track.offsetWidth;
+        next();
+      });
+      return;
+    }
+    show(currentIndex, next);
+  }
+
+  // start with first item
+  show(0, next);
 
   ticker.addEventListener('mouseenter', function() { paused = true; });
   ticker.addEventListener('mouseleave', function() { paused = false; });
@@ -514,7 +547,7 @@ async function searchFromUrl() {
   window.addEventListener('resize', function() {
     sizeItems();
     track.style.transition = 'none';
-    track.style.transform = 'translateX(-' + (viewport.offsetWidth * currentIndex) + 'px)';
+    track.style.transform = 'translateX(-' + allItems[currentIndex].offsetLeft + 'px)';
   });
 })();
 
