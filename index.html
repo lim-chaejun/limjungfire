@@ -40,7 +40,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#3182f6">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="소방체크">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
@@ -877,6 +877,21 @@
     <div class="pwa-banner-actions">
       <button class="pwa-btn-install" onclick="installPWA()">설치</button>
       <button class="pwa-btn-close" onclick="dismissInstallBanner()">닫기</button>
+    </div>
+  </div>
+
+  <!-- 로그인 유도 하단 배너 -->
+  <div id="loginPromptBanner" class="login-prompt-banner">
+    <div class="login-prompt-content">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4M12 16h.01"/>
+      </svg>
+      <span>검색 기록을 놓치지 마세요</span>
+    </div>
+    <div class="login-prompt-actions">
+      <button class="login-prompt-btn" onclick="handleGoogleLogin()">로그인하기</button>
+      <button class="login-prompt-dismiss" onclick="dismissLoginBanner()">닫기</button>
     </div>
   </div>
 

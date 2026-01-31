@@ -62,6 +62,54 @@ let exemptionCriteriaData = null; // 면제기준 데이터 (지연 로딩)
 let adSettings = null; // 광고 설정
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
+// 로그인 유도 관리
+const loginPromptManager = {
+  getSearchCount() {
+    return parseInt(sessionStorage.getItem('searchCount') || '0', 10);
+  },
+  incrementSearchCount() {
+    const count = this.getSearchCount() + 1;
+    sessionStorage.setItem('searchCount', count.toString());
+    return count;
+  },
+  isResultBannerDismissed() {
+    return sessionStorage.getItem('resultBannerDismissed') === 'true';
+  },
+  dismissResultBanner() {
+    sessionStorage.setItem('resultBannerDismissed', 'true');
+  },
+  isLoginBannerDismissed() {
+    const dismissed = localStorage.getItem('loginBannerDismissed');
+    if (!dismissed) return false;
+    const daysSince = (Date.now() - parseInt(dismissed, 10)) / (1000 * 60 * 60 * 24);
+    return daysSince < 3;
+  },
+  dismissLoginBanner() {
+    localStorage.setItem('loginBannerDismissed', Date.now().toString());
+  },
+  shouldShowResultBanner() {
+    return !currentUser && !this.isResultBannerDismissed();
+  },
+  shouldShowLoginBanner() {
+    return !currentUser && this.getSearchCount() >= 2 && !this.isLoginBannerDismissed();
+  },
+  showLoginBannerIfNeeded() {
+    const banner = document.getElementById('loginPromptBanner');
+    if (!banner) return;
+    const pwaBanner = document.getElementById('pwaInstallBanner');
+    const pwaVisible = pwaBanner && pwaBanner.classList.contains('show');
+    if (this.shouldShowLoginBanner() && !pwaVisible) {
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+    }
+  },
+  hideLoginBanner() {
+    const banner = document.getElementById('loginPromptBanner');
+    if (banner) banner.classList.remove('show');
+  }
+};
+
 // 건물 유형 → 파일명 매핑
 const BUILDING_TYPE_TO_FILE = {
   '공동주택': '01_residential_complex',
@@ -545,10 +593,15 @@ async function updateAuthUI(user) {
   if (authSection) {
     authSection.classList.add('auth-ready');
   }
-  // 검색 기록 버튼 표시/숨김
+  // 검색 기록 버튼 항상 표시
   const historyBtn = document.getElementById('historyBtn');
   if (historyBtn) {
-    historyBtn.style.display = user ? 'inline-flex' : 'none';
+    historyBtn.style.display = 'inline-flex';
+  }
+
+  // 로그인 시 하단 배너 숨기기
+  if (user) {
+    loginPromptManager.hideLoginBanner();
   }
 }
 
@@ -652,7 +705,7 @@ let historyModalState = {
 // 검색 기록 보기
 window.showSearchHistory = async function() {
   if (!currentUser) {
-    alert('로그인이 필요합니다.');
+    showLoginRequiredToast('검색 기록을 보려면 로그인이 필요합니다');
     return;
   }
 
@@ -1014,6 +1067,11 @@ window.searchBuilding = async function() {
     return;
   }
 
+  // 검색 카운트 증가 및 로그인 배너 트리거
+  if (!currentUser) {
+    loginPromptManager.incrementSearchCount();
+  }
+
   showLoading(true);
   clearResult();
 
@@ -1035,6 +1093,11 @@ window.searchBuilding = async function() {
 
     // URL 업데이트 (공유 링크용)
     updateUrlWithAddress();
+
+    // 비로그인 시 하단 로그인 배너 트리거
+    if (!currentUser) {
+      loginPromptManager.showLoginBannerIfNeeded();
+    }
 
     // 로그인된 사용자면 검색 기록 저장
     if (currentUser) {
@@ -1212,7 +1275,64 @@ async function renderBuildingView() {
   // 총괄 요약 카드 표시 (총괄표제부 기준) - 지연 로드
   html += await renderSummaryCard(generalInfo, permitInfo, titleItems);
 
+  // 비로그인 인라인 배너 (결과 저장 유도)
+  if (loginPromptManager.shouldShowResultBanner()) {
+    html += `
+      <div class="result-login-banner" id="resultLoginBanner">
+        <div class="result-login-banner-content">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          <span>로그인하면 이 결과를 저장할 수 있어요</span>
+        </div>
+        <div class="result-login-banner-actions">
+          <button class="result-login-btn" onclick="handleGoogleLogin()">로그인</button>
+          <button class="result-login-dismiss" onclick="dismissResultBanner()">닫기</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // PDF 다운로드 버튼
+  html += `
+    <button class="pdf-download-btn" onclick="handlePdfDownload()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 18 15 15"/>
+      </svg>
+      소방시설 설치기준 PDF 다운로드
+      ${!currentUser ? '<span class="pdf-login-badge">로그인 필요</span>' : ''}
+    </button>
+  `;
+
   resultDiv.innerHTML = html;
+
+  // 즐겨찾기 상태 비동기 체크 (로그인 상태일 때)
+  if (currentUser) {
+    checkQuickBookmarkState();
+  }
+}
+
+// 즐겨찾기 상태 확인하여 별 아이콘 업데이트
+async function checkQuickBookmarkState() {
+  const btn = document.getElementById('quickBookmarkBtn');
+  if (!btn) return;
+  const fb = await loadFirebase();
+  if (!fb) return;
+  const favorites = await fb.getMyFavorites(50);
+  const address = currentBuildingData.generalItems?.[0]?.platPlc ||
+                  currentBuildingData.titleItems?.[0]?.platPlc ||
+                  selectedAddressData?.jibunAddress ||
+                  selectedAddressData?.address || '';
+  const isFav = favorites.some(f => f.address === address);
+  if (isFav) {
+    btn.classList.add('active');
+    btn.querySelector('svg').setAttribute('fill', 'currentColor');
+  }
 }
 
 // 건물 선택기 스크롤
@@ -1323,6 +1443,11 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
               <circle cx="18" cy="19" r="3"/>
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+          <button class="action-btn bookmark-btn" id="quickBookmarkBtn" onclick="handleQuickBookmark('${escapedAddress}')" title="즐겨찾기">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
           </button>
         </div>
@@ -2200,6 +2325,167 @@ function clearResult() {
 // 에러 표시
 function showError(message) {
   document.getElementById('result').innerHTML = `<div class="error-message">${message}</div>`;
+}
+
+// ==================== 로그인 유도 핸들러 ====================
+
+// 인라인 결과 배너 닫기
+window.dismissResultBanner = function() {
+  loginPromptManager.dismissResultBanner();
+  const banner = document.getElementById('resultLoginBanner');
+  if (banner) banner.remove();
+};
+
+// 하단 고정 로그인 배너 닫기
+window.dismissLoginBanner = function() {
+  loginPromptManager.dismissLoginBanner();
+  loginPromptManager.hideLoginBanner();
+};
+
+// 즐겨찾기 바로 추가
+window.handleQuickBookmark = async function(address) {
+  if (!currentUser) {
+    showLoginRequiredToast('즐겨찾기를 사용하려면 로그인이 필요합니다');
+    return;
+  }
+
+  const btn = document.getElementById('quickBookmarkBtn');
+  if (!btn) return;
+
+  const fb = await loadFirebase();
+  if (!fb) return;
+
+  const isActive = btn.classList.contains('active');
+
+  try {
+    if (isActive) {
+      // 즐겨찾기 삭제
+      const favorites = await fb.getMyFavorites(50);
+      const fav = favorites.find(f => f.address === address);
+      if (fav) {
+        await fb.removeFavorite(fav.id);
+      }
+      btn.classList.remove('active');
+      btn.querySelector('svg').setAttribute('fill', 'none');
+      showToast('즐겨찾기에서 삭제했습니다');
+    } else {
+      // 즐겨찾기 추가
+      const addrData = selectedAddressData || {
+        address: address,
+        jibunAddress: address,
+        roadAddress: '',
+        bcode: ''
+      };
+      const buildingData = {
+        title: currentBuildingData.titleItems,
+        floor: currentBuildingData.floorItems,
+        general: currentBuildingData.generalItems,
+        permit: currentBuildingData.permitItems
+      };
+      await fb.addFavorite(addrData, buildingData);
+      btn.classList.add('active');
+      btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      showToast('즐겨찾기에 추가했습니다');
+    }
+  } catch (error) {
+    console.error('즐겨찾기 처리 실패:', error);
+    showToast('즐겨찾기 처리에 실패했습니다');
+  }
+};
+
+// PDF 다운로드 (window.print 기반)
+window.handlePdfDownload = function() {
+  if (!currentUser) {
+    showLoginRequiredToast('PDF 다운로드는 로그인 후 이용할 수 있습니다');
+    return;
+  }
+
+  const { titleItems, generalItems, permitItems } = currentBuildingData;
+  const generalInfo = generalItems[0] || {};
+  const permitInfo = permitItems[0] || {};
+  const mainTitle = titleItems[0] || {};
+
+  const buildingName = mainTitle.bldNm || generalInfo.bldNm || '건축물';
+  const address = generalInfo.platPlc || mainTitle.platPlc || '';
+  const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
+  const permitDate = permitInfo.archPmsDay || generalInfo.pmsDay || '';
+  const totalArea = generalInfo.totArea || (titleItems.reduce((s, t) => s + (Number(t.totArea) || 0), 0)) || '-';
+  const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+  const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
+
+  // 소방시설 목록 수집
+  const facilityItems = document.querySelectorAll('.facility-item.required .facility-name');
+  let facilitiesHtml = '';
+  facilityItems.forEach(item => {
+    facilitiesHtml += `<li>${item.textContent}</li>`;
+  });
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${buildingName} - 소방시설 설치기준</title>
+      <style>
+        body { font-family: -apple-system, 'Noto Sans KR', sans-serif; padding: 40px; color: #191f28; line-height: 1.6; }
+        h1 { font-size: 22px; margin-bottom: 8px; }
+        h2 { font-size: 16px; margin: 24px 0 12px; color: #4e5968; border-bottom: 2px solid #3182f6; padding-bottom: 8px; }
+        .subtitle { color: #8b95a1; font-size: 13px; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        th, td { padding: 10px 12px; border: 1px solid #e5e8eb; font-size: 14px; text-align: left; }
+        th { background: #f7f8fa; font-weight: 600; color: #4e5968; width: 120px; }
+        ul { padding-left: 20px; }
+        li { padding: 4px 0; font-size: 14px; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e8eb; font-size: 12px; color: #8b95a1; text-align: center; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      <h1>${buildingName}</h1>
+      <div class="subtitle">소방시설 설치기준 조회 결과 | ${new Date().toLocaleDateString('ko-KR')}</div>
+      <h2>건축물 정보</h2>
+      <table>
+        <tr><th>주소</th><td>${address}</td></tr>
+        <tr><th>주용도</th><td>${mainPurpose}</td></tr>
+        <tr><th>건축허가일</th><td>${fmtDate(permitDate)}</td></tr>
+        <tr><th>연면적</th><td>${fmtArea(totalArea)} ㎡</td></tr>
+      </table>
+      ${facilitiesHtml ? `
+        <h2>설치 필요 소방시설</h2>
+        <ul>${facilitiesHtml}</ul>
+      ` : ''}
+      <div class="footer">
+        소방체크 (sobangcheck.com) | 이 자료는 참고용이며 법적 효력이 없습니다.
+      </div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => { printWindow.print(); }, 500);
+};
+
+// 로그인 필요 토스트 (로그인 버튼 포함)
+function showLoginRequiredToast(message) {
+  // 기존 토스트 제거
+  const existing = document.querySelector('.login-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'login-toast';
+  toast.innerHTML = `
+    <span>${message}</span>
+    <button onclick="this.parentElement.remove(); handleGoogleLogin();">로그인</button>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 4000);
 }
 
 // ==================== 특정소방대상물 분류 ====================

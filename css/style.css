@@ -3959,3 +3959,319 @@ footer {
     font-size: 13px;
   }
 }
+
+/* ==================== 인라인 결과 로그인 배너 ==================== */
+.result-login-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  margin-top: 12px;
+  animation: toastSlideIn 0.3s ease;
+}
+
+.result-login-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.result-login-banner-content svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.result-login-banner-content span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.result-login-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.result-login-btn {
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.result-login-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.result-login-dismiss {
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.result-login-dismiss:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+  .result-login-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .result-login-banner-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* ==================== 하단 고정 로그인 배너 ==================== */
+.login-prompt-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 900;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.login-prompt-banner.show {
+  transform: translateY(0);
+}
+
+.login-prompt-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.login-prompt-content svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.login-prompt-content span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.login-prompt-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.login-prompt-btn {
+  padding: 10px 18px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.login-prompt-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.login-prompt-dismiss {
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.login-prompt-dismiss:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .login-prompt-banner {
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 480px) {
+  .login-prompt-banner {
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+
+  .login-prompt-content span {
+    font-size: 13px;
+  }
+
+  .login-prompt-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .login-prompt-dismiss {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* ==================== 즐겨찾기 바로추가 버튼 ==================== */
+.bookmark-btn {
+  color: var(--text-tertiary);
+}
+
+.bookmark-btn.active {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+}
+
+.bookmark-btn.active svg {
+  fill: currentColor;
+}
+
+.bookmark-btn:hover {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+/* ==================== PDF 다운로드 버튼 ==================== */
+.pdf-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  margin-top: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.pdf-download-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pdf-download-btn:active {
+  transform: scale(0.98);
+}
+
+.pdf-download-btn svg {
+  flex-shrink: 0;
+}
+
+.pdf-login-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-radius: 10px;
+}
+
+/* ==================== 로그인 필요 토스트 ==================== */
+.login-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-color);
+  z-index: 2000;
+  animation: toastSlideIn 0.3s ease;
+  max-width: calc(100vw - 32px);
+}
+
+.login-toast span {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.login-toast button {
+  padding: 6px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.login-toast button:hover {
+  background: var(--color-primary-dark);
+}
+
+.login-toast.fade-out {
+  animation: toastFadeOut 0.3s ease forwards;
+}
+
+@media (max-width: 480px) {
+  .login-toast {
+    bottom: 70px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+    max-width: none;
+  }
+
+  .login-toast span {
+    font-size: 13px;
+    flex: 1;
+    white-space: normal;
+  }
+}
