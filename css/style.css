@@ -1772,7 +1772,7 @@ header h1 {
 .tips-ticker {
   display: flex;
   align-items: stretch;
-  margin-top: 32px;
+  margin-top: auto;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -1784,14 +1784,11 @@ header h1 {
 .tips-ticker-label {
   display: flex;
   align-items: center;
-  padding: 0 14px;
+  justify-content: center;
+  padding: 0 10px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
   flex-shrink: 0;
-  white-space: nowrap;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
@@ -1843,7 +1840,7 @@ footer {
   padding: 24px 16px;
   color: var(--text-disabled);
   font-size: 12px;
-  margin-top: auto;
+  margin-top: 0;
 }
 
 /* Responsive */
@@ -3517,7 +3514,7 @@ footer {
 /* 수동 검색 링크 */
 .manual-search-link {
   text-align: center;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .manual-search-link a {
