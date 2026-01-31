@@ -54,6 +54,32 @@ window.copyUrl = function() {
   });
 };
 
+// ESC 키로 최상위 모달 닫기
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  // 닫기 우선순위: 가장 위에 떠있는 모달부터 닫기
+  const modalCloseMap = [
+    ['facilityDetailModal', 'closeFacilityDetailModal'],
+    ['fireStandardsModal', 'closeFireStandardsModal'],
+    ['mapModal', 'closeMapModal'],
+    ['detailModal', 'closeDetailModal'],
+    ['addressModal', 'closeAddressModal'],
+    ['manualInputModal', 'closeManualInputModal'],
+    ['historyModal', 'closeHistoryModal'],
+    ['myInfoModal', 'closeMyInfoModal'],
+    ['settingsModal', 'closeSettingsModal'],
+    ['authModal', 'closeAuthModal'],
+    ['adBlockModal', 'closeAdBlockModal'],
+  ];
+  for (const [id, fn] of modalCloseMap) {
+    const el = document.getElementById(id);
+    if (el && el.style.display !== 'none' && el.style.display !== '') {
+      if (typeof window[fn] === 'function') window[fn]();
+      return;
+    }
+  }
+});
+
 // 전역 변수
 let selectedAddressData = null;
 let currentUser = null;
@@ -514,16 +540,20 @@ function renderAdBanner() {
   const linkUrl = adSettings.linkUrl || '#';
   const hasLink = adSettings.linkUrl && adSettings.linkUrl.trim() !== '';
 
+  // URL 검증 (프로토콜 제한)
+  const safeImageUrl = /^https?:\/\//i.test(adSettings.imageUrl) ? adSettings.imageUrl : '';
+  const safeLinkUrl = /^https?:\/\//i.test(linkUrl) ? linkUrl : '#';
+
   if (hasLink) {
     return `
-      <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="ad-banner ad-banner-link">
-        <img src="${adSettings.imageUrl}" alt="광고" class="ad-banner-image" onerror="this.parentElement.innerHTML='<span>광고주님을 찾습니다</span>'">
+      <a href="${safeLinkUrl}" target="_blank" rel="noopener noreferrer" class="ad-banner ad-banner-link">
+        <img src="${safeImageUrl}" alt="광고" class="ad-banner-image" onerror="this.onerror=null;this.style.display='none';this.parentElement.insertAdjacentText('beforeend','광고주님을 찾습니다');">
       </a>
     `;
   } else {
     return `
       <div class="ad-banner">
-        <img src="${adSettings.imageUrl}" alt="광고" class="ad-banner-image" onerror="this.innerHTML='<span>광고주님을 찾습니다</span>'">
+        <img src="${safeImageUrl}" alt="광고" class="ad-banner-image" onerror="this.onerror=null;this.style.display='none';this.parentElement.insertAdjacentText('beforeend','광고주님을 찾습니다');">
       </div>
     `;
   }
@@ -1224,18 +1254,31 @@ function extractJibun(jibunAddress) {
   return { bun: '', ji: '' };
 }
 
-// 건축물대장 API 공통 fetch 함수
+// 건축물대장 API 공통 fetch 함수 (15초 타임아웃)
 async function fetchBuildingApi(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`API 요청 실패 (${response.status})`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      throw new Error(`API 요청 실패 (${response.status})`);
+    }
+    const data = await response.json();
+    // 공공데이터 API 에러 응답 체크
+    if (data?.response?.header?.resultCode && data.response.header.resultCode !== '00') {
+      throw new Error(`API 오류: ${data.response.header.resultMsg || '알 수 없는 오류'}`);
+    }
+    return data;
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === 'AbortError') {
+      throw new Error('API 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+    }
+    throw e;
   }
-  const data = await response.json();
-  // 공공데이터 API 에러 응답 체크
-  if (data?.response?.header?.resultCode && data.response.header.resultCode !== '00') {
-    throw new Error(`API 오류: ${data.response.header.resultMsg || '알 수 없는 오류'}`);
-  }
-  return data;
 }
 
 // 표제부 조회 API
