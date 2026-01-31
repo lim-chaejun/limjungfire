@@ -4213,6 +4213,15 @@ footer {
   border-radius: 10px;
 }
 
+.pdf-remain-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  background: rgba(49, 130, 246, 0.1);
+  color: #3182f6;
+  border-radius: 10px;
+}
+
 /* ==================== 로그인 필요 토스트 ==================== */
 .login-toast {
   position: fixed;

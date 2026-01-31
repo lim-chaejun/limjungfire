@@ -1314,7 +1314,13 @@ async function renderBuildingView() {
         <polyline points="9 15 12 18 15 15"/>
       </svg>
       소방시설 설치기준 PDF 다운로드
-      ${!currentUser ? '<span class="pdf-login-badge">로그인 필요</span>' : ''}
+      ${!currentUser ? '<span class="pdf-login-badge">로그인 필요</span>' : (() => {
+        const _today = new Date().toISOString().slice(0, 10);
+        const _d = JSON.parse(localStorage.getItem('pdf_download_count') || '{}');
+        const _used = _d.date === _today ? _d.count : 0;
+        const _remain = 5 - _used;
+        return `<span class="pdf-remain-badge">${_remain}/5</span>`;
+      })()}
     </button>
   `;
 
@@ -2408,6 +2414,21 @@ window.handlePdfDownload = async function() {
     showLoginRequiredToast('PDF 다운로드는 로그인 후 이용할 수 있습니다');
     return;
   }
+
+  // 무료사용자 일일 5회 제한
+  const today = new Date().toISOString().slice(0, 10);
+  const pdfKey = 'pdf_download_count';
+  const pdfData = JSON.parse(localStorage.getItem(pdfKey) || '{}');
+  if (pdfData.date !== today) {
+    pdfData.date = today;
+    pdfData.count = 0;
+  }
+  if (pdfData.count >= 5) {
+    showToast('일일 PDF 다운로드 한도(5회)를 초과했습니다');
+    return;
+  }
+  pdfData.count++;
+  localStorage.setItem(pdfKey, JSON.stringify(pdfData));
 
   showToast('PDF 생성 중...');
 
