@@ -3220,6 +3220,15 @@ async function renderFireFacilitiesCard(buildingInfo) {
         ※ 시설을 클릭하면 상세 기준을 확인할 수 있습니다.
       </div>
 
+      <div class="law-reference-section" id="lawRefSection">
+        <div class="law-reference-label">${formatPermitDate(permitDate)} 기준 소방시설법</div>
+        <div class="law-reference-buttons">
+          <button class="law-ref-btn" data-type="act" onclick="openLawLink('act')">법령</button>
+          <button class="law-ref-btn" data-type="decree" onclick="openLawLink('decree')">시행령</button>
+          <button class="law-ref-btn" data-type="rules" onclick="openLawLink('rules')">시행규칙</button>
+        </div>
+      </div>
+
       <div class="fire-standards-btn-wrapper">
         <button class="btn-fire-standards" onclick="showFireStandardsModalFromCard()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3234,6 +3243,28 @@ async function renderFireFacilitiesCard(buildingInfo) {
       </div>
     </div>
   `;
+
+  // 카드 렌더 후 비동기로 법령 링크 바인딩
+  setTimeout(async () => {
+    try {
+      const [actData, decreeData, rulesData] = await Promise.all([
+        getLawHistoryData('act'),
+        getLawHistoryData('decree'),
+        getLawHistoryData('rules')
+      ]);
+      const lawLinks = {
+        act: findApplicableLaw(actData, permitDate),
+        decree: findApplicableLaw(decreeData, permitDate),
+        rules: findApplicableLaw(rulesData, permitDate)
+      };
+      document.querySelectorAll('#lawRefSection .law-ref-btn').forEach(btn => {
+        const type = btn.dataset.type;
+        if (lawLinks[type] && lawLinks[type].link) {
+          btn.dataset.link = lawLinks[type].link;
+        }
+      });
+    } catch (e) { /* 법령 데이터 로드 실패 시 무시 */ }
+  }, 0);
 
   return html;
 }
@@ -3351,19 +3382,7 @@ window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo
     buildingInfo
   };
 
-  // 법령 연혁 데이터 병렬 로드
-  const [actData, decreeData, rulesData] = await Promise.all([
-    getLawHistoryData('act'),
-    getLawHistoryData('decree'),
-    getLawHistoryData('rules')
-  ]);
-  const lawLinks = {
-    act: findApplicableLaw(actData, permitDate),
-    decree: findApplicableLaw(decreeData, permitDate),
-    rules: findApplicableLaw(rulesData, permitDate)
-  };
-
-  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo, lawLinks);
+  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo);
 
   document.getElementById('fireStandardsBody').innerHTML = html;
   document.getElementById('fireStandardsModal').style.display = 'flex';
@@ -3661,7 +3680,7 @@ window.showFireStandardsModalFromCard = function() {
 };
 
 // 소방기준 모달 콘텐츠 렌더링
-function renderFireStandardsModalContent(data, permitDate, buildingInfo, lawLinks) {
+function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
   const permitNum = parseInt(permitDate) || 0;
 
   // 카테고리별 시설 그룹핑
@@ -3706,20 +3725,6 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo, lawLink
       ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
-
-  // 법령 링크 섹션
-  if (lawLinks) {
-    html += `
-      <div class="law-reference-section">
-        <div class="law-reference-label">${formatPermitDate(permitDate)} 기준 소방시설법</div>
-        <div class="law-reference-buttons">
-          <button class="law-ref-btn" data-type="act" data-link="${lawLinks.act ? lawLinks.act.link : ''}" onclick="openLawLink('act')">법령</button>
-          <button class="law-ref-btn" data-type="decree" data-link="${lawLinks.decree ? lawLinks.decree.link : ''}" onclick="openLawLink('decree')">시행령</button>
-          <button class="law-ref-btn" data-type="rules" data-link="${lawLinks.rules ? lawLinks.rules.link : ''}" onclick="openLawLink('rules')">시행규칙</button>
-        </div>
-      </div>
-    `;
-  }
 
   // 카테고리별 렌더링
   Object.entries(categories).forEach(([catName, catData]) => {
