@@ -1,15 +1,15 @@
 // 인앱 브라우저 처리
 if (window.__inAppBrowser) {
   document.addEventListener('DOMContentLoaded', function() {
-    var guide = document.getElementById('inAppGuide');
-    var splash = document.getElementById('splashScreen');
+    const guide = document.getElementById('inAppGuide');
+    const splash = document.getElementById('splashScreen');
     if (guide) {
       guide.style.display = 'flex';
       if (splash) splash.style.display = 'none';
       // 플랫폼별 안내 표시
-      var isIOS = /iPhone|iPad/.test(navigator.userAgent);
-      var androidGuide = document.getElementById('androidGuide');
-      var iosGuide = document.getElementById('iosGuide');
+      const isIOS = /iPhone|iPad/.test(navigator.userAgent);
+      const androidGuide = document.getElementById('androidGuide');
+      const iosGuide = document.getElementById('iosGuide');
       if (isIOS && iosGuide) {
         iosGuide.style.display = 'block';
       } else if (androidGuide) {
@@ -23,7 +23,7 @@ if (window.__inAppBrowser) {
 window.copyUrl = function() {
   navigator.clipboard.writeText(location.href).then(function() {
     // 토스트 메시지 표시
-    var toast = document.createElement('div');
+    const toast = document.createElement('div');
     toast.className = 'inapp-toast success';
     toast.textContent = '주소가 복사되었습니다!';
     document.body.appendChild(toast);
@@ -32,7 +32,7 @@ window.copyUrl = function() {
     }, 2500);
   }).catch(function() {
     // 클립보드 API 실패 시 fallback
-    var textArea = document.createElement('textarea');
+    const textArea = document.createElement('textarea');
     textArea.value = location.href;
     textArea.style.position = 'fixed';
     textArea.style.left = '-9999px';
@@ -40,7 +40,7 @@ window.copyUrl = function() {
     textArea.select();
     try {
       document.execCommand('copy');
-      var toast = document.createElement('div');
+      const toast = document.createElement('div');
       toast.className = 'inapp-toast success';
       toast.textContent = '주소가 복사되었습니다!';
       document.body.appendChild(toast);
@@ -227,7 +227,7 @@ async function loadFirebase() {
   if (firebaseModule) return firebaseModule;
   try {
     firebaseModule = await import('./firebase.js');
-    console.log('Firebase 로드 성공');
+    // Firebase 로드 성공
     return firebaseModule;
   } catch (error) {
     console.error('Firebase 로드 실패:', error);
@@ -254,7 +254,7 @@ async function getFireFacilityData(buildingType) {
     if (res.ok) {
       const data = await res.json();
       fireFacilitiesCache[buildingType] = data;
-      console.log(`소방시설 데이터 로드: ${buildingType}`);
+      // 소방시설 데이터 로드 완료
       return data;
     }
   } catch (e) {
@@ -274,7 +274,7 @@ async function getExemptionCriteriaData() {
     const res = await fetch('/data/exemption_criteria.json');
     if (res.ok) {
       exemptionCriteriaData = await res.json();
-      console.log('면제기준 데이터 로드 완료');
+      // 면제기준 데이터 로드 완료
       return exemptionCriteriaData;
     }
   } catch (e) {
@@ -302,7 +302,7 @@ async function getFacilitiesMasterData() {
         }
       }
       facilitiesMasterData = { list: data.facilities, byName, byId, byAlias };
-      console.log('시설 마스터 데이터 로드 완료');
+      // 시설 마스터 데이터 로드 완료
       return facilitiesMasterData;
     }
   } catch (e) {
@@ -1224,6 +1224,20 @@ function extractJibun(jibunAddress) {
   return { bun: '', ji: '' };
 }
 
+// 건축물대장 API 공통 fetch 함수
+async function fetchBuildingApi(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`API 요청 실패 (${response.status})`);
+  }
+  const data = await response.json();
+  // 공공데이터 API 에러 응답 체크
+  if (data?.response?.header?.resultCode && data.response.header.resultCode !== '00') {
+    throw new Error(`API 오류: ${data.response.header.resultMsg || '알 수 없는 오류'}`);
+  }
+  return data;
+}
+
 // 표제부 조회 API
 async function fetchBrTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   const url = new URL('https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo');
@@ -1237,8 +1251,7 @@ async function fetchBrTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('pageNo', '1');
   url.searchParams.append('_type', 'json');
 
-  const response = await fetch(url);
-  return await response.json();
+  return await fetchBuildingApi(url);
 }
 
 // 층별 조회 API
@@ -1254,8 +1267,7 @@ async function fetchBrFlrOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('pageNo', '1');
   url.searchParams.append('_type', 'json');
 
-  const response = await fetch(url);
-  return await response.json();
+  return await fetchBuildingApi(url);
 }
 
 // 총괄표제부 조회 API
@@ -1271,8 +1283,7 @@ async function fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('pageNo', '1');
   url.searchParams.append('_type', 'json');
 
-  const response = await fetch(url);
-  return await response.json();
+  return await fetchBuildingApi(url);
 }
 
 // 건축인허가 기본개요 조회 API (허가일 정보)
@@ -1288,8 +1299,7 @@ async function fetchApBasisOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
   url.searchParams.append('pageNo', '1');
   url.searchParams.append('_type', 'json');
 
-  const response = await fetch(url);
-  return await response.json();
+  return await fetchBuildingApi(url);
 }
 
 // 전역 변수로 상세보기용 데이터 저장
