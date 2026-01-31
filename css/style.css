@@ -1770,14 +1770,36 @@ header h1 {
 
 /* Tips Ticker */
 .tips-ticker {
-  overflow: hidden;
-  padding: 14px 0;
+  display: flex;
+  align-items: stretch;
   margin-top: 32px;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   position: relative;
 }
 
-.tips-ticker::before,
-.tips-ticker::after {
+.tips-ticker-label {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tips-ticker-viewport {
+  overflow: hidden;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.tips-ticker-viewport::before,
+.tips-ticker-viewport::after {
   content: '';
   position: absolute;
   top: 0;
@@ -1786,11 +1808,11 @@ header h1 {
   z-index: 1;
   pointer-events: none;
 }
-.tips-ticker::before {
+.tips-ticker-viewport::before {
   left: 0;
   background: linear-gradient(to right, var(--bg-primary), transparent);
 }
-.tips-ticker::after {
+.tips-ticker-viewport::after {
   right: 0;
   background: linear-gradient(to left, var(--bg-primary), transparent);
 }
@@ -1799,11 +1821,7 @@ header h1 {
   display: flex;
   gap: 40px;
   width: max-content;
-  animation: tickerScroll 45s linear infinite;
-}
-
-.tips-ticker:hover .tips-ticker-track {
-  animation-play-state: paused;
+  transition: transform 0.5s ease;
 }
 
 .tips-ticker-item {
@@ -1811,11 +1829,7 @@ header h1 {
   font-size: 13px;
   color: var(--text-tertiary);
   flex-shrink: 0;
-}
-
-@keyframes tickerScroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  padding: 10px 0;
 }
 
 /* Footer */

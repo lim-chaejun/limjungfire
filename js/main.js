@@ -471,12 +471,56 @@ async function searchFromUrl() {
   }
 }
 
-// ticker track 복제 (seamless loop)
-const tickerTrack = document.querySelector('.tips-ticker-track');
-if (tickerTrack) {
-  const items = tickerTrack.innerHTML;
-  tickerTrack.innerHTML = items + items;
-}
+// ticker: step-based scroll with seamless loop
+(function initTicker() {
+  const track = document.querySelector('.tips-ticker-track');
+  const ticker = document.getElementById('tipsTicker');
+  if (!track || !ticker) return;
+
+  // duplicate items for seamless loop
+  const originalItems = track.querySelectorAll('.tips-ticker-item');
+  const itemCount = originalItems.length;
+  if (itemCount === 0) return;
+  const clone = track.innerHTML;
+  track.innerHTML = clone + clone;
+
+  const allItems = track.querySelectorAll('.tips-ticker-item');
+  let currentIndex = 0;
+  let paused = false;
+  let intervalId = null;
+
+  function getOffset(index) {
+    let offset = 0;
+    for (let i = 0; i < index; i++) {
+      offset += allItems[i].offsetWidth + 40; // 40 = gap
+    }
+    return offset;
+  }
+
+  function step() {
+    if (paused) return;
+    currentIndex++;
+    if (currentIndex >= itemCount) {
+      // reached end of original set — jump back without transition
+      track.style.transition = 'none';
+      currentIndex = 0;
+      track.style.transform = 'translateX(-' + getOffset(0) + 'px)';
+      // force reflow then step forward
+      void track.offsetWidth;
+      currentIndex = 1;
+      track.style.transition = 'transform 0.5s ease';
+      track.style.transform = 'translateX(-' + getOffset(1) + 'px)';
+    } else {
+      track.style.transition = 'transform 0.5s ease';
+      track.style.transform = 'translateX(-' + getOffset(currentIndex) + 'px)';
+    }
+  }
+
+  intervalId = setInterval(step, 4000);
+
+  ticker.addEventListener('mouseenter', function() { paused = true; });
+  ticker.addEventListener('mouseleave', function() { paused = false; });
+})();
 
 // 초기화
 (async function init() {
