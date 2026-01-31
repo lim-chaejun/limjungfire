@@ -176,12 +176,8 @@ const BUILDING_TYPE_TO_FILE = {
 // 테마 관리
 function initTheme() {
   const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
   if (savedTheme) {
     document.documentElement.setAttribute('data-theme', savedTheme);
-  } else if (prefersDark) {
-    document.documentElement.setAttribute('data-theme', 'dark');
   }
 }
 
@@ -193,13 +189,6 @@ window.toggleTheme = function() {
   document.documentElement.setAttribute('data-theme', newTheme);
   localStorage.setItem('theme', newTheme);
 };
-
-// 시스템 테마 변경 감지
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  if (!localStorage.getItem('theme')) {
-    document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-  }
-});
 
 // 초기 테마 설정
 initTheme();
