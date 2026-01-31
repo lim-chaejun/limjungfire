@@ -1315,7 +1315,7 @@ async function renderBuildingView() {
       </svg>
       소방시설 설치기준 PDF 다운로드
       ${!currentUser ? '<span class="pdf-login-badge">로그인 필요</span>' : (() => {
-        const _today = new Date().toISOString().slice(0, 10);
+        const _today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
         const _d = JSON.parse(localStorage.getItem('pdf_download_count') || '{}');
         const _used = _d.date === _today ? _d.count : 0;
         const _remain = 5 - _used;
@@ -2416,7 +2416,7 @@ window.handlePdfDownload = async function() {
   }
 
   // 무료사용자 일일 5회 제한
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
   const pdfKey = 'pdf_download_count';
   const pdfData = JSON.parse(localStorage.getItem(pdfKey) || '{}');
   if (pdfData.date !== today) {
