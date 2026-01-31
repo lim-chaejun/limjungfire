@@ -2466,6 +2466,35 @@ window.handlePdfDownload = async function() {
     titleSummaryHtml += `</tbody></table>`;
   }
 
+  // --- 층별 개요 ---
+  let floorSummaryHtml = '';
+  if (floorItems.length > 0) {
+    // 동별 그룹화
+    const dongGroups = {};
+    floorItems.forEach(item => {
+      const dong = item.dongNm || '본동';
+      if (!dongGroups[dong]) dongGroups[dong] = [];
+      dongGroups[dong].push(item);
+    });
+
+    floorSummaryHtml = `<h2>층별 개요</h2>`;
+    for (const [dongName, floors] of Object.entries(dongGroups)) {
+      const ground = floors.filter(f => f.flrGbCdNm !== '지하').sort((a, b) => Number(b.flrNo) - Number(a.flrNo));
+      const underground = floors.filter(f => f.flrGbCdNm === '지하').sort((a, b) => Number(a.flrNo) - Number(b.flrNo));
+      const sorted = [...ground, ...underground];
+
+      if (Object.keys(dongGroups).length > 1) {
+        floorSummaryHtml += `<h3 style="font-size:13px;color:#4e5968;margin:16px 0 6px;">${dongName}</h3>`;
+      }
+      floorSummaryHtml += `<table><thead><tr><th>층</th><th>용도</th><th>면적(㎡)</th></tr></thead><tbody>`;
+      sorted.forEach(f => {
+        const label = f.flrGbCdNm === '지하' ? `B${f.flrNo}` : `${f.flrNo}F`;
+        floorSummaryHtml += `<tr><td>${label}</td><td>${f.mainPurpsCdNm || '-'}${f.etcPurps ? ' / ' + f.etcPurps : ''}</td><td>${f.area ? Number(f.area).toLocaleString() : '-'}</td></tr>`;
+      });
+      floorSummaryHtml += `</tbody></table>`;
+    }
+  }
+
   // --- 소방시설 목록 ---
   let facilitiesHtml = '';
   const facResult = currentFacilitiesResult;
@@ -2481,7 +2510,13 @@ window.handlePdfDownload = async function() {
         const allRegs = f.allRegulations || f.regulations || [];
         const applicable = getApplicableRegulations(allRegs, pDate);
         const criteria = applicable.length > 0
-          ? applicable.map(r => r.criteria).join('<br>')
+          ? applicable.map(r => {
+              let dateInfo = '';
+              if (r.start_date) {
+                dateInfo = r.end_date ? ` <span class="reg-date">(${r.start_date} ~ ${r.end_date})</span>` : ` <span class="reg-date">(${r.start_date}~)</span>`;
+              }
+              return r.criteria + dateInfo;
+            }).join('<br>')
           : '-';
         facilitiesHtml += `<tr><td class="fname">${f.name}</td><td>${criteria}</td></tr>`;
       }
@@ -2493,9 +2528,17 @@ window.handlePdfDownload = async function() {
     for (const f of required) {
       const rules = await getExemptionRulesForFacility(f.name, pDate);
       if (rules.length > 0) {
-        exemptionHtml += `<tr><td class="fname" rowspan="${rules.length}">${f.name}</td><td>${rules[0].criteria}</td></tr>`;
+        const fmtRule = (rule) => {
+          let info = rule.criteria;
+          const parts = [];
+          if (rule.source) parts.push(rule.source);
+          if (rule.start_date) parts.push(rule.end_date ? `${rule.start_date} ~ ${rule.end_date}` : `${rule.start_date}~`);
+          if (parts.length > 0) info += ` <span class="reg-date">(${parts.join(', ')})</span>`;
+          return info;
+        };
+        exemptionHtml += `<tr><td class="fname" rowspan="${rules.length}">${f.name}</td><td>${fmtRule(rules[0])}</td></tr>`;
         for (let i = 1; i < rules.length; i++) {
-          exemptionHtml += `<tr><td>${rules[i].criteria}</td></tr>`;
+          exemptionHtml += `<tr><td>${fmtRule(rules[i])}</td></tr>`;
         }
       }
     }
@@ -2528,7 +2571,7 @@ window.handlePdfDownload = async function() {
   <meta charset="UTF-8">
   <title>${buildingName} - 소방시설 설치기준</title>
   <style>
-    body { font-family: -apple-system, 'Noto Sans KR', sans-serif; padding: 40px; color: #191f28; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+    body { font-family: -apple-system, 'Noto Sans KR', sans-serif; padding: 60px 40px 40px; color: #191f28; line-height: 1.6; max-width: 800px; margin: 0 auto; }
     h1 { font-size: 22px; margin-bottom: 4px; }
     h2 { font-size: 15px; margin: 28px 0 10px; color: #4e5968; border-bottom: 2px solid #3182f6; padding-bottom: 8px; }
     .subtitle { color: #8b95a1; font-size: 13px; margin-bottom: 24px; }
@@ -2538,9 +2581,10 @@ window.handlePdfDownload = async function() {
     thead th { background: #3182f6; color: #fff; font-size: 12px; }
     .fname { font-weight: 600; white-space: nowrap; }
     .optional-list { font-size: 13px; color: #6b7684; line-height: 1.8; }
+    .reg-date { font-size: 11px; color: #8b95a1; }
     .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e8eb; font-size: 11px; color: #8b95a1; text-align: center; }
     @media print {
-      body { padding: 20px; }
+      body { padding: 40px 20px 20px; }
       h2 { break-after: avoid; }
       table { break-inside: avoid; }
     }
@@ -2561,6 +2605,7 @@ window.handlePdfDownload = async function() {
   </table>
 
   ${titleSummaryHtml}
+  ${floorSummaryHtml}
   ${lawHtml}
   ${facilitiesHtml}
 
