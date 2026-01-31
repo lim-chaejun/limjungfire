@@ -3285,6 +3285,20 @@ async function renderFireFacilitiesCard(buildingInfo) {
         </div>
       ` : ''}
 
+      ${permitDate && parseInt(permitDate) <= 19750831 ? `
+        <div class="pre-law-warning">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>
+            <strong>소방법 시행령 제정 이전 건축물</strong>
+            <p>이 건축물은 소방시설 설치에 대한 법적 기준이 제한적이던 시기에 허가되었습니다. 아래 표시된 시설은 허가일 당시 기준이며, 현행 법령에 따른 <strong>소급 적용 대상</strong>이 있을 수 있으므로 관할 소방서에 확인하시기 바랍니다.</p>
+          </div>
+        </div>
+      ` : ''}
+
       <div class="facilities-section">
         <div class="facilities-title required">
           <span>필수 소방시설</span>
@@ -3846,6 +3860,23 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
       ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
+
+  // 소방법 시행령 제정 이전 건축물 안내
+  if (permitDate && parseInt(permitDate) <= 19750831) {
+    html += `
+      <div class="pre-law-warning" style="margin:0 0 4px 0;border-radius:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div>
+          <strong>소방법 시행령 제정 이전 건축물</strong>
+          <p>이 건축물은 소방시설 설치에 대한 법적 기준이 제한적이던 시기에 허가되었습니다. 아래 표시된 시설은 허가일 당시 기준이며, 현행 법령에 따른 <strong>소급 적용 대상</strong>이 있을 수 있으므로 관할 소방서에 확인하시기 바랍니다.</p>
+        </div>
+      </div>
+    `;
+  }
 
   // 카테고리별 렌더링
   Object.entries(categories).forEach(([catName, catData]) => {
