@@ -2403,73 +2403,173 @@ window.handleQuickBookmark = async function(address) {
 };
 
 // PDF 다운로드 (window.print 기반)
-window.handlePdfDownload = function() {
+window.handlePdfDownload = async function() {
   if (!currentUser) {
     showLoginRequiredToast('PDF 다운로드는 로그인 후 이용할 수 있습니다');
     return;
   }
 
-  const { titleItems, generalItems, permitItems } = currentBuildingData;
+  showToast('PDF 생성 중...');
+
+  const { titleItems, floorItems, generalItems, permitItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
   const permitInfo = permitItems[0] || {};
   const mainTitle = titleItems[0] || {};
 
-  const buildingName = mainTitle.bldNm || generalInfo.bldNm || '건축물';
-  const address = generalInfo.platPlc || mainTitle.platPlc || '';
+  const buildingName = mainTitle.bldNm || generalInfo.bldNm || selectedAddressData?.buildingName || '건축물';
+  const address = generalInfo.platPlc || mainTitle.platPlc || selectedAddressData?.jibunAddress || '';
   const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
+  const etcPurpose = generalInfo.etcPurps || mainTitle.etcPurps || '-';
   const permitDate = permitInfo.archPmsDay || generalInfo.pmsDay || '';
-  const totalArea = generalInfo.totArea || (titleItems.reduce((s, t) => s + (Number(t.totArea) || 0), 0)) || '-';
+  const approvalDate = generalInfo.useAprDay || mainTitle.useAprDay || '';
+  const structure = generalInfo.strctCdNm || mainTitle.strctCdNm || '-';
+
+  let totalArea = generalInfo.totArea || '';
+  let buildingArea = generalInfo.archArea || '';
+  if (!totalArea && titleItems.length > 0) totalArea = titleItems.reduce((s, t) => s + (Number(t.totArea) || 0), 0);
+  if (!buildingArea && titleItems.length > 0) buildingArea = titleItems.reduce((s, t) => s + (Number(t.archArea) || 0), 0);
+
+  let groundFloors = generalInfo.grndFlrCnt || '';
+  let undergroundFloors = generalInfo.ugrndFlrCnt || '';
+  if (titleItems.length > 0) {
+    const maxG = Math.max(...titleItems.map(t => Number(t.grndFlrCnt) || 0));
+    const maxU = Math.max(...titleItems.map(t => Number(t.ugrndFlrCnt) || 0));
+    if (!groundFloors || maxG > Number(groundFloors)) groundFloors = maxG;
+    if (!undergroundFloors || maxU > Number(undergroundFloors)) undergroundFloors = maxU;
+  }
+
+  let height = generalInfo.heit || '';
+  if (titleItems.length > 0) {
+    const maxH = Math.max(...titleItems.map(t => Number(t.heit) || 0));
+    if (!height || maxH > Number(height)) height = maxH;
+  }
+
   const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
   const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
+  const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
-  // 소방시설 목록 수집
-  const facilityItems = document.querySelectorAll('.facility-item.required .facility-name');
+  // --- 표제부 (동별) 요약 ---
+  let titleSummaryHtml = '';
+  if (titleItems.length > 0) {
+    titleSummaryHtml = `<h2>표제부 (동별 요약)</h2><table>
+      <thead><tr><th>동명</th><th>주용도</th><th>연면적(㎡)</th><th>지상/지하</th><th>높이</th></tr></thead><tbody>`;
+    titleItems.forEach(t => {
+      const name = t.dongNm || t.bldNm || '-';
+      titleSummaryHtml += `<tr>
+        <td>${name}</td>
+        <td>${t.mainPurpsCdNm || '-'}</td>
+        <td>${fmtArea(t.totArea)}</td>
+        <td>${t.grndFlrCnt || '-'}층 / B${t.ugrndFlrCnt || '-'}</td>
+        <td>${fmtHeight(t.heit)}</td>
+      </tr>`;
+    });
+    titleSummaryHtml += `</tbody></table>`;
+  }
+
+  // --- 소방시설 목록 ---
   let facilitiesHtml = '';
-  facilityItems.forEach(item => {
-    facilitiesHtml += `<li>${item.textContent}</li>`;
-  });
+  const facResult = currentFacilitiesResult;
+  if (facResult && facResult.facilities) {
+    const required = facResult.facilities.filter(f => f.required);
+    const optional = facResult.facilities.filter(f => !f.required);
+    const pDate = facResult.permitDate;
+
+    if (required.length > 0) {
+      facilitiesHtml += `<h2>필수 소방시설 (${required.length}개)</h2><table>
+        <thead><tr><th>시설명</th><th>설치 기준</th></tr></thead><tbody>`;
+      for (const f of required) {
+        const allRegs = f.allRegulations || f.regulations || [];
+        const applicable = getApplicableRegulations(allRegs, pDate);
+        const criteria = applicable.length > 0
+          ? applicable.map(r => r.criteria).join('<br>')
+          : '-';
+        facilitiesHtml += `<tr><td class="fname">${f.name}</td><td>${criteria}</td></tr>`;
+      }
+      facilitiesHtml += `</tbody></table>`;
+    }
+
+    // --- 면제기준 수집 ---
+    let exemptionHtml = '';
+    for (const f of required) {
+      const rules = await getExemptionRulesForFacility(f.name, pDate);
+      if (rules.length > 0) {
+        exemptionHtml += `<tr><td class="fname" rowspan="${rules.length}">${f.name}</td><td>${rules[0].criteria}</td></tr>`;
+        for (let i = 1; i < rules.length; i++) {
+          exemptionHtml += `<tr><td>${rules[i].criteria}</td></tr>`;
+        }
+      }
+    }
+    if (exemptionHtml) {
+      facilitiesHtml += `<h2>면제 기준 (예외 조항)</h2><table>
+        <thead><tr><th>시설명</th><th>면제 조건</th></tr></thead><tbody>${exemptionHtml}</tbody></table>`;
+    }
+
+    if (optional.length > 0) {
+      facilitiesHtml += `<h2>비해당 시설 (${optional.length}개)</h2>
+        <p class="optional-list">${optional.map(f => f.name).join(', ')}</p>`;
+    }
+  }
+
+  // --- 적용 법령 ---
+  const lawInfo = getFireLawInfo(permitDate);
+  let lawHtml = '';
+  if (lawInfo) {
+    lawHtml = `<h2>적용 소방법령</h2><table>
+      <tr><th>법률명</th><td>${lawInfo.name}</td></tr>
+      <tr><th>적용 기간</th><td>${lawInfo.period}</td></tr>
+      <tr><th>주요 내용</th><td>${lawInfo.keyPoints.join('<br>')}</td></tr>
+    </table>`;
+  }
 
   const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-      <meta charset="UTF-8">
-      <title>${buildingName} - 소방시설 설치기준</title>
-      <style>
-        body { font-family: -apple-system, 'Noto Sans KR', sans-serif; padding: 40px; color: #191f28; line-height: 1.6; }
-        h1 { font-size: 22px; margin-bottom: 8px; }
-        h2 { font-size: 16px; margin: 24px 0 12px; color: #4e5968; border-bottom: 2px solid #3182f6; padding-bottom: 8px; }
-        .subtitle { color: #8b95a1; font-size: 13px; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        th, td { padding: 10px 12px; border: 1px solid #e5e8eb; font-size: 14px; text-align: left; }
-        th { background: #f7f8fa; font-weight: 600; color: #4e5968; width: 120px; }
-        ul { padding-left: 20px; }
-        li { padding: 4px 0; font-size: 14px; }
-        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e8eb; font-size: 12px; color: #8b95a1; text-align: center; }
-        @media print { body { padding: 20px; } }
-      </style>
-    </head>
-    <body>
-      <h1>${buildingName}</h1>
-      <div class="subtitle">소방시설 설치기준 조회 결과 | ${new Date().toLocaleDateString('ko-KR')}</div>
-      <h2>건축물 정보</h2>
-      <table>
-        <tr><th>주소</th><td>${address}</td></tr>
-        <tr><th>주용도</th><td>${mainPurpose}</td></tr>
-        <tr><th>건축허가일</th><td>${fmtDate(permitDate)}</td></tr>
-        <tr><th>연면적</th><td>${fmtArea(totalArea)} ㎡</td></tr>
-      </table>
-      ${facilitiesHtml ? `
-        <h2>설치 필요 소방시설</h2>
-        <ul>${facilitiesHtml}</ul>
-      ` : ''}
-      <div class="footer">
-        소방체크 (sobangcheck.com) | 이 자료는 참고용이며 법적 효력이 없습니다.
-      </div>
-    </body>
-    </html>
-  `);
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>${buildingName} - 소방시설 설치기준</title>
+  <style>
+    body { font-family: -apple-system, 'Noto Sans KR', sans-serif; padding: 40px; color: #191f28; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    h2 { font-size: 15px; margin: 28px 0 10px; color: #4e5968; border-bottom: 2px solid #3182f6; padding-bottom: 8px; }
+    .subtitle { color: #8b95a1; font-size: 13px; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 13px; }
+    th, td { padding: 8px 10px; border: 1px solid #e5e8eb; text-align: left; vertical-align: top; }
+    th { background: #f7f8fa; font-weight: 600; color: #4e5968; white-space: nowrap; }
+    thead th { background: #3182f6; color: #fff; font-size: 12px; }
+    .fname { font-weight: 600; white-space: nowrap; }
+    .optional-list { font-size: 13px; color: #6b7684; line-height: 1.8; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e8eb; font-size: 11px; color: #8b95a1; text-align: center; }
+    @media print {
+      body { padding: 20px; }
+      h2 { break-after: avoid; }
+      table { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>${buildingName}</h1>
+  <div class="subtitle">소방시설 설치기준 조회 결과 | ${new Date().toLocaleDateString('ko-KR')} | sobangcheck.com</div>
+
+  <h2>건축물 개요</h2>
+  <table>
+    <tr><th>주소</th><td colspan="3">${address}</td></tr>
+    <tr><th>주용도</th><td>${mainPurpose}</td><th>기타용도</th><td>${etcPurpose}</td></tr>
+    <tr><th>건축허가일</th><td>${fmtDate(permitDate)}</td><th>사용승인일</th><td>${fmtDate(approvalDate)}</td></tr>
+    <tr><th>연면적</th><td>${fmtArea(totalArea)} ㎡</td><th>건축면적</th><td>${fmtArea(buildingArea)} ㎡</td></tr>
+    <tr><th>층수</th><td>지상 ${groundFloors || '-'}층 / 지하 ${undergroundFloors || '-'}층</td><th>높이</th><td>${fmtHeight(height)}</td></tr>
+    <tr><th>구조</th><td colspan="3">${structure}</td></tr>
+  </table>
+
+  ${titleSummaryHtml}
+  ${lawHtml}
+  ${facilitiesHtml}
+
+  <div class="footer">
+    소방체크 (sobangcheck.com) | 이 자료는 참고용이며 법적 효력이 없습니다.<br>
+    실제 소방점검이나 인허가 절차에서는 관할 소방서의 공식 확인을 받으시기 바랍니다.
+  </div>
+</body>
+</html>`);
   printWindow.document.close();
   printWindow.focus();
   setTimeout(() => { printWindow.print(); }, 500);
