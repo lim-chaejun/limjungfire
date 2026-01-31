@@ -602,9 +602,15 @@ async function updateAuthUI(user) {
     historyBtn.style.display = 'inline-flex';
   }
 
-  // 로그인 시 하단 배너 숨기기
+  // 로그인 시 배너/뱃지 정리
   if (user) {
     loginPromptManager.hideLoginBanner();
+    // 인라인 결과 배너 제거
+    const resultBanner = document.getElementById('resultLoginBanner');
+    if (resultBanner) resultBanner.remove();
+    // PDF 로그인 필요 뱃지 제거
+    const pdfBadge = document.querySelector('.pdf-login-badge');
+    if (pdfBadge) pdfBadge.remove();
   }
 }
 
