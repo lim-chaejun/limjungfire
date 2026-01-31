@@ -2690,6 +2690,43 @@ footer {
   border: 1px solid var(--border-color);
 }
 
+/* 법령 링크 버튼 */
+.law-reference-section {
+  margin-bottom: 16px;
+  padding: 0 16px;
+  padding-top: 16px;
+  text-align: center;
+}
+.law-reference-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+.law-reference-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.law-ref-btn {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.law-ref-btn:hover {
+  background: rgba(49, 130, 246, 0.1);
+  border-color: #3182f6;
+  color: #3182f6;
+}
+
 /* 카테고리별 스타일 */
 .standards-category {
   border-bottom: 1px solid var(--border-light);

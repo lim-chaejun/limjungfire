@@ -3295,6 +3295,32 @@ function formatPermitDate(dateStr) {
 
 // ==================== 소방기준 모달 ====================
 
+// 법령 연혁 데이터 캐시
+let lawHistoryCache = { act: null, decree: null, rules: null };
+
+async function getLawHistoryData(type) {
+  if (lawHistoryCache[type]) return lawHistoryCache[type];
+  const fileMap = { act: 'law_history_act', decree: 'law_history_decree', rules: 'law_history_rules' };
+  const res = await fetch(`data/${fileMap[type]}.json`);
+  lawHistoryCache[type] = await res.json();
+  return lawHistoryCache[type];
+}
+
+// 허가일 기준 해당 법령 버전 찾기
+function findApplicableLaw(history, permitDate) {
+  const permit = parseInt(permitDate) || 0;
+  const sorted = [...history].sort((a, b) => parseInt(b.effective_date) - parseInt(a.effective_date));
+  return sorted.find(item => parseInt(item.effective_date) <= permit) || sorted[sorted.length - 1];
+}
+
+// 법령 링크 열기
+window.openLawLink = function(type) {
+  const btn = document.querySelector(`.law-ref-btn[data-type="${type}"]`);
+  if (btn && btn.dataset.link) {
+    window.open(btn.dataset.link, '_blank');
+  }
+};
+
 // 현재 소방기준 모달 상태
 let currentFireStandardsData = {
   buildingType: null,
@@ -3325,7 +3351,19 @@ window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo
     buildingInfo
   };
 
-  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo);
+  // 법령 연혁 데이터 병렬 로드
+  const [actData, decreeData, rulesData] = await Promise.all([
+    getLawHistoryData('act'),
+    getLawHistoryData('decree'),
+    getLawHistoryData('rules')
+  ]);
+  const lawLinks = {
+    act: findApplicableLaw(actData, permitDate),
+    decree: findApplicableLaw(decreeData, permitDate),
+    rules: findApplicableLaw(rulesData, permitDate)
+  };
+
+  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo, lawLinks);
 
   document.getElementById('fireStandardsBody').innerHTML = html;
   document.getElementById('fireStandardsModal').style.display = 'flex';
@@ -3623,7 +3661,7 @@ window.showFireStandardsModalFromCard = function() {
 };
 
 // 소방기준 모달 콘텐츠 렌더링
-function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
+function renderFireStandardsModalContent(data, permitDate, buildingInfo, lawLinks) {
   const permitNum = parseInt(permitDate) || 0;
 
   // 카테고리별 시설 그룹핑
@@ -3668,6 +3706,20 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
       ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
+
+  // 법령 링크 섹션
+  if (lawLinks) {
+    html += `
+      <div class="law-reference-section">
+        <div class="law-reference-label">${formatPermitDate(permitDate)} 기준 소방시설법</div>
+        <div class="law-reference-buttons">
+          <button class="law-ref-btn" data-type="act" data-link="${lawLinks.act ? lawLinks.act.link : ''}" onclick="openLawLink('act')">법령</button>
+          <button class="law-ref-btn" data-type="decree" data-link="${lawLinks.decree ? lawLinks.decree.link : ''}" onclick="openLawLink('decree')">시행령</button>
+          <button class="law-ref-btn" data-type="rules" data-link="${lawLinks.rules ? lawLinks.rules.link : ''}" onclick="openLawLink('rules')">시행규칙</button>
+        </div>
+      </div>
+    `;
+  }
 
   // 카테고리별 렌더링
   Object.entries(categories).forEach(([catName, catData]) => {
