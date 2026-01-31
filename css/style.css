@@ -1777,7 +1777,8 @@ header h1 {
   border-radius: var(--radius-md);
   overflow: hidden;
   position: relative;
-  background: var(--bg-secondary);
+  background: var(--color-primary-bg);
+  border-color: rgba(49, 130, 246, 0.2);
 }
 
 .tips-ticker-label {
@@ -1792,6 +1793,14 @@ header h1 {
   flex-shrink: 0;
   white-space: nowrap;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+[data-theme="dark"] .tips-ticker {
+  border-color: rgba(49, 130, 246, 0.25);
+}
+
+[data-theme="dark"] .tips-ticker-item {
+  color: var(--color-primary-light);
 }
 
 .tips-ticker-viewport {
@@ -1810,7 +1819,7 @@ header h1 {
   width: 32px;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(to left, var(--bg-secondary), transparent);
+  background: linear-gradient(to left, var(--color-primary-bg), transparent);
 }
 
 .tips-ticker-track {
@@ -1822,7 +1831,8 @@ header h1 {
   box-sizing: border-box;
   white-space: nowrap;
   font-size: 13px;
-  color: var(--text-secondary);
+  font-weight: 500;
+  color: var(--color-primary-dark);
   flex-shrink: 0;
   padding: 10px 16px;
 }
