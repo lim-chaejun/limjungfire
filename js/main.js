@@ -471,6 +471,13 @@ async function searchFromUrl() {
   }
 }
 
+// ticker track 복제 (seamless loop)
+const tickerTrack = document.querySelector('.tips-ticker-track');
+if (tickerTrack) {
+  const items = tickerTrack.innerHTML;
+  tickerTrack.innerHTML = items + items;
+}
+
 // 초기화
 (async function init() {
   // 스플래시 화면 최대 표시 시간 (Firebase 느릴 때 대비)

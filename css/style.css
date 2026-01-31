@@ -1768,6 +1768,56 @@ header h1 {
   font-weight: 500;
 }
 
+/* Tips Ticker */
+.tips-ticker {
+  overflow: hidden;
+  padding: 14px 0;
+  margin-top: 32px;
+  position: relative;
+}
+
+.tips-ticker::before,
+.tips-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  z-index: 1;
+  pointer-events: none;
+}
+.tips-ticker::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-primary), transparent);
+}
+.tips-ticker::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-primary), transparent);
+}
+
+.tips-ticker-track {
+  display: flex;
+  gap: 40px;
+  width: max-content;
+  animation: tickerScroll 45s linear infinite;
+}
+
+.tips-ticker:hover .tips-ticker-track {
+  animation-play-state: paused;
+}
+
+.tips-ticker-item {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* Footer */
 footer {
   text-align: center;
