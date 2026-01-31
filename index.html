@@ -327,15 +327,7 @@
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7564559804434011"
      crossorigin="anonymous"></script>
-  <!-- 카카오 주소 검색 API -->
-  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <!-- 네이버 지도 API -->
-  <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=hakre9jin8&submodules=geocoder,panorama"></script>
-  <script>
-    window.navermap_authFailure = function() {
-      console.error('네이버 지도 API 인증 실패');
-    };
-  </script>
+  <!-- 카카오 주소 검색 API / 네이버 지도 API: 사용 시점에 지연 로딩 (main.js) -->
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->

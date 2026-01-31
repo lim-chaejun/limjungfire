@@ -447,6 +447,9 @@ async function searchFromUrl() {
 
 // 초기화
 (async function init() {
+  // 스플래시 화면 최대 표시 시간 (Firebase 느릴 때 대비)
+  const splashTimeout = setTimeout(hideSplashScreen, 2000);
+
   // 광고 차단 감지 (차단해도 계속 진행, 안내만 표시)
   const adBlockDetected = await detectAdBlock();
   if (adBlockDetected) {
@@ -464,6 +467,7 @@ async function searchFromUrl() {
       currentUser = user;
       updateAuthUI(user);
       // 인증 상태 확인 후 스플래시 화면 숨기기
+      clearTimeout(splashTimeout);
       hideSplashScreen();
       // URL 파라미터가 있으면 자동 검색 (최초 1회만)
       if (!window.__urlSearched) {
@@ -473,6 +477,7 @@ async function searchFromUrl() {
     });
   } else {
     // Firebase 로드 실패해도 스플래시 숨기기
+    clearTimeout(splashTimeout);
     hideSplashScreen();
     // URL 파라미터 검색
     if (!window.__urlSearched) {
@@ -1069,14 +1074,41 @@ window.closeHistoryModal = function() {
   if (tabs) tabs.remove();
 };
 
+// 카카오 우편번호 서비스 지연 로딩
+let daumPostcodeLoaded = false;
+function loadDaumPostcode() {
+  return new Promise((resolve, reject) => {
+    if (daumPostcodeLoaded || (window.daum && window.daum.Postcode)) {
+      daumPostcodeLoaded = true;
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.onload = () => { daumPostcodeLoaded = true; resolve(); };
+    script.onerror = () => reject(new Error('주소 검색 서비스 로드 실패'));
+    document.head.appendChild(script);
+  });
+}
+
 // 주소 검색 (카카오 우편번호 서비스) - embed 방식 (모바일 호환성 개선)
-window.searchAddress = function() {
+window.searchAddress = async function() {
   const modal = document.getElementById('addressModal');
   const embedLayer = document.getElementById('addressEmbedLayer');
 
   // 모달 표시
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  // 로딩 표시
+  embedLayer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);"><div class="spinner"></div><span style="margin-left:12px;">주소 검색 준비 중...</span></div>';
+
+  try {
+    await loadDaumPostcode();
+  } catch (e) {
+    embedLayer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-error);">주소 검색 서비스를 불러올 수 없습니다.</div>';
+    return;
+  }
 
   // 기존 내용 초기화
   embedLayer.innerHTML = '';
@@ -3821,8 +3853,37 @@ let naverMap = null;
 let naverPano = null;
 let mapCoords = null;
 
+// 네이버 지도 API 지연 로딩
+let naverMapsLoaded = false;
+function loadNaverMaps() {
+  return new Promise((resolve, reject) => {
+    if (naverMapsLoaded || (window.naver && window.naver.maps && window.naver.maps.Service)) {
+      naverMapsLoaded = true;
+      resolve();
+      return;
+    }
+    window.navermap_authFailure = function() {
+      console.error('네이버 지도 API 인증 실패');
+    };
+    const script = document.createElement('script');
+    script.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=hakre9jin8&submodules=geocoder,panorama';
+    script.onload = () => {
+      const check = setInterval(() => {
+        if (window.naver && naver.maps && naver.maps.Service) {
+          clearInterval(check);
+          naverMapsLoaded = true;
+          resolve();
+        }
+      }, 50);
+      setTimeout(() => { clearInterval(check); resolve(); }, 5000);
+    };
+    script.onerror = () => reject(new Error('네이버 지도 로드 실패'));
+    document.head.appendChild(script);
+  });
+}
+
 // 지도/내비 모달 표시
-window.showMapModal = function(address) {
+window.showMapModal = async function(address) {
   const mapModal = document.getElementById('mapModal');
   const mapContainer = document.getElementById('mapContainer');
   const mapAddress = document.getElementById('mapAddress');
@@ -3837,15 +3898,38 @@ window.showMapModal = function(address) {
   const encodedAddress = encodeURIComponent(address);
   const naverMapUrl = `https://map.naver.com/v5/search/${encodedAddress}`;
 
-  // 컨테이너 구성 (탭 추가)
+  // Fallback 표시 함수
+  const showFallback = () => {
+    const mapArea = document.getElementById('naverMapArea');
+    if (mapArea) {
+      mapArea.innerHTML = `
+        <a href="${naverMapUrl}" target="_blank" class="map-fallback">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <circle cx="12" cy="9" r="2.5"/>
+          </svg>
+          <span>지도 보기</span>
+        </a>
+      `;
+    }
+  };
+
+  // 컨테이너 구성 (탭 + 로딩 표시)
   mapContainer.innerHTML = `
     <div class="map-tabs">
       <button class="map-tab active" data-tab="map">지도</button>
       <button class="map-tab" data-tab="roadview">로드뷰</button>
     </div>
-    <div id="naverMapArea" class="map-area"></div>
+    <div id="naverMapArea" class="map-area"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);"><div class="spinner"></div><span style="margin-left:12px;">지도 로딩 중...</span></div></div>
     <div id="naverPanoArea" class="map-area" style="display:none;"></div>
   `;
+
+  // 네이버 지도 API 지연 로딩
+  try {
+    await loadNaverMaps();
+  } catch (e) {
+    console.warn('네이버 지도 API 로드 실패:', e);
+  }
 
   const mapArea = document.getElementById('naverMapArea');
   const panoArea = document.getElementById('naverPanoArea');
@@ -3872,24 +3956,14 @@ window.showMapModal = function(address) {
     });
   });
 
-  // Fallback 표시 함수
-  const showFallback = () => {
-    mapArea.innerHTML = `
-      <a href="${naverMapUrl}" target="_blank" class="map-fallback">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <circle cx="12" cy="9" r="2.5"/>
-        </svg>
-        <span>지도 보기</span>
-      </a>
-    `;
-  };
-
   // 네이버 지도 API 체크
   if (typeof naver === 'undefined' || !naver.maps || !naver.maps.Service) {
     showFallback();
     return;
   }
+
+  // 로딩 표시 제거
+  mapArea.innerHTML = '';
 
   // 주소 → 좌표 변환
   naver.maps.Service.geocode({ query: address }, function(status, response) {
