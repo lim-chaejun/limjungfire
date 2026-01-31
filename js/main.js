@@ -475,51 +475,58 @@ async function searchFromUrl() {
 (function initTicker() {
   const track = document.querySelector('.tips-ticker-track');
   const ticker = document.getElementById('tipsTicker');
-  if (!track || !ticker) return;
+  const viewport = document.querySelector('.tips-ticker-viewport');
+  if (!track || !ticker || !viewport) return;
 
-  // duplicate items for seamless loop
   const originalItems = track.querySelectorAll('.tips-ticker-item');
   const itemCount = originalItems.length;
   if (itemCount === 0) return;
-  const clone = track.innerHTML;
-  track.innerHTML = clone + clone;
 
-  const allItems = track.querySelectorAll('.tips-ticker-item');
+  // set each item width = viewport width so one item fills the view
+  function sizeItems() {
+    const w = viewport.offsetWidth;
+    const items = track.querySelectorAll('.tips-ticker-item');
+    for (let i = 0; i < items.length; i++) {
+      items[i].style.width = w + 'px';
+    }
+  }
+
+  // duplicate items for seamless loop
+  track.innerHTML = track.innerHTML + track.innerHTML;
+  sizeItems();
+
   let currentIndex = 0;
   let paused = false;
-  let intervalId = null;
-
-  function getOffset(index) {
-    let offset = 0;
-    for (let i = 0; i < index; i++) {
-      offset += allItems[i].offsetWidth + 40; // 40 = gap
-    }
-    return offset;
-  }
 
   function step() {
     if (paused) return;
     currentIndex++;
     if (currentIndex >= itemCount) {
-      // reached end of original set — jump back without transition
+      // jump back to start without transition
       track.style.transition = 'none';
       currentIndex = 0;
-      track.style.transform = 'translateX(-' + getOffset(0) + 'px)';
-      // force reflow then step forward
+      track.style.transform = 'translateX(0)';
       void track.offsetWidth;
+      // then slide to item 1
       currentIndex = 1;
       track.style.transition = 'transform 0.5s ease';
-      track.style.transform = 'translateX(-' + getOffset(1) + 'px)';
+      track.style.transform = 'translateX(-' + (viewport.offsetWidth * currentIndex) + 'px)';
     } else {
       track.style.transition = 'transform 0.5s ease';
-      track.style.transform = 'translateX(-' + getOffset(currentIndex) + 'px)';
+      track.style.transform = 'translateX(-' + (viewport.offsetWidth * currentIndex) + 'px)';
     }
   }
 
-  intervalId = setInterval(step, 4000);
+  setInterval(step, 4000);
 
   ticker.addEventListener('mouseenter', function() { paused = true; });
   ticker.addEventListener('mouseleave', function() { paused = false; });
+
+  window.addEventListener('resize', function() {
+    sizeItems();
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(-' + (viewport.offsetWidth * currentIndex) + 'px)';
+  });
 })();
 
 // 초기화

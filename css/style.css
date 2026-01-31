@@ -1819,17 +1819,16 @@ header h1 {
 
 .tips-ticker-track {
   display: flex;
-  gap: 40px;
-  width: max-content;
   transition: transform 0.5s ease;
 }
 
 .tips-ticker-item {
+  box-sizing: border-box;
   white-space: nowrap;
   font-size: 13px;
   color: var(--text-tertiary);
   flex-shrink: 0;
-  padding: 10px 0;
+  padding: 10px 16px;
 }
 
 /* Footer */
