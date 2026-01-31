@@ -1773,6 +1773,7 @@ header h1 {
   display: flex;
   align-items: stretch;
   margin-top: auto;
+  margin-bottom: auto;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
