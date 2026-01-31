@@ -4321,3 +4321,29 @@ footer {
     white-space: normal;
   }
 }
+
+/* NFSC 링크 버튼 */
+.nfsc-link-section {
+  padding: 12px 16px;
+}
+.nfsc-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nfsc-link-btn:hover {
+  background: rgba(49, 130, 246, 0.1);
+  border-color: #3182f6;
+  color: #3182f6;
+}

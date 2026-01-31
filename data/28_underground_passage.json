@@ -12,7 +12,8 @@
           "end_date": null,
           "criteria": "사람이 출입할 수 있는 출입구 부근에 5개 이상 설치(A.B.C소화기 3.3㎏ 이상)"
         }
-      ]
+      ],
+      "facility_id": "fire_extinguisher"
     },
     {
       "category": "소화설비",
@@ -23,7 +24,8 @@
           "end_date": null,
           "criteria": "지하구 내 발전실·변전실·송전실·변압기실·배전반실·통신기기실·전산기기실·기타 이와 유사한 시설이 있는 장소 중 바닥면적이 300㎡ 미만인 곳에는 유효설치 방호체적 이내의 가스·분말·고체에어로졸·캐비닛형 자동소화장치를 설치"
         }
-      ]
+      ],
+      "facility_id": "auto_extinguisher"
     },
     {
       "category": "소화설비",
@@ -34,7 +36,8 @@
           "end_date": null,
           "criteria": "제어반 또는 분전반마다 가스·분말·고체에어로졸 자동소화장치 또는 유효설치 방호체적 이내의 소공간용 소화용구를 설치"
         }
-      ]
+      ],
+      "facility_id": "small_space_extinguisher"
     },
     {
       "category": "소화설비",
@@ -45,7 +48,8 @@
           "end_date": null,
           "criteria": "케이블접속부(절연유를 포함한 접속부에 한한다)마다 가스·분말·고체에어로졸 자동소화장치 또는 케이블 화재에 적응성이 있다고 인정된 자동소화장치를 설치하되 소화성능이 확보될 수 있도록 방호공간을 구획하는 등 유효한 조치"
         }
-      ]
+      ],
+      "facility_id": "effective_measure"
     },
     {
       "category": "경보설비",
@@ -61,7 +65,8 @@
           "end_date": null,
           "criteria": "발신기, 지구음향장치 및 시각경보기는 미설치"
         }
-      ]
+      ],
+      "facility_id": "auto_fire_detection"
     },
     {
       "category": "경보설비",
@@ -74,11 +79,12 @@
           "note": "수신기는 지하구의 통제실에 설치하되 화재신호, 경보, 발화지점 등 수신기에 표시되는 정보가 별표 1에 적합한 방식으로 119상황실이 있는 관할 소방관서의 정보통신장치에 표시되도록 할 것"
         },
         {
-          "start_date": "2014-11-19",
+          "start_date": "20141119",
           "end_date": null,
           "criteria": "적용대상이 공동구 → 지하구로 확대됨"
         }
-      ]
+      ],
+      "facility_id": "integrated_monitor"
     },
     {
       "category": "피난구조설비",
@@ -94,18 +100,20 @@
           "end_date": null,
           "criteria": "공동구에도 소급 설치"
         }
-      ]
+      ],
+      "facility_id": "guide_light"
     },
     {
       "category": "소화활동설비",
       "facility_name": "무선통신보조설비",
       "regulations": [
         {
-          "start_date": "2021-12-16",
+          "start_date": "20211216",
           "end_date": null,
           "criteria": "(공동구) 무전기접속단자는 방재실과 공동구의 입구 및 연소방지설비 송수구가 설치된 장소(지상)에 설치"
         }
-      ]
+      ],
+      "facility_id": "wireless_comm"
     },
     {
       "category": "소화활동설비",
@@ -127,7 +135,8 @@
           "criteria": "환기구 사이의 간격이 700m를 초과할 경우에는 700m 이내마다 살수구역(방화벽 설치시 제외)",
           "note": "연소방지설비 전용헤드의 경우에는 2미터 이하, SP헤드의 경우에는 1.5미터 이하"
         }
-      ]
+      ],
+      "facility_id": "fire_spread_prevention"
     },
     {
       "category": "소화활동설비",
@@ -139,7 +148,8 @@
           "criteria": "케이블·전선 등에는 다음 각 호의 기준에 따라 연소방지재를 설치(시험성적서의 유효기간은 발급 후 3년)",
           "note": "연소방지재 간의 설치 간격은 350m 이내"
         }
-      ]
+      ],
+      "facility_id": "fire_spread_material"
     },
     {
       "category": "소화활동설비",
@@ -151,7 +161,8 @@
           "criteria": "분기구 및 국사·변전소 등의 건축물과 지하구가 연결되는 부위(건축물로부터 20m 이내)에 설치",
           "note": "출입문은 갑종방화문, 관통부는 내화충전 구조로 마감, 자동 닫힘이 가능한 자동폐쇄장치를 설치"
         }
-      ]
+      ],
+      "facility_id": "firewall"
     }
   ]
 }

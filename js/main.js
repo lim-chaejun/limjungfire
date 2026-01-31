@@ -59,6 +59,7 @@ let selectedAddressData = null;
 let currentUser = null;
 let fireFacilitiesCache = {}; // 지연 로딩 캐시 (건물유형별)
 let exemptionCriteriaData = null; // 면제기준 데이터 (지연 로딩)
+let facilitiesMasterData = null; // 시설 마스터 데이터 (지연 로딩)
 let adSettings = null; // 광고 설정
 const API_KEY = '07887a9d4f6b1509b530798e1b5b86a1e1b6e4f5aacc26994fd1fd73cbcebefb';
 
@@ -280,6 +281,55 @@ async function getExemptionCriteriaData() {
     console.warn('면제기준 데이터 로드 실패:', e);
   }
   return null;
+}
+
+// 시설 마스터 데이터 지연 로드
+async function getFacilitiesMasterData() {
+  if (facilitiesMasterData) return facilitiesMasterData;
+  try {
+    const res = await fetch('/data/facilities.json');
+    if (res.ok) {
+      const data = await res.json();
+      // name→facility, alias→facility 인덱스 구축
+      const byName = {};
+      const byId = {};
+      const byAlias = {};
+      for (const fac of data.facilities) {
+        byName[fac.name] = fac;
+        byId[fac.id] = fac;
+        for (const alias of (fac.aliases || [])) {
+          byAlias[alias] = fac;
+        }
+      }
+      facilitiesMasterData = { list: data.facilities, byName, byId, byAlias };
+      console.log('시설 마스터 데이터 로드 완료');
+      return facilitiesMasterData;
+    }
+  } catch (e) {
+    console.warn('시설 마스터 데이터 로드 실패:', e);
+  }
+  return null;
+}
+
+// 시설 마스터에서 아이콘 조회
+function getFacilityIcon(facilityName) {
+  if (!facilitiesMasterData) return '📋';
+  const fac = facilitiesMasterData.byName[facilityName] || facilitiesMasterData.byAlias[facilityName];
+  return (fac && fac.icon) || '📋';
+}
+
+// 시설 마스터에서 NFSC 키 조회
+function getFacilityNfscKey(facilityName) {
+  if (!facilitiesMasterData) return null;
+  const fac = facilitiesMasterData.byName[facilityName] || facilitiesMasterData.byAlias[facilityName];
+  return fac ? fac.nfsc_key : null;
+}
+
+// 시설 마스터에서 정규화된 이름 조회
+function normalizeFacilityName(facilityName) {
+  if (!facilitiesMasterData) return facilityName;
+  const fac = facilitiesMasterData.byAlias[facilityName];
+  return fac ? fac.name : facilityName;
 }
 
 // 스플래시 화면 숨기기
@@ -2585,7 +2635,7 @@ window._executePdfDownload = async function() {
           ? applicable.map(r => {
               let dateInfo = '';
               if (r.start_date) {
-                dateInfo = r.end_date ? ` <span class="reg-date">(${r.start_date} ~ ${r.end_date})</span>` : ` <span class="reg-date">(${r.start_date}~)</span>`;
+                dateInfo = r.end_date ? ` <span class="reg-date">(${formatPermitDate(r.start_date)} ~ ${formatPermitDate(r.end_date)})</span>` : ` <span class="reg-date">(${formatPermitDate(r.start_date)}~)</span>`;
               }
               return r.criteria + dateInfo;
             }).join('<br>')
@@ -2604,7 +2654,7 @@ window._executePdfDownload = async function() {
           let info = rule.criteria;
           const parts = [];
           if (rule.source) parts.push(rule.source);
-          if (rule.start_date) parts.push(rule.end_date ? `${rule.start_date} ~ ${rule.end_date}` : `${rule.start_date}~`);
+          if (rule.start_date) parts.push(rule.end_date ? `${formatPermitDate(rule.start_date)} ~ ${formatPermitDate(rule.end_date)}` : `${formatPermitDate(rule.start_date)}~`);
           if (parts.length > 0) info += ` <span class="reg-date">(${parts.join(', ')})</span>`;
           return info;
         };
@@ -3011,36 +3061,6 @@ function mapPurposeToFireDataType(mainPurpose) {
 
 // ==================== 필수 소방시설 판단 ====================
 
-// 시설별 아이콘 매핑 (SVG)
-const facilityIcons = {
-  '소화기구': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="6" width="6" height="14" rx="2"/><path d="M12 3v3"/><path d="M12 3l3-1"/><path d="M9 10h6"/><path d="M10 14h4"/></svg>',
-  '옥내소화전설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="1"/><circle cx="12" cy="12" r="4"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>',
-  '스프링클러설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="4" ry="2"/><path d="M12 8v3"/><path d="M7 20l2-9"/><path d="M12 11l0 9"/><path d="M17 20l-2-9"/><path d="M5 20l3-9"/><path d="M19 20l-3-9"/></svg>',
-  '간이스프링클러설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="3" ry="1.5"/><path d="M12 7.5v3"/><path d="M8 18l2-7.5"/><path d="M12 10.5v7.5"/><path d="M16 18l-2-7.5"/></svg>',
-  '물분무등소화설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v5"/><path d="M8 8l4 3 4-3"/><circle cx="6" cy="16" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="16" r="2"/><circle cx="9" cy="13" r="1.5"/><circle cx="15" cy="13" r="1.5"/></svg>',
-  '옥외소화전설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 21h8"/><rect x="9" y="10" width="6" height="11"/><ellipse cx="12" cy="10" rx="3" ry="2"/><path d="M6 14h3"/><path d="M15 14h3"/><path d="M12 4v6"/><circle cx="12" cy="4" r="2"/></svg>',
-  '자동소화장치': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="12" width="8" height="9" rx="1"/><path d="M12 12v-3"/><path d="M10 9h4"/><path d="M6 5l2 2"/><path d="M12 3v3"/><path d="M18 5l-2 2"/></svg>',
-  '자동화재탐지설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>',
-  '비상경보설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M12 2v2"/></svg>',
-  '비상방송설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 12h2l6-5v14l-6-5H6V12z"/><path d="M17 9a4 4 0 0 1 0 6"/><path d="M19.5 6.5a8 8 0 0 1 0 11"/></svg>',
-  '단독경보형감지기': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 5v2"/></svg>',
-  '시각경보장치': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 3v2"/><path d="M12 19v2"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="M5.6 5.6l1.4 1.4"/><path d="M17 17l1.4 1.4"/><path d="M5.6 18.4l1.4-1.4"/><path d="M17 7l1.4-1.4"/></svg>',
-  '가스누설경보기': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="12" cy="11" r="2"/><path d="M12 15v2"/><path d="M8 4h8"/><path d="M9 20h6"/></svg>',
-  '피난기구': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4v16"/><path d="M18 4v16"/><path d="M6 8h12"/><path d="M6 12h12"/><path d="M6 16h12"/></svg>',
-  '인명구조기구': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/></svg>',
-  '유도등': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="1"/><circle cx="8" cy="12" r="2"/><path d="M8 10v4"/><path d="M13 10l3 2-3 2"/><path d="M13 10v4"/></svg>',
-  '비상조명등': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="10" r="6"/><path d="M12 4v2"/><path d="M10 18h4"/><path d="M10 20h4"/><rect x="10" y="16" width="4" height="2"/></svg>',
-  '휴대용비상조명등': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="8" width="8" height="12" rx="2"/><path d="M10 8V6a2 2 0 0 1 4 0v2"/><ellipse cx="12" cy="5" rx="3" ry="1"/><path d="M10 12h4"/></svg>',
-  '제연설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="14" width="16" height="6" rx="1"/><path d="M8 14v-2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M7 8c0-2 1-4 5-4s5 2 5 4"/><path d="M12 4v2"/></svg>',
-  '연결송수관설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="3"/><circle cx="19" cy="12" r="3"/><path d="M8 12h8"/><path d="M5 9v-4"/><path d="M5 15v4"/></svg>',
-  '연결살수설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v6"/><path d="M9 9l3 3 3-3"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
-  '비상콘센트설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9v3"/><path d="M15 9v3"/><path d="M12 15v2"/></svg>',
-  '무선통신보조설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-10"/><path d="M6 14a6 6 0 0 1 12 0"/><path d="M3 11a10 10 0 0 1 18 0"/><circle cx="12" cy="20" r="2"/></svg>',
-  '상수도소화용수설비': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4c2 3 5 5 5 9a5 5 0 0 1-10 0c0-4 3-6 5-9z"/><path d="M10 13a2 2 0 0 0 4 0"/></svg>',
-  '소화수조및저수조': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="8" width="16" height="12" rx="1"/><path d="M4 12h16"/><path d="M4 16h16"/><path d="M8 8V5"/><path d="M16 8V5"/><path d="M6 5h12"/></svg>',
-  '피난시설': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M8 21l4-10 4 10"/><path d="M16 11l4-2"/><path d="M8 11l-4-2"/></svg>'
-};
-
 // 허가일 기준 필수 소방시설 판단 (JSON 데이터 기반)
 async function getRequiredFireFacilities(buildingInfo) {
   const {
@@ -3069,8 +3089,11 @@ async function getRequiredFireFacilities(buildingInfo) {
 
   const facilities = [];
 
-  // 건물 유형에 맞는 데이터 지연 로드
-  const fireData = buildingType ? await getFireFacilityData(buildingType) : null;
+  // 시설 마스터 데이터 + 건물 유형 데이터 지연 로드
+  const [fireData] = await Promise.all([
+    buildingType ? getFireFacilityData(buildingType) : null,
+    getFacilitiesMasterData()
+  ]);
 
   // JSON 데이터가 있으면 해당 데이터 사용
   if (fireData) {
@@ -3078,8 +3101,8 @@ async function getRequiredFireFacilities(buildingInfo) {
     fireData.fire_facilities.forEach(facility => {
       // 허가일에 맞는 규정만 필터링
       const applicableRegs = facility.regulations.filter(reg => {
-        const startDate = reg.start_date ? parseInt(reg.start_date.replace(/-/g, '')) : 0;
-        const endDate = reg.end_date ? parseInt(reg.end_date.replace(/-/g, '')) : 99999999;
+        const startDate = reg.start_date ? parseInt(reg.start_date) : 0;
+        const endDate = reg.end_date ? parseInt(reg.end_date) : 99999999;
 
         // 허가일이 있으면 범위 내 체크
         if (permitDate > 0) {
@@ -3099,7 +3122,7 @@ async function getRequiredFireFacilities(buildingInfo) {
         reason: applicableRegs.length > 0
           ? applicableRegs[0].criteria
           : '해당없음',
-        icon: facilityIcons[facility.facility_name] || '📋'
+        icon: getFacilityIcon(facility.facility_name)
       };
 
       facilities.push(facilityInfo);
@@ -3113,7 +3136,7 @@ async function getRequiredFireFacilities(buildingInfo) {
       regulations: [],
       allRegulations: [],
       reason: totalArea >= 33 ? '연면적 33㎡ 이상' : '해당없음',
-      icon: '🧯'
+      icon: getFacilityIcon('소화기구')
     });
   }
 
@@ -3344,6 +3367,23 @@ function findApplicableLaw(history, permitDate) {
   return sorted.find(item => parseInt(item.effective_date) <= permit) || sorted[sorted.length - 1];
 }
 
+// NFSC 연혁 데이터 로드
+let nfscHistoryCache = null;
+
+async function getNfscHistoryData() {
+  if (nfscHistoryCache) return nfscHistoryCache;
+  const res = await fetch('data/nfsc_history.json');
+  nfscHistoryCache = await res.json();
+  return nfscHistoryCache;
+}
+
+// 허가일 기준 해당 NFSC 버전 찾기
+function findApplicableNfsc(nfscList, permitDate) {
+  const permit = parseInt(permitDate) || 0;
+  const sorted = [...nfscList].sort((a, b) => parseInt(b.effective_date) - parseInt(a.effective_date));
+  return sorted.find(item => parseInt(item.effective_date) <= permit) || sorted[sorted.length - 1];
+}
+
 // 법령 링크 열기
 window.openLawLink = function(type) {
   const btn = document.querySelector(`.law-ref-btn[data-type="${type}"]`);
@@ -3409,10 +3449,10 @@ window.showFacilityDetailModal = async function(facilityIndex) {
 
   // 적용 기간 포맷
   const formatPeriod = (reg) => {
-    const start = reg.start_date || '';
-    const end = reg.end_date;
-    if (!start && !end) return '상시 적용';
-    if (!end) return `${start} ~ 현재`;
+    const start = reg.start_date ? formatPermitDate(reg.start_date) : '';
+    const end = reg.end_date ? formatPermitDate(reg.end_date) : '';
+    if (!reg.start_date && !reg.end_date) return '상시 적용';
+    if (!reg.end_date) return `${start} ~ 현재`;
     return `${start} ~ ${end}`;
   };
 
@@ -3481,6 +3521,30 @@ window.showFacilityDetailModal = async function(facilityIndex) {
     html += `</div></div>`;
   }
 
+  // NFSC 링크 추가
+  const nfscKey = getFacilityNfscKey(facility.name);
+  if (nfscKey) {
+    const nfscData = await getNfscHistoryData();
+    const nfscList = nfscData[nfscKey];
+    if (nfscList) {
+      const matched = findApplicableNfsc(nfscList, permitDate);
+      if (matched) {
+        html += `
+          <div class="nfsc-link-section">
+            <a href="${matched.link}" target="_blank" class="nfsc-link-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              ${matched.name}
+            </a>
+          </div>
+        `;
+      }
+    }
+  }
+
   html += `
     <div class="facility-detail-footer">
       <p>건축허가일: ${formatPermitDate(permitDate) || '-'}</p>
@@ -3507,40 +3571,12 @@ async function getExemptionRulesForFacility(facilityName, permitDate) {
 
   const permitNum = parseInt(permitDate) || 0;
 
-  // 시설명 매핑 (UI 표시명 → 데이터 시설명)
-  const nameMapping = {
-    '소화기구': '소화기구',
-    '간이스프링클러설비': '간이스프링클러설비',
-    '간이스프링클러': '간이스프링클러설비',
-    '스프링클러설비': '스프링클러설비',
-    '스프링클러': '스프링클러설비',
-    '옥내소화전설비': '옥내소화전설비',
-    '옥내소화전': '옥내소화전설비',
-    '옥외소화전설비': '옥외소화전설비',
-    '옥외소화전': '옥외소화전설비',
-    '물분무등소화설비': '물분무등소화설비',
-    '물분무소화설비': '물분무등소화설비',
-    '자동화재탐지설비': '자동화재탐지설비',
-    '비상경보설비': '비상경보설비',
-    '비상방송설비': '비상방송설비',
-    '누전경보기': '누전경보기',
-    '자동소화장치': '자동소화장치',
-    '제연설비': '제연설비',
-    '연결송수관설비': '연결송수관설비',
-    '연결살수설비': '연결살수설비',
-    '비상조명등': '비상조명등',
-    '피난구조설비': '피난구조설비',
-    '무선통신보조설비': '무선통신보조설비',
-    '연소방지설비': '연소방지설비',
-    '상수도소화용수설비': '상수도소화용수설비',
-    '화재알림설비': '화재알림설비'
-  };
+  // 시설 마스터를 통해 정규화된 이름 조회
+  const dataFacilityName = normalizeFacilityName(facilityName);
 
-  const dataFacilityName = nameMapping[facilityName] || facilityName;
-
-  // 해당 시설의 면제기준 찾기
+  // 해당 시설의 면제기준 찾기 (facility_name 또는 정규화된 이름으로 매칭)
   const facilityRule = data.exemption_rules.find(
-    rule => rule.facility_name === dataFacilityName
+    rule => rule.facility_name === dataFacilityName || rule.facility_name === facilityName
   );
 
   if (!facilityRule || !facilityRule.regulations) {
@@ -3549,8 +3585,8 @@ async function getExemptionRulesForFacility(facilityName, permitDate) {
 
   // 허가일 기준 필터링
   return facilityRule.regulations.filter(reg => {
-    const start = parseInt(reg.start_date?.replace(/-/g, '')) || 0;
-    const end = parseInt(reg.end_date?.replace(/-/g, '')) || 99999999;
+    const start = parseInt(reg.start_date) || 0;
+    const end = parseInt(reg.end_date) || 99999999;
 
     if (permitNum > 0) {
       return permitNum >= start && permitNum <= end;
@@ -3564,8 +3600,8 @@ async function getExemptionRulesForFacility(facilityName, permitDate) {
 function getApplicableRegulations(regulations, permitDate) {
   const permitNum = parseInt(permitDate) || 0;
   return regulations.filter(reg => {
-    const start = parseInt(reg.start_date?.replace(/-/g, '')) || 0;
-    const end = parseInt(reg.end_date?.replace(/-/g, '')) || 99999999;
+    const start = parseInt(reg.start_date) || 0;
+    const end = parseInt(reg.end_date) || 99999999;
 
     if (permitNum > 0) {
       return permitNum >= start && permitNum <= end;
@@ -3589,10 +3625,10 @@ function renderFacilityDetailContent(facility, permitDate) {
 
   // 적용 기간 포맷 (간결하게)
   const formatPeriod = (reg) => {
-    const start = reg.start_date || '';
-    const end = reg.end_date;
-    if (!start && !end) return '상시 적용';
-    if (!end) return `${start} ~ 현재`;
+    const start = reg.start_date ? formatPermitDate(reg.start_date) : '';
+    const end = reg.end_date ? formatPermitDate(reg.end_date) : '';
+    if (!reg.start_date && !reg.end_date) return '상시 적용';
+    if (!reg.end_date) return `${start} ~ 현재`;
     return `${start} ~ ${end}`;
   };
 
@@ -3644,7 +3680,7 @@ function renderFacilityDetailContent(facility, permitDate) {
 function formatRegulationPeriod(startDate, endDate) {
   const formatDate = (dateStr) => {
     if (!dateStr) return null;
-    return dateStr; // YYYY-MM-DD 형식 그대로 사용
+    return dateStr; // YYYYMMDD 형식 그대로 사용
   };
 
   const start = formatDate(startDate);
@@ -3699,8 +3735,8 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
 
     // 허가일 기준 적용 가능한 규정 필터링
     const applicableRegs = facility.regulations.filter(reg => {
-      const startDate = reg.start_date ? parseInt(reg.start_date.replace(/-/g, '')) : 0;
-      const endDate = reg.end_date ? parseInt(reg.end_date.replace(/-/g, '')) : 99999999;
+      const startDate = reg.start_date ? parseInt(reg.start_date) : 0;
+      const endDate = reg.end_date ? parseInt(reg.end_date) : 99999999;
 
       // 허가일이 규정 기간 내에 있는지 확인
       if (permitNum > 0) {
