@@ -3244,9 +3244,50 @@ async function getRequiredFireFacilities(buildingInfo) {
 let currentFacilitiesResult = null;
 
 // 소방시설 카드 렌더링
+// 소방법 이전 건축물 안내 모달
+function showPreLawModal() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+      <div class="modal-content" style="max-width:440px;">
+        <div class="modal-body" style="padding:24px;">
+          <div style="text-align:center;margin-bottom:16px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3 style="text-align:center;margin:0 0 12px;font-size:17px;color:var(--text-primary);">소방법 시행령 제정 이전 건축물</h3>
+          <p style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin:0 0 8px;text-align:center;">
+            이 건축물은 소방시설 설치에 대한 법적 기준이<br>제한적이던 시기에 허가되었습니다.
+          </p>
+          <div style="background:var(--bg-tertiary);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:13px;line-height:1.6;color:var(--text-secondary);">
+            <p style="margin:0 0 8px;"><strong style="color:var(--text-primary);">안내사항</strong></p>
+            <p style="margin:0;">아래 표시되는 소방시설은 허가일 당시 기준이며, 현행 법령에 따른 <strong style="color:var(--color-primary);">소급 적용 대상</strong>이 있을 수 있습니다. 정확한 설치 의무는 관할 소방서에 확인하시기 바랍니다.</p>
+          </div>
+          <button onclick="this.closest('.modal').remove()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--color-primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">확인</button>
+        </div>
+      </div>
+    `;
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) { overlay.remove(); resolve(); }
+    });
+    overlay.querySelector('button').addEventListener('click', () => resolve());
+    document.body.appendChild(overlay);
+  });
+}
+
 async function renderFireFacilitiesCard(buildingInfo) {
   const result = await getRequiredFireFacilities(buildingInfo);
   const { classification, facilities, permitDate, usedApprovalDate, effectiveDate } = result;
+
+  // 소방법 이전 건축물이면 안내 모달 표시
+  if (permitDate && parseInt(permitDate) <= 19750831) {
+    await showPreLawModal();
+  }
 
   // 모달에서 사용할 수 있도록 저장
   currentFacilitiesResult = result;
@@ -3282,20 +3323,6 @@ async function renderFireFacilitiesCard(buildingInfo) {
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
           <span>허가일이 조회되지 않아 <strong>사용승인일(${effectiveDate ? effectiveDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3') : '-'})</strong> 기준으로 판단했습니다. 재확인이 필요합니다.</span>
-        </div>
-      ` : ''}
-
-      ${permitDate && parseInt(permitDate) <= 19750831 ? `
-        <div class="pre-law-warning">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <div>
-            <strong>소방법 시행령 제정 이전 건축물</strong>
-            <p>이 건축물은 소방시설 설치에 대한 법적 기준이 제한적이던 시기에 허가되었습니다. 아래 표시된 시설은 허가일 당시 기준이며, 현행 법령에 따른 <strong>소급 적용 대상</strong>이 있을 수 있으므로 관할 소방서에 확인하시기 바랍니다.</p>
-          </div>
         </div>
       ` : ''}
 
@@ -3860,23 +3887,6 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
       ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
-
-  // 소방법 시행령 제정 이전 건축물 안내
-  if (permitDate && parseInt(permitDate) <= 19750831) {
-    html += `
-      <div class="pre-law-warning" style="margin:0 0 4px 0;border-radius:0;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <div>
-          <strong>소방법 시행령 제정 이전 건축물</strong>
-          <p>이 건축물은 소방시설 설치에 대한 법적 기준이 제한적이던 시기에 허가되었습니다. 아래 표시된 시설은 허가일 당시 기준이며, 현행 법령에 따른 <strong>소급 적용 대상</strong>이 있을 수 있으므로 관할 소방서에 확인하시기 바랍니다.</p>
-        </div>
-      </div>
-    `;
-  }
 
   // 카테고리별 렌더링
   Object.entries(categories).forEach(([catName, catData]) => {
