@@ -87,11 +87,14 @@ const loginPromptManager = {
   dismissLoginBanner() {
     localStorage.setItem('loginBannerDismissed', Date.now().toString());
   },
+  _isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  },
   shouldShowResultBanner() {
-    return !currentUser && !this.isResultBannerDismissed();
+    return !currentUser && !this.isResultBannerDismissed() && !this._isStandalone();
   },
   shouldShowLoginBanner() {
-    return !currentUser && this.getSearchCount() >= 2 && !this.isLoginBannerDismissed();
+    return !currentUser && this.getSearchCount() >= 2 && !this.isLoginBannerDismissed() && !this._isStandalone();
   },
   showLoginBannerIfNeeded() {
     const banner = document.getElementById('loginPromptBanner');
