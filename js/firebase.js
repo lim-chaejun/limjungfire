@@ -1,6 +1,6 @@
 // Firebase 초기화 및 인증 (CDN 방식)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithCredential, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getFirestore,
   collection,
@@ -64,39 +64,75 @@ function isMobileBrowser() {
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 }
 
+// Google OAuth Client ID (Firebase 프로젝트에서 자동 생성)
+const GOOGLE_CLIENT_ID = '651331831897-2tmd717q6kmo3mhpbac6ub80q3uukbr0.apps.googleusercontent.com';
+
+// Google Identity Services 스크립트 로드
+function loadGISScript() {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts?.id) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('Google 로그인 라이브러리 로드 실패'));
+    document.head.appendChild(script);
+  });
+}
+
+// GIS One Tap 로그인 (페이지 내에서 처리, 팝업/리다이렉트 없음)
+function signInWithGIS() {
+  return new Promise((resolve, reject) => {
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async (response) => {
+        try {
+          const credential = GoogleAuthProvider.credential(response.credential);
+          const result = await signInWithCredential(auth, credential);
+          console.log('GIS 로그인 성공:', result.user.displayName);
+          resolve(result.user);
+        } catch (error) {
+          reject(error);
+        }
+      }
+    });
+
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        console.log('One Tap 표시 불가:', notification.getNotDisplayedReason());
+        reject(new Error('ONE_TAP_NOT_DISPLAYED'));
+      } else if (notification.isSkippedMoment()) {
+        console.log('One Tap 건너뜀:', notification.getSkippedReason());
+        reject(new Error('ONE_TAP_SKIPPED'));
+      }
+    });
+  });
+}
+
 // Google 로그인
 export async function signInWithGoogle() {
   try {
     if (isMobileBrowser()) {
-      // 모바일 브라우저 (삼성 인터넷 등)에서는 redirect 방식 사용
-      await signInWithRedirect(auth, provider);
-      // redirect 후 페이지가 새로고침되므로 여기서 return되지 않음
-      return null;
+      // 모바일: GIS One Tap 시도 (accounts.google.com 이동 없이 페이지 내 처리)
+      try {
+        await loadGISScript();
+        return await signInWithGIS();
+      } catch (gisError) {
+        console.log('GIS 실패, popup 방식으로 재시도:', gisError.message);
+        // GIS 실패 시 popup 방식으로 폴백
+        const result = await signInWithPopup(auth, provider);
+        return result.user;
+      }
     } else {
-      // 데스크톱 브라우저에서는 popup 방식 사용
+      // 데스크톱: popup 방식
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      console.log('로그인 성공:', user.displayName);
-      return user;
+      console.log('로그인 성공:', result.user.displayName);
+      return result.user;
     }
   } catch (error) {
     console.error('로그인 실패:', error);
-    throw error;
-  }
-}
-
-// 리다이렉트 결과 처리 (페이지 로드 시 호출)
-export async function handleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    if (result) {
-      const user = result.user;
-      console.log('리다이렉트 로그인 성공:', user.displayName);
-      return user;
-    }
-    return null;
-  } catch (error) {
-    console.error('리다이렉트 로그인 실패:', error);
     throw error;
   }
 }

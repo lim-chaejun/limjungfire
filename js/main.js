@@ -569,17 +569,6 @@ async function searchFromUrl() {
     // 광고 설정 로드
     loadAdSettings();
 
-    // 모바일 리다이렉트 로그인 결과 처리
-    if (fb.handleRedirectResult) {
-      fb.handleRedirectResult().then(async (user) => {
-        if (user && fb.saveUserInfo) {
-          await fb.saveUserInfo(user);
-        }
-      }).catch((error) => {
-        console.error('리다이렉트 로그인 처리 실패:', error);
-      });
-    }
-
     fb.onAuthChange((user) => {
       currentUser = user;
       updateAuthUI(user);
