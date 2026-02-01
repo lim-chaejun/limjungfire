@@ -678,13 +678,14 @@ window.handleSignup = async function() {
     return;
   }
   try {
-    const user = await fb.signInWithGoogle();
-    // redirect 방식이면 user가 null (페이지 새로고침 후 handleRedirectResult에서 처리)
+    // 회원가입은 계정 선택 화면을 표시
+    const signUp = fb.signUpWithGoogle || fb.signInWithGoogle;
+    const user = await signUp();
     if (user && fb.saveUserInfo) {
       await fb.saveUserInfo(user);
     }
   } catch (error) {
-    if (error.code === 'auth/popup-closed-by-user') return;
+    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') return;
     alert('회원가입에 실패했습니다: ' + error.message);
   }
 };

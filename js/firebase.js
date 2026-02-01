@@ -111,7 +111,7 @@ function signInWithGIS() {
   });
 }
 
-// Google 로그인
+// Google 로그인 (기존 계정으로 빠른 로그인)
 export async function signInWithGoogle() {
   try {
     if (isMobileBrowser()) {
@@ -121,12 +121,10 @@ export async function signInWithGoogle() {
         return await signInWithGIS();
       } catch (gisError) {
         console.log('GIS 실패, popup 방식으로 재시도:', gisError.message);
-        // GIS 실패 시 popup 방식으로 폴백
         const result = await signInWithPopup(auth, provider);
         return result.user;
       }
     } else {
-      // 데스크톱: popup 방식
       const result = await signInWithPopup(auth, provider);
       console.log('로그인 성공:', result.user.displayName);
       return result.user;
@@ -135,6 +133,59 @@ export async function signInWithGoogle() {
     console.error('로그인 실패:', error);
     throw error;
   }
+}
+
+// Google 회원가입 (계정 선택 화면 표시)
+export async function signUpWithGoogle() {
+  try {
+    if (isMobileBrowser()) {
+      // 모바일: GIS Token Client 사용 (계정 선택 가능)
+      try {
+        await loadGISScript();
+        return await signUpWithGIS();
+      } catch (gisError) {
+        console.log('GIS 회원가입 실패, popup 방식으로 재시도:', gisError.message);
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const result = await signInWithPopup(auth, provider);
+        return result.user;
+      }
+    } else {
+      // 데스크톱: popup 방식 + 계정 선택 강제
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      console.log('회원가입 성공:', result.user.displayName);
+      return result.user;
+    }
+  } catch (error) {
+    console.error('회원가입 실패:', error);
+    throw error;
+  }
+}
+
+// GIS Token Client로 계정 선택 (회원가입용)
+function signUpWithGIS() {
+  return new Promise((resolve, reject) => {
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email profile',
+      prompt: 'select_account',
+      callback: async (response) => {
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+        try {
+          const credential = GoogleAuthProvider.credential(null, response.access_token);
+          const result = await signInWithCredential(auth, credential);
+          console.log('GIS 회원가입 성공:', result.user.displayName);
+          resolve(result.user);
+        } catch (error) {
+          reject(error);
+        }
+      }
+    });
+    client.requestAccessToken();
+  });
 }
 
 // 로그아웃
