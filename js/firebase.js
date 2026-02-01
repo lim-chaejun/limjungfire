@@ -1,6 +1,6 @@
 // Firebase 초기화 및 인증 (CDN 방식)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getFirestore,
   collection,
@@ -59,15 +59,44 @@ export const ROLE_LABELS = {
 // 최초 관리자 이메일
 const ADMIN_EMAIL = 'lcjun37@gmail.com';
 
+// 모바일 브라우저 감지
+function isMobileBrowser() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
 // Google 로그인
 export async function signInWithGoogle() {
   try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    console.log('로그인 성공:', user.displayName);
-    return user;
+    if (isMobileBrowser()) {
+      // 모바일 브라우저 (삼성 인터넷 등)에서는 redirect 방식 사용
+      await signInWithRedirect(auth, provider);
+      // redirect 후 페이지가 새로고침되므로 여기서 return되지 않음
+      return null;
+    } else {
+      // 데스크톱 브라우저에서는 popup 방식 사용
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      console.log('로그인 성공:', user.displayName);
+      return user;
+    }
   } catch (error) {
     console.error('로그인 실패:', error);
+    throw error;
+  }
+}
+
+// 리다이렉트 결과 처리 (페이지 로드 시 호출)
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      const user = result.user;
+      console.log('리다이렉트 로그인 성공:', user.displayName);
+      return user;
+    }
+    return null;
+  } catch (error) {
+    console.error('리다이렉트 로그인 실패:', error);
     throw error;
   }
 }

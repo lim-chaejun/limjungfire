@@ -569,6 +569,17 @@ async function searchFromUrl() {
     // 광고 설정 로드
     loadAdSettings();
 
+    // 모바일 리다이렉트 로그인 결과 처리
+    if (fb.handleRedirectResult) {
+      fb.handleRedirectResult().then(async (user) => {
+        if (user && fb.saveUserInfo) {
+          await fb.saveUserInfo(user);
+        }
+      }).catch((error) => {
+        console.error('리다이렉트 로그인 처리 실패:', error);
+      });
+    }
+
     fb.onAuthChange((user) => {
       currentUser = user;
       updateAuthUI(user);
@@ -659,12 +670,11 @@ window.handleLogin = async function() {
   }
   try {
     const user = await fb.signInWithGoogle();
-    // Firestore에 사용자 정보 저장 (등급 정보 포함)
+    // redirect 방식이면 user가 null (페이지 새로고침 후 handleRedirectResult에서 처리)
     if (user && fb.saveUserInfo) {
       await fb.saveUserInfo(user);
     }
   } catch (error) {
-    // 사용자가 팝업을 닫은 경우 무시
     if (error.code === 'auth/popup-closed-by-user') return;
     alert('로그인에 실패했습니다: ' + error.message);
   }
@@ -680,12 +690,11 @@ window.handleSignup = async function() {
   }
   try {
     const user = await fb.signInWithGoogle();
-    // Firestore에 사용자 정보 저장
+    // redirect 방식이면 user가 null (페이지 새로고침 후 handleRedirectResult에서 처리)
     if (user && fb.saveUserInfo) {
       await fb.saveUserInfo(user);
     }
   } catch (error) {
-    // 사용자가 팝업을 닫은 경우 무시
     if (error.code === 'auth/popup-closed-by-user') return;
     alert('회원가입에 실패했습니다: ' + error.message);
   }
