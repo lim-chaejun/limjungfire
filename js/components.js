@@ -1,5 +1,8 @@
-// 공통 컴포넌트 - 헤더, 프로필 메뉴, 푸터
+// 공통 컴포넌트 - 헤더, 프로필 메뉴, 모달, 푸터
 // 모든 페이지에서 동일하게 사용
+
+// 현재 로그인된 사용자 (내부 추적용)
+let _currentUser = null;
 
 // 로고 SVG
 const logoSvg = `
@@ -91,6 +94,96 @@ export function getHeaderHTML() {
     </div>`;
 }
 
+// 공유 모달 HTML 생성 (인증, 내 정보, 설정)
+function getModalsHTML() {
+  return `
+    <div id="authModal" class="modal" style="display: none;">
+      <div class="auth-modal-content">
+        <button class="auth-modal-close" onclick="closeAuthModal()" aria-label="닫기">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+        <h2 class="auth-modal-title">시작하기</h2>
+        <div class="auth-modal-buttons">
+          <button class="auth-modal-btn login-btn" onclick="handleLogin()">
+            ${googleIconSvg}
+            로그인
+          </button>
+          <button class="auth-modal-btn signup-btn" onclick="handleSignup()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6"/>
+            </svg>
+            회원가입
+          </button>
+        </div>
+        <p class="auth-modal-hint">로그인 또는 회원가입을 선택하세요</p>
+        <p class="auth-modal-terms"><a href="/pages/terms.html">이용약관</a> · <a href="/pages/privacy.html">개인정보처리방침</a></p>
+      </div>
+    </div>
+    <div id="myInfoModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>내 정보</h2>
+          <button class="modal-close" onclick="closeMyInfoModal()" aria-label="닫기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="my-info-content">
+            <div class="my-info-avatar">
+              <img id="myInfoPhoto" src="" alt="프로필">
+            </div>
+            <div class="my-info-details">
+              <div class="my-info-row">
+                <span class="my-info-label">이름</span>
+                <span id="myInfoName" class="my-info-value">-</span>
+              </div>
+              <div class="my-info-row">
+                <span class="my-info-label">이메일</span>
+                <span id="myInfoEmail" class="my-info-value">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="settingsModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>설정</h2>
+          <button class="modal-close" onclick="closeSettingsModal()" aria-label="닫기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-section">
+            <div class="settings-section-title">화면 테마</div>
+            <div class="theme-options">
+              <button class="theme-option" data-theme="light" onclick="setTheme('light')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"/>
+                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                <span>라이트</span>
+              </button>
+              <button class="theme-option" data-theme="dark" onclick="setTheme('dark')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                <span>다크</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // 푸터 HTML 생성
 export function getFooterHTML() {
   return `
@@ -115,6 +208,8 @@ export function getFooterHTML() {
     </footer>`;
 }
 
+// ==================== 렌더링 ====================
+
 // 헤더 렌더링
 export function renderHeader(containerId = 'header-container') {
   const container = document.getElementById(containerId);
@@ -127,6 +222,11 @@ export function renderHeader(containerId = 'header-container') {
       mainContainer.insertAdjacentHTML('afterbegin', getHeaderHTML());
     }
   }
+
+  // 모달이 아직 없으면 body에 삽입
+  if (!document.getElementById('authModal')) {
+    document.body.insertAdjacentHTML('beforeend', getModalsHTML());
+  }
 }
 
 // 푸터 렌더링
@@ -136,6 +236,8 @@ export function renderFooter(containerId = 'footer-container') {
     container.innerHTML = getFooterHTML();
   }
 }
+
+// ==================== Firebase ====================
 
 // Firebase 동적 로드
 let firebaseModule = null;
@@ -150,8 +252,12 @@ async function loadFirebase() {
   }
 }
 
+// ==================== 인증 UI ====================
+
 // 인증 UI 업데이트
 export async function updateAuthUI(user) {
+  _currentUser = user;
+
   const loginBtn = document.getElementById('loginBtn');
   const userInfo = document.getElementById('userInfo');
   const userPhoto = document.getElementById('userPhoto');
@@ -208,6 +314,8 @@ export async function updateAuthUI(user) {
   }
 }
 
+// ==================== 프로필 메뉴 ====================
+
 // 프로필 메뉴 토글
 export function toggleProfileMenu() {
   const menu = document.getElementById('profileMenu');
@@ -219,6 +327,8 @@ export function closeProfileMenu() {
   const menu = document.getElementById('profileMenu');
   if (menu) menu.classList.remove('show');
 }
+
+// ==================== 페이지 이동 ====================
 
 // 관리자 페이지로 이동
 export function goToAdminPage() {
@@ -232,19 +342,56 @@ export function goToAdAdminPage() {
   window.location.href = '/pages/ad-admin.html';
 }
 
-// Google 로그인 처리
-export async function handleGoogleLogin() {
+// ==================== 인증 모달 ====================
+
+// 로그인/회원가입 모달 열기
+export function handleGoogleLogin() {
+  const modal = document.getElementById('authModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// 인증 모달 닫기
+export function closeAuthModal() {
+  const modal = document.getElementById('authModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 로그인 처리
+export async function handleLogin() {
+  closeAuthModal();
   const fb = await loadFirebase();
   if (!fb) {
-    alert('로그인 서비스를 불러올 수 없습니다.');
+    alert('Firebase를 로드할 수 없습니다.');
     return;
   }
   try {
-    await fb.signInWithGoogle();
-  } catch (error) {
-    if (error.code !== 'auth/popup-closed-by-user') {
-      alert('로그인에 실패했습니다: ' + error.message);
+    const user = await fb.signInWithGoogle();
+    if (user && fb.saveUserInfo) {
+      await fb.saveUserInfo(user);
     }
+  } catch (error) {
+    if (error.code === 'auth/popup-closed-by-user') return;
+    alert('로그인에 실패했습니다: ' + error.message);
+  }
+}
+
+// 회원가입 처리
+export async function handleSignup() {
+  closeAuthModal();
+  const fb = await loadFirebase();
+  if (!fb) {
+    alert('Firebase를 로드할 수 없습니다.');
+    return;
+  }
+  try {
+    const signUp = fb.signUpWithGoogle || fb.signInWithGoogle;
+    const user = await signUp();
+    if (user && fb.saveUserInfo) {
+      await fb.saveUserInfo(user);
+    }
+  } catch (error) {
+    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') return;
+    alert('회원가입에 실패했습니다: ' + error.message);
   }
 }
 
@@ -260,6 +407,63 @@ export async function handleLogout() {
   }
 }
 
+// ==================== 내 정보 모달 ====================
+
+// 내 정보 보기
+export function showMyInfo() {
+  closeProfileMenu();
+  if (!_currentUser) return;
+
+  const photo = document.getElementById('myInfoPhoto');
+  const name = document.getElementById('myInfoName');
+  const email = document.getElementById('myInfoEmail');
+  const modal = document.getElementById('myInfoModal');
+
+  if (photo) photo.src = _currentUser.photoURL || '';
+  if (name) name.textContent = _currentUser.displayName || '-';
+  if (email) email.textContent = _currentUser.email || '-';
+  if (modal) modal.style.display = 'flex';
+}
+
+// 내 정보 모달 닫기
+export function closeMyInfoModal() {
+  const modal = document.getElementById('myInfoModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// ==================== 설정 모달 ====================
+
+// 테마 옵션 UI 업데이트
+function updateThemeOptions() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+  });
+}
+
+// 설정 보기
+export function showSettings() {
+  closeProfileMenu();
+  updateThemeOptions();
+  const modal = document.getElementById('settingsModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// 설정 모달 닫기
+export function closeSettingsModal() {
+  const modal = document.getElementById('settingsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 테마 설정
+export function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  updateThemeOptions();
+}
+
+// ==================== 이벤트 핸들러 ====================
+
 // 외부 클릭 시 메뉴 닫기 이벤트 등록
 function setupClickOutside() {
   document.addEventListener('click', function(e) {
@@ -271,10 +475,36 @@ function setupClickOutside() {
   });
 }
 
+// ESC 키로 공유 모달 닫기
+function setupEscHandler() {
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    const modalCloseMap = [
+      ['myInfoModal', closeMyInfoModal],
+      ['settingsModal', closeSettingsModal],
+      ['authModal', closeAuthModal],
+    ];
+    for (const [id, fn] of modalCloseMap) {
+      const el = document.getElementById(id);
+      if (el && el.style.display !== 'none' && el.style.display !== '') {
+        fn();
+        return;
+      }
+    }
+  });
+}
+
+// ==================== 초기화 ====================
+
 // 컴포넌트 초기화 (헤더 + 인증 상태 감지)
+let _initialized = false;
 export async function initComponents() {
-  // 외부 클릭 이벤트 설정
+  if (_initialized) return;
+  _initialized = true;
+
+  // 이벤트 설정
   setupClickOutside();
+  setupEscHandler();
 
   // 전역 함수로 등록
   window.toggleProfileMenu = toggleProfileMenu;
@@ -282,13 +512,29 @@ export async function initComponents() {
   window.goToAdminPage = goToAdminPage;
   window.goToAdAdminPage = goToAdAdminPage;
   window.handleGoogleLogin = handleGoogleLogin;
+  window.handleLogin = handleLogin;
+  window.handleSignup = handleSignup;
+  window.closeAuthModal = closeAuthModal;
   window.handleLogout = handleLogout;
+  window.showMyInfo = showMyInfo;
+  window.closeMyInfoModal = closeMyInfoModal;
+  window.showSettings = showSettings;
+  window.closeSettingsModal = closeSettingsModal;
+  window.setTheme = setTheme;
 
   // Firebase 인증 상태 감지
   const fb = await loadFirebase();
   if (fb && fb.onAuthChange) {
-    fb.onAuthChange((user) => {
+    fb.onAuthChange(async (user) => {
       updateAuthUI(user);
+      // 로그인된 사용자 정보를 Firestore에 저장 (누락 방지)
+      if (user && fb.saveUserInfo) {
+        try {
+          await fb.saveUserInfo(user);
+        } catch (e) {
+          console.error('사용자 정보 저장 실패:', e);
+        }
+      }
     });
   }
 }

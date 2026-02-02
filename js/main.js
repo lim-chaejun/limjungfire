@@ -58,6 +58,7 @@ window.copyUrl = function() {
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Escape') return;
   // 닫기 우선순위: 가장 위에 떠있는 모달부터 닫기
+  // myInfoModal, settingsModal, authModal은 components.js에서 처리
   const modalCloseMap = [
     ['facilityDetailModal', 'closeFacilityDetailModal'],
     ['fireStandardsModal', 'closeFireStandardsModal'],
@@ -66,9 +67,6 @@ document.addEventListener('keydown', function(e) {
     ['addressModal', 'closeAddressModal'],
     ['manualInputModal', 'closeManualInputModal'],
     ['historyModal', 'closeHistoryModal'],
-    ['myInfoModal', 'closeMyInfoModal'],
-    ['settingsModal', 'closeSettingsModal'],
-    ['authModal', 'closeAuthModal'],
     ['adBlockModal', 'closeAdBlockModal'],
   ];
   for (const [id, fn] of modalCloseMap) {
@@ -569,16 +567,28 @@ async function searchFromUrl() {
     // 광고 설정 로드
     loadAdSettings();
 
+    // 인증 UI 업데이트와 saveUserInfo는 components.js가 처리
+    // 여기서는 index.html 전용 로직만 처리
     fb.onAuthChange((user) => {
       currentUser = user;
-      updateAuthUI(user);
-      // 인증 상태 확인 후 스플래시 화면 숨기기
+      // index 전용: 스플래시 화면 숨기기
       clearTimeout(splashTimeout);
       hideSplashScreen();
-      // URL 파라미터가 있으면 자동 검색 (최초 1회만)
+      // index 전용: URL 파라미터 자동 검색
       if (!window.__urlSearched) {
         window.__urlSearched = true;
         searchFromUrl();
+      }
+      // index 전용: 검색 기록 버튼 표시
+      const historyBtn = document.getElementById('historyBtn');
+      if (historyBtn) historyBtn.style.display = 'inline-flex';
+      // index 전용: 로그인 시 배너/뱃지 정리
+      if (user) {
+        loginPromptManager.hideLoginBanner();
+        const resultBanner = document.getElementById('resultLoginBanner');
+        if (resultBanner) resultBanner.remove();
+        const pdfBadge = document.querySelector('.pdf-login-badge');
+        if (pdfBadge) pdfBadge.remove();
       }
     });
   } else {
@@ -639,222 +649,9 @@ function renderAdBanner() {
   }
 }
 
-// 로그인/회원가입 모달 열기
-window.handleGoogleLogin = function() {
-  document.getElementById('authModal').style.display = 'flex';
-};
+// 헤더, 프로필 메뉴, 인증, 모달 관련 함수는 components.js에서 처리
 
-// 모달 닫기
-window.closeAuthModal = function() {
-  document.getElementById('authModal').style.display = 'none';
-};
-
-// 로그인 처리
-window.handleLogin = async function() {
-  closeAuthModal();
-  const fb = await loadFirebase();
-  if (!fb) {
-    alert('Firebase를 로드할 수 없습니다.');
-    return;
-  }
-  try {
-    const user = await fb.signInWithGoogle();
-    // redirect 방식이면 user가 null (페이지 새로고침 후 handleRedirectResult에서 처리)
-    if (user && fb.saveUserInfo) {
-      await fb.saveUserInfo(user);
-    }
-  } catch (error) {
-    if (error.code === 'auth/popup-closed-by-user') return;
-    alert('로그인에 실패했습니다: ' + error.message);
-  }
-};
-
-// 회원가입 처리 (Google 로그인 후 Firestore에 사용자 정보 저장)
-window.handleSignup = async function() {
-  closeAuthModal();
-  const fb = await loadFirebase();
-  if (!fb) {
-    alert('Firebase를 로드할 수 없습니다.');
-    return;
-  }
-  try {
-    // 회원가입은 계정 선택 화면을 표시
-    const signUp = fb.signUpWithGoogle || fb.signInWithGoogle;
-    const user = await signUp();
-    if (user && fb.saveUserInfo) {
-      await fb.saveUserInfo(user);
-    }
-  } catch (error) {
-    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') return;
-    alert('회원가입에 실패했습니다: ' + error.message);
-  }
-};
-
-// 로그아웃 처리
-window.handleLogout = async function() {
-  const fb = await loadFirebase();
-  if (!fb) return;
-  try {
-    await fb.logout();
-  } catch (error) {
-    alert('로그아웃에 실패했습니다: ' + error.message);
-  }
-};
-
-// 인증 UI 업데이트
-async function updateAuthUI(user) {
-  const authSection = document.getElementById('authSection');
-  const loginBtn = document.getElementById('loginBtn');
-  const userInfo = document.getElementById('userInfo');
-  const userPhoto = document.getElementById('userPhoto');
-  const userName = document.getElementById('userName');
-  const menuUserPhoto = document.getElementById('menuUserPhoto');
-  const menuUserName = document.getElementById('menuUserName');
-  const menuUserEmail = document.getElementById('menuUserEmail');
-  const menuUserRole = document.getElementById('menuUserRole');
-  const adminMenuItem = document.getElementById('adminMenuItem');
-  const adAdminMenuItem = document.getElementById('adAdminMenuItem');
-
-  if (user) {
-    loginBtn.style.display = 'none';
-    userInfo.style.display = 'flex';
-    userPhoto.src = user.photoURL || '';
-    userName.textContent = user.displayName || user.email;
-    // 드롭다운 메뉴 정보
-    if (menuUserPhoto) menuUserPhoto.src = user.photoURL || '';
-    if (menuUserName) menuUserName.textContent = user.displayName || '';
-    if (menuUserEmail) menuUserEmail.textContent = user.email || '';
-
-    // 사용자 등급 정보 가져오기
-    const fb = await loadFirebase();
-    if (fb && fb.getCurrentUserInfo) {
-      const userInfoData = await fb.getCurrentUserInfo();
-      const role = userInfoData?.role || 'free';
-      const roleLabel = fb.ROLE_LABELS?.[role] || '무료이용자';
-      const isAdminOrManager = role === 'admin' || role === 'manager';
-
-      // 등급 배지 표시
-      if (menuUserRole) {
-        menuUserRole.textContent = roleLabel;
-        menuUserRole.className = 'user-role-badge role-' + role;
-      }
-
-      // 관리자 메뉴 표시/숨김
-      if (adminMenuItem) {
-        adminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
-      }
-      if (adAdminMenuItem) {
-        adAdminMenuItem.style.display = isAdminOrManager ? 'flex' : 'none';
-      }
-    }
-  } else {
-    loginBtn.style.display = 'flex';
-    userInfo.style.display = 'none';
-    closeProfileMenu();
-    // 등급 배지 숨김
-    if (menuUserRole) menuUserRole.textContent = '';
-    if (adminMenuItem) adminMenuItem.style.display = 'none';
-    if (adAdminMenuItem) adAdminMenuItem.style.display = 'none';
-  }
-  // 인증 상태 확인 완료 - 로그인 영역 표시
-  if (authSection) {
-    authSection.classList.add('auth-ready');
-  }
-  // 검색 기록 버튼 항상 표시
-  const historyBtn = document.getElementById('historyBtn');
-  if (historyBtn) {
-    historyBtn.style.display = 'inline-flex';
-  }
-
-  // 로그인 시 배너/뱃지 정리
-  if (user) {
-    loginPromptManager.hideLoginBanner();
-    // 인라인 결과 배너 제거
-    const resultBanner = document.getElementById('resultLoginBanner');
-    if (resultBanner) resultBanner.remove();
-    // PDF 로그인 필요 뱃지 제거
-    const pdfBadge = document.querySelector('.pdf-login-badge');
-    if (pdfBadge) pdfBadge.remove();
-  }
-}
-
-// 관리자 페이지로 이동
-window.goToAdminPage = function() {
-  closeProfileMenu();
-  window.location.href = '/pages/admin.html';
-};
-
-// 광고 관리 페이지로 이동
-window.goToAdAdminPage = function() {
-  closeProfileMenu();
-  window.location.href = '/pages/ad-admin.html';
-};
-
-// 프로필 메뉴 토글
-window.toggleProfileMenu = function() {
-  const menu = document.getElementById('profileMenu');
-  menu.classList.toggle('show');
-};
-
-// 프로필 메뉴 닫기
-function closeProfileMenu() {
-  const menu = document.getElementById('profileMenu');
-  if (menu) menu.classList.remove('show');
-}
-
-// 외부 클릭 시 메뉴 닫기
-document.addEventListener('click', function(e) {
-  const profileDropdown = document.querySelector('.profile-dropdown');
-  const profileMenu = document.getElementById('profileMenu');
-  if (profileDropdown && profileMenu && !profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
-    closeProfileMenu();
-  }
-});
-
-// 내 정보 보기
-window.showMyInfo = function() {
-  closeProfileMenu();
-  if (!currentUser) return;
-
-  document.getElementById('myInfoPhoto').src = currentUser.photoURL || '';
-  document.getElementById('myInfoName').textContent = currentUser.displayName || '-';
-  document.getElementById('myInfoEmail').textContent = currentUser.email || '-';
-  document.getElementById('myInfoModal').style.display = 'flex';
-};
-
-// 내 정보 모달 닫기
-window.closeMyInfoModal = function() {
-  document.getElementById('myInfoModal').style.display = 'none';
-};
-
-// 설정 보기
-window.showSettings = function() {
-  closeProfileMenu();
-  updateThemeOptions();
-  document.getElementById('settingsModal').style.display = 'flex';
-};
-
-// 설정 모달 닫기
-window.closeSettingsModal = function() {
-  document.getElementById('settingsModal').style.display = 'none';
-};
-
-// 테마 옵션 업데이트
-function updateThemeOptions() {
-  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-  document.querySelectorAll('.theme-option').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.theme === currentTheme);
-  });
-}
-
-// 테마 설정 (설정 모달에서)
-window.setTheme = function(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
-  updateThemeOptions();
-};
-
-// 홈으로 이동
+// 홈으로 이동 (index.html 전용 - 검색 상태 초기화)
 window.goHome = function() {
   // 검색 결과 초기화
   document.getElementById('result').innerHTML = '';
@@ -868,6 +665,22 @@ window.goHome = function() {
   const manualLink = document.querySelector('.manual-search-link');
   if (manualLink) manualLink.style.display = '';
 };
+
+// index.html 전용: 홈 버튼을 goHome()으로 오버라이드
+document.addEventListener('DOMContentLoaded', () => {
+  // components.js가 헤더를 렌더링한 후 홈 버튼 동작 변경
+  setTimeout(() => {
+    const homeBtn = document.querySelector('.home-btn');
+    if (homeBtn) {
+      homeBtn.removeAttribute('href');
+      homeBtn.style.cursor = 'pointer';
+      homeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        goHome();
+      });
+    }
+  }, 0);
+});
 
 // 검색기록 모달 상태
 let historyModalState = {
