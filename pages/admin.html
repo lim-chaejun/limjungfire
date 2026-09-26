@@ -296,10 +296,12 @@
     initComponents();
 
     let allUsers = [];
+    let currentUid = null;
 
     // 페이지 초기화
     onAuthChange(async (user) => {
       await updateAuthUI(user);
+      currentUid = user ? user.uid : null;
 
       if (!user) {
         showAccessDenied();
@@ -370,7 +372,7 @@
               <div class="user-email">${escapeHtml(user.email || '-')}</div>
               <div class="user-meta">가입일: ${escapeHtml(dateStr)}</div>
             </div>
-            <select class="role-select" aria-label="회원 등급">
+            <select class="role-select" aria-label="회원 등급" ${user.id === currentUid ? 'disabled title="본인 등급은 변경할 수 없습니다"' : ''}>
               ${Object.entries(ROLE_LABELS).map(([key, label]) => `
                 <option value="${escapeHtml(key)}" ${user.role === key ? 'selected' : ''}>${escapeHtml(label)}</option>
               `).join('')}

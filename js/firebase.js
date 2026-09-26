@@ -215,8 +215,20 @@ export function getCurrentUser() {
 // ==================== Firestore 함수 ====================
 
 // 사용자 정보 저장 (로그인/회원가입 시)
-export async function saveUserInfo(user) {
-  if (!user) return null;
+// 로그인 직후 인증 상태 리스너와 로그인 처리 함수가 동시에 호출하므로 사용자별로 한 번만 실행한다.
+// (동시에 실행되면 신규 회원의 두 번째 쓰기가 '수정'으로 평가되어 보안 규칙에 거부됨)
+const saveUserInfoInflight = new Map();
+
+export function saveUserInfo(user) {
+  if (!user) return Promise.resolve(null);
+  if (!saveUserInfoInflight.has(user.uid)) {
+    const task = saveUserInfoOnce(user).finally(() => saveUserInfoInflight.delete(user.uid));
+    saveUserInfoInflight.set(user.uid, task);
+  }
+  return saveUserInfoInflight.get(user.uid);
+}
+
+async function saveUserInfoOnce(user) {
 
   try {
     const userRef = doc(db, 'users', user.uid);

@@ -76,21 +76,36 @@ export async function onRequestGet(context) {
   let upstreamRes;
   try {
     upstreamRes = await fetch(upstream.toString(), { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
-  } catch {
-    return jsonError(504, 'upstream timeout');
+  } catch (e) {
+    console.error('building proxy: upstream fetch failed', e && e.name, e && e.message);
+    return jsonError(504, 'upstream unreachable');
+  }
+  // 인증·할당량 문제는 503(프록시 사용 불가)으로 알려 클라이언트가 직접 호출로 폴백하게 한다
+  if (upstreamRes.status === 401 || upstreamRes.status === 403 || upstreamRes.status === 429) {
+    return jsonError(503, `upstream key or quota error (${upstreamRes.status})`);
   }
   if (!upstreamRes.ok) {
     return jsonError(502, `upstream status ${upstreamRes.status}`);
   }
 
   const body = await upstreamRes.text();
-  let ok;
+  let resultCode;
   try {
-    ok = JSON.parse(body)?.response?.header?.resultCode === '00';
+    resultCode = JSON.parse(body)?.response?.header?.resultCode;
   } catch {
-    // 서비스키 오류 등은 XML로 응답하는 경우가 있다
-    return jsonError(502, 'upstream returned non-JSON');
+    console.error('building proxy: upstream returned non-JSON', body.slice(0, 200));
+    // 서비스키 미등록·미활성·일일 한도 초과 등은 XML 오류로 응답한다 → 503(프록시 사용 불가)
+    if (/SERVICE_KEY|SERVICE_ACCESS_DENIED|LIMITED_NUMBER_OF_SERVICE_REQUESTS|UNREGISTERED_IP/.test(body)) {
+      return jsonError(503, 'upstream key or quota error');
+    }
+    // 빈 응답 등 일시 오류 → 502(이번 요청만 재시도)
+    return jsonError(502, 'upstream returned an invalid body');
   }
+  // 20·22·30·31·32: 서비스 접근 거부·요청 한도 초과·미등록 키·기한 만료 키·미등록 IP
+  if (['20', '22', '30', '31', '32'].includes(String(resultCode))) {
+    return jsonError(503, `upstream key or quota error (resultCode ${resultCode})`);
+  }
+  const ok = resultCode === '00';
 
   const response = new Response(body, {
     status: 200,

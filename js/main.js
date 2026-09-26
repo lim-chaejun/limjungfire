@@ -1167,8 +1167,12 @@ async function fetchBuildingApi(url, { isProxy = false } = {}) {
 
     if (!response.ok) {
       const err = new Error(`API 요청 실패 (${response.status})`);
-      // 프록시가 없거나(404·405) 서비스키가 설정되지 않은(503) 경우 → 직접 호출로 폴백
-      if (isProxy && [404, 405, 503].includes(response.status)) err.proxyUnavailable = true;
+      if (isProxy) {
+        // 프록시 미배포(404·405)·키 미설정/인증·한도 오류(503) → 이번 세션은 직접 호출
+        if ([404, 405, 503].includes(response.status)) err.proxyUnavailable = true;
+        // 그 밖의 일시 오류(5xx·429) → 이번 요청만 직접 호출로 재시도
+        else if (response.status >= 500 || response.status === 429) err.proxyRetryDirect = true;
+      }
       throw err;
     }
     const data = await response.json();
@@ -1202,8 +1206,8 @@ async function fetchBuildingOp(op, sigunguCd, bjdongCd, jibunInfo) {
       buildingProxyAvailable = true;
       return data;
     } catch (e) {
-      if (!e.proxyUnavailable) throw e;
-      buildingProxyAvailable = false;
+      if (!e.proxyUnavailable && !e.proxyRetryDirect) throw e;
+      if (e.proxyUnavailable) buildingProxyAvailable = false;
     }
   }
 

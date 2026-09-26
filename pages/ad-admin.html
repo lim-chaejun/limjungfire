@@ -432,11 +432,17 @@
       const rawLinkUrl = document.getElementById('adLinkUrl').value.trim();
       const isActive = document.getElementById('adIsActive').checked;
 
-      // 이미지는 https만, 링크는 http(s)만 허용 (Firestore 규칙과 동일한 기준)
+      // 이미지는 https만, 링크는 http(s)만 허용 (firestore.rules의 validAd와 같은 문자 집합·길이)
+      const RULE_CHARS = /^[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]+$/;
       const imageUrl = rawImageUrl ? safeHttpUrl(rawImageUrl, { httpsOnly: true }) : '';
       const linkUrl = rawLinkUrl ? safeHttpUrl(rawLinkUrl) : '';
       if ((rawImageUrl && !imageUrl) || (rawLinkUrl && !linkUrl)) {
         showToast('이미지는 https://, 링크는 http(s):// 주소만 입력할 수 있습니다.', 'error');
+        return;
+      }
+      if ((imageUrl && (!RULE_CHARS.test(imageUrl) || imageUrl.length > 2048)) ||
+          (linkUrl && (!RULE_CHARS.test(linkUrl) || linkUrl.length > 2048))) {
+        showToast("주소에 사용할 수 없는 문자(작은따옴표 ', |, ^ 등)가 있거나 너무 깁니다.", 'error');
         return;
       }
 

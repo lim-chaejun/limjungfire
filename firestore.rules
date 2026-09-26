@@ -33,8 +33,9 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    // role 필드가 없는 예전 회원 문서도 평가 오류 없이 처리
     function myRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '');
     }
 
     // 운영자: admin 또는 manager
@@ -61,12 +62,15 @@ service cloud.firestore {
     }
 
     // 광고 설정: 이미지는 https, 링크는 http(s). 따옴표·꺾쇠·공백 등 URL 밖의 문자는 허용하지 않음
+    // (RE2는 반복 횟수 {n,m}의 상한이 1000이므로 길이는 size()로 따로 제한)
+    function urlOk(u, re) {
+      return u is string && (u == '' || (u.size() <= 2048 && u.matches(re)));
+    }
+
     function validAd(d) {
       return d.keys().hasOnly(['imageUrl', 'linkUrl', 'isActive', 'updatedAt', 'updatedBy'])
-        && d.imageUrl is string
-        && (d.imageUrl == '' || d.imageUrl.matches('^https://[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]{1,2000}$'))
-        && d.linkUrl is string
-        && (d.linkUrl == '' || d.linkUrl.matches('^https?://[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]{1,2000}$'))
+        && urlOk(d.imageUrl, '^https://[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]+$')
+        && urlOk(d.linkUrl, '^https?://[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]+$')
         && d.isActive is bool;
     }
 
@@ -83,20 +87,23 @@ service cloud.firestore {
         && validProfile(request.resource.data);
 
       // 본인 갱신: 프로필·접속시각만. role 변경은 최고 관리자 본인의 admin 승격만 허용
+      //   createdAt은 다른 탭·기기에서 최초 저장이 겹칠 때를 위해 서버 시각으로만 허용
       // 운영자 갱신: 다른 회원의 role만. manager는 admin 부여·admin 변경 불가
       allow update: if (
           isOwner(uid)
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['email', 'displayName', 'photoURL', 'lastLoginAt', 'role'])
+               .hasOnly(['email', 'displayName', 'photoURL', 'lastLoginAt', 'role', 'createdAt'])
           && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])
               || (isSuperAdmin() && request.resource.data.role == 'admin'))
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt'])
+              || request.resource.data.createdAt == request.time)
           && validProfile(request.resource.data)
         ) || (
           isStaff() && !isOwner(uid)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'updatedAt'])
           && validRole(request.resource.data.role)
           && (isAdminRole()
-              || (request.resource.data.role != 'admin' && resource.data.role != 'admin'))
+              || (request.resource.data.role != 'admin' && resource.data.get('role', 'free') != 'admin'))
         );
 
       allow delete: if false;
@@ -107,7 +114,8 @@ service cloud.firestore {
       allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasOnly(['userId', 'userEmail', 'address', 'jibunAddress', 'roadAddress', 'bcode', 'buildingData', 'createdAt']);
+        && request.resource.data.keys().hasOnly(['userId', 'userEmail', 'address', 'jibunAddress', 'roadAddress', 'bcode', 'buildingData', 'createdAt'])
+        && (!('userEmail' in request.resource.data) || request.resource.data.userEmail == request.auth.token.email);
       allow update: if false;
     }
 
@@ -116,7 +124,10 @@ service cloud.firestore {
       allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasOnly(['userId', 'userEmail', 'address', 'jibunAddress', 'roadAddress', 'bcode', 'buildingData', 'createdAt', 'memo']);
+        && request.resource.data.keys().hasOnly(['userId', 'userEmail', 'address', 'jibunAddress', 'roadAddress', 'bcode', 'buildingData', 'createdAt', 'memo'])
+        && (!('memo' in request.resource.data)
+            || (request.resource.data.memo is string && request.resource.data.memo.size() <= 500))
+        && (!('userEmail' in request.resource.data) || request.resource.data.userEmail == request.auth.token.email);
       allow update: if signedIn()
         && resource.data.userId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memo', 'updatedAt'])
