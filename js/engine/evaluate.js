@@ -1,37 +1,47 @@
 // 판정 평가기 — 행 → 시설(파일별, 동 안에서 결합) → 확정 판정(해당 / 확인 필요 / 비해당)
 //
-// 한 번의 "패스(pass)"는 (기준일, 답변) 하나에 대한 평가다. 시설 간 의존(facility 노드)은 같은 패스 안에서
-// 재귀·메모로 풀고, 개정 경계 검사와 결정적 질문 검사는 기준일·답변만 바꾼 새 패스로 다시 평가한다.
+// 한 번의 "패스(pass)"는 (기준일, 답변, 가정값 사용 여부) 하나에 대한 평가다. 시설 간 의존(facility 노드)은 같은 패스
+// 안에서 재귀·메모로 풀고, 패스는 동 안의 모든 시설이 공유한다.
 //
-// 확정 규칙
-//   T → 해당(적용 범위)
-//   U → 확인 필요(결정적 질문만)
-//   F → 비해당. 단, 가정값에 기대는 F 는 그 가정을 바꿔 결과가 달라지면 확인 필요 (불변식)
-//   허가일 전 신청 구간 안의 개정 경계로 결과가 갈리면 확인 필요(허가 신청일)
+// 판정 절차(judge)
+//   1. 기준일 구간(개정 경계 검사 구간)의 각 시기(epoch)마다 보통 평가(가정값 사용)
+//      모두 T → 해당 / 시기마다 다르거나 U 가 있으면 → 확인 필요
+//   2. 모두 F 이면, 가정값을 모두 풀어(무창층·수동 입력 지하층·복합건축물 가정 → 모름) 각 시기마다 다시 평가
+//      모두 F → 비해당 / 하나라도 F 가 아니면 → 확인 필요
+//   Kleene 3값은 단조(입력을 모름으로 바꾸면 T·F 가 U 로만 바뀜)이므로, 푼 평가에서도 F 인 비해당은
+//   어떤 가정값·시기 조합에서도 F 다(불변식 — property.test.mjs 가 끝값·무작위 답변 조합으로 확인한다).
+// 질문 선별: 확인 필요일 때 확정이 아닌 입력마다 시험값을 넣어 판정이 바뀌는지 본다(한 입력으로 바뀌면 결정적).
+//   결정적 입력이 없으면 관련 입력을 모두 함께 묻는다(jointQuestions). 시험 예산을 넘겨도 모두 함께 묻는다.
 
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
-import { addDays, formatYmd, rowValidAt } from './dates.js';
+import { addDays, formatYmd, resolveDateInfo, rowValidAt } from './dates.js';
 import { evalCondition, floorMember, floorsOf, makeEnv } from './conditions.js';
-import { DATE_INPUTS, buildQuestion, constantsFor, testValues } from './questions.js';
+import { DATE_INPUTS, buildQuestion, constantsFor, extremeValues, testValues } from './questions.js';
 
 export const VERDICT = Object.freeze({ T: '해당', U: '확인 필요', F: '비해당' });
 
+// 시설 하나의 질문 선별에 쓰는 시설 평가 횟수 상한. 넘으면 선별을 멈추고 관련 입력을 모두 함께 묻는다.
+export const DECISIVE_TEST_BUDGET = 400;
+
 // ───────────── 행 ─────────────
 
-function reviewValue(row, env) {
-  const sig = row.id ?? stableKey(row.criteria ?? '');
+const NO_WHY = Object.freeze([]);
+const NO_DEPS = Object.freeze([]);
+const whyOf = (env, make) => (env.explain ? make() : NO_WHY);
+const depsOf = (env, make) => (env.track ? make() : NO_DEPS);
+
+function reviewValue(sig, env, criteria, question) {
   const a = env.answers[depKey('review', env.dong.id, undefined, sig)];
   if (a === true || a === false) {
-    return tv(a ? T : F, [makeDep('review', CONFIRMED, { dong: env.dong.id, sig, source: 'user' })], [`기준 해당 여부 답변: ${a ? '예' : '아니오'}`]);
+    return tv(a ? T : F, depsOf(env, () => [makeDep('review', CONFIRMED, { dong: env.dong.id, sig, source: 'user' })]), whyOf(env, () => [`기준 해당 여부 답변: ${a ? '예' : '아니오'}`]));
   }
-  const info = { criteria: row.criteria ?? '', question: row.needs_review?.question };
-  return tv(U, [makeDep('review', UNKNOWN, { dong: env.dong.id, sig, info })], ['조건 구조화 전 — 기준 원문 확인 필요']);
+  return tv(U, depsOf(env, () => [makeDep('review', UNKNOWN, { dong: env.dong.id, sig, info: { criteria, question } })]), whyOf(env, () => ['조건 구조화 전 — 기준 원문 확인 필요']));
 }
 
 // 분기: 앞에서부터 when 이 맞는 첫 분기. when 이 U 여도 양쪽 결과가 같으면 확정 (ite)
 function evalBranches(branches, env, i = 0) {
-  if (i >= branches.length) return { value: tv(F, [], ['해당 분기 없음']), scope: null, matched: [], maybe: [] };
+  if (i >= branches.length) return { value: tv(F, [], whyOf(env, () => ['해당 분기 없음'])), scope: null, matched: [], maybe: [] };
   const b = branches[i];
   env.matched = new Set();
   env.maybeMatched = new Set();
@@ -89,8 +99,10 @@ export function evaluateRow(row, env) {
     value = evalCondition(row.conditions, env);
     matched = [...env.matched];
     maybe = [...env.maybeMatched];
-  } else value = kind === 'trigger' ? reviewValue(row, env) : tv(T, [], ['조건 없음(항상 적용)']);
-  const scope = value.v === F ? null : resolveScope(normalizeScope(scopeSpec ?? (kind === 'modifier' ? 'inherit' : 'all_floors')), env, matched, maybe);
+  } else if (kind === 'trigger') {
+    value = reviewValue(row.id ?? stableKey(row.criteria ?? ''), env, row.criteria ?? '', row.needs_review?.question);
+  } else value = tv(T, [], whyOf(env, () => ['조건 없음(항상 적용)']));
+  const scope = !env.explain || value.v === F ? null : resolveScope(normalizeScope(scopeSpec ?? (kind === 'modifier' ? 'inherit' : 'all_floors')), env, matched, maybe);
   // 행 단위 질문 후보(확정이 아닌 입력)와 근거 — 결정적 질문 선별은 시설 단위(finalizeFacility)에서 한다
   const questions = [...new Set(value.deps.filter((d) => d.status !== CONFIRMED).map((d) => d.key))];
   return { id: row.id ?? null, kind, row, value, scope, questions, reasons: value.why };
@@ -112,22 +124,34 @@ function selectRows(def, date, dctx) {
 }
 
 const counts = (r, policy) => r.kind === 'trigger' && !(r.basis === 'strengthened' && policy.strengthenedRetroactive === 'badge');
+const hasTrigger = (facility) => (facility.regulations || []).some((r) => (r.kind || 'trigger') === 'trigger');
 
 // ───────────── 패스 ─────────────
 
 function mixedUseValue(env, dctx) {
   const a = env.answers[depKey('mixed_use', env.dong.id)];
-  if (a === true || a === false) return tv(a ? T : F, [makeDep('mixed_use', CONFIRMED, { dong: env.dong.id, source: 'user' })], [`복합건축물 ${a ? '해당' : '아님'}(답변)`]);
+  if (a === true || a === false) {
+    return tv(a ? T : F, depsOf(env, () => [makeDep('mixed_use', CONFIRMED, { dong: env.dong.id, source: 'user' })]), whyOf(env, () => [`복합건축물 ${a ? '해당' : '아님'}(답변)`]));
+  }
   const info = { groups: env.dong.fileGroups };
-  if (!dctx.policy.mixedUseRequiresConfirmation) return tv(T, [makeDep('mixed_use', ASSUMED, { dong: env.dong.id, info, source: 'policy' })], ['복합건축물로 가정']);
-  return tv(U, [makeDep('mixed_use', UNKNOWN, { dong: env.dong.id, info })], ['복합건축물 해당 여부 미확인']);
+  if (!dctx.policy.mixedUseRequiresConfirmation && !env.release) {
+    return tv(T, depsOf(env, () => [makeDep('mixed_use', ASSUMED, { dong: env.dong.id, info, source: 'policy' })]), whyOf(env, () => ['복합건축물로 가정']));
+  }
+  const released = !dctx.policy.mixedUseRequiresConfirmation;
+  return tv(U, depsOf(env, () => [makeDep('mixed_use', UNKNOWN, { dong: env.dong.id, info, released })]), whyOf(env, () => ['복합건축물 해당 여부 미확인']));
 }
 
 function fileFacility(def, pass) {
   const { env, dctx } = pass;
   const rows = selectRows(def, pass.date, dctx).map(({ row, basis }) => ({ ...evaluateRow(row, env), basis, typeCode: def.typeCode }));
   const counted = rows.filter((r) => counts(r, dctx.policy));
-  let base = counted.length ? any(counted.map((r) => r.value)) : tv(F, [], [`${formatYmd(pass.date)} 기준 유효한 설치 기준 없음`]);
+  let base;
+  if (counted.length) base = any(counted.map((r) => r.value));
+  else if (!hasTrigger(def.facility)) {
+    // 판정 행(trigger)이 전혀 없는 시설(안내·범위 행만) — 조용히 비해당으로 두지 않고 원문 확인을 묻는다
+    const name = def.facility.facility_name ?? def.facility.facility_id;
+    base = reviewValue(`facility:${def.facility.facility_id}`, env, `${name} 설치 기준(구조화된 판정 행 없음)`, `${env.dong.id}이(가) ${name} 설치 대상입니까? (구조화된 판정 기준이 없어 원문 확인 필요)`);
+  } else base = tv(F, [], whyOf(env, () => [`${formatYmd(pass.date)} 기준 유효한 설치 기준 없음`]));
   let excluded = null;
   if (def.facility.excluded_if !== undefined) {
     excluded = evalCondition(def.facility.excluded_if, env);
@@ -144,6 +168,7 @@ function facilityCore(fid, pass) {
     return { fid, perFile: [], tv: tv(U, [makeDep('facility_cycle', UNKNOWN, { dong: pass.dctx.dong.id, sig: fid })], [`${name} 순환 참조`]) };
   }
   pass.visiting.add(fid);
+  if (pass.budget) pass.budget.count++;
   const perFile = (pass.dctx.defs.get(fid) || []).map((def) => fileFacility(def, pass));
   const value = perFile.length ? any(perFile.map((r) => r.value)) : tv(F, [], [`${name} 기준 없음`]);
   pass.visiting.delete(fid);
@@ -152,8 +177,8 @@ function facilityCore(fid, pass) {
   return core;
 }
 
-function makePass(dctx, date, answers) {
-  const pass = { dctx, date, answers, memo: new Map(), visiting: new Set() };
+function makePass(dctx, date, answers, { release = false, explain = false, track = explain } = {}) {
+  const pass = { dctx, date, answers, memo: new Map(), visiting: new Set(), budget: null };
   pass.env = makeEnv({
     dong: dctx.dong,
     index: dctx.index,
@@ -161,12 +186,41 @@ function makePass(dctx, date, answers) {
     policy: dctx.policy,
     inputDefs: dctx.inputDefs,
     names: dctx.names,
+    release,
+    explain,
+    track,
     facility: (id) => {
       const core = facilityCore(id, pass);
-      return tv(core.tv.v, core.tv.deps, [`${dctx.names.get(id) ?? id} ${VERDICT[core.tv.v]}`]);
+      return tv(core.tv.v, core.tv.deps, whyOf(pass.env, () => [`${dctx.names.get(id) ?? id} ${VERDICT[core.tv.v]}`]));
     },
   });
   return pass;
+}
+
+// 패스는 (기준일, 가정값 사용 여부, 답변 변경)으로 동 전체에서 공유 — 시설마다 같은 질문 시험을 하므로 층 계산을 재사용한다
+function getPass(dctx, date, release, answers, overrideKey) {
+  const key = `${date}|${release ? 1 : 0}|${overrideKey}`;
+  let pass = dctx.passes.get(key);
+  if (!pass) {
+    // 기본 답변 패스만 근거 문장·출처를 만든다(판정 설명·질문 후보용). 질문 시험 패스는 값(T/F/U)만 필요하다
+    pass = makePass(dctx, date, answers, { release, explain: overrideKey === '', track: overrideKey === '' });
+    dctx.passes.set(key, pass);
+  }
+  return pass;
+}
+
+function coreAt(fid, dctx, date, release, answers, overrideKey, budget) {
+  const pass = getPass(dctx, date, release, answers, overrideKey);
+  pass.budget = budget;
+  const core = facilityCore(fid, pass);
+  pass.budget = null;
+  return core;
+}
+
+function dateInfoFor(dctx, answers) {
+  const key = `${answers.application_date ?? ''}|${answers.permit_date ?? ''}`;
+  if (!dctx.dateCache.has(key)) dctx.dateCache.set(key, resolveDateInfo(dctx.dates, answers, dctx.policy, dctx.today));
+  return dctx.dateCache.get(key);
 }
 
 // ───────────── 개정 경계 ─────────────
@@ -183,29 +237,49 @@ function facilityClosure(fid, dctx, seen = new Set()) {
   return seen;
 }
 
-function transitionPoints(fid, dctx, span) {
+// 구간 안의 시기 시작일: 구간 시작 + 시설(과 의존 시설) 행의 시작일·종료 다음 날
+function epochDates(fid, dctx, di) {
+  if (!di.window) return [di.refDate];
+  const key = `${fid}|${di.window.from}|${di.window.to}`;
+  if (dctx.epochCache.has(key)) return dctx.epochCache.get(key);
   const pts = new Set();
   for (const id of facilityClosure(fid, dctx)) {
     for (const def of dctx.defs.get(id) || []) {
       for (const row of def.facility.regulations || []) {
-        for (const p of [row.start_date, row.end_date ? addDays(row.end_date, 1) : null]) if (p && span.from < p && p <= span.to) pts.add(p);
+        for (const p of [row.start_date, row.end_date ? addDays(row.end_date, 1) : null]) if (p && di.window.from < p && p <= di.window.to) pts.add(p);
       }
     }
   }
-  return [...pts].sort();
+  const dates = [di.window.from, ...[...pts].sort()];
+  dctx.epochCache.set(key, dates);
+  return dates;
 }
 
-function boundaryCheck(fid, dctx, answers, baseV) {
-  const w = dctx.dateInfo.window;
-  if (!w) return null;
-  const points = transitionPoints(fid, dctx, w);
-  if (!points.length) return null;
-  const epochs = [w.from, ...points].map((date) => ({ from: date, value: facilityCore(fid, makePass(dctx, date, answers)).tv.v }));
-  if (epochs.every((e) => e.value === baseV)) return null;
-  return { window: w, points, epochs, question: w.question };
+// ───────────── 판정 ─────────────
+
+// 답변(answers) 아래 시설 판정값. full=false 면 결과값만(결정되는 즉시 멈춤)
+function judge(fid, dctx, answers, overrideKey, budget, full) {
+  const di = dateInfoFor(dctx, answers);
+  const dates = epochDates(fid, dctx, di);
+  const normal = [];
+  for (const date of dates) {
+    const c = coreAt(fid, dctx, date, false, answers, overrideKey, budget);
+    normal.push({ date, tv: c.tv });
+    if (!full && (c.tv.v === U || c.tv.v !== normal[0].tv.v)) return { v: U };
+  }
+  const nv = normal.map((n) => n.tv.v);
+  if (nv.every((v) => v === T)) return { v: T, di, dates, normal, released: null };
+  if (!nv.every((v) => v === F)) return { v: U, di, dates, normal, released: null };
+  const released = [];
+  for (const date of dates) {
+    const c = coreAt(fid, dctx, date, true, answers, overrideKey, budget);
+    released.push({ date, tv: c.tv });
+    if (!full && c.tv.v !== F) return { v: U };
+  }
+  return { v: released.every((r) => r.tv.v === F) ? F : U, di, dates, normal, released };
 }
 
-// ───────────── 결정적 질문 ─────────────
+const distinct = (list) => new Set(list.map((x) => x.tv.v)).size;
 
 function facilityConstants(fid, dctx) {
   const out = [];
@@ -218,13 +292,104 @@ function facilityConstants(fid, dctx) {
   return out;
 }
 
-// 이 입력에 어떤 값을 답하면 판정(v)이 달라지는가
-function isDecisive(fid, dctx, answers, dep, currentV, constants) {
-  const def = dctx.inputDefs.get(dep.input) ?? { type: 'boolean' };
-  for (const value of testValues(dep, def, constantsFor(dep.input, constants))) {
-    if (facilityCore(fid, makePass(dctx, dctx.dateInfo.refDate, { ...answers, [dep.key]: value })).tv.v !== currentV) return true;
+// 질문 후보: 각 시기의 보통 평가(T 가 아닌 것)와 푼 평가(F 가 아닌 것)의 확정이 아닌 입력 (+날짜가 판정을 가르면 날짜 질문)
+function candidatesOf(j) {
+  const byKey = new Map();
+  const add = (deps) => {
+    for (const d of deps) if (d.status !== CONFIRMED && !DATE_INPUTS.has(d.input) && !byKey.has(d.key)) byKey.set(d.key, d);
+  };
+  for (const n of j.normal) add(n.tv.deps); // 확인 필요일 때만 부른다 — 모든 시기의 가정·미확인 입력이 후보
+  for (const r of j.released || []) if (r.tv.v !== F) add(r.tv.deps);
+  const out = [...byKey.values()];
+  const dateSplit = j.dates.length > 1 && (distinct(j.normal) > 1 || (j.released && distinct(j.released) > 1));
+  if (dateSplit) out.unshift({ ...makeDep(j.di.window.question, UNKNOWN, { info: { boundaries: j.dates.slice(1) } }), isDate: true });
+  return { candidates: out, dateSplit };
+}
+
+function hashKey(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+// 결정적 질문 선별 — 한 입력만 답해도 판정이 바뀌는 입력만 묻는다. 비해당의 안전성과는 무관한 '무엇을 물을지'의 문제라
+// 비용을 제한한다(시험 예산). 단계:
+//   1. 묶음 확인: 같은 종류 입력이 여럿(예: 층마다 무창층)이면 모두 한쪽 끝값으로 두어 본다. 어느 끝으로도 판정이
+//      안 바뀌면 — 조건이 그 입력에 단조이면 — 하나만 답해서도 바뀌지 않으므로 개별 시험을 건너뛴다.
+//   2. 끝값 시험: 입력마다 참/거짓, 수치는 범위 양 끝, 날짜는 각 시기.
+//   3. 여전히 결정적 입력이 없으면 기준값 앞뒤와 좁은 정수 범위 전체(폭 1짜리 구간 조건용).
+//   결정적 입력이 없거나(여러 답이 함께 있어야 풀림) 예산을 다 쓰면 후보 전부를 함께 묻는다(jointQuestions).
+function chooseQuestions(fid, dctx, j, candidates) {
+  const budget = { count: 0, limit: DECISIVE_TEST_BUDGET };
+  const constants = facilityConstants(fid, dctx);
+  const defOf = (d) => dctx.inputDefs.get(d.input) ?? { type: 'boolean' };
+  const consts = (d) => constantsFor(d.input, constants);
+  const decisive = new Set();
+  const tried = new Map();
+  let exhausted = false;
+  const resolves = (overrides, key) => {
+    if (budget.count >= budget.limit) {
+      exhausted = true;
+      return null;
+    }
+    return judge(fid, dctx, { ...dctx.answers, ...overrides }, key, budget, false).v !== U;
+  };
+  const trySingle = (d, values) => {
+    const seen = tried.get(d.key) ?? new Set();
+    tried.set(d.key, seen);
+    for (const value of values) {
+      if (seen.has(value)) continue;
+      seen.add(value);
+      const r = resolves({ [d.key]: value }, `${d.key}=${value}`);
+      if (r === null) return;
+      if (r) {
+        decisive.add(d.key);
+        return;
+      }
+    }
+  };
+
+  // 1. 묶음 확인
+  const skip = new Set();
+  const groups = new Map();
+  for (const d of candidates) if (!d.isDate) groups.set(d.input, [...(groups.get(d.input) || []), d]);
+  for (const [input, members] of groups) {
+    if (members.length < 3) continue;
+    const sig = hashKey(members.map((m) => m.key).join('|'));
+    const sides = defOf(members[0]).type === 'boolean' ? [true, false] : [0, 1]; // 수치는 각자의 위 끝(0)·아래 끝(1)
+    let any = false;
+    for (const side of sides) {
+      const ov = {};
+      for (const m of members) {
+        const ex = typeof side === 'boolean' ? [side] : extremeValues(m, defOf(m), consts(m));
+        if (ex.length) ov[m.key] = ex[Math.min(side === 1 ? ex.length - 1 : 0, ex.length - 1)] ?? ex[0];
+      }
+      const r = resolves(ov, `grp:${input}:${side}:${sig}`);
+      if (r === null) break;
+      if (r) {
+        any = true;
+        break;
+      }
+    }
+    if (!any && !exhausted) members.forEach((m) => skip.add(m.key));
   }
-  return false;
+
+  // 2. 끝값
+  for (const d of candidates) {
+    if (exhausted) break;
+    if (skip.has(d.key)) continue;
+    trySingle(d, d.isDate ? j.dates : extremeValues(d, defOf(d), consts(d)));
+  }
+  // 3. 기준값 앞뒤·좁은 정수 범위 전체
+  if (!decisive.size) {
+    for (const d of candidates) {
+      if (exhausted) break;
+      if (skip.has(d.key) || d.isDate) continue;
+      trySingle(d, testValues(d, defOf(d), consts(d)));
+    }
+  }
+  const joint = !decisive.size;
+  return { deps: joint ? candidates : candidates.filter((d) => decisive.has(d.key)), joint, exhausted, tests: budget.count };
 }
 
 // ───────────── 확정·출력 ─────────────
@@ -249,9 +414,17 @@ function mergeScopes(scopes, order) {
 const reasonOf = (r, gated = false) =>
   `「${r.row.criteria ?? r.id}」 ${VERDICT[r.value.v]}${gated && r.value.v === T ? '(복합건축물인 경우)' : ''}${r.value.why.length ? ` — ${r.value.why.join(', ')}` : ''}`;
 
-function describeAssumption(dep, dctx) {
+function describeDep(dep, dctx) {
   const label = dctx.inputDefs.get(dep.input)?.label ?? dep.input;
-  return `${label}${dep.floor ? `(${dep.floor})` : ''}: ${dep.status === ASSUMED ? '가정값' : '미확인'}`;
+  return `${label}${dep.floor ? `(${dep.floor})` : ''}: ${dep.status === ASSUMED ? '가정값' : dep.released ? '가정값을 풀어 모름' : '미확인'}`;
+}
+
+function describeDateAssumption(di) {
+  if (di.status !== ASSUMED) return null;
+  if (di.source === 'today') return `기준일: 오늘(${formatYmd(di.today)}) — 허가일·사용승인일 없음(가정, 모든 개정 경계 확인)`;
+  if (di.source === 'approval') return `기준일: 사용승인일 ${formatYmd(di.refDate)} — 허가일 없음(가정, 추정 구간 안의 개정 경계 확인)`;
+  const n = di.permits?.length ?? 0;
+  return `기준일: 허가일 ${formatYmd(di.refDate)} — 인허가 ${n || '여러'}건 중 판정 기준 허가 미확인(가정)`;
 }
 
 function exemptionFor(fid, dctx, env) {
@@ -263,34 +436,41 @@ function exemptionFor(fid, dctx, env) {
 }
 
 export function finalizeFacility(fid, dctx) {
-  const { answers } = dctx;
-  const pass = makePass(dctx, dctx.dateInfo.refDate, answers);
-  const core = facilityCore(fid, pass);
-  const boundary = boundaryCheck(fid, dctx, answers, core.tv.v);
-  const constants = facilityConstants(fid, dctx);
-  let v = core.tv.v;
+  const j = judge(fid, dctx, dctx.answers, '', null, true);
+  const di = j.di;
+  const refPass = getPass(dctx, di.refDate, false, dctx.answers, '');
+  const core = facilityCore(fid, refPass);
+  let v = j.v;
+  const reasons = [];
   let questionDeps = [];
   let joint = false;
-  const reasons = [];
-
-  if (boundary) {
-    v = U;
-    questionDeps = [makeDep(boundary.question, UNKNOWN, { info: { boundaries: boundary.points } })];
-    const steps = boundary.epochs.map((e) => `${formatYmd(e.from)}~ ${VERDICT[e.value]}`).join(' → ');
-    reasons.push(`개정 시행일(${boundary.points.map(formatYmd).join(', ')}) 전후로 판정이 달라짐: ${steps}`);
-  } else if (v === F) {
-    // 불변식: 가정·미확인 입력에 기대는 F 는, 그 입력을 다른 값으로 바꿔 결과가 달라지면 비해당으로 내지 않는다
-    const dec = core.tv.deps.filter((d) => d.status !== CONFIRMED && !DATE_INPUTS.has(d.input) && isDecisive(fid, dctx, answers, d, F, constants));
-    if (dec.length) {
-      v = U;
-      questionDeps = dec;
-      reasons.push(`가정값·미확인 입력에 기대는 비해당이라 확인이 필요함: ${dec.map((d) => describeAssumption(d, dctx)).join(', ')}`);
+  let selection = null;
+  let boundary = null;
+  const { candidates, dateSplit } = v === U ? candidatesOf(j) : { candidates: [], dateSplit: false };
+  if (j.dates.length > 1 && (dateSplit || distinct(j.normal) > 1)) {
+    boundary = {
+      window: di.window,
+      points: j.dates.slice(1),
+      epochs: j.normal.map((n, i) => ({ from: n.date, value: n.tv.v, released: j.released ? j.released[i].tv.v : null })),
+      question: di.window.question,
+    };
+    const steps = boundary.epochs.map((e) => `${formatYmd(e.from)}~ ${VERDICT[e.value]}${e.released && e.released !== e.value ? `(가정값을 풀면 ${VERDICT[e.released]})` : ''}`);
+    reasons.push(`기준일에 따라 판정이 달라짐: ${steps.join(' → ')}`);
+  }
+  if (v === U) {
+    selection = chooseQuestions(fid, dctx, j, candidates);
+    questionDeps = selection.deps;
+    joint = selection.joint;
+    if (j.released && j.normal.every((n) => n.tv.v === F)) {
+      const released = candidates.filter((d) => !d.isDate);
+      reasons.push(`가정값·미확인 입력을 모름으로 두면 비해당이 확정되지 않음${released.length ? `: ${released.map((d) => describeDep(d, dctx)).join(', ')}` : ''}`);
     }
-  } else if (v === U) {
-    const cands = core.tv.deps.filter((d) => d.status !== CONFIRMED && !DATE_INPUTS.has(d.input));
-    const dec = cands.filter((d) => isDecisive(fid, dctx, answers, d, U, constants));
-    questionDeps = dec.length ? dec : cands;
-    joint = !dec.length && cands.length > 0;
+  }
+
+  // M7b: 이 동에 v2 로 평가하지 못한 파일(v1·없음)이 있으면 그 파일 기준이 빠진 비해당이므로 확정하지 않는다
+  if (v === F && dctx.pendingV1.length) {
+    v = U;
+    reasons.push(`이 동의 ${dctx.pendingV1.join('·')}번 기준 파일이 v1 이라 판정에 빠짐 — 기존(v1) 판정과 함께 확인 필요`);
   }
 
   const defs = dctx.defs.get(fid) || [];
@@ -315,7 +495,10 @@ export function finalizeFacility(fid, dctx) {
   const qctx = { inputDefs: dctx.inputDefs, index: dctx.index, names: dctx.names };
   const questions = [];
   for (const d of questionDeps) if (!questions.some((q) => q.key === d.key)) questions.push(buildQuestion(d, qctx));
-  const selected = allRows.map((r) => r.row);
+  const assumptions = core.tv.deps.filter((d) => d.status === ASSUMED).map((d) => describeDep(d, dctx));
+  const dateAssumption = describeDateAssumption(di);
+  if (dateAssumption) assumptions.push(dateAssumption);
+  const extScopes = decided.flatMap((r) => r.rows.filter((x) => x.kind === 'modifier' && x.value.v === T).map((x) => x.scope));
   return {
     id: fid,
     name: first.facility_name ?? dctx.names.get(fid) ?? fid,
@@ -325,23 +508,24 @@ export function finalizeFacility(fid, dctx) {
     required: v !== F,
     reason: reasons[0] ?? '',
     reasons,
-    scope: v === T ? mergeScopes([...tRows.map((r) => r.scope), ...decided.flatMap((r) => r.rows.filter((x) => x.kind === 'modifier' && x.value.v === T).map((x) => x.scope))], order) : null,
-    // 확인 필요일 때 답에 따라 적용될 수 있는 범위 (개정 경계로 U 가 된 T 는 기준일 기준의 범위)
-    possibleScope:
-      v === U && (uRows.length || tRows.length) ? mergeScopes([...uRows, ...(boundary ? tRows : [])].map((r) => r.scope), order) : null,
+    scope: v === T ? mergeScopes([...tRows.map((r) => r.scope), ...extScopes], order) : null,
+    // 확인 필요일 때 답에 따라 적용될 수 있는 범위 (기준일에 따라 갈리는 T 는 기준일 기준의 범위)
+    possibleScope: v === U && (uRows.length || tRows.length) ? mergeScopes([...uRows, ...(boundary ? tRows : [])].map((r) => r.scope), order) : null,
     extensions: decided.flatMap((r) => r.rows.filter((x) => x.kind === 'modifier' && x.value.v === T).map((x) => x.row.specs?.label ?? x.row.criteria)),
     questions,
     jointQuestions: joint,
-    assumptions: core.tv.deps.filter((d) => d.status === ASSUMED).map((d) => describeAssumption(d, dctx)),
+    assumptions,
     boundary,
-    exemption: v !== F ? exemptionFor(fid, dctx, pass.env) : null,
+    exemption: v !== F ? exemptionFor(fid, dctx, refPass.env) : null,
     retroactive: allRows.filter((r) => r.basis !== 'ref' && r.value.v !== F).map((r) => ({ id: r.id, basis: r.basis, criteria: r.row.criteria, ...(r.row.retroactive || {}) })),
     review: allRows.filter((r) => r.row.needs_review).map((r) => ({ id: r.id, ...r.row.needs_review })),
     info: allRows.filter((r) => r.kind === 'info').map((r) => ({ id: r.id, criteria: r.row.criteria, specs: r.row.specs ?? null })),
+    pendingV1: dctx.pendingV1.length ? [...dctx.pendingV1] : null,
     files: core.perFile.map((r) => ({ type_code: r.def.typeCode, value: r.value.v, gated: Boolean(r.def.gate) })),
     rows: allRows.map((r) => ({ id: r.id, type_code: r.typeCode, kind: r.kind, basis: r.basis, value: r.value.v, scope: r.scope, questions: r.questions, reasons: r.reasons })),
+    diagnostics: selection ? { questionTests: selection.tests, budgetExhausted: selection.exhausted } : null,
     // v1 호환: 기준일에 선택된 규정 행(모달 표시용)과 시설의 모든 규정 행
-    regulations: selected,
+    regulations: allRows.map((r) => r.row),
     allRegulations: defs.flatMap((d) => d.facility.regulations || []),
   };
 }
@@ -360,7 +544,7 @@ const tally = (facilities) => ({
   notApplicable: facilities.filter((f) => f.value === F).length,
 });
 
-// bctx = { dataFiles, index, inputDefs, names, exemptions, answers, policy, today, dateInfo }
+// bctx = { dataFiles, index, inputDefs, names, exemptions, answers, policy, today, dates, dateInfo }
 export function evaluateDong(dong, bctx) {
   const files = dong.typeCodes.map((code) => classifyFile(code, bctx.dataFiles?.[code]));
   const summary = {
@@ -386,10 +570,26 @@ export function evaluateDong(dong, bctx) {
       defs.get(facility.facility_id).push(def);
     }
   }
-  const dctx = { ...bctx, dong, defs };
-  dctx.floorOrder = new Map(floorsOf(makePass(dctx, dctx.dateInfo.refDate, dctx.answers).env).floors.map((f, i) => [f.key, i]));
+  const dctx = {
+    ...bctx,
+    dong,
+    defs,
+    passes: new Map(),
+    dateCache: new Map(),
+    epochCache: new Map(),
+    pendingV1: files.filter((f) => f.status !== 'v2').map((f) => f.type_code),
+  };
+  dctx.dateInfo = dateInfoFor(dctx, dctx.answers);
+  dctx.floorOrder = new Map(floorsOf(getPass(dctx, dctx.dateInfo.refDate, false, dctx.answers, '').env).floors.map((f, i) => [f.key, i]));
   const facilities = [...defs.keys()].map((fid) => finalizeFacility(fid, dctx));
   const questions = [];
   for (const q of facilities.flatMap((f) => f.questions)) if (!questions.some((x) => x.key === q.key)) questions.push(q);
-  return { ...summary, status: v2.length === files.length ? 'v2' : 'partial', facilities, questions, counts: tally(facilities) };
+  return {
+    ...summary,
+    status: v2.length === files.length ? 'v2' : 'partial',
+    pendingV1: dctx.pendingV1.length ? dctx.pendingV1 : null,
+    facilities,
+    questions,
+    counts: tally(facilities),
+  };
 }

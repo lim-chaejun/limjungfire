@@ -1,46 +1,23 @@
-// 건물 판정 — 기준일 결정, 동별 평가, v1 호환 결과 조립
+// 건물 판정 — 기준일 결정, 동별 평가, 연결된 동(대지) 확인, v1 호환 결과 조립
 //
 // 결과는 main.js getRequiredFireFacilities 의 모양(facilities[].required·regulations·allRegulations, permitDate,
 // usedApprovalDate, summary, buildingType)을 유지하고 v2 필드(verdict·scope·questions·dongs…)를 더한다.
 // required 는 '해당' 또는 '확인 필요'일 때 true — 기존 화면이 확인 필요 항목을 '비해당'으로 보이지 않게 한다.
+//
+// 주의(출력 경계): 질문 문장·근거(reasons)·동 이름 등 모든 문자열은 건축물대장·데이터 원문(dongNm, criteria …)을
+// 그대로 담은 평문이다. 화면에 넣을 때는 반드시 이스케이프해야 한다(엔진은 HTML 을 만들지 않는다).
 
 import { SCHEMA_VERSION } from './schema.js';
 import { resolvePolicy } from './policy.js';
 import { buildUseIndex, useName } from './uses.js';
-import { inputDefsFrom } from './questions.js';
-import { addDays, normalizeYmd, todayYmd } from './dates.js';
-import { ASSUMED, CONFIRMED, F, T, U } from './logic.js';
+import { buildQuestion, inputDefsFrom } from './questions.js';
+import { normalizeYmd, resolveDateInfo, todayYmd } from './dates.js';
+import { F, T, U, UNKNOWN, makeDep } from './logic.js';
 import { VERDICT, evaluateDong } from './evaluate.js';
+import { mergeDongs, siteLinkCandidate } from './facts.js';
 
 export const ENGINE_VERSION = '2.0.0-p0';
-
-// 기준일(refDate)과 개정 경계 검사 구간(window)
-//   허가 신청일 답변 → 신청일(정책 applicationDateSelectsRows)
-//   허가일 → [허가일 − 신청 구간, 허가일], 질문 '허가 신청일' (허가일 후보가 여럿이면 전 후보를 덮고 질문 '허가일')
-//   사용승인일만 → [승인일 − (추정 구간 + 신청 구간), 승인일], 질문 '허가일', 기준일은 가정
-//   날짜 없음 → 오늘(가정), 질문 '허가일'
-export function resolveDateInfo(dates = {}, answers = {}, policy = resolvePolicy(), today = todayYmd()) {
-  const W = policy.applicationWindowDays;
-  const application = normalizeYmd(answers.application_date);
-  const permitAnswer = normalizeYmd(answers.permit_date);
-  const permit = permitAnswer ? { value: permitAnswer, source: 'user', status: CONFIRMED, candidates: [permitAnswer] } : dates.permit || null;
-  const approval = dates.approval?.value ? dates.approval : null;
-  const base = { permit: permit?.value ?? null, approval: approval?.value ?? null, today };
-  if (application && (policy.applicationDateSelectsRows || !permit?.value)) {
-    return { ...base, refDate: application, source: 'application', status: CONFIRMED, window: null };
-  }
-  if (permit?.value) {
-    const cands = permit.candidates?.length ? permit.candidates : [permit.value];
-    const multiple = cands.length > 1;
-    const span = application ? null : { from: addDays(cands[0], -W), to: cands[cands.length - 1], question: multiple ? 'permit_date' : 'application_date' };
-    return { ...base, refDate: permit.value, source: 'permit', permitSource: permit.source, status: permit.status, window: span && span.from < span.to ? span : null };
-  }
-  if (approval) {
-    const from = addDays(approval.value, -(policy.approvalOnlyLookbackDays + W));
-    return { ...base, refDate: approval.value, source: 'approval', status: ASSUMED, window: from < approval.value ? { from, to: approval.value, question: 'permit_date' } : null };
-  }
-  return { ...base, refDate: today, source: 'today', status: ASSUMED, window: W > 0 ? { from: addDays(today, -W), to: today, question: 'permit_date' } : null };
-}
+export { resolveDateInfo };
 
 // 시설 id → 이름 (시설 마스터 → 데이터 파일 → inputs.json 의 installed 대상 순)
 export function facilityNames(facilitiesJson, dataFiles = {}, inputsJson) {
@@ -52,36 +29,69 @@ export function facilityNames(facilitiesJson, dataFiles = {}, inputsJson) {
   return names;
 }
 
-// 평가에 필요한 데이터 파일(type_code) — 호출자가 이것만 불러오면 된다
-export function requiredTypeCodes(building) {
-  return [...new Set(building.dongs.flatMap((d) => d.typeCodes))].sort();
+// 평가에 필요한 데이터 파일(type_code) — 호출자가 이것만 불러오면 된다 (연결 가능 대지는 합친 동의 파일 포함)
+export function requiredTypeCodes(building, { useIndex, vocabulary, policy } = {}) {
+  const codes = building.dongs.flatMap((d) => d.typeCodes);
+  if (siteLinkCandidate(building) && (useIndex || vocabulary)) codes.push(...mergeDongs(building.dongs, { useIndex, vocabulary, policy }).typeCodes);
+  return [...new Set(codes)].sort();
 }
 
 const RANK = { F: 0, U: 1, T: 2 };
 
-// 동별 결과 → 시설별 결합(가장 강한 판정). v1 화면은 이 목록 하나만 본다
+// 동별 결과 → 시설별 결합. 판정·근거·범위·질문·경계·가정 등은 모두 가장 강한 판정(T > U > F, 같으면 앞 동)의
+// 한 동에서 가져와 서로 어긋나지 않게 하고, dongs(동별 판정)와 규정 행 합집합(v1 모달용)만 모은다
 function aggregate(dongs) {
   const byId = new Map();
   for (const d of dongs) {
     for (const f of d.facilities) {
-      const cur = byId.get(f.id);
-      if (!cur) {
-        byId.set(f.id, { ...f, dongs: { [d.id]: f.verdict }, questions: [...f.questions], regulations: [...f.regulations], allRegulations: [...f.allRegulations] });
-        continue;
-      }
-      cur.dongs[d.id] = f.verdict;
-      for (const q of f.questions) if (!cur.questions.some((x) => x.key === q.key)) cur.questions.push(q);
-      for (const r of f.regulations) if (!cur.regulations.includes(r)) cur.regulations.push(r);
-      for (const r of f.allRegulations) if (!cur.allRegulations.includes(r)) cur.allRegulations.push(r);
-      if (RANK[f.value] > RANK[cur.value]) {
-        Object.assign(cur, { value: f.value, verdict: f.verdict, required: f.required, reason: f.reason, reasons: f.reasons, scope: f.scope, exemption: f.exemption });
-      }
+      let e = byId.get(f.id);
+      if (!e) byId.set(f.id, (e = { best: f, bestDong: d.id, dongs: {}, regulations: [], allRegulations: [] }));
+      e.dongs[d.id] = f.verdict;
+      if (RANK[f.value] > RANK[e.best.value]) Object.assign(e, { best: f, bestDong: d.id });
+      for (const r of f.regulations) if (!e.regulations.includes(r)) e.regulations.push(r);
+      for (const r of f.allRegulations) if (!e.allRegulations.includes(r)) e.allRegulations.push(r);
     }
   }
-  return [...byId.values()];
+  return [...byId.values()].map((e) => ({ ...e.best, dong: e.bestDong, dongs: e.dongs, regulations: e.regulations, allRegulations: e.allRegulations }));
 }
 
 const lo = (iv) => (iv && Number.isFinite(iv.lo) && iv.lo === iv.hi ? iv.lo : 0);
+
+const tally = (facilities) => ({
+  applicable: facilities.filter((f) => f.value === T).length,
+  check: facilities.filter((f) => f.value === U).length,
+  notApplicable: facilities.filter((f) => f.value === F).length,
+});
+
+// 연결된 동(CP1 Q11) — 지하층만 있는 동·주차 전용 동이 있는 여러 동 대지는 지하주차장 등으로 이어져
+// 하나의 소방대상물일 수 있다. 검수 전에는 보수적으로: 모든 동을 합친 가상 동도 평가해서, 동별로 비해당인데 합치면
+// 비해당이 아닌 시설은 '확인 필요(동 연결 여부)'로 둔다. 답이 '예'면 합친 판정을, '아니오'면 동별 판정을 쓴다.
+function applySiteLink(building, dongs, bctx) {
+  if (!siteLinkCandidate(building)) return null;
+  const merged = mergeDongs(building.dongs, { useIndex: bctx.index, policy: bctx.policy });
+  const site = evaluateDong(merged, bctx);
+  const connected = bctx.answers.site_connected;
+  const members = building.dongs.map((d) => d.id);
+  const question = buildQuestion(makeDep('site_connected', UNKNOWN, {}), { inputDefs: bctx.inputDefs, index: bctx.index, names: bctx.names });
+  for (const d of dongs) {
+    if (d.status !== 'v2' && d.status !== 'partial') continue;
+    d.facilities = d.facilities.map((f) => {
+      if (f.value !== F || connected === false) return f;
+      const mf = site.facilities.find((x) => x.id === f.id);
+      if (!mf || mf.value === F) return f;
+      if (connected === true) {
+        const reason = `대지 전체(${members.join('·')})를 하나의 소방대상물로 판정 — ${mf.verdict}`;
+        return { ...mf, reason, reasons: [reason, ...mf.reasons], siteLink: { merged: true } };
+      }
+      const reason = `동별로는 비해당이지만, 대지의 동들(${members.join('·')})이 연결되어 하나의 소방대상물이면 ${mf.verdict} — 연결 여부 확인 필요(CP1 검수 전 보수적 처리)`;
+      return { ...f, value: U, verdict: VERDICT.U, required: true, reason, reasons: [reason, ...f.reasons], questions: [question], jointQuestions: false, siteLink: { mergedVerdict: mf.verdict } };
+    });
+    d.questions = [];
+    for (const q of d.facilities.flatMap((f) => f.questions)) if (!d.questions.some((x) => x.key === q.key)) d.questions.push(q);
+    d.counts = tally(d.facilities);
+  }
+  return { id: merged.id, members, status: site.status, typeCodes: site.typeCodes, counts: site.counts, connected: connected ?? null, facilities: site.facilities };
+}
 
 export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useIndex, inputs, facilities, exemptions, answers = {}, policy, today } = {}) {
   if (!building || !Array.isArray(building.dongs)) throw new Error('building(normalizeRegistry·normalizeManual 결과)이 필요함');
@@ -98,9 +108,10 @@ export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useInde
     answers,
     policy: pol,
     today: day,
-    dateInfo,
+    dates: building.dates || {},
   };
   const dongs = building.dongs.map((d) => evaluateDong(d, bctx));
+  const site = applySiteLink(building, dongs, bctx);
   const merged = aggregate(dongs);
   // v2 = 모든 동을 v2 로 평가 · partial = 일부만 · v1 = 평가한 동 없음(기존 판정으로 대체) · unmapped = 용도 미분류뿐
   const evaluated = dongs.some((d) => d.status === 'v2' || d.status === 'partial');
@@ -126,12 +137,9 @@ export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useInde
     },
     // v2
     dateInfo,
-    counts: {
-      applicable: merged.filter((f) => f.value === T).length,
-      check: merged.filter((f) => f.value === U).length,
-      notApplicable: merged.filter((f) => f.value === F).length,
-    },
+    counts: tally(merged),
     dongs,
+    site,
     questions,
     notEvaluated: dongs.flatMap((d) =>
       d.status === 'unmapped'

@@ -18,11 +18,13 @@ const BUILTIN = [
   ['floor_area', 'number', '층 바닥면적', '㎡'],
   ['use_area', 'number', '용도별 바닥면적 합계', '㎡'],
   ['floor_use_area', 'number', '층의 용도별 면적', '㎡'],
+  ['part_area', 'number', '층 부분 면적', '㎡'],
   ['windowless', 'boolean', '무창층 여부', ''],
   ['use_presence', 'boolean', '용도 존재 여부', ''],
   ['installed', 'boolean', '설치 여부', ''],
   ['mixed_use', 'boolean', '복합건축물 해당 여부', ''],
   ['review', 'boolean', '기준 해당 여부', ''],
+  ['site_connected', 'boolean', '동 연결 여부', ''],
   ['application_date', 'date', '건축허가 신청일', ''],
   ['permit_date', 'date', '건축허가일', ''],
 ];
@@ -73,40 +75,65 @@ export function buildQuestion(dep, { inputDefs, index, names = new Map() }) {
     criteria: info.criteria ?? '',
     boundary: (info.boundaries || []).map(formatYmd).join(', '),
     groups: (info.groups || []).map((g) => useName(g, index)).join('·'),
+    part: info.partLabel ?? '',
   };
   const label = def.label ?? dep.input;
   const fallback = `${vars.where ? `${vars.where} — ` : ''}${label}${josa(label, '을', '를')} 확인해 주세요.`;
   const text = info.question || (def.question ? fill(def.question, vars) : fallback);
   const q = { key: dep.key, input: dep.input, dong: dep.dong ?? null, floor: dep.floor ?? null, type: def.type ?? 'boolean', unit: def.unit ?? '', label: def.label ?? dep.input, text, status: dep.status };
   if (dep.range) q.range = dep.range;
-  if (dep.status === ASSUMED) q.note = '가정값으로 판정했으나 결과를 바꿀 수 있어 확인이 필요합니다';
+  if (dep.status === ASSUMED || dep.released) q.note = '가정값(정책 기본값)으로 두면 판정을 확정할 수 없어 확인이 필요합니다';
   return q;
 }
 
-const COARSE_GRID = [0, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 100000];
+const SMALL_RANGE = 40; // 정수 입력의 가능한 값 개수가 이 이하이면 모두 시험 (예: 지하층수 0~30)
 const EPS = 0.001;
+const SPARSE_GRID = [0, 1, 10, 100, 1000, 10000]; // 범위도 기준값도 없는 수치 입력에만
 
-// 수치 입력의 시험값: 기준값 앞뒤 + 거친 격자. 입력 정의의 range(있을 수 있는 값) 밖은 버리고,
-// 모르는 입력은 현재 알려진 구간 안으로 제한한다
+// 수치 입력의 시험값 — 질문을 고를 때만 쓴다(비해당의 안전성은 가정값을 푼 재평가가 보장한다).
+// 가능한 값의 범위(입력 정의 range ∩ 지금 알려진 구간)의 양 끝과 조건 기준값 앞뒤. 정수이고 범위가 좁으면 모든 값
+// (파생 합계의 폭 1짜리 구간 — 예: 지상 2층 + 지하 x층 = 7층 — 을 놓치지 않게).
 export function testValues(dep, def = {}, constants = []) {
   const type = def.type ?? 'boolean';
   if (type === 'boolean') return [true, false];
   if (type !== 'number' && type !== 'integer') return [];
-  const vals = new Set(COARSE_GRID);
+  let [lo, hi] = Array.isArray(def.range) ? def.range : [0, Infinity];
+  if (dep.status === UNKNOWN && Array.isArray(dep.range)) {
+    lo = Math.max(lo, dep.range[0]);
+    hi = Math.min(hi, dep.range[1]);
+  }
+  if (!(hi >= lo)) return [];
+  if (type === 'integer' && Number.isFinite(hi) && hi - lo <= SMALL_RANGE) {
+    return Array.from({ length: Math.floor(hi) - Math.ceil(lo) + 1 }, (_, i) => Math.ceil(lo) + i);
+  }
+  const vals = new Set();
+  if (Number.isFinite(lo)) vals.add(lo);
+  if (Number.isFinite(hi)) vals.add(hi);
   for (const c of constants) {
     if (type === 'integer') [Math.floor(c) - 1, Math.floor(c), Math.ceil(c), Math.ceil(c) + 1].forEach((v) => vals.add(v));
     else [c - EPS, c, c + EPS].forEach((v) => vals.add(v));
   }
-  const [min, max] = Array.isArray(def.range) ? def.range : [0, Infinity];
-  let out = [...vals].filter((v) => v >= min && v <= max);
-  if (dep.status === UNKNOWN && Array.isArray(dep.range)) {
-    const [lo, hi] = dep.range;
-    out = out.filter((v) => v >= lo && v <= hi);
-    if (Number.isFinite(lo)) out.push(lo);
-    if (Number.isFinite(hi)) out.push(hi);
-  }
+  if (!constants.length && !Number.isFinite(hi)) SPARSE_GRID.forEach((v) => vals.add(v));
+  let out = [...vals].filter((v) => v >= lo && v <= hi);
   if (type === 'integer') out = out.map((v) => Math.round(v));
   return [...new Set(out)].sort((a, b) => a - b);
+}
+
+// 끝값 시험값(질문 선별 1·2단계): 참/거짓은 둘 다, 수치는 가능한 범위의 위·아래 끝(위부터 — '이상' 조건이 흔하다).
+// 위 끝이 무한이면 기준값 가운데 가장 큰 값보다 조금 큰 값
+export function extremeValues(dep, def = {}, constants = []) {
+  const type = def.type ?? 'boolean';
+  if (type === 'boolean') return [true, false];
+  if (type !== 'number' && type !== 'integer') return [];
+  let [lo, hi] = Array.isArray(def.range) ? def.range : [0, Infinity];
+  if (dep.status === UNKNOWN && Array.isArray(dep.range)) {
+    lo = Math.max(lo, dep.range[0]);
+    hi = Math.min(hi, dep.range[1]);
+  }
+  if (!(hi >= lo)) return [];
+  if (!Number.isFinite(hi)) hi = constants.length ? Math.max(...constants) + 1 : null;
+  const out = [hi, lo].filter((v) => v !== null && Number.isFinite(v)).map((v) => (type === 'integer' ? Math.round(v) : v));
+  return [...new Set(out)];
 }
 
 // 시험값에 쓸 기준 상수의 입력 대응: 층수 입력은 'N층 이상인 층'(level)·'지하층 포함 N개층'의 기준도 본다
@@ -115,6 +142,7 @@ export function constantsFor(input, constants) {
     ground_floors: ['ground_floors', 'floors_incl_basement', 'level'],
     basement_floors: ['basement_floors', 'floors_incl_basement', 'level'],
     floor_area: ['floor_area', 'use_area', 'floor_use_area'],
+    part_area: ['floor_area', 'use_area', 'floor_use_area'],
     use_area: ['use_area', 'floor_area'],
     floor_use_area: ['floor_use_area', 'floor_area'],
   }[input] || [input];

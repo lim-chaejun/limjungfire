@@ -26,22 +26,37 @@ export function depKey(input, dong, floor, sig) {
   return `${input}${sig ? `[${sig}]` : ''}${dong ? `@${dong}` : ''}${floor ? `/${floor}` : ''}`;
 }
 
-// 입력 의존 하나. info 는 질문 문장을 만들 때 쓰는 부가 정보(층 범위·용도·시설 등)
-export function makeDep(input, status, { dong, floor, sig, info, range, source } = {}) {
+// 입력 의존 하나. info 는 질문 문장을 만들 때 쓰는 부가 정보(층 범위·용도·시설 등).
+// released: 가정값을 풀어(모름으로) 다시 평가할 때 생긴 의존 — 질문에 '가정값 확인' 표시를 붙인다
+export function makeDep(input, status, { dong, floor, sig, info, range, source, released } = {}) {
   const dep = { key: depKey(input, dong, floor, sig), input, status };
   if (dong) dep.dong = dong;
   if (floor) dep.floor = floor;
   if (info) dep.info = info;
   if (range) dep.range = range;
   if (source) dep.source = source;
+  if (released) dep.released = true;
   return dep;
 }
 
-// 같은 키는 하나로 — 상태는 더 불확실한 쪽(unknown > assumed > confirmed)
+const EMPTY = Object.freeze([]);
+
+// 같은 키는 하나로 — 상태는 더 불확실한 쪽(unknown > assumed > confirmed).
+// 입력 목록은 이미 키가 겹치지 않는 목록이라서, 비어 있지 않은 목록이 하나뿐이면 그대로 돌려준다(복사 없음 — 돌려받은 배열을 고치지 말 것).
 export function mergeDeps(...lists) {
+  let only = null;
+  let count = 0;
+  for (const list of lists) {
+    if (list && list.length) {
+      count++;
+      only = list;
+    }
+  }
+  if (count === 0) return EMPTY;
+  if (count === 1) return only;
   const byKey = new Map();
   for (const list of lists) {
-    for (const d of list || []) {
+    for (const d of list || EMPTY) {
       const prev = byKey.get(d.key);
       if (!prev || STATUS_RANK[d.status] > STATUS_RANK[prev.status]) byKey.set(d.key, d);
     }
@@ -49,53 +64,121 @@ export function mergeDeps(...lists) {
   return [...byKey.values()];
 }
 
-export function tv(v, deps = [], why = []) {
-  return { v, deps, why: Array.isArray(why) ? why : why ? [why] : [] };
+// 반복문에서 근거를 계속 합칠 때 쓰는 누적기 (mergeDeps 를 반복하면 목록이 길어질수록 제곱으로 느려진다)
+export function depCollector() {
+  const byKey = new Map();
+  return {
+    add(list) {
+      for (const d of list || EMPTY) {
+        const prev = byKey.get(d.key);
+        if (!prev || STATUS_RANK[d.status] > STATUS_RANK[prev.status]) byKey.set(d.key, d);
+      }
+    },
+    list: () => (byKey.size ? [...byKey.values()] : EMPTY),
+  };
+}
+
+export function tv(v, deps = EMPTY, why = EMPTY) {
+  return { v, deps, why: Array.isArray(why) ? why : why ? [why] : EMPTY };
 }
 
 export const hasAssumed = (x) => x.deps.some((d) => d.status === ASSUMED);
 export const hasUnknown = (x) => x.deps.some((d) => d.status === UNKNOWN);
 
-const uncertainty = (x) => x.deps.reduce((n, d) => n + STATUS_RANK[d.status], 0);
+const uncertainty = (x) => {
+  let n = 0;
+  for (const d of x.deps) n += STATUS_RANK[d.status];
+  return n;
+};
 
-// 가장 확실한 증인: 불확실 점수가 낮고, 의존이 적은 값 (동점이면 앞의 것)
-function witness(xs) {
-  let best = xs[0];
-  for (const x of xs.slice(1)) {
-    const d = uncertainty(x) - uncertainty(best);
-    if (d < 0 || (d === 0 && x.deps.length < best.deps.length)) best = x;
+// 가장 확실한 증인: 값이 v 인 것 가운데 불확실 점수가 낮고 의존이 적은 값 (동점이면 앞의 것)
+function witness(xs, v) {
+  let best = null;
+  let bestU = 0;
+  for (const x of xs) {
+    if (x.v !== v) continue;
+    if (!best) {
+      best = x;
+      bestU = uncertainty(x);
+      continue;
+    }
+    const u = uncertainty(x);
+    if (u < bestU || (u === bestU && x.deps.length < best.deps.length)) {
+      best = x;
+      bestU = u;
+    }
   }
   return best;
 }
 
-const joinWhy = (xs) => xs.flatMap((x) => x.why);
+// 값이 v 인(또는 모든, v = null) 자식들의 근거 합 — 합칠 것이 하나뿐이면 새 배열을 만들지 않는다
+function unionDeps(xs, v) {
+  let only = null;
+  let count = 0;
+  for (const x of xs) {
+    if ((v === null || x.v === v) && x.deps.length) {
+      count++;
+      only = x.deps;
+    }
+  }
+  if (count === 0) return EMPTY;
+  if (count === 1) return only;
+  const byKey = new Map();
+  for (const x of xs) {
+    if (v !== null && x.v !== v) continue;
+    for (const d of x.deps) {
+      const prev = byKey.get(d.key);
+      if (!prev || STATUS_RANK[d.status] > STATUS_RANK[prev.status]) byKey.set(d.key, d);
+    }
+  }
+  return [...byKey.values()];
+}
+
+function unionWhy(xs, v) {
+  let n = 0;
+  for (const x of xs) if (v === null || x.v === v) n += x.why.length;
+  if (!n) return EMPTY;
+  const out = [];
+  for (const x of xs) if (v === null || x.v === v) out.push(...x.why);
+  return out;
+}
+
+const joinWhy = (xs) => {
+  let n = 0;
+  for (const x of xs) n += x.why.length;
+  return n ? xs.flatMap((x) => x.why) : EMPTY;
+};
 
 export function not(x) {
   return tv(x.v === T ? F : x.v === F ? T : U, x.deps, x.why);
 }
 
+const count = (xs, v) => {
+  let n = 0;
+  for (const x of xs) if (x.v === v) n++;
+  return n;
+};
+
 export function all(xs) {
   if (!xs.length) return tv(T);
-  const fs = xs.filter((x) => x.v === F);
-  if (fs.length) {
-    const w = witness(fs);
+  if (xs.length === 1) return xs[0];
+  if (count(xs, F)) {
+    const w = witness(xs, F);
     return tv(F, w.deps, w.why);
   }
-  const us = xs.filter((x) => x.v === U);
-  if (us.length) return tv(U, mergeDeps(...us.map((x) => x.deps)), joinWhy(us));
-  return tv(T, mergeDeps(...xs.map((x) => x.deps)), joinWhy(xs));
+  if (count(xs, U)) return tv(U, unionDeps(xs, U), unionWhy(xs, U));
+  return tv(T, unionDeps(xs, null), unionWhy(xs, null));
 }
 
 export function any(xs) {
   if (!xs.length) return tv(F);
-  const ts = xs.filter((x) => x.v === T);
-  if (ts.length) {
-    const w = witness(ts);
+  if (xs.length === 1) return xs[0];
+  if (count(xs, T)) {
+    const w = witness(xs, T);
     return tv(T, w.deps, w.why);
   }
-  const us = xs.filter((x) => x.v === U);
-  if (us.length) return tv(U, mergeDeps(...us.map((x) => x.deps)), joinWhy(us));
-  return tv(F, mergeDeps(...xs.map((x) => x.deps)), joinWhy(xs));
+  if (count(xs, U)) return tv(U, unionDeps(xs, U), unionWhy(xs, U));
+  return tv(F, unionDeps(xs, null), unionWhy(xs, null));
 }
 
 // if c then a else b — c 가 U 라도 a·b 가 같은 확정값이면 그 값

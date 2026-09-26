@@ -54,31 +54,83 @@ export const NODE_ALLOWED_KEYS = Object.freeze({
 
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-// 노드 종류 판별 — 종류 키가 0개이거나 2개 이상이면 null
+const NODE_TYPE_CACHE = new WeakMap();
+
+// 노드 종류 판별 — 종류 키가 0개이거나 2개 이상이면 null (평가 중 반복 호출이 많아 노드별 캐시)
 export function nodeType(node) {
   if (!isPlainObject(node)) return null;
-  const found = NODE_TYPES.filter((k) => Object.prototype.hasOwnProperty.call(node, k));
-  return found.length === 1 ? found[0] : null;
+  let t = NODE_TYPE_CACHE.get(node);
+  if (t === undefined) {
+    const found = NODE_TYPES.filter((k) => Object.prototype.hasOwnProperty.call(node, k));
+    t = found.length === 1 ? found[0] : null;
+    NODE_TYPE_CACHE.set(node, t);
+  }
+  return t;
 }
 
-// 객체에 들어 있는 비교 연산자 목록 (예: { gte: 300, lt: 600 } → ['gte', 'lt'])
+const OPS_CACHE = new WeakMap();
+
+// 객체에 들어 있는 비교 연산자 목록 (예: { gte: 300, lt: 600 } → ['gte', 'lt']). 평가 중 반복 호출이 많아 캐시
 export function comparisonOps(obj) {
-  return isPlainObject(obj) ? COMPARISON_OPS.filter((op) => op in obj) : [];
+  if (!isPlainObject(obj)) return [];
+  let ops = OPS_CACHE.get(obj);
+  if (!ops) OPS_CACHE.set(obj, (ops = COMPARISON_OPS.filter((op) => op in obj)));
+  return ops;
 }
+
+const SELECTORS_KEY = new WeakMap();
+
+// 선택자 목록의 내용 키 — 내용이 같은 선택자(다른 시설의 같은 조건)끼리 층 계산을 공유하는 메모 키
+export function selectorsKey(selectors) {
+  let key = SELECTORS_KEY.get(selectors);
+  if (key === undefined) SELECTORS_KEY.set(selectors, (key = selectors.map((s) => stableKey(s)).join('|')));
+  return key;
+}
+
+const DEFAULT_FLOORS = Object.freeze([FLOOR_SHORTHANDS.all]);
+const FLOORS_CACHE = new WeakMap(); // 조건 트리의 floors 배열 → 정규화 결과 (평가 중 반복 호출이 많아 캐시)
 
 // 층 선택자 목록 정규화: 문자열 약칭·단일 객체 → 객체 배열. 형식이 틀리면 null
 export function normalizeFloors(floors) {
-  if (floors === undefined) return [FLOOR_SHORTHANDS.all];
+  if (floors === undefined) return DEFAULT_FLOORS;
+  const cacheable = floors !== null && typeof floors === 'object';
+  if (cacheable && FLOORS_CACHE.has(floors)) return FLOORS_CACHE.get(floors);
   const list = Array.isArray(floors) ? floors : [floors];
-  const out = [];
+  let out = [];
   for (const s of list) {
     if (typeof s === 'string') {
-      if (!FLOOR_SHORTHANDS[s]) return null;
+      if (!FLOOR_SHORTHANDS[s]) {
+        out = null;
+        break;
+      }
       out.push(FLOOR_SHORTHANDS[s]);
     } else if (isPlainObject(s)) out.push(s);
-    else return null;
+    else {
+      out = null;
+      break;
+    }
   }
-  return out.length ? out : null;
+  if (out && !out.length) out = null;
+  if (cacheable) FLOORS_CACHE.set(floors, out);
+  return out;
+}
+
+export const ALL_FLOOR_KINDS = Object.freeze(['basement', 'ground', 'rooftop']);
+const KINDS_CACHE = new WeakMap();
+
+// 선택자 목록이 고를 수 있는 층 구분 — 층 목록의 완전성(층수를 아는가)을 구분별로 따질 때 쓴다.
+// kind 가 없으면 모든 구분, 단 무창층만 고르는 선택자는 지상층(무창층은 지상층의 정의)
+export function selectorKinds(selectors) {
+  if (KINDS_CACHE.has(selectors)) return KINDS_CACHE.get(selectors);
+  const out = new Set();
+  for (const s of selectors || []) {
+    if (s.kind !== undefined) [].concat(s.kind).forEach((k) => out.add(k));
+    else if (s.windowless) out.add('ground');
+    else ALL_FLOOR_KINDS.forEach((k) => out.add(k));
+  }
+  const kinds = [...out];
+  if (selectors) KINDS_CACHE.set(selectors, kinds);
+  return kinds;
 }
 
 // 범위(scope) 정규화: 문자열 약칭 → { type, floors?, label? }. 형식이 틀리면 null

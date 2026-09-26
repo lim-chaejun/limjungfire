@@ -27,8 +27,12 @@ export function buildUseIndex(vocabulary) {
   const groupNames = new Map();
   const aliases = new Map();
   const notCovered = new Map();
+  const contextAliases = new Map(); // 동의 주용도 군 → (별칭 → 세부 용도): 그 군의 건물 안에서는 뜻이 달라지는 말
   for (const g of vocabulary.groups) {
     groups.set(g.type_code, g);
+    if (g.context_aliases) {
+      contextAliases.set(g.type_code, new Map(Object.entries(g.context_aliases).map(([a, id]) => [normalizeUseText(a), id])));
+    }
     for (const n of [g.name, ...(g.registry_names || [])]) groupNames.set(normalizeUseText(n), g.type_code);
     for (const u of g.uses || []) {
       uses.set(u.id, { ...u, group: g.type_code });
@@ -44,7 +48,7 @@ export function buildUseIndex(vocabulary) {
   const containsList = [...new Set([...groupNames.keys(), ...aliases.keys(), ...notCovered.keys()])]
     .filter((k) => k.length >= 2)
     .sort((a, b) => b.length - a.length);
-  return { groups, uses, groupNames, aliases, notCovered, containsList };
+  return { groups, uses, groupNames, aliases, notCovered, containsList, contextAliases };
 }
 
 // 쉼표·괄호 등으로 먼저 나누고, 통째로 사전에 없으면 가운뎃점·'및'으로 한 번 더 나눈다
@@ -58,7 +62,7 @@ function segments(text) {
 function lookup(n, index) {
   if (index.notCovered.has(n)) return { notCovered: index.notCovered.get(n) };
   if (index.groupNames.has(n)) return { group: index.groupNames.get(n) };
-  if (index.aliases.has(n)) return { uses: index.aliases.get(n) };
+  if (index.aliases.has(n)) return { uses: index.aliases.get(n), alias: n };
   return null;
 }
 
@@ -91,7 +95,9 @@ function matchSegment(seg, index) {
 // 건축물대장 주용도명 + 기타용도 → { terms, mainGroup, groups, notCovered, unmatched }
 // 기타용도에서 세부 용도가 나오면 그것을 믿고 주용도 와일드카드는 붙이지 않는다
 // (층별개요의 주용도코드는 분류 코드이고, 실제 용도는 기타용도에 적힌 경우가 대부분이다).
-export function classifyUses(mainName, etcText, index) {
+// contextGroup: 이 항목이 속한 동의 주용도 군(표제부). 그 군의 context_aliases 가 별칭 해석을 바꾼다
+// (예: 자동차관련시설 동의 주차장 = 주차용 건축물, 다른 동의 주차장 = 건축물 내부 주차장). 없으면 이 항목의 주용도 군.
+export function classifyUses(mainName, etcText, index, contextGroup = null) {
   const mainNorm = normalizeUseText(mainName);
   const mainGroup = index.groupNames.get(mainNorm) ?? null;
   const texts = mainGroup ? [etcText] : [mainName, etcText];
@@ -105,15 +111,16 @@ export function classifyUses(mainName, etcText, index) {
       unmatched.push(...rest);
       for (const h of hits) {
         if (h.group) named.add(h.group);
-        else if (h.uses) useCandidates.push(h.uses);
+        else if (h.uses) useCandidates.push(h);
         else if (h.notCovered) notCovered.push(h.notCovered);
       }
     }
   }
   const prefer = [mainGroup, ...named].filter(Boolean);
+  const context = index.contextAliases?.get(contextGroup ?? mainGroup);
   const detail = [];
-  for (const ids of useCandidates) {
-    const pick = prefer.map((g) => ids.find((id) => index.uses.get(id).group === g)).find(Boolean) || ids[0];
+  for (const { uses: ids, alias } of useCandidates) {
+    const pick = context?.get(alias) ?? (prefer.map((g) => ids.find((id) => index.uses.get(id).group === g)).find(Boolean) || ids[0]);
     if (!detail.includes(pick)) detail.push(pick);
   }
   const terms = detail.map((id) => ({ use: id }));
@@ -135,10 +142,15 @@ export function termGroups(terms, index) {
 // term 이 부수 용도(ancillary)인가 — 와일드카드는 부수 용도가 아니다
 export const isAncillaryTerm = (term, index) => Boolean(term.use && index.uses.get(term.use)?.ancillary);
 
+// 대상 용도에 보조 용도(용도군 없음 — 전기실·기계실 등)가 있으면, 층별개요가 그 용도를 적지 않은 부분이라도
+// 그 방이 있을 수 있으므로 'maybe'. (그런 기준은 use 보다 지표 electrical_room_area 로 쓰는 것을 권장)
+const hasAuxiliary = (targets, index) => targets.some((t) => !isGroupCode(t) && index.uses.get(t) && !index.uses.get(t).group);
+
 function termCoverage(term, targets, index) {
   if (term.use) {
     const u = index.uses.get(term.use);
-    return targets.some((t) => t === term.use || (u?.group && t === u.group)) ? 'yes' : 'no';
+    if (targets.some((t) => t === term.use || (u?.group && t === u.group))) return 'yes';
+    return hasAuxiliary(targets, index) ? 'maybe' : 'no';
   }
   let maybe = false;
   for (const t of targets) {

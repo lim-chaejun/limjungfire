@@ -48,3 +48,44 @@ export function rowValidAt(row, ymd) {
   const end = row.end_date || '99999999';
   return start <= ymd && ymd <= end;
 }
+
+// 날짜를 전혀 모를 때 검사 구간의 시작 — 이후의 모든 개정 경계를 본다 (소방 기준은 이보다 늦게 생겼다.
+// JS Date.UTC 는 0~99년을 19xx 년으로 읽으므로 유효한 날짜인 1900년을 쓴다)
+export const EARLIEST = '19000101';
+
+// 기준일(refDate)과 개정 경계 검사 구간(window). status 'assumed' 인 기준일은 판정 근거(assumptions)에 표시된다.
+//   허가 신청일 답변 → 신청일(정책 applicationDateSelectsRows)
+//   허가일(확정) → [허가일 − 신청 구간, 허가일], 질문 '허가 신청일'
+//   허가일 후보 여럿(신축·증축 등 인허가 여러 건) → [가장 이른 날 − 신청 구간, 가장 늦은 날], 질문 '허가일'(기준 허가 선택)
+//   사용승인일만 → [승인일 − (추정 구간 + 신청 구간), 승인일], 질문 '허가일'
+//   날짜 없음 → [가장 이른 개정 경계, 오늘] — 허가 시점을 전혀 모르므로 모든 개정 경계를 본다, 질문 '허가일'
+export function resolveDateInfo(dates = {}, answers = {}, policy, today = todayYmd()) {
+  const W = policy.applicationWindowDays;
+  const application = normalizeYmd(answers.application_date);
+  const permitAnswer = normalizeYmd(answers.permit_date);
+  const permit = permitAnswer ? { value: permitAnswer, source: 'user', status: 'confirmed', candidates: [permitAnswer] } : dates.permit || null;
+  const approval = dates.approval?.value ? dates.approval : null;
+  const base = { permit: permit?.value ?? null, approval: approval?.value ?? null, today };
+  if (application && (policy.applicationDateSelectsRows || !permit?.value)) {
+    return { ...base, refDate: application, source: 'application', status: 'confirmed', window: null };
+  }
+  if (permit?.value) {
+    const cands = permit.candidates?.length ? permit.candidates : [permit.value];
+    const multiple = cands.length > 1;
+    const span = application ? null : { from: addDays(cands[0], -W), to: cands[cands.length - 1], question: multiple ? 'permit_date' : 'application_date' };
+    return {
+      ...base,
+      refDate: permit.value,
+      source: 'permit',
+      permitSource: permit.source,
+      status: permit.status,
+      permits: permit.permits,
+      window: span && span.from < span.to ? span : null,
+    };
+  }
+  if (approval) {
+    const from = addDays(approval.value, -(policy.approvalOnlyLookbackDays + W));
+    return { ...base, refDate: approval.value, source: 'approval', status: 'assumed', window: from < approval.value ? { from, to: approval.value, question: 'permit_date' } : null };
+  }
+  return { ...base, refDate: today, source: 'today', status: 'assumed', window: { from: EARLIEST, to: today, question: 'permit_date' } };
+}
