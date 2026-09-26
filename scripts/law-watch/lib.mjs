@@ -198,8 +198,11 @@ export function requestKey({ method, url, body = '' }) {
 // ───────────────────────── 파서 ─────────────────────────
 
 const normNo = (s) => String(s).replace(/^0+(?=\d)/, '');
+const LAW_ROW_CALL = 'lsViewLsHst2(';
+const ADM_ROW_CALL = 'admRulViewHst(';
+const stripComments = (s) => s.replace(/<!--[\s\S]*?-->/g, ' ');
 
-// 반복 호출 지점(onclick) 기준으로 조각을 나눈다 — <li> 구조가 바뀌어도 행 단위가 유지된다
+// 반복 호출 지점(onclick) 기준으로 조각을 나눈다 — 행 안의 마크업이 바뀌어도 행 단위가 유지된다
 function chunksAt(html, needle) {
   const starts = [];
   let i = html.indexOf(needle);
@@ -210,15 +213,29 @@ function chunksAt(html, needle) {
   return starts.map((s, k) => html.slice(s, k + 1 < starts.length ? starts[k + 1] : html.length));
 }
 
-// 법령 연혁 목록(lsHstListR.do). 한글 연혁 탭(lsHstDivKO)만 본다(영문 연혁 탭 제외).
+// 목록 항목(<li>) 수 = 호출 지점 수(해석 성공 + 실패) 여야 한다. 호출 함수 이름이 바뀐 행은 조각에서
+// 통째로 빠지므로, 어긋나면 해석 실패로 올린다(조용히 빠뜨리지 않음). 39개 기록 목록 모두 일치한다.
+function checkItemCount(scope, needle, parsed) {
+  const items = scope.split(/<li[\s>]/i).slice(1);
+  const calls = parsed.rows.length + parsed.unparsed.length;
+  if (items.length !== calls) {
+    const stray = items.find((li) => !li.includes(needle));
+    parsed.unparsed.push(
+      `목록 항목(<li>) ${items.length}개 ≠ 행(${needle}) ${calls}개${stray ? ` — 호출이 없는 항목: ${snippet(`<li ${stray}`, 150)}` : ''}`,
+    );
+  }
+  return parsed;
+}
+
+// 법령 연혁 목록(lsHstListR.do). 한글 연혁 탭(lsHstDivKO)만 본다(영문 연혁 탭 제외). 주석은 지우고 본다.
 export function parseLawList(html) {
-  const s = String(html ?? '');
+  const s = stripComments(String(html ?? ''));
   const ko = s.indexOf('id="lsHstDivKO"');
   const en = s.indexOf('id="lsHstDivENG"');
   const scope = ko >= 0 ? s.slice(ko, en > ko ? en : s.length) : s;
   const rows = [];
   const unparsed = [];
-  for (const chunk of chunksAt(scope, 'lsViewLsHst2(')) {
+  for (const chunk of chunksAt(scope, LAW_ROW_CALL)) {
     const m = RE_LAW_ROW.exec(chunk);
     if (!m) {
       unparsed.push(snippet(chunk, 200));
@@ -245,15 +262,15 @@ export function parseLawList(html) {
       altKey: null,
     });
   }
-  return { rows, unparsed };
+  return checkItemCount(scope, LAW_ROW_CALL, { rows, unparsed });
 }
 
 // 행정규칙(고시) 연혁 체인(admRulHstListR.do). 체인 안의 아무 seq 로 조회해도 전체가 온다.
 export function parseAdmChain(html) {
-  const s = String(html ?? '');
+  const s = stripComments(String(html ?? ''));
   const rows = [];
   const unparsed = [];
-  for (const chunk of chunksAt(s, 'admRulViewHst(')) {
+  for (const chunk of chunksAt(s, ADM_ROW_CALL)) {
     const m = RE_ADM_ROW.exec(chunk);
     const efYd = m ? parseKoDate(m[3]) : null;
     const prom = m ? RE_PROM.exec(m[4].trim()) : null;
@@ -276,7 +293,7 @@ export function parseAdmChain(html) {
       altKey: `${efYd}#${prom[2]}`, // seq 없는 옛 연혁 행과 맞추기 위한 대체 키
     });
   }
-  return { rows, unparsed };
+  return checkItemCount(s, ADM_ROW_CALL, { rows, unparsed });
 }
 
 // 이름 조회 래퍼 → 현행 버전 식별자
@@ -792,8 +809,11 @@ export function summaryLine(result) {
   const base = `소스 ${stats.sources}개 중 정상 ${stats.healthy}개 · 요청 ${stats.requests}회 · 기준일 ${fmtYmd(result.todayKst)}(KST)${only ? ` · 부분 실행(--only ${only.join(',')})` : ''}`;
   if (result.status === 'ok') return `**변경 없음** — ${only ? '지정한' : '모든'} 소스가 사이트 데이터와 일치합니다. (${base})`;
   if (result.status === 'changes') return `**법령 개정 반영 필요: ${changes.length}건** (${base})`;
-  const failed = new Set(errors.map((e) => e.sourceId)).size;
-  return `**감시 오류: 소스 ${failed}개 실패** — 정상 소스에서 감지된 개정 ${changes.length}건 (${base})`;
+  // sourceId '-' 는 소스가 아니라 실행 전체의 오류(CONFIG_INVALID, CROSSCHECK_UNAVAILABLE 등)
+  const failed = new Set(errors.map((e) => e.sourceId).filter((id) => id !== '-')).size;
+  const runLevel = [...new Set(errors.filter((e) => e.sourceId === '-').map((e) => e.code))];
+  const what = [failed ? `소스 ${failed}개 실패` : '', ...runLevel].filter(Boolean).join(', ') || '실행 실패';
+  return `**감시 오류: ${what}** — 정상 소스에서 감지된 개정 ${changes.length}건 (${base})`;
 }
 
 function changeDetails(c) {

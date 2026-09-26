@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { runChecks, loadDataDir, CHECKS } from '../../validate-data.mjs';
-import { MARKER_LAW, historyRowKey, parseState } from '../lib.mjs';
-import { SNAPSHOT, chainAware, copySnapshot, fakeClock, mutating, readJson, replay, runCheck, writeRegistry } from './helpers.mjs';
+import { MARKER_LAW, historyRowKey, parseState, wrapperRequest } from '../lib.mjs';
+import { SNAPSHOT, chainAware, copySnapshot, fakeClock, mutating, readJson, replay, runCheck, tmpDir, writeRegistry } from './helpers.mjs';
 
 // 2026-09-26 law.go.kr 기준, origin/main 연혁 데이터에 없는 개정 13건
 const GOLDEN = [
@@ -211,13 +211,72 @@ test('고장: 현행(Y) 행이 없으면 CURRENT_NOT_UNIQUE', async () => {
   assert.equal(result.errors[0].code, 'CURRENT_NOT_UNIQUE');
 });
 
-test('래퍼가 메인 페이지를 주면 NAME_LOOKUP_MISS 경고만 (exit 는 변경 여부로)', async () => {
-  const fetchImpl = mutating(replay(), (r) => (r.url.includes('/%EB%B2%95%EB%A0%B9/') ? { text: '<html><head><title>국가법령정보센터</title></head><body>메인</body></html>' } : null));
-  const { code, result } = await runCheck({ fetchImpl, args: ['--only', 'act,decree'] });
+const MAIN_PAGE = '<html><head><title>국가법령정보센터</title></head><body>메인</body></html>';
+const LAW_WRAPPER = '/%EB%B2%95%EB%A0%B9/'; // /법령/
+const ADM_WRAPPER = '/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/'; // /행정규칙/
+
+test('래퍼가 메인 페이지를 주는 소스가 절반 미만이면 NAME_LOOKUP_MISS 경고만 (exit 는 변경 여부로)', async () => {
+  const actWrapper = wrapperRequest('law', '소방시설 설치 및 관리에 관한 법률').url;
+  const fetchImpl = mutating(replay(), (r) => (r.url === actWrapper ? { text: MAIN_PAGE } : null));
+  const { code, result } = await runCheck({ fetchImpl, args: ['--only', 'act,decree,rules'] });
   assert.equal(code, 10);
   assert.deepEqual(result.errors, []);
-  assert.deepEqual(result.warnings.map((w) => `${w.sourceId}:${w.code}`), ['act:NAME_LOOKUP_MISS', 'decree:NAME_LOOKUP_MISS']);
-  assert.equal(result.changes.length, 2);
+  assert.deepEqual(result.warnings.map((w) => `${w.sourceId}:${w.code}`), ['act:NAME_LOOKUP_MISS']);
+  assert.equal(result.changes.length, 3);
+});
+
+test('교차검증을 절반 이상에서 못 하면 CROSSCHECK_UNAVAILABLE 실행 오류, exit 20 (감지한 개정은 그대로 보고)', async () => {
+  const laws = mutating(replay(), (r) => (r.url.includes(LAW_WRAPPER) ? { text: MAIN_PAGE } : null));
+  const a = await runCheck({ fetchImpl: laws, args: ['--only', 'act,decree'] });
+  assert.equal(a.code, 20);
+  assert.deepEqual(a.result.errors.map((e) => `${e.sourceId}:${e.code}`), ['-:CROSSCHECK_UNAVAILABLE']);
+  assert.match(a.result.errors[0].detail, /2개 소스 중 2개/);
+  assert.deepEqual(a.result.warnings.map((w) => w.code), ['NAME_LOOKUP_MISS', 'NAME_LOOKUP_MISS']);
+  assert.equal(a.result.changes.length, 2);
+  assert.equal(a.result.stats.healthy, 2, '소스 자체는 정상');
+  assert.match(a.report, /\*\*감시 오류: CROSSCHECK_UNAVAILABLE\*\*/);
+
+  // 재현(리뷰): 행정규칙 래퍼 형식만 바뀐 전체 실행 — 예전에는 경고 36개와 함께 exit 10 이었다
+  const adm = mutating(replay(), (r) => (r.url.includes(ADM_WRAPPER) ? { text: '<html>main</html>' } : null));
+  const b = await runCheck({ fetchImpl: adm });
+  assert.equal(b.code, 20);
+  assert.equal(b.result.warnings.filter((w) => w.code === 'NAME_LOOKUP_MISS').length, 36);
+  assert.match(b.result.errors.at(-1).detail, /39개 소스 중 36개/);
+
+  // 래퍼 요청 자체가 실패해도(CROSSCHECK_SKIPPED) 같다. --no-crosscheck 는 시도하지 않으므로 해당 없음
+  const down = mutating(replay(), (r) => (r.url.includes(LAW_WRAPPER) ? { status: 404, text: 'nf' } : null));
+  const c = await runCheck({ fetchImpl: down, args: ['--only', 'decree'] });
+  assert.deepEqual([c.code, c.result.warnings[0].code, c.result.errors[0].code], [20, 'CROSSCHECK_SKIPPED', 'CROSSCHECK_UNAVAILABLE']);
+  const off = await runCheck({ fetchImpl: down, args: ['--only', 'decree', '--no-crosscheck'] });
+  assert.equal(off.code, 10);
+});
+
+test('재현(리뷰): NFPC 108 최신 행의 onclick 이름만 바뀌면 PARSE_BAD_ROW (예전: 행이 조용히 빠져 exit 0)', async () => {
+  const rename = (r) =>
+    r.url.endsWith('/admRulHstListR.do') && r.body === 'admRulSeq=2100000253098'
+      ? { text: r.text.replace("admRulViewHst('Y','2100000278572')", "admRulViewHstNew('Y','2100000278572')") }
+      : null;
+  const brokenWrapper = (r) => (r.url.includes(ADM_WRAPPER) ? { text: '<html>main</html>' } : null);
+  for (const edit of [rename, (r) => rename(r) ?? brokenWrapper(r)]) {
+    const { code, result } = await runCheck({ fetchImpl: mutating(replay(), edit), args: ['--only', 'nfpc-108'] });
+    assert.equal(code, 20);
+    assert.equal(result.errors[0].code, 'PARSE_BAD_ROW');
+    assert.match(result.errors[0].snippet, /<li>\) 11개 ≠ .* 10개/);
+  }
+});
+
+test('GITHUB_STEP_SUMMARY 가 있으면 보고서(경고·오류 포함)를 실행 요약에 덧붙인다', async () => {
+  const file = path.join(tmpDir('law-watch-summary-'), 'summary.md');
+  fs.writeFileSync(file, '# 앞 단계\n');
+  const { report } = await runCheck({ stepSummary: file });
+  const text = fs.readFileSync(file, 'utf8');
+  assert.ok(text.startsWith('# 앞 단계\n'), '덧붙이기(append)');
+  assert.ok(text.includes(report));
+  assert.match(text, /### 경고\n- `nfpc-107` \*\*ROW_WITHOUT_SEQ\*\*/);
+  // 설정 오류로 끝나도 남긴다
+  const bad = await runCheck({ stepSummary: file, args: ['--only', 'no-such-source'] });
+  assert.equal(bad.code, 30);
+  assert.match(fs.readFileSync(file, 'utf8'), /CONFIG_INVALID/);
 });
 
 test('래퍼가 다른 현행 버전을 가리키면 CROSSCHECK_MISMATCH, exit 20', async () => {

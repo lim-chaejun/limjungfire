@@ -88,6 +88,7 @@ export async function runCheck({ args = [], dataDir = SNAPSHOT, registry = REGIS
     log: (m) => logs.push(m),
     print: (m) => logs.push(m),
     runUrl: '',
+    stepSummary: '', // CI 에서 테스트가 실제 실행 요약($GITHUB_STEP_SUMMARY)에 쓰지 않도록
     ...deps,
   });
   const read = (f) => (fs.existsSync(path.join(out, f)) ? fs.readFileSync(path.join(out, f), 'utf8') : null);

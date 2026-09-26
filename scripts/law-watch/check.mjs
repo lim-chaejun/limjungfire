@@ -367,16 +367,18 @@ async function checkSource(src, ctx) {
     return out;
   }
 
-  // 3) 이름 교차검증 (래퍼를 못 가져오면 경고만)
+  // 3) 이름 교차검증 (래퍼를 못 가져오면 소스는 경고만 — 절반 이상이면 checkMode 가 실행 오류로 올린다)
   if (crosscheck) {
     const wreq = wrapperRequest(src.kind, src.name);
     const w = await get(wreq);
     if (w.budget) return fail(w.error.code, { url: wreq.url, detail: w.error.message });
+    out.crosscheck = 'unavailable';
     if (w.error) warn('CROSSCHECK_SKIPPED', `래퍼 요청 실패: ${w.error.message}`);
     else if (w.res.status !== 200) warn('CROSSCHECK_SKIPPED', `래퍼 HTTP ${w.res.status}`);
     else {
       const cc = crossCheck(src, parsed.rows, parseWrapper(w.res.text));
       if (cc.warning) warn(cc.warning.code, cc.warning.detail);
+      else out.crosscheck = 'done';
       if (cc.error) return fail(cc.error.code, { url: wreq.url, http: w.res.status, bytes: w.res.bytes, detail: cc.error.detail });
     }
   }
@@ -428,6 +430,17 @@ function writeOutputs(outDir, result, runUrl) {
   return report;
 }
 
+// GitHub Actions 실행 요약($GITHUB_STEP_SUMMARY)에 보고서를 붙인다 — 정상 실행의 경고처럼
+// 이슈에 드러나지 않는 내용도 실행 페이지에서 보이게. 부가 기능이라 실패해도 결과는 그대로다.
+function appendStepSummary(file, report, log) {
+  if (!file) return;
+  try {
+    fs.appendFileSync(file, `${report}\n`);
+  } catch (e) {
+    log(`실행 요약을 쓰지 못함: ${e.message}`);
+  }
+}
+
 export function applyHistory(changes, dataDir = DEFAULT_DATA_DIR) {
   const byFile = new Map();
   for (const c of changes) {
@@ -458,17 +471,19 @@ async function checkMode(opts, deps) {
   const runAt = new Date(t0).toISOString();
   const outDir = path.resolve(opts.out ?? defaultOutDir(t0));
   const runUrl = deps.runUrl ?? process.env.RUN_URL ?? '';
+  const stepSummary = deps.stepSummary ?? process.env.GITHUB_STEP_SUMMARY;
   let config;
   try {
     config = loadConfig({ registry: opts.registry, dataDir: opts.dataDir, only: opts.only });
   } catch (e) {
     if (e instanceof ConfigError) {
-      writeOutputs(outDir, {
+      const report = writeOutputs(outDir, {
         schemaVersion: 1, runAt, todayKst: opts.today ?? todayKst(new Date(t0)), status: 'broken', exitCode: EXIT.CONFIG,
         scope: opts.only ? { only: opts.only, sources: [] } : null,
         fingerprint: fingerprint([]), stats: { sources: 0, healthy: 0, requests: 0, ms: now() - t0 },
         changes: [], warnings: [], errors: [{ sourceId: '-', code: 'CONFIG_INVALID', detail: e.message }],
       }, runUrl);
+      appendStepSummary(stepSummary, report, log);
     }
     throw e;
   }
@@ -494,6 +509,7 @@ async function checkMode(opts, deps) {
   const errors = [];
   let healthy = 0;
   let outageRun = 0; // 목록 요청이 장애로 실패한 연속 소스 수
+  const cc = { tried: 0, missed: 0 }; // 이름 교차검증을 시도한 소스 / 그중 하지 못한 소스
   const n = config.sources.length;
   for (const [i, src] of config.sources.entries()) {
     let r;
@@ -509,6 +525,10 @@ async function checkMode(opts, deps) {
       }
       outageRun = r.outage ? outageRun + 1 : 0;
     }
+    if (r.crosscheck) {
+      cc.tried++;
+      if (r.crosscheck === 'unavailable') cc.missed++;
+    }
     changes.push(...r.changes);
     warnings.push(...r.warnings);
     errors.push(...r.errors);
@@ -517,6 +537,14 @@ async function checkMode(opts, deps) {
     log(`[${String(i + 1).padStart(2)}/${n}] ${src.id.padEnd(12)} ${note}`);
   }
   if (ctx.enrich.capped) warnings.push({ sourceId: '-', code: 'ENRICH_CAPPED', detail: `개정문 조회 상한 ${ENRICH_CAP}건을 넘어 나머지는 발췌 없이 보고` });
+  // 교차검증이 절반 이상에서 안 되면 안전망이 사실상 꺼진 것 — 경고가 아니라 실행 오류(exit 20)
+  if (cc.tried && cc.missed * 2 >= cc.tried) {
+    errors.push({
+      sourceId: '-',
+      code: 'CROSSCHECK_UNAVAILABLE',
+      detail: `이름 교차검증을 ${cc.tried}개 소스 중 ${cc.missed}개에서 하지 못함(절반 이상) — 래퍼 페이지 형식이 바뀌었거나 이름 조회가 막혔을 수 있음`,
+    });
+  }
 
   const exitCode = exitCodeFor(changes, errors);
   const result = {
@@ -532,7 +560,7 @@ async function checkMode(opts, deps) {
     warnings,
     errors,
   };
-  writeOutputs(outDir, result, runUrl);
+  appendStepSummary(stepSummary, writeOutputs(outDir, result, runUrl), log);
   if (recorder) recorder.finish({ runAt, todayKst: today });
   log(`결과: ${result.status} (exit ${exitCode}) · 변경 ${changes.length} · 경고 ${warnings.length} · 오류 ${errors.length} · 요청 ${http.count} → ${outDir}`);
 

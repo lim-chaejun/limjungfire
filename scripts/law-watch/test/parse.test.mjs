@@ -1,6 +1,8 @@
 // 파서 — 2026-09-26 기록 원문으로 검증
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   RE_PROM,
   RE_TRANSIT,
@@ -17,7 +19,7 @@ import {
   transitionalSummary,
   wrapperRequest,
 } from '../lib.mjs';
-import { fixtureText } from './helpers.mjs';
+import { FIX, fixtureText } from './helpers.mjs';
 
 const DECREE = '소방시설 설치 및 관리에 관한 법률 시행령';
 
@@ -72,6 +74,38 @@ test('NFPC 107/107A 체인: 본문 없는 옛 버전(seq 비어 있던 행)도 �
   assert.ok(c107.some((r) => r.altKey === '20061230#2006-19'));
   const c107a = parseAdmChain(fixtureText(admChainRequest('2100000243628'))).rows;
   assert.ok(c107a.some((r) => r.altKey === '20090824#2009-31'));
+});
+
+test('기록한 목록 39개 모두: <li> 수 = 행 수 (해석 실패 0)', () => {
+  const index = JSON.parse(fs.readFileSync(path.join(FIX, 'index.json'), 'utf8'));
+  let lists = 0;
+  for (const e of Object.values(index.entries)) {
+    const parse = e.url.endsWith('/lsHstListR.do') ? parseLawList : e.url.endsWith('/admRulHstListR.do') ? parseAdmChain : null;
+    if (!parse) continue;
+    lists++;
+    const { rows, unparsed } = parse(fs.readFileSync(path.join(FIX, e.file), 'utf8'));
+    assert.deepEqual(unparsed, [], e.body);
+    assert.ok(rows.length > 0, e.body);
+  }
+  assert.equal(lists, 39);
+});
+
+test('호출 함수 이름이 바뀐 행은 <li> 수 대조로 해석 실패가 된다 (조용히 빠지지 않음), 주석 속 행은 세지 않는다', () => {
+  const decree = fixtureText(lawListRequest('009694'));
+  const renamed = parseLawList(decree.replace("lsViewLsHst2('287375'", "lsViewLsHst3('287375'"));
+  assert.equal(renamed.rows.length, 78);
+  assert.equal(renamed.unparsed.length, 1);
+  assert.match(renamed.unparsed[0], /목록 항목\(<li>\) 79개 ≠ 행\(lsViewLsHst2\(\) 78개 — 호출이 없는 항목: 2\. 소방시설 설치 및 관리에 관한 법률 시행령 \[시행 2026\. 7\. 1\.\] \[대통령령 제36432호/);
+
+  const chain = fixtureText(admChainRequest('2100000253098'));
+  const adm = parseAdmChain(chain.replace("admRulViewHst('Y','2100000278572')", "admRulViewHstNew('Y','2100000278572')"));
+  assert.deepEqual([adm.rows.length, adm.unparsed.length], [10, 1]);
+  assert.match(adm.unparsed[0], /11개 ≠ .* 10개 — 호출이 없는 항목: 1\. 분말소화설비의 화재안전성능기준\(NFPC 108\) \[시행 2026\. 5\. 4\.\] \[소방청고시 제2026-15호/);
+
+  // 주석으로 감춘 행은 화면에 없으므로 행으로도 <li> 로도 세지 않는다
+  const hidden = parseLawList(decree.replace(/(<li style="width:auto">(?:(?!<\/li>)[\s\S])*'287375'[\s\S]*?<\/li>)/, '<!-- $1 -->'));
+  assert.deepEqual([hidden.rows.length, hidden.unparsed.length], [78, 0]);
+  assert.ok(!hidden.rows.some((r) => r.seq === '287375'));
 });
 
 test('래퍼: iframe src 의 &amp; 를 풀어 lsiSeq·efYd / admRulSeq 를 읽는다', () => {

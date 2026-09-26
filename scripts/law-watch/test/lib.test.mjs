@@ -330,7 +330,7 @@ test('fingerprint 는 순서와 무관, todayKst 는 UTC+9', () => {
 test('기본 --out 은 저장소 밖(os.tmpdir 아래)이다', async () => {
   const { main } = await import('../check.mjs');
   const logs = [];
-  const code = await main(['--replay', path.join(SNAPSHOT, '..'), '--data-dir', SNAPSHOT, '--registry', REGISTRY, '--only', 'act'], { log: (m) => logs.push(m), runUrl: '' });
+  const code = await main(['--replay', path.join(SNAPSHOT, '..'), '--data-dir', SNAPSHOT, '--registry', REGISTRY, '--only', 'act'], { log: (m) => logs.push(m), runUrl: '', stepSummary: '' });
   assert.equal(code, 0);
   const outLine = logs.find((l) => l.startsWith('결과:'));
   const out = path.resolve(outLine.slice(outLine.lastIndexOf('→') + 1).trim());
