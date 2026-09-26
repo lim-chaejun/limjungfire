@@ -632,11 +632,18 @@ export function analyzeSource(src, base, live) {
     if (r.altKey) liveKeys.add(r.altKey);
   }
   const knownLive = [...base.keys].filter((k) => liveKeys.has(k));
+  // 법령 앵커(맨 앞 행, 흔히 시행예정)의 lsiSeq 가 새 시행일로 살아 있으면 시행일이 바뀐 것(연기 등)이다
+  // → 오류가 아니라 변경으로 알린다(새 키는 pending 에 잡힌다). seq 까지 없으면 ANCHOR_MISSING 그대로.
+  const anchorSeq = src.kind === 'law' && base.anchorKey ? base.anchorKey.split(':')[1] : null;
+  const rekeyed = anchorSeq && !liveKeys.has(base.anchorKey) ? live.find((r) => r.seq === anchorSeq && !base.keys.has(r.key)) : null;
+  if (rekeyed) {
+    warnings.push({ code: 'ANCHOR_REKEYED', detail: `기준 키 ${base.anchorKey} 의 시행일이 ${rekeyed.efYd} 로 바뀜(${rekeyed.key}) — 변경으로 보고. 옛 시행일 행은 연혁·기준 파일에서 고쳐야 함` });
+  }
   if (base.keys.size === 0) {
     errors.push({ code: 'ANCHOR_MISSING', detail: '기준선 키가 비어 있음 — --bootstrap 으로 baseline.known 을 채우세요' });
   } else if (knownLive.length === 0) {
     errors.push({ code: 'ANCHOR_MISSING', detail: `기준선 키 ${base.keys.size}개 중 라이브 목록에 있는 것이 하나도 없음` });
-  } else if (base.anchorKey && !liveKeys.has(base.anchorKey)) {
+  } else if (base.anchorKey && !liveKeys.has(base.anchorKey) && !rekeyed) {
     errors.push({ code: 'ANCHOR_MISSING', detail: `기준 키 ${base.anchorKey} 가 라이브 목록에 없음` });
   } else if (live.length < base.keys.size) {
     errors.push({ code: 'LIVE_SHRUNK', detail: `라이브 ${live.length}행 < 기준선 ${base.keys.size}행` });

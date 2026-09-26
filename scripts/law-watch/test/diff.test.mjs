@@ -193,6 +193,34 @@ test('고장: 앵커 행이 사라지면 ANCHOR_MISSING (고시 체인 · 법령
   assert.deepEqual(b.result.errors.map((e) => e.code), ['ANCHOR_MISSING']);
 });
 
+test('앵커(시행예정 행)의 시행일만 바뀌면(같은 lsiSeq) 오류가 아니라 변경 + ANCHOR_REKEYED 경고', async () => {
+  const postpone = mutating(replay(), (r) =>
+    isDecreeList(r)
+      ? { text: r.text.replace("lsViewLsHst2('267669', '20241231', '35151', '20270101'", "lsViewLsHst2('267669', '20241231', '35151', '20280101'").replace('[시행 2027. 1. 1.]', '[시행 2028. 1. 1.]') }
+      : null,
+  );
+  const { code, result } = await runCheck({ fetchImpl: postpone, args: ['--only', 'decree'] });
+  assert.equal(code, 10);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.changes.map((c) => c.id).sort(), ['decree:20260324:284781', 'decree:20260701:287375', 'decree:20280101:267669']);
+  const moved = result.changes.find((c) => c.id === 'decree:20280101:267669');
+  assert.deepEqual([moved.isFuture, moved.suggestedRow.effective_date, moved.suggestedRow.law_no], [true, '20280101', '제35151호']);
+  const byCode = Object.fromEntries(result.warnings.map((w) => [w.code, w.detail]));
+  assert.match(byCode.ANCHOR_REKEYED, /20270101:267669 의 시행일이 20280101 로 바뀜/);
+  assert.match(byCode.KNOWN_NOT_LIVE, /20270101:267669/);
+
+  // lsiSeq 가 이미 아는 다른 시행일로만 남아 있으면(새 키 없음) 여전히 ANCHOR_MISSING — 법률 236977(2024·2022 시행)
+  const dropAnchor = mutating(replay(), (r) =>
+    r.url.endsWith('/lsHstListR.do') && r.body.includes('lsId=009503')
+      ? { text: r.text.replace(/<li style="width:auto">(?:(?!<\/li>)[\s\S])*'236977', '20211130', '18522', '20241201'[\s\S]*?<\/li>/, '') }
+      : null,
+  );
+  const act = await runCheck({ fetchImpl: dropAnchor, args: ['--only', 'act'] });
+  assert.equal(act.code, 20);
+  assert.ok(act.result.errors.some((e) => e.code === 'ANCHOR_MISSING'), JSON.stringify(act.result.errors));
+  assert.ok(!act.result.warnings.some((w) => w.code === 'ANCHOR_REKEYED'));
+});
+
 test('고장: 목록이 잘려 기준선보다 짧으면 LIVE_SHRUNK', async () => {
   const fetchImpl = mutating(replay(), (r) => {
     if (!isDecreeList(r)) return null;
