@@ -146,7 +146,8 @@ export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useInde
         ? [{ dong: d.id, type_code: null, status: 'unmapped', message: '용도 미분류 — v2 미평가' }]
         : d.files.filter((f) => f.status !== 'v2').map((f) => ({ dong: d.id, ...f })),
     ),
-    warnings: building.warnings || [],
+    // 정규화 경고(대장끼리 불일치 등) + 평가 경고(답변한 면적이 연면적과 모순 등)
+    warnings: [...(building.warnings || []), ...dongs.flatMap((d) => d.warnings || [])],
     verdictLabels: VERDICT,
   };
 }

@@ -8,16 +8,20 @@
 //      모두 T → 해당 / 시기마다 다르거나 U 가 있으면 → 확인 필요
 //   2. 모두 F 이면, 가정값을 모두 풀어(무창층·수동 입력 지하층·복합건축물 가정 → 모름) 각 시기마다 다시 평가
 //      모두 F → 비해당 / 하나라도 F 가 아니면 → 확인 필요
-//   Kleene 3값은 단조(입력을 모름으로 바꾸면 T·F 가 U 로만 바뀜)이므로, 푼 평가에서도 F 인 비해당은
-//   어떤 가정값·시기 조합에서도 F 다(불변식 — property.test.mjs 가 끝값·무작위 답변 조합으로 확인한다).
+//   이 재평가가 건전하려면 평가 전체가 단조여야 한다 — 어떤 입력을 모름에서 값으로 좁혀도 이미 확정된 T·F 는 바뀌지 않아야 한다.
+//   Kleene 논리·구간 비교는 그 자체로 단조이고, 사실에서 값을 추론하는 단계는 conditions.js 에서 모름을 확정값으로 바꾸지 않게 제한한다
+//   (면적 항등식은 모순 없을 때만, 층 목록이 불완전할 때 표제부 용도는 모름, 보충한 층에 표제부 용도가 여럿이면 모름).
+//   그러면 푼 평가에서도 F 인 비해당은 어떤 가정값·시기 조합에서도 F 다 — property.test.mjs(끝값·무작위 답변 조합)와
+//   monotonicity.test.mjs(무작위 건물·기준에서 묻는 질문에 답해 가는 산책)가 확인한다.
 // 질문 선별: 확인 필요일 때 확정이 아닌 입력마다 시험값을 넣어 판정이 바뀌는지 본다(한 입력으로 바뀌면 결정적).
 //   결정적 입력이 없으면 관련 입력을 모두 함께 묻는다(jointQuestions). 시험 예산을 넘겨도 모두 함께 묻는다.
 
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
 import { addDays, formatYmd, resolveDateInfo, rowValidAt } from './dates.js';
-import { evalCondition, floorMember, floorsOf, makeEnv } from './conditions.js';
+import { areaIdentity, evalCondition, floorMember, floorsOf, makeEnv, metric, rawFloorArea } from './conditions.js';
 import { DATE_INPUTS, buildQuestion, constantsFor, extremeValues, testValues } from './questions.js';
+import { fmtNum } from './format.js';
 
 export const VERDICT = Object.freeze({ T: '해당', U: '확인 필요', F: '비해당' });
 
@@ -544,6 +548,28 @@ const tally = (facilities) => ({
   notApplicable: facilities.filter((f) => f.value === F).length,
 });
 
+const AREA_ANSWER_RE = /^(floor_area|part_area\[[^\]]*\]|total_area)@(.*)$/;
+
+// 답변한 면적이 연면적·층별개요와 맞지 않으면 경고 — 한 층이 연면적보다 크거나, 층수를 알 때 층 면적 합이 연면적과 모순
+// (이때 엔진은 모순된 쪽으로 추론하지 않으며, 그런 답은 단조성 보장 밖이다)
+function areaAnswerWarnings(dong, env, answers) {
+  const mine = Object.keys(answers).some((k) => {
+    const m = AREA_ANSWER_RE.exec(k);
+    return m && (m[2] === dong.id || m[2].startsWith(`${dong.id}/`));
+  });
+  if (!mine) return [];
+  const total = metric(env, 'total_area');
+  const totalText = total.lo === total.hi ? fmtNum(total.lo) : `${fmtNum(total.lo)}~${fmtNum(total.hi)}`;
+  const over = floorsOf(env).floors.filter((f) => rawFloorArea(env, f).lo > total.hi + 1e-6);
+  if (over.length) {
+    return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: ${over.map((f) => f.label).join('·')} 면적(답변 포함)이 연면적 ${totalText}㎡ 보다 큼 — 면적 답변을 확인해 주세요` }];
+  }
+  const id = areaIdentity(env);
+  if (!id || id.consistent) return [];
+  const sum = id.lo === id.hi + id.roofHi ? fmtNum(id.lo) : `${fmtNum(id.lo)}~${fmtNum(id.hi + id.roofHi)}`;
+  return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: 답변을 반영한 층 면적 합계 ${sum}㎡ 가 연면적 ${totalText}㎡ 와 맞지 않음 — 면적 답변을 확인해 주세요` }];
+}
+
 // bctx = { dataFiles, index, inputDefs, names, exemptions, answers, policy, today, dates, dateInfo }
 export function evaluateDong(dong, bctx) {
   const files = dong.typeCodes.map((code) => classifyFile(code, bctx.dataFiles?.[code]));
@@ -580,7 +606,8 @@ export function evaluateDong(dong, bctx) {
     pendingV1: files.filter((f) => f.status !== 'v2').map((f) => f.type_code),
   };
   dctx.dateInfo = dateInfoFor(dctx, dctx.answers);
-  dctx.floorOrder = new Map(floorsOf(getPass(dctx, dctx.dateInfo.refDate, false, dctx.answers, '').env).floors.map((f, i) => [f.key, i]));
+  const baseEnv = getPass(dctx, dctx.dateInfo.refDate, false, dctx.answers, '').env;
+  dctx.floorOrder = new Map(floorsOf(baseEnv).floors.map((f, i) => [f.key, i]));
   const facilities = [...defs.keys()].map((fid) => finalizeFacility(fid, dctx));
   const questions = [];
   for (const q of facilities.flatMap((f) => f.questions)) if (!questions.some((x) => x.key === q.key)) questions.push(q);
@@ -591,5 +618,6 @@ export function evaluateDong(dong, bctx) {
     facilities,
     questions,
     counts: tally(facilities),
+    warnings: areaAnswerWarnings(dong, baseEnv, dctx.answers),
   };
 }

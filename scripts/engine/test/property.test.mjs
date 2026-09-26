@@ -12,6 +12,7 @@ import { addDays } from '../../../js/engine/dates.js';
 import { nodeType, normalizeFloors, numericConstants, rowConditionRoots, stableKey, walkConditions } from '../../../js/engine/schema.js';
 import { FACILITIES, FIXTURE_SET, INDEX, INPUTS, TODAY, loadBuildingFixtures } from './helpers.mjs';
 import { CASES } from './review-cases.mjs';
+import { areasConsistent, isExactConfirmed } from './answer-model.mjs';
 
 const SAMPLES = Number(process.env.ENGINE_PROPERTY_SAMPLES) || 12;
 const DEFS = new Map(INPUTS.inputs.map((d) => [d.id, d]));
@@ -100,7 +101,6 @@ function numericDomain(lo, hi, integer, consts) {
   return [...vals].filter((v) => v >= lo && v <= top && (!integer || Number.isInteger(v))).sort((a, b) => a - b);
 }
 
-const isExactConfirmed = (iv) => iv.lo === iv.hi && !iv.open.length && [...iv.loDeps, ...iv.hiDeps].every((d) => d.status === CONFIRMED);
 const hasAssumed = (iv) => [...iv.loDeps, ...iv.hiDeps].some((d) => d.status !== CONFIRMED);
 
 // 모형이 허용하는 값 범위: 가정값이면 입력 정의 range 전체(가정을 푼 값), 아니면 지금 구간
@@ -245,8 +245,11 @@ function checkScenario(sc) {
   for (const d of base.dongs) for (const f of d.facilities) if (f.verdict === '비해당') notApplicable.push([d.id, f.id]);
   if (!notApplicable.length) return { checked: 0, combos: 0 };
   const universe = answerUniverse(sc, base);
+  const building = normalize(sc.input, sc.policy);
   let combos = 0;
   for (const a of assignments(universe, hash(sc.id))) {
+    // 연면적과 모순되는 면적 답변 조합은 모형 밖(엔진이 AREA_ANSWER_MISMATCH 로 경고) — 거른다
+    if (!areasConsistent(building, { ...sc.answers, ...a })) continue;
     combos++;
     const r = run(sc, a);
     for (const [dongId, fid] of notApplicable) {

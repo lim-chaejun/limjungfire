@@ -60,6 +60,14 @@ function areaText(area) {
   return Number.isFinite(hi) && hi > 0 ? `(최대 ${fmtNum(hi)}㎡)` : '';
 }
 
+function answerRange(known, defined) {
+  if (!known) return defined ? [...defined] : null;
+  if (!defined) return known;
+  const lo = Math.max(known[0], defined[0]);
+  const hi = Math.min(known[1], defined[1]);
+  return lo <= hi ? [lo, hi] : known;
+}
+
 // dep → { key, input, dong, floor, type, unit, label, text, status, range }
 export function buildQuestion(dep, { inputDefs, index, names = new Map() }) {
   const def = inputDefs.get(dep.input) || { label: dep.input, type: 'boolean' };
@@ -81,7 +89,9 @@ export function buildQuestion(dep, { inputDefs, index, names = new Map() }) {
   const fallback = `${vars.where ? `${vars.where} — ` : ''}${label}${josa(label, '을', '를')} 확인해 주세요.`;
   const text = info.question || (def.question ? fill(def.question, vars) : fallback);
   const q = { key: dep.key, input: dep.input, dong: dep.dong ?? null, floor: dep.floor ?? null, type: def.type ?? 'boolean', unit: def.unit ?? '', label: def.label ?? dep.input, text, status: dep.status };
-  if (dep.range) q.range = dep.range;
+  // 답할 수 있는 범위: 지금 알려진 구간 ∩ 입력 정의의 range (예: 지하층수 [2, ∞) ∩ [0, 30] → [2, 30])
+  const range = answerRange(dep.range, def.range);
+  if (range) q.range = range;
   if (dep.status === ASSUMED || dep.released) q.note = '가정값(정책 기본값)으로 두면 판정을 확정할 수 없어 확인이 필요합니다';
   return q;
 }

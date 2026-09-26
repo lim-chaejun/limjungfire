@@ -26,6 +26,12 @@ const BASEMENT_UNKNOWN = {
 };
 const ROW_HOUSE = (extra = {}) => ({ title: [{ dongNm: 'A동', mainPurpsCdNm: '공동주택', etcPurps: '연립주택', totArea: 1200, grndFlrCnt: 4, ugrndFlrCnt: 0, hhldCnt: 16, ...extra }] });
 const APT8 = (permits) => ({ title: [{ dongNm: 'A동', mainPurpsCdNm: '공동주택', etcPurps: '아파트', totArea: 4000, grndFlrCnt: 8, ugrndFlrCnt: 0, hhldCnt: 32 }], permit: permits });
+const SINGING_150 = { '02': v2('02', [{ facility_id: 'smoke_control', facility_name: '제연설비', regulations: [row('k', { sum_area: { use: ['singing_room'] }, gte: 150 })] }]) };
+// N1: 층별개요 400 + 400 = 800 < 연면적 1,000 (200㎡ 는 어느 층인지 모름)
+const N1_BUILDING = { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1000, grndFlrCnt: 2, ugrndFlrCnt: 0 }], floors: [nc2(1, '소매점', 400), nc2(2, '소매점', 400)], permit: [permit('20150101')] };
+const windowlessSum = (cmp) => ({ '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('w', { sum_area: { floors: ['windowless'] }, ...cmp })] }]) });
+// N2: 지하층수 빈칸(층 목록 불완전), 표제부 소매점·노래연습장, 1층 행은 용도 미상
+const N2_BUILDING = { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: '' }], floors: [nc2(1, '', 600)], permit: [permit('20150101')] };
 // 개정 경계(2026.03.01)를 사이에 둔 두 기준: 옛 기준은 지하층 포함 7개층, 새 기준은 지상 11층
 const STANDPIPE_BOUNDARY = { '02': v2('02', [{ facility_id: 'standpipe', facility_name: '연결송수관설비', regulations: [
   { id: 'old', start_date: null, end_date: '20260228', criteria: '지하층 포함 7개층 이상', kind: 'trigger', conditions: { m: 'floors_incl_basement', gte: 7 }, scope: 'all_floors' },
@@ -86,9 +92,54 @@ export const CASES = [
   },
   {
     id: 'ce7-multipart',
-    title: 'M6 한 층이 두 행, 한 행 면적 빈칸',
+    title: 'M6 한 층이 두 행, 한 행 면적 빈칸 (층이 하나뿐이라 면적 항등식으로 정해짐)',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: 0 }], floors: [nc2(1, '소매점', 300), nc2(1, '노래연습장', '')], permit: [permit('20150101')] } },
-    dataFiles: { '02': v2('02', [{ facility_id: 'smoke_control', facility_name: '제연설비', regulations: [row('k', { sum_area: { use: ['singing_room'] }, gte: 150 })] }]) },
+    dataFiles: SINGING_150,
+  },
+  {
+    id: 'ce7b-multipart-open',
+    title: 'M6 같은 층 구성 + 면적 미상인 2층(소매점) — 빈 행 면적은 부분 질문',
+    input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점, 노래연습장', totArea: 900, grndFlrCnt: 2, ugrndFlrCnt: 0 }], floors: [nc2(1, '소매점', 300), nc2(1, '노래연습장', ''), nc2(2, '소매점', '')], permit: [permit('20150101')] } },
+    dataFiles: SINGING_150,
+  },
+  // ── 2차 리뷰: 단조성(재평가의 전제)을 깨던 세 단계 ──
+  { id: 'n1-lt', title: 'N1 층별개요 400+400 < 연면적 1,000, 무창층 바닥면적 합계 150㎡ 미만', input: { registry: N1_BUILDING }, dataFiles: windowlessSum({ lt: 150 }) },
+  {
+    id: 'n1-excluded',
+    title: 'N1 같은 건물, 제외 조건 무창층 합계 150㎡ 이상',
+    input: { registry: N1_BUILDING },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('c', { const: true })], excluded_if: { sum_area: { floors: ['windowless'] }, gte: 150 } }]) },
+  },
+  { id: 'n1-gte', title: 'N1 같은 건물, 무창층 합계 150㎡ 이상(잘못된 해당 방향)', input: { registry: N1_BUILDING }, dataFiles: windowlessSum({ gte: 150 }) },
+  {
+    id: 'n2-excluded-use',
+    title: 'N2 지하층수 빈칸, 표제부 소매점·노래연습장, 제외 조건 노래연습장',
+    input: { registry: N2_BUILDING },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('c', { m: 'total_area', gte: 33 })], excluded_if: { use: ['singing_room'] } }]) },
+  },
+  {
+    id: 'n2-not-use',
+    title: 'N2 같은 건물, all(연면적 300 이상, not 노래연습장)',
+    input: { registry: N2_BUILDING },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('n', { all: [{ m: 'total_area', gte: 300 }, { not: { use: ['singing_room'] } }] })] }]) },
+  },
+  {
+    id: 'n2p-synth-floor',
+    title: "N2′ 보충한 2층(표제부 소매점·노래연습장), 제외 조건 '2층 이상 노래연습장'",
+    input: {
+      registry: {
+        title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점, 노래연습장', totArea: 800, grndFlrCnt: 2, ugrndFlrCnt: 0 }],
+        floors: [nc2(1, '노래연습장', 400)],
+        permit: [permit('20150101')],
+      },
+    },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('c', { m: 'total_area', gte: 33 })], excluded_if: { use: ['singing_room'], floors: [{ kind: 'ground', level: { gte: 2 } }] } }]) },
+  },
+  {
+    id: 'area-determined',
+    title: '1층 600 + 지하1층 400, 연면적 1,200 → 2층 200(항등식), 2층 이상 바닥면적 합계 150㎡ 미만',
+    input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }], floors: [nc2(1, '소매점', 600), nc2(1, '소매점', 400, '10')], permit: [permit('20150101')] } },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('s', { sum_area: { floors: [{ kind: 'ground', level: { gte: 2 } }] }, lt: 150 })] }]) },
   },
   {
     id: 'ce8-date-x-assumed',

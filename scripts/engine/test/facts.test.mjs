@@ -99,7 +99,7 @@ test('층수가 구간이면 층별개요가 상한까지 모든 층을 덮을 �
 test('층수 불일치(M1): 층별개요가 표제부보다 높은 층을 보이면 구간(모름)+경고, 정책으로 한쪽 선택', () => {
   const items = {
     title: [{ mainPurpsCdNm: '업무시설', totArea: 1800, grndFlrCnt: 5, ugrndFlrCnt: 2 }],
-    floors: [...[1, 2, 3, 4, 5, 6].map((n) => floor('', '20', n, '업무시설', '사무소', 300)), floor('', '10', 3, '업무시설', '사무소', 100)],
+    floors: [...[1, 2, 3, 4, 5, 6].map((n) => floor('', '20', n, '업무시설', '사무소', 280)), floor('', '10', 3, '업무시설', '사무소', 100)],
   };
   const b = reg(items);
   const g = b.dongs[0].metrics.ground_floors;

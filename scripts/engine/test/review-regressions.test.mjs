@@ -190,12 +190,64 @@ test('M5 (CE9): 별칭은 동의 주용도 군에 따라 — 주차 전용 동�
 });
 
 test('M6 (CE7): 한 층의 여러 행 — 면적 빈 행은 부분 질문 part_area[n](부분 이름 표시), 답하면 반영', () => {
-  const f = fac(runCase(caseById('ce7-multipart')), '본동', 'smoke_control');
+  // 층이 하나뿐이면 층 면적 = 연면적(600) 이라 빈 행 = 600 − 300 으로 정해져 묻지 않는다
+  const one = fac(runCase(caseById('ce7-multipart')), '본동', 'smoke_control');
+  assert.deepEqual([one.verdict, qkeys(one)], ['해당', []]);
+  // 다른 층 면적이 미상이면 부분 질문, 범위는 [0, 900 − 300]
+  const f = fac(runCase(caseById('ce7b-multipart-open')), '본동', 'smoke_control');
   assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', ['part_area[2]@본동/1F']]);
   assert.match(f.questions[0].text, /노래연습장/);
-  for (const [v, verdict] of [[300, '해당'], [999999, '해당'], [100, '비해당']]) {
-    assert.equal(verdictOf('ce7-multipart', '본동', 'smoke_control', { answers: { 'part_area[2]@본동/1F': v } }), verdict, String(v));
+  assert.deepEqual(f.questions[0].range, [0, 600]);
+  for (const [v, verdict] of [[300, '해당'], [100, '비해당']]) {
+    assert.equal(verdictOf('ce7b-multipart-open', '본동', 'smoke_control', { answers: { 'part_area[2]@본동/1F': v } }), verdict, String(v));
   }
+});
+
+// ───── 2차 리뷰 HIGH: 단조성 ─────
+
+test('N1: 층별개요 면적 합(800) < 연면적(1,000) 이면 면적 항등식으로 합계 하한을 올리지 않는다 — 무창층을 묻고, 답에 따라 뒤집히지 않음', () => {
+  const both = { 'windowless@본동/1F': false, 'windowless@본동/2F': false };
+  for (const id of ['n1-lt', 'n1-excluded', 'n1-gte']) {
+    const f = fac(runCase(caseById(id)), '본동', 'x');
+    assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', ['windowless@본동/1F', 'windowless@본동/2F']], id);
+  }
+  assert.equal(verdictOf('n1-lt', '본동', 'x', { answers: both }), '해당');
+  assert.equal(verdictOf('n1-excluded', '본동', 'x', { answers: both }), '해당');
+  assert.equal(verdictOf('n1-gte', '본동', 'x', { answers: both }), '비해당');
+  assert.equal(verdictOf('n1-gte', '본동', 'x', { answers: { 'windowless@본동/1F': true } }), '해당');
+  const r = runCase(caseById('n1-lt'));
+  assert.match(r.warnings.find((w) => w.code === 'FLOOR_AREA_MISMATCH').message, /800㎡ ↔ 연면적 1,000㎡/);
+});
+
+test('N2: 층 목록이 불완전할 때 표제부 용도로 빠진 층의 용도를 확정하지 않는다 — 부정 조건이 확정 비해당이 되지 않음', () => {
+  for (const id of ['n2-excluded-use', 'n2-not-use']) {
+    const f = fac(runCase(caseById(id)), '본동', 'x');
+    assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', ['use_presence[{"floors":null,"use":["singing_room"]}]@본동']], id);
+    const noSinging = { 'basement_floors@본동': 0, 'use_presence[{"use":["singing_room"]}]@본동/1F': false };
+    assert.equal(verdictOf(id, '본동', 'x', { answers: { 'basement_floors@본동': 0 } }), '확인 필요', id);
+    assert.equal(verdictOf(id, '본동', 'x', { answers: noSinging }), '해당', id);
+    assert.equal(verdictOf(id, '본동', 'x', { answers: { 'use_presence[{"floors":null,"use":["singing_room"]}]@본동': true } }), '비해당', id);
+  }
+});
+
+test("N2′: 보충한 층에 표제부 용도가 여럿이면 그 층 용도는 모름 — 그 층 질문을 묻고 답을 읽는다", () => {
+  const key = 'use_presence[{"use":["singing_room"]}]@본동/2F';
+  const f = fac(runCase(caseById('n2p-synth-floor')), '본동', 'x');
+  assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', [key]]);
+  assert.equal(verdictOf('n2p-synth-floor', '본동', 'x', { answers: { [key]: false } }), '해당');
+  assert.equal(verdictOf('n2p-synth-floor', '본동', 'x', { answers: { [key]: true } }), '비해당');
+});
+
+test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
+  const r = runCase(caseById('area-determined'));
+  const f = fac(r, '본동', 'x');
+  assert.deepEqual([f.verdict, qkeys(f)], ['비해당', []]);
+  assert.ok(!r.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH'));
+  const contra = runCase(caseById('area-determined'), { answers: { 'floor_area@본동/2F': 0 } });
+  assert.match(contra.warnings.find((w) => w.code === 'AREA_ANSWER_MISMATCH').message, /1,000㎡ 가 연면적 1,200㎡/);
+  const fine = runCase(caseById('area-determined'), { answers: { 'floor_area@본동/2F': 200 } });
+  assert.ok(!fine.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH'));
+  assert.equal(fac(fine, '본동', 'x').verdict, '비해당');
 });
 
 test('재평가 방향 점검(fixcheck_release): 가정값 정책을 끈 결과와 같고, 정당한 비해당은 그대로', () => {

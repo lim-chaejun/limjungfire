@@ -152,15 +152,75 @@ test('층 목록 완전성은 구분별: 지상층수를 몰라도 지하층 조
 });
 
 test('여러 행으로 나뉜 층(M6): 부분 면적 답변 part_area[n] 이 그 부분의 용도 면적 — 층 면적 답변이면 나머지로 역산', () => {
-  const d = dongOf({ etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1 }, [floor('20', 1, '소매점', 300), floor('20', 1, '노래연습장', '')]);
+  // 2층(소매점)은 면적 미상 → 1층 노래연습장 행은 [0, 900 − 300]
+  const d = dongOf({ etcPurps: '소매점, 노래연습장', totArea: 900, grndFlrCnt: 2 }, [
+    floor('20', 1, '소매점', 300),
+    floor('20', 1, '노래연습장', ''),
+    floor('20', 2, '소매점', ''),
+  ]);
   const node = { sum_area: { use: ['singing_room'] }, gte: 150 };
   const r = run(node, d);
   assert.equal(r.v, U);
-  assert.ok(keys(r).includes('part_area[2]@본동/1F'), keys(r).join());
+  const dep = r.deps.find((x) => x.key === 'part_area[2]@본동/1F');
+  assert.deepEqual(dep.range, [0, 600]);
   assert.equal(run(node, d, { answers: { 'part_area[2]@본동/1F': 200 } }).v, T);
   assert.equal(run(node, d, { answers: { 'part_area[2]@본동/1F': 100 } }).v, F);
   assert.equal(run(node, d, { answers: { 'floor_area@본동/1F': 420 } }).v, F);
   assert.equal(run(node, d, { answers: { 'floor_area@본동/1F': 500 } }).v, T);
+});
+
+test('면적 항등식(연면적 = 각 층 바닥면적의 합): 나머지가 정해지면 그 층·부분도 정해져 묻지 않는다, 질문 범위도 좁힌다', () => {
+  // 한 층뿐이면 층 면적 = 연면적 → 빈 행 = 600 − 300
+  const one = dongOf({ etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1 }, [floor('20', 1, '소매점', 300), floor('20', 1, '노래연습장', '')]);
+  const r = run({ sum_area: { use: ['singing_room'] }, gte: 150 }, one);
+  assert.equal(r.v, T);
+  assert.ok(r.deps.every((x) => x.status === 'confirmed'));
+  // 1층 600 + 지하1층 400, 연면적 1,200 → 보충한 2층 = 200 (리뷰 LOW: 2층 0 답변으로 뒤집히던 사례)
+  const d = dongOf({ totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }, [floor('20', 1, '', 600), floor('10', 1, '', 400)]);
+  const two = run({ floor_exists: { floors: [{ kind: 'ground', level: { gte: 2 } }], area: { gte: 150 } } }, d);
+  assert.equal(two.v, T);
+  assert.equal(run({ floor_exists: { floors: [{ kind: 'ground', level: { gte: 2 } }], area: { gte: 250 } } }, d).v, F);
+  // 두 층이 미상이면 각 층 [0, 나머지] — 질문 범위(range)가 좁혀진다
+  const open = dongOf({ totArea: 1200, grndFlrCnt: 3 }, [floor('20', 1, '', 600)]);
+  const u = run({ floor_exists: { floors: [{ kind: 'ground', level: { gte: 2 } }], area: { gte: 700 } } }, open);
+  assert.equal(u.v, F);
+  const u2 = run({ floor_exists: { floors: [{ kind: 'ground', level: { gte: 2 } }], area: { gte: 500 } } }, open);
+  assert.equal(u2.v, U);
+  assert.deepEqual(u2.deps.map((x) => [x.key, x.range]).sort(), [['floor_area@본동/2F', [0, 600]], ['floor_area@본동/3F', [0, 600]]]);
+});
+
+test('면적 항등식이 모순이면(확정 층 면적 합 < 연면적) 쓰지 않는다 — 대상 층에 빈 면적을 몰아 주지 않음(리뷰 N1)', () => {
+  const d = dongOf({ etcPurps: '소매점', totArea: 1000, grndFlrCnt: 2 }, [floor('20', 1, '소매점', 400), floor('20', 2, '소매점', 400)]);
+  for (const node of [{ sum_area: { floors: ['windowless'] }, lt: 150 }, { sum_area: { floors: ['windowless'] }, gte: 150 }]) {
+    const r = run(node, d);
+    assert.equal(r.v, U, JSON.stringify(node));
+    assert.deepEqual(keys(r), ['windowless@본동/1F', 'windowless@본동/2F']);
+  }
+  const no = { 'windowless@본동/1F': false, 'windowless@본동/2F': false };
+  assert.equal(run({ sum_area: { floors: ['windowless'] }, lt: 150 }, d, { answers: no }).v, T);
+  // 모순이 없으면 하한 보강은 그대로: 1·2층 미상, 연면적 1,000 → 모든 층 합계 = 1,000
+  const ok = dongOf({ totArea: 1000, grndFlrCnt: 2 }, []);
+  assert.equal(run({ sum_area: { floors: 'all' }, gte: 1000 }, ok).v, T);
+});
+
+test('층 목록이 불완전할 때 동 전체 use 노드의 빠진 층 몫은 표제부 용도가 있으면 U(확정 T 아님), 보충한 층의 여러 표제부 용도도 U(리뷰 N2·N2′)', () => {
+  const n2 = dongOf({ etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: '' }, [floor('20', 1, '', 600)]);
+  assert.equal(run({ not: { use: ['singing_room'] } }, n2).v, U);
+  const done = { 'basement_floors@본동': 0, 'use_presence[{"use":["singing_room"]}]@본동/1F': false };
+  assert.equal(run({ not: { use: ['singing_room'] } }, n2, { answers: done }).v, T);
+  // 표제부에 대상 용도가 없으면 빠진 층에도 없다고 본다(F)
+  const plain = dongOf({ etcPurps: '소매점', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: '' }, [floor('20', 1, '소매점', 600)]);
+  assert.equal(run({ use: ['singing_room'] }, plain).v, F);
+  // 보충한 2층: 표제부 용도가 둘(소매점·노래연습장)이면 2층에 무엇이 있는지 모름 → 그 층 질문, 답하면 반영
+  const synth = dongOf({ etcPurps: '소매점, 노래연습장', totArea: 800, grndFlrCnt: 2 }, [floor('20', 1, '노래연습장', 400)]);
+  const node = { use: ['singing_room'], floors: [{ kind: 'ground', level: { gte: 2 } }] };
+  const r = run({ not: node }, synth);
+  assert.equal(r.v, U);
+  assert.deepEqual(keys(r), ['use_presence[{"use":["singing_room"]}]@본동/2F']);
+  assert.equal(run({ not: node }, synth, { answers: { 'use_presence[{"use":["singing_room"]}]@본동/2F': false } }).v, T);
+  // 표제부 용도가 하나면 보충한 층은 그 용도(문서화한 가정): 확정
+  const single = dongOf({ etcPurps: '노래연습장', totArea: 800, grndFlrCnt: 2 }, [floor('20', 1, '노래연습장', 400)]);
+  assert.equal(run(node, single).v, T);
 });
 
 test('재평가(release, H1): 가정값(무창층 assume_none · 수동 입력 지하층 빈칸 0)을 모름으로 풀어 다시 평가', () => {

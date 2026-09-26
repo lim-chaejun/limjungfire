@@ -18,6 +18,7 @@ import { resolvePolicy } from './policy.js';
 import { buildUseIndex, classifyUses, isAncillaryTerm, termGroups } from './uses.js';
 import { ASSUMED, CONFIRMED, UNKNOWN, addInterval, any, exact, interval, makeDep, mergeDeps } from './logic.js';
 import { formatYmd, normalizeYmd } from './dates.js';
+import { fmtNum } from './format.js';
 
 const asArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 const num = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
@@ -110,7 +111,8 @@ function buildFloors(items, dongId, index, contextGroup, cap, fallbackTerms, war
         a !== null
           ? exact(a, [registryDep(multi ? 'part_area' : 'floor_area', dongId, f.key)])
           : unknownFloorArea(dongId, f.key, cap, f.label, multi ? { n: i + 1, label: partLabelOf(raw) } : null);
-      return { terms: cls.terms.length ? cls.terms : fallbackTerms, area, raw, n: i + 1 };
+      // 용도가 비어 표제부 용도를 빌려 온 행은 fromTitle — 표제부 용도가 여럿이면 이 층에 그중 무엇이 있는지 모른다
+      return { terms: cls.terms.length ? cls.terms : fallbackTerms, fromTitle: !cls.terms.length, area, raw, n: i + 1 };
     });
     floors.push({ key: f.key, kind: f.kind, level: f.level, label: f.label, parts, area: parts.map((p) => p.area).reduce(addInterval), synthesized: false });
   }
@@ -194,6 +196,25 @@ function derivedTotal(id, floors, ground, basement) {
   return interval(known, Infinity, { loDeps: known > 0 ? dep : [], open });
 }
 
+// 층별개요가 층수만큼의 모든 층을 면적과 함께 덮는데 그 합이 연면적과 맞지 않으면 경고(옥탑은 0 ~ 그 면적만큼 산입될 수 있음).
+// 평가는 이때 면적 항등식(연면적 = 각 층 바닥면적의 합)으로 층 면적을 추론하지 않는다(conditions.js areaIdentity).
+function areaMismatchWarning(id, floors, ground, basement, total, warnings) {
+  const body = floors.filter((f) => f.kind !== 'rooftop');
+  const sum = body.reduce((s, f) => s + f.area.lo, 0); // 알려진 층 면적(빈 칸은 0)
+  const warn = () => warnings.push({ code: 'FLOOR_AREA_MISMATCH', dong: id, message: `${id}: 층별개요 바닥면적 합계 ${fmtNum(sum)}㎡ ↔ 연면적 ${fmtNum(total)}㎡ — 층 면적을 연면적으로 맞추는 추론은 하지 않음` });
+  if (sum > total + 0.5) return warn(); // 알려진 층만으로 이미 연면적을 넘음
+  const exactCount = (c) => (c && c.lo === c.hi ? c.lo : null);
+  const g = exactCount(ground);
+  const b = exactCount(basement);
+  if (g === null || b === null) return;
+  const have = new Set(body.map((f) => f.key));
+  const covers = Array.from({ length: g }, (_, i) => floorKey('ground', i + 1)).every((k) => have.has(k))
+    && Array.from({ length: b }, (_, i) => floorKey('basement', i + 1)).every((k) => have.has(k));
+  if (!covers || floors.some((f) => f.area.open.length)) return;
+  const roof = floors.filter((f) => f.kind === 'rooftop').reduce((s, f) => s + f.area.hi, 0);
+  if (sum + roof < total - 0.5) warn();
+}
+
 function buildDong(t, id, floorItems, index, policy, warnings) {
   const notes = [];
   const titleCls = classifyUses(t.mainPurpsCdNm, t.etcPurps, index);
@@ -218,6 +239,7 @@ function buildDong(t, id, floorItems, index, policy, warnings) {
   if (basement?.conflict) notes.push('BASEMENT_COUNT_MISMATCH');
 
   const totalArea = total !== null ? cap : derivedTotal(id, floors, ground, basement);
+  if (total !== null) areaMismatchWarning(id, floors, ground, basement, total, warnings);
 
   const height = posNum(t.heit);
   const hh = nonNegInt(t.hhldCnt);
@@ -388,7 +410,7 @@ export function effectiveFloors(dong, groundCount, basementCount) {
         const key = floorKey(kind, level);
         if (have.has(key)) continue;
         const area = unknownFloorArea(dong.id, key, dong.metrics.total_area, floorLabel(kind, level));
-        floors.push({ key, kind, level, label: floorLabel(kind, level), area, parts: [{ terms: dong.synthTerms, area, raw: null, n: 1 }], synthesized: true });
+        floors.push({ key, kind, level, label: floorLabel(kind, level), area, parts: [{ terms: dong.synthTerms, fromTitle: true, area, raw: null, n: 1 }], synthesized: true });
       }
       complete[kind] = true;
     } else if (count && Number.isFinite(count.hi)) {
