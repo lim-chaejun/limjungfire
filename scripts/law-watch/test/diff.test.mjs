@@ -155,6 +155,55 @@ test('왕복: --apply-history 로 스냅샷 사본에 반영 → 다시 실행�
   assert.equal(fs.readFileSync(path.join(dir, 'nfsc_history.json'), 'utf8'), snap);
 });
 
+test('--apply-from: 검토한 result.json 을 네트워크 없이 그대로 반영 — --apply-history 와 바이트까지 같고, 두 번 해도 같다', async () => {
+  const viaHistory = copySnapshot();
+  await runCheck({ dataDir: viaHistory, args: ['--apply-history'] });
+
+  const dir = copySnapshot();
+  const reviewed = await runCheck({ dataDir: dir }); // 1단계: 검토용 결과만 (데이터는 그대로)
+  assert.equal(reviewed.code, 10);
+  const resultFile = path.join(reviewed.out, 'result.json');
+  const { main } = await import('../check.mjs');
+  const logs = [];
+  // --replay 없이도 요청하지 않는다: fetch 를 막아 둔다
+  const blocked = () => {
+    throw new Error('네트워크 금지');
+  };
+  assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir], { log: (m) => logs.push(m), fetchImpl: blocked }), 0);
+  for (const f of fs.readdirSync(viaHistory)) assert.equal(fs.readFileSync(path.join(dir, f), 'utf8'), fs.readFileSync(path.join(viaHistory, f), 'utf8'), f);
+  assert.ok(logs.some((l) => /nfsc_history\.json \(\+10행\)/.test(l)), logs.join('\n'));
+  const snap = fs.readFileSync(path.join(dir, 'law_history_decree.json'), 'utf8');
+  assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir], { log: () => {} }), 0);
+  assert.equal(fs.readFileSync(path.join(dir, 'law_history_decree.json'), 'utf8'), snap, '멱등');
+});
+
+test('--apply-from: data/*.json 밖을 가리키거나 행 형식이 틀리면 아무것도 쓰지 않고 exit 30', async () => {
+  const dir = copySnapshot();
+  const reviewed = await runCheck({ dataDir: dir });
+  const before = Object.fromEntries(fs.readdirSync(dir).map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')]));
+  const { main } = await import('../check.mjs');
+  const tamper = (edit) => {
+    const r = structuredClone(reviewed.result);
+    edit(r);
+    const p = path.join(tmpDir('law-watch-apply-'), 'result.json');
+    fs.writeFileSync(p, JSON.stringify(r));
+    return p;
+  };
+  const logs = [];
+  const cases = [
+    (r) => (r.changes[0].target = '../package.json'),
+    (r) => (r.changes[0].target = 'scripts/law-watch/lib.mjs'),
+    (r) => (r.changes.at(-1).suggestedRow.link = 'https://example.com/LSW/lsInfoP.do?lsiSeq=1'),
+    (r) => (r.changes.at(-1).suggestedRow.effective_date = '2026-07-01'),
+    (r) => delete r.changes[1].suggestedRow.revision_type,
+    (r) => (r.schemaVersion = 2),
+  ];
+  for (const edit of cases) assert.equal(await main(['--apply-from', tamper(edit), '--data-dir', dir], { log: (m) => logs.push(m) }), 30, String(edit));
+  for (const [f, text] of Object.entries(before)) assert.equal(fs.readFileSync(path.join(dir, f), 'utf8'), text, f);
+  assert.match(logs.join('\n'), /반영할 수 없는 항목/);
+  assert.equal(await main(['--apply-from', path.join(reviewed.out, 'result.json'), '--only', 'decree'], { log: () => {} }), 30, '--only 와 함께 못 씀');
+});
+
 // ───────────── 고장 시나리오 ─────────────
 
 const isDecreeList = ({ url, body }) => url.endsWith('/lsHstListR.do') && body.includes('lsId=009694');

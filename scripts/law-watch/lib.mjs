@@ -416,6 +416,8 @@ export function parseRevisionDoc(html, { kind, name = '', revisionType = '' } = 
 // ───────────────────────── 레지스트리 ─────────────────────────
 
 const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+// 연혁 반영(--apply-history/--apply-from)이 쓸 수 있는 파일: data/ 바로 아래 .json 만
+export const DATA_FILE_RE = /^data\/[\w.-]+\.json$/;
 const isStrArray = (a) => Array.isArray(a) && a.every((x) => typeof x === 'string' && x.length > 0);
 
 export function isValidKey(kind, key) {
@@ -460,7 +462,7 @@ export function validateRegistry(reg) {
     if (!b || typeof b !== 'object' || !['history', 'inline'].includes(b.from)) {
       errs.push(`${at}: baseline.from 은 history | inline`);
     } else if (b.from === 'history') {
-      if (typeof b.file !== 'string' || !b.file.endsWith('.json')) errs.push(`${at}: baseline.file(.json) 필요`);
+      if (typeof b.file !== 'string' || !DATA_FILE_RE.test(b.file)) errs.push(`${at}: baseline.file 은 data/<이름>.json 이어야 함`);
     } else {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(b.asOf ?? '') || !isValidYmd(String(b.asOf).replace(/-/g, ''))) errs.push(`${at}: baseline.asOf(YYYY-MM-DD) 필요`);
       // 빈 배열은 허용한다(추가 직후) — 실행하면 ANCHOR_MISSING 으로 실패하므로 --bootstrap 으로 채운다

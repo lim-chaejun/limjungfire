@@ -57,6 +57,10 @@ test('레지스트리 형식 오류를 잡는다', () => {
   assert.match(bad((r) => (r.sources[0].baseline = { from: 'inline', asOf: '2026-01-20', known: ['20260701-287375'] })).join(), /키 형식/);
   assert.match(bad((r) => (r.http.maxRequests = -1)).join(), /maxRequests/);
   assert.match(bad((r) => (r.http.deadlineMs = 1.5)).join(), /deadlineMs/);
+  // 연혁 반영이 쓰는 파일이므로 data/ 바로 아래 .json 만 (저장소 밖·스크립트·하위 폴더 금지)
+  for (const file of ['../secrets.json', 'data/../package.json', 'data/sub/x.json', 'scripts/law-watch/x.json', '/etc/x.json', 'data/x.js']) {
+    assert.match(bad((r) => (r.sources[0].baseline.file = file)).join(), /baseline\.file 은 data\/<이름>\.json/, file);
+  }
   assert.match(bad((r) => (r.sources[3].expand = 'other')).join(), /expand/);
   assert.deepEqual(validateRegistry([]), ['레지스트리가 JSON 객체가 아님']);
   const noCode = expandSources({ sources: [{ id: 'g', kind: 'admrul', expand: 'nfsc', baseline: { from: 'history', file: 'x.json' } }] }, {

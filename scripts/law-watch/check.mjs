@@ -5,8 +5,12 @@
 //   node scripts/law-watch/check.mjs [--out DIR] [--only id,..] [--no-crosscheck]
 //        [--record [DIR]] [--replay DIR] [--data-dir DIR] [--registry FILE]
 //        [--today YYYYMMDD] [--apply-history]
+//   node scripts/law-watch/check.mjs --apply-from RESULT.json [--data-dir DIR]
 //   node scripts/law-watch/check.mjs --bootstrap ID [--as-of YYYY-MM-DD]
 //   node scripts/law-watch/check.mjs --ack ID[,ID..]
+//
+//   --apply-history  이번 실행에서 가져온 결과의 제안 행을 연혁 파일에 넣는다
+//   --apply-from     이미 검토한 result.json 의 제안 행을 그대로 넣는다 (네트워크 없음 — 검토한 것 = 반영한 것)
 //
 // 종료 코드
 //   0  모든 소스를 가져와 해석·대조했고 반영할 개정이 없음 (유일한 "최신" 판정)
@@ -35,8 +39,10 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
+  DATA_FILE_RE,
   DEFAULT_HTTP,
   ENRICH_CAP,
+  LAW_GO_KR,
   admChainRequest,
   admDocRequest,
   analyzeSource,
@@ -47,6 +53,7 @@ import {
   exitCodeFor,
   expandSources,
   fingerprint,
+  historyRowKey,
   insertHistoryRow,
   isValidKey,
   isValidYmd,
@@ -77,6 +84,7 @@ export const USAGE = `사용법:
   node scripts/law-watch/check.mjs [--out DIR] [--only id,..] [--no-crosscheck]
        [--record [DIR]] [--replay DIR] [--data-dir DIR] [--registry FILE]
        [--today YYYYMMDD] [--apply-history]
+  node scripts/law-watch/check.mjs --apply-from RESULT.json [--data-dir DIR]
   node scripts/law-watch/check.mjs --bootstrap ID [--as-of YYYY-MM-DD]
   node scripts/law-watch/check.mjs --ack ID[,ID..]
 종료 코드: 0 최신 · 10 개정 있음 · 20 소스 오류 · 30 설정/사용법 오류`;
@@ -122,6 +130,7 @@ export function parseArgs(argv) {
       case '--registry': o.registry = val(); break;
       case '--today': o.today = val(); break;
       case '--apply-history': o.applyHistory = true; break;
+      case '--apply-from': o.applyFrom = val(); break;
       case '--bootstrap': o.bootstrap = val(); break;
       case '--as-of': o.asOf = val(); break;
       case '--ack': o.ack = list(val()); break;
@@ -136,6 +145,7 @@ export function parseArgs(argv) {
   if (o.ack && !o.ack.length) throw new ConfigError('--ack 목록이 비어 있음');
   if (o.ack && o.bootstrap) throw new ConfigError('--ack 와 --bootstrap 은 함께 쓸 수 없음');
   if (o.record && o.replay) throw new ConfigError('--record 와 --replay 는 함께 쓸 수 없음');
+  if (o.applyFrom && (o.ack || o.bootstrap || o.applyHistory || o.only)) throw new ConfigError('--apply-from 은 --ack·--bootstrap·--apply-history·--only 와 함께 쓸 수 없음');
   return o;
 }
 
@@ -464,6 +474,42 @@ export function applyHistory(changes, dataDir = DEFAULT_DATA_DIR) {
   return written;
 }
 
+// result.json 의 변경 항목을 연혁 파일에 넣어도 되는지 — --apply-from 은 파일 내용을 그대로 믿지 않는다
+function applicableChange(c) {
+  if (!c || typeof c !== 'object' || !['law', 'admrul'].includes(c.kind)) return false;
+  if (c.target == null) return true; // inline 소스: 연혁 파일 없음(반영하지 않고 --ack 안내)
+  if (typeof c.target !== 'string' || !DATA_FILE_RE.test(c.target)) return false;
+  if (c.targetKey != null && typeof c.targetKey !== 'string') return false;
+  const r = c.suggestedRow;
+  const fields = ['name', 'effective_date', c.kind === 'law' ? 'law_no' : 'notice_no', 'promulgation_date', 'revision_type', 'link'];
+  return (
+    !!r &&
+    typeof r === 'object' &&
+    fields.every((k) => typeof r[k] === 'string' && r[k].length > 0) &&
+    isValidYmd(r.effective_date) &&
+    isValidYmd(r.promulgation_date) &&
+    r.link.startsWith(`${LAW_GO_KR}/LSW/`) &&
+    historyRowKey(c.kind, r).seq != null
+  );
+}
+
+// 검토한 result.json 의 제안 행을 그대로 반영한다 (네트워크 없음). --apply-history 는 그 자리에서 다시
+// 가져온 결과를 넣으므로 검토한 뒤 사이트가 바뀌면 검토하지 않은 행이 들어갈 수 있다.
+async function applyFromMode(opts, deps) {
+  const log = deps.log ?? ((m) => process.stderr.write(`${m}\n`));
+  const file = path.resolve(opts.applyFrom);
+  const res = readJson(file, `결과 파일(${file})`);
+  if (res?.schemaVersion !== 1 || !Array.isArray(res.changes)) throw new ConfigError(`--apply-from: ${file} 는 check.mjs 의 result.json 이 아님`);
+  const bad = res.changes.filter((c) => !applicableChange(c)).map((c) => c?.id ?? '?');
+  if (bad.length) throw new ConfigError(`--apply-from: 반영할 수 없는 항목 ${bad.join(', ')} (target 은 data/*.json, suggestedRow 는 law.go.kr 연혁 행 형식)`);
+  const written = applyHistory(res.changes, opts.dataDir ?? DEFAULT_DATA_DIR);
+  for (const w of written) log(`연혁 반영: ${w.file} (+${w.rows}행)`);
+  const inline = res.changes.filter((c) => !c.target);
+  if (inline.length) log(`inline 소스 변경 ${inline.length}건은 연혁 파일이 없으므로 --ack 로 확인 처리하세요.`);
+  if (!res.changes.length) log(`--apply-from: 반영할 변경 없음 (${res.status ?? '?'})`);
+  return EXIT.OK;
+}
+
 async function checkMode(opts, deps) {
   const now = deps.now ?? Date.now;
   const log = deps.log ?? ((m) => process.stderr.write(`${m}\n`));
@@ -658,6 +704,7 @@ export async function main(argv, deps = {}) {
   }
   try {
     if (opts.ack) return await ackMode(opts, deps);
+    if (opts.applyFrom) return await applyFromMode(opts, deps);
     if (opts.bootstrap) return await bootstrapMode(opts, deps);
     return await checkMode(opts, deps);
   } catch (e) {
