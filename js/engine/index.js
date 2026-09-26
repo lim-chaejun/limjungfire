@@ -19,6 +19,6 @@ export { inputDefsFrom, buildQuestion } from './questions.js';
 export { VERDICT, DECISIVE_TEST_BUDGET, evaluateRow, evaluateDong, classifyFile } from './evaluate.js';
 export { ENGINE_VERSION, evaluateBuilding, requiredTypeCodes, facilityNames } from './building.js';
 export {
-  ERROR_CODES, WARNING_CODES, makeValidationContext, validateConditions, validateRow, validateFile, checkItemKeyOverlaps,
+  ERROR_CODES, WARNING_CODES, makeValidationContext, validateConditions, validateRow, validateFile, validateFileSet, checkItemKeyOverlaps,
   findFacilityCycles, lintRow, compareV1Fields,
 } from './validate.js';

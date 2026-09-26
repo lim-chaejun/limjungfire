@@ -5,7 +5,7 @@
 import {
   FLOOR_KINDS, FLOOR_SHORTHANDS, NODE_ALLOWED_KEYS, REVIEW_STATUSES, ROW_KINDS, SCHEMA_VERSION, SELECTOR_KEYS, TYPE_CODE_RE,
   V1_ROW_FIELDS, V2_ROW_FIELDS, WORDING_TO_OP, comparisonOps, isPlainObject, nodeType, normalizeFloors, normalizeScope,
-  numericConstants, referencedFacilities, referencedInputs, rowConditionRoots, stableKey,
+  numericConstants, referencedFacilities, referencedInputs, rowConditionRoots, stableKey, walkConditions,
 } from './schema.js';
 import { isValidYmd } from './dates.js';
 import { buildUseIndex, isGroupCode } from './uses.js';
@@ -64,6 +64,10 @@ export const WARNING_CODES = Object.freeze({
   W_OP_MISMATCH: '원문의 이상·초과·이하·미만과 비교 연산자가 다름',
   W_SCOPE_WORDING: "원문의 '모든 층'·'해당 층'·'해당 부분'과 scope 가 다름",
   W_NEEDS_REVIEW: '검수 필요 표시(needs_review)가 있는 행',
+  W_NO_TRIGGER: '판정 행(trigger)이 없는 시설 — 평가 시 원문 확인 질문(확인 필요)이 된다',
+  W_LEVEL_WITHOUT_KIND: "층 선택자의 level 에 kind 가 없음 — 지하층 깊이에도 맞는다(지하4층이 '4층 이상'에 해당)",
+  W_AUXILIARY_USE: '보조 용도(전기실 등)를 use 로 참조 — 층별개요에 거의 없어 늘 모름이 되므로 지표(electrical_room_area 등)를 권장',
+  W_CROSS_FILE_CYCLE: '파일끼리 합쳐 평가하면(복합건축물 동) 시설 의존이 순환함 — 실행 시 확인 필요로 처리됨',
 });
 
 const MAX_DEPTH = 20;
@@ -336,9 +340,44 @@ export function findFacilityCycles(facilities) {
 // 원문 대조 경고: 수치·이상/초과/이하/미만·'모든 층/해당 층/해당 부분'
 const NUMBER_RE = /(\d[\d,]*(?:\.\d+)?)\s*(㎡|m²|개층|층|m|명|세대|대|배)\s*(이상|초과|이하|미만)?/g;
 
-export function lintRow(row, path = 'row') {
+// 조건 트리·범위의 층 선택자와 용도 목록 점검: level 에 kind 없음, 보조 용도 참조
+function lintSelectorsAndUses(row, path, ctx, out) {
+  const selectorLists = [];
+  const useLists = [];
+  for (const [node] of rowConditionRoots(row)) {
+    if (!nodeType(node)) continue;
+    walkConditions(node, (n) => {
+      const t = nodeType(n);
+      if (t === 'use') {
+        useLists.push(n.use);
+        if (n.floors !== undefined) selectorLists.push(n.floors);
+      } else if ((t === 'sum_area' || t === 'floor_exists') && isPlainObject(n[t])) {
+        if (n[t].use) useLists.push(n[t].use);
+        selectorLists.push(n[t].floors);
+      }
+    });
+  }
+  for (const sc of [row.scope, ...(row.branches || []).map((b) => b?.scope)].map(normalizeScope).filter(Boolean)) {
+    if (sc.type === 'floors') selectorLists.push(sc.floors);
+  }
+  for (const list of selectorLists) {
+    for (const sel of normalizeFloors(list) || []) {
+      if (sel.use) useLists.push(sel.use);
+      if (sel.level !== undefined && sel.kind === undefined) out.push(warn('W_LEVEL_WITHOUT_KIND', path, JSON.stringify(sel)));
+    }
+  }
+  if (ctx?.index) {
+    for (const uses of useLists) {
+      const aux = (Array.isArray(uses) ? uses : []).filter((id) => !isGroupCode(id) && ctx.index.uses.get(id) && !ctx.index.uses.get(id).group);
+      if (aux.length) out.push(warn('W_AUXILIARY_USE', path, aux.join(', ')));
+    }
+  }
+}
+
+export function lintRow(row, path = 'row', ctx = null) {
   const out = [];
   if (row.needs_review) out.push(warn('W_NEEDS_REVIEW', path, row.needs_review.reason));
+  lintSelectorsAndUses(row, path, ctx, out);
   const roots = rowConditionRoots(row);
   if (!roots.length || typeof row.criteria !== 'string') return out;
   const consts = [];
@@ -396,10 +435,11 @@ export function validateFile(file, ctx, { fileName } = {}) {
       errors.push(err('FILE_BAD_FACILITIES', `${p}.regulations`));
       return;
     }
+    if (!fac.regulations.some((r) => (r?.kind ?? 'trigger') === 'trigger')) warnings.push(warn('W_NO_TRIGGER', p, fac.facility_id));
     fac.regulations.forEach((row, j) => {
       const rp = `${p}.regulations[${j}]`;
       validateRow(row, ctx, rp, errors);
-      warnings.push(...(isPlainObject(row) ? lintRow(row, rp) : []));
+      warnings.push(...(isPlainObject(row) ? lintRow(row, rp, ctx) : []));
       if (typeof row?.id === 'string') {
         if (rowIds.has(row.id)) errors.push(err('ROW_DUPLICATE_ID', `${rp}.id`, row.id));
         rowIds.add(row.id);
@@ -414,29 +454,77 @@ export function validateFile(file, ctx, { fileName } = {}) {
   return { v1: false, errors, warnings };
 }
 
-// v1 필드 불변 검사: 변환 전(before)·후(after) 파일을 위치 기준으로 대조
+// 파일 묶음 검증: 파일마다 validateFile + 파일끼리의 시설 의존 순환(복합건축물 동은 여러 파일을 합쳐 평가한다)
+// files: { 파일명: json } 또는 [{ name, json }]
+export function validateFileSet(files, ctx) {
+  const entries = Array.isArray(files) ? files : Object.entries(files).map(([name, json]) => ({ name, json }));
+  const byFile = {};
+  const errors = [];
+  const warnings = [];
+  const facilities = [];
+  const within = new Set();
+  for (const { name, json } of entries) {
+    const r = validateFile(json, ctx, { fileName: name });
+    byFile[name] = r;
+    errors.push(...r.errors.map((e) => ({ ...e, file: name })));
+    warnings.push(...r.warnings.map((w) => ({ ...w, file: name })));
+    if (r.v1 || !Array.isArray(json?.fire_facilities)) continue;
+    facilities.push(...json.fire_facilities);
+    for (const cyc of findFacilityCycles(json.fire_facilities)) within.add(cyc.join('>'));
+  }
+  for (const cyc of findFacilityCycles(facilities)) {
+    if (!within.has(cyc.join('>'))) warnings.push({ ...warn('W_CROSS_FILE_CYCLE', 'files', cyc.join(' → ')), file: null });
+  }
+  return { byFile, errors, warnings };
+}
+
+// v2 가 더하는 필드(파일·시설·행). v1 비교에서 빼는 허용 목록
+const V2_FILE_KEYS = new Set(['schema_version', 'type_code', 'review', 'strengthened_retroactive']);
+const V2_FACILITY_KEYS = new Set(['excluded_if']);
+const V2_ROW_KEYS = new Set(V2_ROW_FIELDS);
+const omit = (obj, keys) => (isPlainObject(obj) ? Object.fromEntries(Object.entries(obj).filter(([k]) => !keys.has(k))) : obj);
+
+// 두 값의 다른 경로들 (깊은 비교)
+function diffPaths(a, b, path, out) {
+  if (isPlainObject(a) && isPlainObject(b)) {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) diffPaths(a[k], b[k], path ? `${path}.${k}` : k, out);
+  } else if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) {
+    a.forEach((x, i) => diffPaths(x, b[i], `${path}[${i}]`, out));
+  } else if (stableKey(a ?? null) !== stableKey(b ?? null)) out.push(path);
+}
+
+// v1 필드 불변 검사 — 데이터 변환(구조화) PR 전용: 변환 전(before)·후(after) 파일에서 v2 추가 필드(허용 목록)만 빼고
+// 나머지 전부(파일 최상위의 building_type·definition·modular_classroom 등 포함)가 그대로인지 위치 기준으로 대조한다.
+// 법령 개정 반영 PR 은 종료일 변경·행 추가가 정상이므로 이 검사를 쓰지 않는다.
 export function compareV1Fields(before, after) {
   const out = [];
-  for (const k of ['building_type', 'definition', 'note', 'sub_types']) {
-    if (stableKey(before?.[k] ?? null) !== stableKey(after?.[k] ?? null)) out.push(err('V1_FIELD_CHANGED', k));
-  }
-  const bf = before?.fire_facilities || [];
-  const af = after?.fire_facilities || [];
+  const b = omit(before ?? {}, V2_FILE_KEYS);
+  const a = omit(after ?? {}, V2_FILE_KEYS);
+  const top = [];
+  diffPaths(omit(b, new Set(['fire_facilities'])), omit(a, new Set(['fire_facilities'])), '', top);
+  for (const p of top) out.push(err('V1_FIELD_CHANGED', p));
+  const bf = Array.isArray(b.fire_facilities) ? b.fire_facilities : [];
+  const af = Array.isArray(a.fire_facilities) ? a.fire_facilities : [];
   if (bf.length !== af.length) out.push(err('V1_FACILITY_CHANGED', 'fire_facilities', `${bf.length} → ${af.length}`));
-  bf.forEach((b, i) => {
-    const a = af[i];
+  bf.forEach((bFac, i) => {
+    const aFac = af[i];
     const p = `fire_facilities[${i}]`;
-    if (!a) return;
-    if (['facility_id', 'facility_name', 'category', 'note'].some((k) => (a[k] ?? null) !== (b[k] ?? null))) {
-      out.push(err('V1_FACILITY_CHANGED', p, `${b.facility_id} → ${a.facility_id}`));
+    if (!aFac) return;
+    if (bFac?.facility_id !== aFac?.facility_id) {
+      out.push(err('V1_FACILITY_CHANGED', p, `${bFac?.facility_id} → ${aFac?.facility_id}`));
       return;
     }
-    const br = b.regulations || [];
-    const ar = a.regulations || [];
+    const facPaths = [];
+    diffPaths(omit(omit(bFac, V2_FACILITY_KEYS), new Set(['regulations'])), omit(omit(aFac, V2_FACILITY_KEYS), new Set(['regulations'])), p, facPaths);
+    for (const fp of facPaths) out.push(err('V1_FIELD_CHANGED', fp));
+    const br = Array.isArray(bFac.regulations) ? bFac.regulations : [];
+    const ar = Array.isArray(aFac.regulations) ? aFac.regulations : [];
     if (br.length !== ar.length) out.push(err('V1_ROW_COUNT_CHANGED', `${p}.regulations`, `${br.length} → ${ar.length}`));
     br.forEach((row, j) => {
       if (!ar[j]) return;
-      for (const k of V1_ROW_FIELDS) if ((row[k] ?? null) !== (ar[j][k] ?? null)) out.push(err('V1_FIELD_CHANGED', `${p}.regulations[${j}].${k}`));
+      const rowPaths = [];
+      diffPaths(omit(row, V2_ROW_KEYS), omit(ar[j], V2_ROW_KEYS), `${p}.regulations[${j}]`, rowPaths);
+      for (const rp of rowPaths) out.push(err('V1_FIELD_CHANGED', rp));
     });
   });
   return out;
