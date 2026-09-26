@@ -1179,11 +1179,61 @@ async function fetchBuildingApi(url, { isProxy = false } = {}) {
   }
 }
 
-// 오퍼레이션 호출: 1순위 자체 프록시(서비스키 비노출), 프록시가 없을 때만 공공데이터포털 직접 호출
+// 한 번에 받는 행 수와 최대 페이지 (대단지 층별개요는 수천 행이 될 수 있다)
+const BUILDING_PAGE_SIZE = 100;
+const BUILDING_MAX_PAGES = 30;
+const BUILDING_PAGE_CONCURRENCY = 4;
+
+// 응답의 items.item 을 배열로 (1건이면 객체, 0건이면 빈 문자열로 온다)
+function responseItemList(data) {
+  const item = data?.response?.body?.items?.item;
+  if (!item) return [];
+  return Array.isArray(item) ? item : [item];
+}
+
+// 오퍼레이션 호출: totalCount 가 한 페이지를 넘으면 나머지 페이지까지 받아 한 응답으로 합친다.
+// 뒤 페이지가 실패하면 받은 행만 돌려주고 body._incomplete 에 {fetched, total} 을 남긴다(화면에서 '일부' 안내).
 async function fetchBuildingOp(op, sigunguCd, bjdongCd, jibunInfo) {
+  const first = await fetchBuildingOpPage(op, sigunguCd, bjdongCd, jibunInfo, 1);
+  const body = first?.response?.body;
+  const total = Number(body?.totalCount) || 0;
+  const items = responseItemList(first);
+  if (!body || total <= items.length) return first;
+
+  const lastPage = Math.min(Math.ceil(total / BUILDING_PAGE_SIZE), BUILDING_MAX_PAGES);
+  const pages = [];
+  for (let pageNo = 2; pageNo <= lastPage; pageNo++) pages.push(pageNo);
+  const results = new Map();
+  let failedPage = null;
+  const worker = async () => {
+    while (pages.length && failedPage === null) {
+      const pageNo = pages.shift();
+      try {
+        results.set(pageNo, responseItemList(await fetchBuildingOpPage(op, sigunguCd, bjdongCd, jibunInfo, pageNo)));
+      } catch (e) {
+        console.warn(`${op} ${pageNo}페이지 조회 실패:`, e);
+        failedPage = failedPage === null ? pageNo : Math.min(failedPage, pageNo);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(BUILDING_PAGE_CONCURRENCY, pages.length) }, worker));
+
+  // 실패한 페이지 앞까지만 순서대로 이어 붙인다 (중간이 빈 목록을 만들지 않도록)
+  for (let pageNo = 2; pageNo <= lastPage; pageNo++) {
+    if (!results.has(pageNo) || (failedPage !== null && pageNo >= failedPage)) break;
+    items.push(...results.get(pageNo));
+  }
+  body.items = { item: items };
+  if (items.length < total) body._incomplete = { fetched: items.length, total };
+  return first;
+}
+
+// 오퍼레이션 한 페이지 호출: 1순위 자체 프록시(서비스키 비노출), 프록시가 없을 때만 공공데이터포털 직접 호출
+async function fetchBuildingOpPage(op, sigunguCd, bjdongCd, jibunInfo, pageNo) {
   const params = new URLSearchParams({ sigunguCd, bjdongCd, platGbCd: normalizePlatGbCd(jibunInfo.platGbCd) });
   if (jibunInfo.bun) params.set('bun', jibunInfo.bun.padStart(4, '0'));
   if (jibunInfo.ji) params.set('ji', jibunInfo.ji.padStart(4, '0'));
+  params.set('pageNo', String(pageNo));
 
   if (buildingProxyAvailable !== false) {
     try {
@@ -1200,8 +1250,7 @@ async function fetchBuildingOp(op, sigunguCd, bjdongCd, jibunInfo) {
   const url = new URL(`https://apis.data.go.kr/1613000/${BUILDING_OPS[op]}`);
   url.searchParams.append('serviceKey', API_KEY);
   params.forEach((value, key) => url.searchParams.append(key, value));
-  url.searchParams.append('numOfRows', '100');
-  url.searchParams.append('pageNo', '1');
+  url.searchParams.append('numOfRows', String(BUILDING_PAGE_SIZE));
   url.searchParams.append('_type', 'json');
   return await fetchBuildingApi(url);
 }
@@ -1221,6 +1270,12 @@ async function fetchAllBuildingData(sigunguCd, bjdongCd, jibunInfo) {
     optional('총괄표제부', fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)),
     optional('건축인허가(허가일)', fetchApBasisOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo))
   ]);
+  // 여러 페이지 중 일부만 받은 결과도 안내한다 (예: 층별개요 200/250행)
+  [['표제부', titleResult], ['층별개요', floorResult], ['총괄표제부', generalResult], ['건축인허가(허가일)', permitResult]]
+    .forEach(([label, result]) => {
+      const partial = result?.response?.body?._incomplete;
+      if (partial) failed.push(`${label} 일부(${partial.fetched}/${partial.total}행)`);
+    });
   return { titleResult, floorResult, generalResult, permitResult, failed };
 }
 

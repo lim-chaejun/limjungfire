@@ -1,5 +1,6 @@
 // Cloudflare Pages Function: 건축물대장·건축인허가 API 프록시
-//   GET /api/building/:op?sigunguCd=11680&bjdongCd=10300&platGbCd=0&bun=0012&ji=0000
+//   GET /api/building/:op?sigunguCd=11680&bjdongCd=10300&platGbCd=0&bun=0012&ji=0000[&pageNo=2]
+//   (한 페이지 100행 — 클라이언트가 totalCount 를 보고 나머지 페이지를 요청한다)
 //
 // - 공공데이터포털 서비스키는 Cloudflare Pages 환경변수 DATA_GO_KR_KEY 에만 둔다
 //   (클라이언트 코드·저장소에 두지 않음). 미설정이면 503을 돌려주고, 클라이언트는 기존 직접 호출로 폴백한다.
@@ -45,8 +46,9 @@ export async function onRequestGet(context) {
   const platGbCd = q.get('platGbCd') || '0';
   const bun = q.get('bun') || '';
   const ji = q.get('ji') || '';
+  const pageNo = q.get('pageNo') || '1';
   if (!/^\d{5}$/.test(sigunguCd) || !/^\d{5}$/.test(bjdongCd) || !/^[0-2]$/.test(platGbCd) ||
-      !/^\d{0,4}$/.test(bun) || !/^\d{0,4}$/.test(ji)) {
+      !/^\d{0,4}$/.test(bun) || !/^\d{0,4}$/.test(ji) || !/^[1-9]\d{0,2}$/.test(pageNo)) {
     return jsonError(400, 'invalid parameters');
   }
 
@@ -57,6 +59,7 @@ export async function onRequestGet(context) {
   cacheUrl.searchParams.set('platGbCd', platGbCd);
   cacheUrl.searchParams.set('bun', bun);
   cacheUrl.searchParams.set('ji', ji);
+  cacheUrl.searchParams.set('pageNo', pageNo);
   const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
   const cache = caches.default;
   const cached = await cache.match(cacheKey);
@@ -70,7 +73,7 @@ export async function onRequestGet(context) {
   if (bun) upstream.searchParams.set('bun', bun.padStart(4, '0'));
   if (ji) upstream.searchParams.set('ji', ji.padStart(4, '0'));
   upstream.searchParams.set('numOfRows', '100');
-  upstream.searchParams.set('pageNo', '1');
+  upstream.searchParams.set('pageNo', pageNo);
   upstream.searchParams.set('_type', 'json');
 
   let upstreamRes;
