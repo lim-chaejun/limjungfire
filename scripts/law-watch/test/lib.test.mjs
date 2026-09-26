@@ -23,13 +23,13 @@ import { REGISTRY, REPO_DATA, SNAPSHOT, readJson, runCheck, writeRegistry } from
 
 // ───────────── 레지스트리 ─────────────
 
-test('저장소 레지스트리(data/law_watch.json)는 유효하고 39개 소스(법령 3 + 기준 36)로 펼쳐진다', () => {
+test('저장소 레지스트리(data/law_watch.json)는 유효하고 연혁 기준 소스 39개(법령 3 + 기준 36)로 펼쳐진다', () => {
   const reg = readJson(path.join(REPO_DATA, 'law_watch.json'));
   assert.deepEqual(validateRegistry(reg), []);
   const baselines = { 'data/nfsc_history.json': readJson(path.join(SNAPSHOT, 'nfsc_history.json')) };
   const { sources, errors } = expandSources(reg, baselines);
   assert.deepEqual(errors, []);
-  assert.equal(sources.length, 39);
+  assert.equal(sources.filter((s) => s.baseline.from === 'history').length, 39);
   assert.deepEqual(sources.slice(0, 3).map((s) => s.id), ['act', 'decree', 'rules']);
   const ids = sources.map((s) => s.id);
   for (const id of ['nfpc-103a', 'nfpc-107a', 'nfpc-501a', 'nfpc-604', 'nfpc-seismic']) assert.ok(ids.includes(id), id);
@@ -39,8 +39,8 @@ test('저장소 레지스트리(data/law_watch.json)는 유효하고 39개 소�
   assert.equal(hi.name, '고층건축물의 화재안전성능기준 (NFPC 604)');
   const n108 = sources.find((s) => s.id === 'nfpc-108');
   assert.deepEqual([n108.anchorSeq, n108.kind, n108.group, n108.target], ['2100000253098', 'admrul', 'nfpc', 'data/nfsc_history.json']);
-  // 기록 당시 레지스트리와 같은 소스 구성
-  assert.deepEqual(reg.sources, readJson(REGISTRY).sources);
+  // 기록 당시 소스는 저장소 레지스트리에 그대로 있다 (inline 소스 추가는 허용 — 골든은 기록 당시 레지스트리로 재생)
+  for (const s of readJson(REGISTRY).sources) assert.deepEqual(reg.sources.find((x) => x.id === s.id), s, s.id);
 });
 
 test('레지스트리 형식 오류를 잡는다', () => {
