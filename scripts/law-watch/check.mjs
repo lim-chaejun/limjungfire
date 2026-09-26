@@ -82,6 +82,9 @@ const DEFAULT_DATA_DIR = path.join(REPO_ROOT, 'data');
 
 export const EXIT = Object.freeze({ OK: 0, CHANGES: 10, BROKEN: 20, CONFIG: 30 });
 export const OUTAGE_TRIP = 3; // 연속 N개 소스의 목록 요청이 전송·5xx·429 로 실패하면 law.go.kr 장애로 본다
+// 이름 교차검증을 시도한 소스가 이만큼은 돼야 "절반 이상 불가"를 실행 오류로 올린다 — 작은 --only 실행에서
+// 래퍼 한 번의 일시 오류로 exit 20 이 되지 않도록 (그보다 적으면 소스별 경고만)
+export const CROSSCHECK_MIN_TRIED = 4;
 
 export const USAGE = `사용법:
   node scripts/law-watch/check.mjs [--out DIR] [--only id,..] [--no-crosscheck]
@@ -380,7 +383,7 @@ async function checkSource(src, ctx) {
     return out;
   }
 
-  // 3) 이름 교차검증 (래퍼를 못 가져오면 소스는 경고만 — 절반 이상이면 checkMode 가 실행 오류로 올린다)
+  // 3) 이름 교차검증 (래퍼를 못 가져오면 소스는 경고만 — 4개 이상 시도해 절반 이상이면 checkMode 가 실행 오류로 올린다)
   if (crosscheck) {
     const wreq = wrapperRequest(src.kind, src.name);
     const w = await get(wreq);
@@ -592,8 +595,9 @@ async function checkMode(opts, deps) {
     log(`[${String(i + 1).padStart(2)}/${n}] ${src.id.padEnd(12)} ${note}`);
   }
   if (ctx.enrich.capped) warnings.push({ sourceId: '-', code: 'ENRICH_CAPPED', detail: `개정문 조회 상한 ${ENRICH_CAP}건을 넘어 나머지는 발췌 없이 보고` });
-  // 교차검증이 절반 이상에서 안 되면 안전망이 사실상 꺼진 것 — 경고가 아니라 실행 오류(exit 20)
-  if (cc.tried && cc.missed * 2 >= cc.tried) {
+  // 교차검증이 절반 이상에서 안 되면 안전망이 사실상 꺼진 것 — 경고가 아니라 실행 오류(exit 20).
+  // 시도한 소스가 CROSSCHECK_MIN_TRIED 개 미만이면(작은 --only 실행) 소스별 경고로 둔다
+  if (cc.tried >= CROSSCHECK_MIN_TRIED && cc.missed * 2 >= cc.tried) {
     errors.push({
       sourceId: '-',
       code: 'CROSSCHECK_UNAVAILABLE',

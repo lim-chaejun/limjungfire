@@ -352,26 +352,34 @@ const MAIN_PAGE = '<html><head><title>국가법령정보센터</title></head><bo
 const LAW_WRAPPER = '/%EB%B2%95%EB%A0%B9/'; // /법령/
 const ADM_WRAPPER = '/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/'; // /행정규칙/
 
+const ACT_WRAPPER_URL = wrapperRequest('law', '소방시설 설치 및 관리에 관한 법률').url;
+const DECREE_WRAPPER_URL = wrapperRequest('law', '소방시설 설치 및 관리에 관한 법률 시행령').url;
+const FOUR = ['--only', 'act,decree,rules,nfpc-108']; // 교차검증 시도 4개 (법령 래퍼 3 + 행정규칙 래퍼 1)
+
 test('래퍼가 메인 페이지를 주는 소스가 절반 미만이면 NAME_LOOKUP_MISS 경고만 (exit 는 변경 여부로)', async () => {
-  const actWrapper = wrapperRequest('law', '소방시설 설치 및 관리에 관한 법률').url;
-  const fetchImpl = mutating(replay(), (r) => (r.url === actWrapper ? { text: MAIN_PAGE } : null));
-  const { code, result } = await runCheck({ fetchImpl, args: ['--only', 'act,decree,rules'] });
+  const fetchImpl = mutating(replay(), (r) => (r.url === ACT_WRAPPER_URL ? { text: MAIN_PAGE } : null));
+  const { code, result } = await runCheck({ fetchImpl, args: FOUR });
   assert.equal(code, 10);
   assert.deepEqual(result.errors, []);
   assert.deepEqual(result.warnings.map((w) => `${w.sourceId}:${w.code}`), ['act:NAME_LOOKUP_MISS']);
-  assert.equal(result.changes.length, 3);
+  assert.equal(result.changes.length, 4);
 });
 
-test('교차검증을 절반 이상에서 못 하면 CROSSCHECK_UNAVAILABLE 실행 오류, exit 20 (감지한 개정은 그대로 보고)', async () => {
+test('교차검증을 4개 이상 시도해 절반 이상에서 못 하면 CROSSCHECK_UNAVAILABLE 실행 오류, exit 20 (감지한 개정은 그대로 보고)', async () => {
   const laws = mutating(replay(), (r) => (r.url.includes(LAW_WRAPPER) ? { text: MAIN_PAGE } : null));
-  const a = await runCheck({ fetchImpl: laws, args: ['--only', 'act,decree'] });
+  const a = await runCheck({ fetchImpl: laws, args: FOUR });
   assert.equal(a.code, 20);
   assert.deepEqual(a.result.errors.map((e) => `${e.sourceId}:${e.code}`), ['-:CROSSCHECK_UNAVAILABLE']);
-  assert.match(a.result.errors[0].detail, /2개 소스 중 2개/);
-  assert.deepEqual(a.result.warnings.map((w) => w.code), ['NAME_LOOKUP_MISS', 'NAME_LOOKUP_MISS']);
-  assert.equal(a.result.changes.length, 2);
-  assert.equal(a.result.stats.healthy, 2, '소스 자체는 정상');
+  assert.match(a.result.errors[0].detail, /4개 소스 중 3개/);
+  assert.deepEqual(a.result.warnings.map((w) => w.code), ['NAME_LOOKUP_MISS', 'NAME_LOOKUP_MISS', 'NAME_LOOKUP_MISS']);
+  assert.equal(a.result.changes.length, 4);
+  assert.equal(a.result.stats.healthy, 4, '소스 자체는 정상');
   assert.match(a.report, /\*\*감시 오류: CROSSCHECK_UNAVAILABLE\*\*/);
+
+  // 딱 절반(4개 중 2개)도 실행 오류
+  const half = mutating(replay(), (r) => ([ACT_WRAPPER_URL, DECREE_WRAPPER_URL].includes(r.url) ? { text: MAIN_PAGE } : null));
+  const h = await runCheck({ fetchImpl: half, args: FOUR });
+  assert.deepEqual([h.code, h.result.errors.map((e) => e.code)], [20, ['CROSSCHECK_UNAVAILABLE']]);
 
   // 재현(리뷰): 행정규칙 래퍼 형식만 바뀐 전체 실행 — 예전에는 경고 36개와 함께 exit 10 이었다
   const adm = mutating(replay(), (r) => (r.url.includes(ADM_WRAPPER) ? { text: '<html>main</html>' } : null));
@@ -379,13 +387,22 @@ test('교차검증을 절반 이상에서 못 하면 CROSSCHECK_UNAVAILABLE 실�
   assert.equal(b.code, 20);
   assert.equal(b.result.warnings.filter((w) => w.code === 'NAME_LOOKUP_MISS').length, 36);
   assert.match(b.result.errors.at(-1).detail, /39개 소스 중 36개/);
+});
 
-  // 래퍼 요청 자체가 실패해도(CROSSCHECK_SKIPPED) 같다. --no-crosscheck 는 시도하지 않으므로 해당 없음
+test('교차검증을 시도한 소스가 4개 미만(작은 --only 실행)이면 래퍼가 다 안 돼도 경고만 — exit 는 목록 대조로', async () => {
+  const laws = mutating(replay(), (r) => (r.url.includes(LAW_WRAPPER) ? { text: MAIN_PAGE } : null));
+  const a = await runCheck({ fetchImpl: laws, args: ['--only', 'act,decree'] });
+  assert.equal(a.code, 10);
+  assert.deepEqual(a.result.errors, []);
+  assert.deepEqual(a.result.warnings.map((w) => `${w.sourceId}:${w.code}`), ['act:NAME_LOOKUP_MISS', 'decree:NAME_LOOKUP_MISS']);
+
+  // 리뷰 재현: --only decree + 래퍼 한 번의 오류(404) — 예전에는 1개 중 1개로 exit 20
   const down = mutating(replay(), (r) => (r.url.includes(LAW_WRAPPER) ? { status: 404, text: 'nf' } : null));
   const c = await runCheck({ fetchImpl: down, args: ['--only', 'decree'] });
-  assert.deepEqual([c.code, c.result.warnings[0].code, c.result.errors[0].code], [20, 'CROSSCHECK_SKIPPED', 'CROSSCHECK_UNAVAILABLE']);
+  assert.deepEqual([c.code, c.result.warnings.map((w) => w.code), c.result.errors], [10, ['CROSSCHECK_SKIPPED'], []]);
+  // 반영 뒤 확인 실행(SKILL 5.4)은 --no-crosscheck — 래퍼를 부르지 않는다
   const off = await runCheck({ fetchImpl: down, args: ['--only', 'decree', '--no-crosscheck'] });
-  assert.equal(off.code, 10);
+  assert.deepEqual([off.code, off.result.warnings], [10, []]);
 });
 
 test('재현(리뷰): NFPC 108 최신 행의 onclick 이름만 바뀌면 PARSE_BAD_ROW (예전: 행이 조용히 빠져 exit 0)', async () => {

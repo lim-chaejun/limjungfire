@@ -108,8 +108,10 @@ echo "exit=$?"
 4. 검증 — 모두 통과해야 한다:
    ```bash
    node scripts/validate-data.mjs && node --test scripts/law-watch/test/*.test.mjs
-   node scripts/law-watch/check.mjs --out "$OUT-after" --only <반영한 change 의 sourceId 들>   # exit 0 이어야 한다
+   node scripts/law-watch/check.mjs --out "$OUT-after" --no-crosscheck --only <반영한 change 의 sourceId 들>   # exit 0 이어야 한다
    ```
+   이 확인은 반영한 항목이 목록 대조에서 사라졌는지만 본다. 이름 교차검증(래퍼)은 1단계에서 이미 했으므로
+   `--no-crosscheck` 로 끈다 — 래퍼 한 번의 일시 오류로 확인이 멈추지 않게.
    1단계가 exit 10 이었으면 `--only` 없이 전체로 돌려 exit 0 을 확인해도 된다. exit 20 이었으면 오류 소스를 빼고
    `--only` 로 돌린다 (같은 오류가 다시 나는 것은 이 PR 의 실패가 아니다).
 
