@@ -9,6 +9,7 @@
     "source": "registry(건축물대장) | user(사용자 답변) | derived(다른 입력에서 계산)",
     "scope": "building(동) | floor(층) | site(대지·허가 단위)",
     "range": "있을 수 있는 값의 범위(선택) — 입력 검사와 결정적 질문 시험값에 쓴다",
+    "site_aggregation": "동별 참/거짓 입력을 대지 전체(연결된 동을 하나로)로 모으는 방법 — any: 어느 동이든 참이면 참(예: 가스시설이 있다), all: 모든 동이 참이어야 참(예: 불연재료 구조다). 없으면 동들이 모두 같을 때만 그 값, 다르면 대지 전체로 묻는다",
     "question": "질문 문장 틀. {dong} 동 이름, {floor} 층 이름, {part} 층 부분의 용도, {where} 동(+층) 이름, {area} 층 면적(괄호 포함), {uses} 용도, {floors} 층 범위, {facility} 시설, {criteria} 기준 원문, {boundary} 개정 시행일, {groups} 용도군. {dong:은/는}처럼 쓰면 받침에 맞는 조사를 붙인다"
   },
   "inputs": [
@@ -92,7 +93,8 @@
       "source": "registry",
       "scope": "building",
       "registry_field": "rideUseElvtCnt + emgenUseElvtCnt",
-      "question": "{dong}에 승강기가 설치되어 있습니까?"
+      "question": "{dong}에 승강기가 설치되어 있습니까?",
+      "site_aggregation": "any"
     },
     {
       "id": "occupants",
@@ -177,7 +179,8 @@
       "type": "boolean",
       "source": "user",
       "scope": "building",
-      "question": "{dong}에 가스시설(가스 제조·저장·취급시설)이 설치되어 있습니까?"
+      "question": "{dong}에 가스시설(가스 제조·저장·취급시설)이 설치되어 있습니까?",
+      "site_aggregation": "any"
     },
     {
       "id": "inpatient_room",
@@ -185,7 +188,8 @@
       "type": "boolean",
       "source": "user",
       "scope": "building",
-      "question": "{dong}의 의원·치과의원·한의원·조산원에 입원실이 있습니까?"
+      "question": "{dong}의 의원·치과의원·한의원·조산원에 입원실이 있습니까?",
+      "site_aggregation": "any"
     },
     {
       "id": "multi_use_business",
@@ -193,7 +197,8 @@
       "type": "boolean",
       "source": "user",
       "scope": "building",
-      "question": "{dong}에 다중이용업소(음식점·노래연습장·PC방·고시원 등 「다중이용업소법」 대상 영업장)가 있습니까?"
+      "question": "{dong}에 다중이용업소(음식점·노래연습장·PC방·고시원 등 「다중이용업소법」 대상 영업장)가 있습니까?",
+      "site_aggregation": "any"
     },
     {
       "id": "window_bars",
@@ -201,7 +206,8 @@
       "type": "boolean",
       "source": "user",
       "scope": "building",
-      "question": "{dong}의 정신의료기관·의료재활시설에 창살(사람의 탈출을 막기 위한 철재·플라스틱·목재 등)이 설치되어 있습니까?"
+      "question": "{dong}의 정신의료기관·의료재활시설에 창살(사람의 탈출을 막기 위한 철재·플라스틱·목재 등)이 설치되어 있습니까?",
+      "site_aggregation": "any"
     },
     {
       "id": "noncombustible_structure",
@@ -209,7 +215,8 @@
       "type": "boolean",
       "source": "user",
       "scope": "building",
-      "question": "{dong}의 지붕과 외벽이 불연재료이거나 내화구조입니까?"
+      "question": "{dong}의 지붕과 외벽이 불연재료이거나 내화구조입니까?",
+      "site_aggregation": "all"
     },
     {
       "id": "mechanical_parking_spaces",
@@ -273,6 +280,7 @@
       "scope": "building",
       "engine": true,
       "question": "{dong}에 {facility:이/가} 설치되어 있습니까?",
+      "site_aggregation": "any",
       "targets": [
         { "id": "co2_extinguishing", "name": "이산화탄소소화설비" },
         { "id": "halon_extinguishing", "name": "할론소화설비" },
@@ -296,6 +304,15 @@
       "scope": "site",
       "engine": true,
       "question": "이 대지의 동들이 지하주차장·연결통로 등으로 연결되어 하나의 소방대상물로 보아야 합니까? (연결통로의 길이·벽 유무, 방화셔터 등 예외는 관할 소방서에 확인)"
+    },
+    {
+      "id": "site_combined_floors",
+      "label": "합친 층으로 보기(연결된 동)",
+      "type": "boolean",
+      "source": "user",
+      "scope": "site",
+      "engine": true,
+      "question": "연결된 동들을 하나의 소방대상물로 볼 때, 여러 동의 같은 층(예: 각 동의 1층)을 합쳐 한 층의 바닥면적으로 봅니까? ('바닥면적 ○㎡ 이상인 층' 같은 층별 기준에 영향 — '아니오'면 동별 층으로 봅니다)"
     },
     {
       "id": "review",

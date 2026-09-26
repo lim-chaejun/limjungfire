@@ -41,6 +41,24 @@ const SITE_TWO_DONGS = {
   floors: [{ dongNm: '주차장동', flrGbCd: '10', flrNo: 1, mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', area: 900 }],
   permit: [permit('20150101')],
 };
+// 3차 리뷰: 상가동(1층 900 + 2층 100) + 주차 전용 주차타워(1층 900) — 연결되면 대지 전체로 평가
+const RV3_SITE = {
+  title: [
+    { dongNm: '상가동', mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 1000, grndFlrCnt: 2, ugrndFlrCnt: 0 },
+    { dongNm: '주차타워', mainPurpsCdNm: '자동차관련시설', etcPurps: '주차장', totArea: 900, grndFlrCnt: 1, ugrndFlrCnt: 0 },
+  ],
+  floors: [
+    { dongNm: '상가동', flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', area: 900 },
+    { dongNm: '상가동', flrGbCd: '20', flrNo: 2, mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', area: 100 },
+    { dongNm: '주차타워', flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '자동차관련시설', etcPurps: '주차장', area: 900 },
+  ],
+  permit: [permit('20150101')],
+};
+const rv3Data = (excluded) => ({
+  '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('big', { m: 'total_area', gte: 1500 })], excluded_if: excluded }]),
+  '18': v2('18', []),
+  '30': v2('30', []),
+});
 // 개정 경계(2026.03.01)를 사이에 둔 두 기준: 옛 기준은 지하층 포함 7개층, 새 기준은 지상 11층
 const STANDPIPE_BOUNDARY = { '02': v2('02', [{ facility_id: 'standpipe', facility_name: '연결송수관설비', regulations: [
   { id: 'old', start_date: null, end_date: '20260228', criteria: '지하층 포함 7개층 이상', kind: 'trigger', conditions: { m: 'floors_incl_basement', gte: 7 }, scope: 'all_floors' },
@@ -202,6 +220,20 @@ export const CASES = [
       ]),
       '12': v2('12', [{ facility_id: 'fire_extinguisher', facility_name: '소화기구', regulations: [row('e', { m: 'total_area', gte: 33 })] }]),
       '30': v2('30', [{ facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [row('c', { facility: 'visual_alarm' })] }]),
+    },
+  },
+  // ── 3차 리뷰: 합친 동의 부정 조건(제외 조건) ──
+  { id: 'rv3-flow', title: '3차 HIGH: 제외 조건 "무창층 바닥면적 합계 1,000㎡ 이상" — 상가동 1층만 무창층(900㎡)', input: { registry: RV3_SITE }, dataFiles: rv3Data({ sum_area: { floors: ['windowless'] }, gte: 1000 }) },
+  { id: 'rv3-s1b', title: '3차 HIGH: 제외 조건 "무창층으로서 바닥면적 1,000㎡ 이상인 층"', input: { registry: RV3_SITE }, dataFiles: rv3Data({ floor_exists: { floors: ['windowless'], area: { gte: 1000 } } }) },
+  { id: 'rv3-s2', title: '3차 HIGH: 제외 조건 "불연재료·내화구조"(전칭) — 주차타워만 불연', input: { registry: RV3_SITE }, dataFiles: rv3Data({ flag: 'noncombustible_structure' }) },
+  {
+    id: 'rv3-combined-floor',
+    title: '3차: 층별 면적 기준 "1층 바닥면적 1,500㎡ 이상인 층" — 동별 층(900·900)과 합친 1층(1,800)이 갈림',
+    input: { registry: RV3_SITE },
+    dataFiles: {
+      '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('f', { floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: 1500 } } })] }]),
+      '18': v2('18', []),
+      '30': v2('30', []),
     },
   },
   {

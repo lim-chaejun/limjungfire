@@ -146,9 +146,13 @@ export function floorsOf(env) {
   });
 }
 
-// 대지 전체의 층 목록: 같은 층 키의 동별 층을 한 층으로(면적 합·무창층·용도는 동별 층에서). 구분별 완전성은 모든 동이 완전할 때
+// 대지 전체의 층 목록: 동별 층을 그대로 둔다(층마다 어느 동의 층인지 members 로 — 무창층·용도·면적은 그 동의 층에서 읽는다).
+// 무창층·용도 선택은 동별 층마다 따지므로 '무창층 바닥면적 합계' = 무창층인 동별 층 면적의 합이다(2차 리뷰 이후 3차 지적:
+// 같은 층 키를 합친 층의 무창층을 '어느 동이든'으로 보면 합친 면적 전체가 무창층으로 잡혀 제외 조건에서 틀린 비해당이 났다).
+// 같은 층 키의 동별 층을 합친 '한 층' 읽기는 층 면적 기준(floor_exists 의 area)에서만 따로 보고 두 읽기를 맞춰 본다.
+// 구분별 완전성은 모든 동이 완전할 때
 function siteFloors(env) {
-  const byKey = new Map();
+  const floors = [];
   const kinds = {};
   for (const k of ['ground', 'basement', 'rooftop']) kinds[k] = { complete: true, deps: EMPTY, open: EMPTY };
   let exactCounts = true;
@@ -163,13 +167,10 @@ function siteFloors(env) {
       };
     }
     for (const f of fo.floors) {
-      let mf = byKey.get(f.key);
-      if (!mf) byKey.set(f.key, (mf = { key: f.key, kind: f.kind, level: f.level, label: f.label, parts: [], members: [], synthesized: false }));
-      mf.members.push({ env: m, floor: f });
-      for (const p of f.parts) mf.parts.push({ ...p, n: mf.parts.length + 1 });
+      floors.push({ key: f.key, kind: f.kind, level: f.level, label: `${m.dong.id} ${f.label}`, parts: f.parts, members: [{ env: m, floor: f }], synthesized: f.synthesized });
     }
   }
-  return { floors: sortFloors([...byKey.values()]), kinds, allComplete: kinds.ground.complete && kinds.basement.complete, exactCounts };
+  return { floors: sortFloors(floors), kinds, allComplete: kinds.ground.complete && kinds.basement.complete, exactCounts };
 }
 
 // 선택자가 고르는 구분들의 층 목록 정보: 완전한가, 목록 근거(층수 입력), 모르는 층수 입력
@@ -509,28 +510,59 @@ function evalFloorExists(node, env) {
   const results = floors.map((f) => {
     const m = floorMember(env, f, selectors);
     // 확정 F(층 구분이 다름 등)는 바로, 가정·미확인 F 는 면적도 보고 더 확실한 근거를 남긴다
-    if (m.v === F && confirmedOnly(m)) return { f, r: m };
+    if (m.v === F && confirmedOnly(m)) return { f, m, a: null, r: m };
     let c = tv(T, EMPTY, why(env, () => [`${f.label}`]));
+    let a = null;
     if (spec.area) {
       const floorDep = spec.use && env.track
         ? makeDep('floor_use_area', UNKNOWN, { dong: env.dong.id, floor: f.key, sig: useSig(spec.use), info: { floorLabel: f.label, use: spec.use } })
         : null;
-      const a = spec.use ? floorUseArea(env, f, spec.use, floorDep) : floorArea(env, f);
+      a = spec.use ? floorUseArea(env, f, spec.use, floorDep) : floorArea(env, f);
       if (floorDep) floorDep.range = [a.lo, a.hi];
-      const r = compareInterval(a, spec.area, comparisonOps(spec.area));
-      c = tv(r.v, r.deps, why(env, () => [`${f.label} ${spec.use ? `${describeUses(spec.use, env.index)} ` : ''}${fmtInterval(a, '㎡')}`]));
+      const area = a;
+      const r = compareInterval(area, spec.area, comparisonOps(spec.area));
+      c = tv(r.v, r.deps, why(env, () => [`${f.label} ${spec.use ? `${describeUses(spec.use, env.index)} ` : ''}${fmtInterval(area, '㎡')}`]));
     } else if (spec.use) c = floorUsePresence(env, f, spec.use);
-    return { f, r: all([m, c]) };
+    return { f, m, a, r: all([m, c]) };
   });
   for (const { f, r } of results) {
     if (r.v === T && env.matched) env.matched.add(f.key);
     if (r.v === U && env.maybeMatched) env.maybeMatched.add(f.key);
   }
-  const res = any(results.map((x) => x.r));
+  let res = any(results.map((x) => x.r));
+  if (env.members && spec.area) res = siteCombinedFloors(env, spec, results, res);
   if (res.v !== F) return res;
   const none = () => `${describeFloors(spec.floors, env.index)}${spec.area ? ` 바닥면적 ${fmtCondition(spec.area, '㎡')}` : ''}인 층 없음`;
   if (!list.complete) return tv(U, list.open.length ? list.open : list.deps, why(env, () => [`${none()}(층수 미확인)`]));
   return tv(F, mergeDeps(res.deps, list.deps), why(env, () => [none()]));
+}
+
+// 대지 전체의 층 면적 기준: '층'을 동별 층으로 볼 때(res — 동별 층마다 선택·면적)와, 같은 층 키의 동별 층을 합친 한 층으로
+// 볼 때(선택된 동별 층의 (용도)면적을 층 키별로 합침)가 갈릴 수 있다. 두 읽기가 같으면 그 값, 다르면 모름 + 대지 단위 질문
+// site_combined_floors(답하면 그 읽기). 모름은 두 읽기의 공통 부분이라 어느 읽기가 맞아도 틀린 비해당·해당이 나오지 않는다
+function siteCombinedFloors(env, spec, results, perMember) {
+  const choice = boolAnswer(env.answers[depKey('site_combined_floors', env.dong.id)]);
+  if (choice === false) return perMember;
+  const byKey = new Map();
+  for (const { f, m, a } of results) {
+    if (!a || m.v === F) continue;
+    let g = byKey.get(f.key);
+    if (!g) byKey.set(f.key, (g = { key: f.key, area: exact(0), members: [] }));
+    const part = m.v === T ? a : interval(0, a.hi, { hiDeps: a.hiDeps, open: D(env, () => mergeDeps(a.open, m.deps)) });
+    g.area = addInterval(g.area, part);
+    g.members.push(m);
+  }
+  const perKey = [...byKey.values()].map((g) => {
+    const r = compareInterval(g.area, spec.area, comparisonOps(spec.area));
+    return all([any(g.members), tv(r.v, r.deps, why(env, () => [`${g.key}(합친 층) ${fmtInterval(g.area, '㎡')}`]))]);
+  });
+  const combined = any(perKey);
+  if (choice === true) return combined;
+  if (combined.v === perMember.v) return tv(perMember.v, D(env, () => mergeDeps(perMember.deps, combined.deps)), why(env, () => perMember.why));
+  const dep = makeDep('site_combined_floors', UNKNOWN, { dong: env.dong.id });
+  return tv(U, D(env, () => mergeDeps([dep], perMember.v === U ? perMember.deps : EMPTY, combined.v === U ? combined.deps : EMPTY)), why(env, () => [
+    `동별 층으로 보면 ${perMember.v === T ? '있음' : perMember.v === F ? '없음' : '미확인'}, 같은 층을 합친 한 층으로 보면 ${combined.v === T ? '있음' : combined.v === F ? '없음' : '미확인'} — 층 면적 기준을 어느 쪽으로 볼지 확인 필요`,
+  ]));
 }
 
 function evalUse(node, env) {
@@ -564,9 +596,24 @@ function evalUse(node, env) {
   return tv(res.v, deps, why(env, () => [`${name()} 용도 ${res.v === T ? '있음' : '없음'}`]));
 }
 
+// 대지 전체에서 동별 값 모으기 — 입력 정의의 site_aggregation: any(어느 동이든, 예: 가스시설), all(모든 동, 예: 불연재료 구조).
+// 정하지 않은 입력은 모든 동이 같을 때만 그 값, 다르면 대지 단위 질문(key@대지 전체)
+function siteAggregate(env, id, values, siteDep) {
+  const how = env.inputDefs.get(id)?.site_aggregation;
+  if (how === 'any') return any(values);
+  if (how === 'all') return all(values);
+  if (values.every((v) => v.v === T)) return all(values);
+  if (values.every((v) => v.v === F)) return any(values);
+  return tv(U, D(env, () => mergeDeps([siteDep()], ...values.filter((v) => v.v === U).map((v) => v.deps))), why(env, () => [`${labelOf(env, id)}: 동마다 다름 — 대지 전체로 확인 필요`]));
+}
+
 function evalFlag(node, env) {
-  if (env.members) return any(env.members.map((m) => evalFlag(node, m)));
   const id = node.flag;
+  if (env.members) {
+    const a = boolAnswer(env.answers[depKey(id, env.dong.id)]);
+    if (a !== null) return tv(a ? T : F, D(env, () => [userDep(id, env)]), why(env, () => [`${labelOf(env, id)}: ${a ? '예' : '아니오'}(대지 전체)`]));
+    return siteAggregate(env, id, env.members.map((m) => evalFlag(node, m)), () => makeDep(id, UNKNOWN, { dong: env.dong.id }));
+  }
   const a = boolAnswer(env.answers[depKey(id, env.dong.id)]);
   const label = () => labelOf(env, id);
   if (a !== null) return tv(a ? T : F, D(env, () => [userDep(id, env)]), why(env, () => [`${label()}: ${a ? '예' : '아니오'}`]));
@@ -576,8 +623,12 @@ function evalFlag(node, env) {
 }
 
 function evalInstalled(node, env) {
-  if (env.members) return any(env.members.map((m) => evalInstalled(node, m)));
   const id = node.installed;
+  if (env.members) {
+    const a = boolAnswer(env.answers[depKey('installed', env.dong.id, undefined, id)]);
+    if (a !== null) return tv(a ? T : F, D(env, () => [userDep('installed', env, { sig: id })]), why(env, () => [`${env.names.get(id) ?? id} 설치 ${a ? '예' : '아니오'}(대지 전체)`]));
+    return siteAggregate(env, 'installed', env.members.map((m) => evalInstalled(node, m)), () => makeDep('installed', UNKNOWN, { dong: env.dong.id, sig: id, info: { facility: id } }));
+  }
   const a = boolAnswer(env.answers[depKey('installed', env.dong.id, undefined, id)]);
   const name = () => env.names.get(id) ?? id;
   if (a !== null) return tv(a ? T : F, D(env, () => [userDep('installed', env, { sig: id })]), why(env, () => [`${name()} 설치 ${a ? '예' : '아니오'}`]));

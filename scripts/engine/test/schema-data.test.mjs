@@ -90,6 +90,21 @@ test('inputs.json: id 유일, 필수 필드, 유형·출처·범위 값, 질문 
   }
 });
 
+test('inputs.json: 동별 참/거짓 입력(flag·installed)은 대지 전체로 모으는 방법(site_aggregation: any|all)을 밝힌다', () => {
+  const isFlag = (d) => d.type === 'boolean' && d.scope === 'building' && (!d.engine || d.id === 'installed');
+  for (const d of INPUTS.inputs) {
+    if (d.site_aggregation !== undefined) {
+      assert.ok(['any', 'all'].includes(d.site_aggregation), `${d.id}.site_aggregation = ${d.site_aggregation}`);
+      assert.ok(isFlag(d), `${d.id}: site_aggregation 은 동 단위 참/거짓 입력에만`);
+    }
+    if (isFlag(d)) assert.ok(d.site_aggregation, `${d.id}: site_aggregation 없음`);
+  }
+  // 전칭 성질(불연재료 구조)은 all, 존재 성질(가스시설·승강기·입원실 등)은 any
+  const agg = Object.fromEntries(INPUTS.inputs.filter((d) => d.site_aggregation).map((d) => [d.id, d.site_aggregation]));
+  assert.equal(agg.noncombustible_structure, 'all');
+  for (const id of ['gas_facility', 'elevator', 'inpatient_room', 'multi_use_business', 'window_bars', 'installed']) assert.equal(agg[id], 'any', id);
+});
+
 test('엔진이 만드는 질문의 입력 id 는 모두 inputs.json 에 있다', () => {
   const engineInputs = [...inputDefsFrom(undefined).keys()];
   const ids = new Set(INPUTS.inputs.map((d) => d.id));

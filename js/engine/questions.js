@@ -25,6 +25,7 @@ const BUILTIN = [
   ['mixed_use', 'boolean', '복합건축물 해당 여부', ''],
   ['review', 'boolean', '기준 해당 여부', ''],
   ['site_connected', 'boolean', '동 연결 여부', ''],
+  ['site_combined_floors', 'boolean', '합친 층으로 보기(연결된 동)', ''],
   ['application_date', 'date', '건축허가 신청일', ''],
   ['permit_date', 'date', '건축허가일', ''],
 ];

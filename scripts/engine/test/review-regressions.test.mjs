@@ -316,6 +316,52 @@ test('2차 LOW: 파일끼리의 시설 순환은 검증기 오류, 실행 중에
   }
 });
 
+// ───── 3차 리뷰 HIGH: 합친 동의 부정 조건 ─────
+
+test('3차 rv3_flow: 보이는 질문에만 사실대로 답해도 합친 동의 무창층 면적은 동별 무창층 층의 합 — 제외되지 않아 해당', () => {
+  const truth = { site_connected: true, 'windowless@상가동/1F': true, 'windowless@상가동/2F': false, 'windowless@주차타워/1F': false };
+  const c = caseById('rv3-flow');
+  let answers = {};
+  const seen = [];
+  for (let round = 0; round < 6; round++) {
+    const f = fac(runCase(c, { answers }), '상가동', 'x');
+    seen.push(f.verdict);
+    if (!f.questions.length) break;
+    for (const q of f.questions) if (q.key in truth) answers = { ...answers, [q.key]: truth[q.key] };
+  }
+  assert.equal(seen[0], '확인 필요');
+  assert.equal(seen.at(-1), '해당', seen.join(' → '));
+  assert.ok(!seen.includes('비해당'), seen.join(' → '));
+  // 합친 동의 무창층 바닥면적 합계 = 900(상가동 1층만)
+  const r = runCase(c, { answers: truth });
+  assert.equal(r.site.facilities.find((x) => x.id === 'x').verdict, '해당');
+});
+
+test('3차 S1b·S2: 층 단위 무창층 조건·전칭 플래그도 동별로 — 합친 층·any 로 모아 틀린 비해당을 내지 않는다', () => {
+  const windowless = { site_connected: true, 'windowless@상가동/1F': true, 'windowless@상가동/2F': false, 'windowless@주차타워/1F': false };
+  assert.equal(verdictOf('rv3-s1b', '상가동', 'x', { answers: windowless }), '해당');
+  // 불연재료 구조는 모든 동이 그래야 참(site_aggregation: all)
+  const onlyTower = { site_connected: true, 'noncombustible_structure@상가동': false, 'noncombustible_structure@주차타워': true };
+  assert.equal(verdictOf('rv3-s2', '상가동', 'x', { answers: onlyTower }), '해당');
+  const both = { site_connected: true, 'noncombustible_structure@상가동': true, 'noncombustible_structure@주차타워': true };
+  assert.equal(verdictOf('rv3-s2', '상가동', 'x', { answers: both }), '비해당');
+  // 한 동만 답했으면 확인 필요(다른 동을 묻는다)
+  const f = fac(runCase(caseById('rv3-s2'), { answers: { site_connected: true, 'noncombustible_structure@주차타워': true } }), '상가동', 'x');
+  assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', ['noncombustible_structure@상가동']]);
+});
+
+test('3차: 층 면적 기준은 동별 층과 합친 한 층 읽기가 갈리면 확인 필요(site_combined_floors) — 답하면 그 읽기', () => {
+  const c = caseById('rv3-combined-floor');
+  const f = fac(runCase(c, { answers: { site_connected: true } }), '상가동', 'x');
+  assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', ['site_combined_floors@대지 전체']]);
+  assert.match(f.reasons.join(' '), /동별 층으로 보면 없음, 같은 층을 합친 한 층으로 보면 있음/);
+  assert.equal(verdictOf('rv3-combined-floor', '상가동', 'x', { answers: { site_connected: true, 'site_combined_floors@대지 전체': true } }), '해당');
+  assert.equal(verdictOf('rv3-combined-floor', '상가동', 'x', { answers: { site_connected: true, 'site_combined_floors@대지 전체': false } }), '비해당');
+  // 두 읽기가 같으면(1,000㎡ 이상 — 동별 900 < 1,000 이지만 합친 1층 1,800 도, … ) 묻지 않는다: 기준 2,000㎡ 이면 둘 다 없음
+  const none = { ...c, dataFiles: { ...c.dataFiles, '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('f', { floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: 2000 } } })] }]) } };
+  assert.equal(fac(runCase(none, { answers: { site_connected: true } }), '상가동', 'x').verdict, '비해당');
+});
+
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
   const r = runCase(caseById('area-determined'));
   const f = fac(r, '본동', 'x');
