@@ -12,6 +12,7 @@
 //   · 개정이 있으면 law-update 이슈(본문 표지 포함)를 만들거나 본문·제목을 조용히 고친다.
 //     댓글(=알림)은 이전 상태 표지에 없던 새 id 가 있을 때만 단다.
 //   · 정상 실행에서 반영할 개정이 없으면 "반영 확인" 댓글을 달고 닫는다.
+//   · --only 부분 실행(result.scope)은 어떤 이슈도 닫지 않고, 범위 밖 소스의 이전 항목을 상태에 남긴다.
 //   · 이슈가 14일 넘게 열려 있으면 리마인더 댓글을 한 번만 단다(law-watch-hold 라벨이면 생략).
 //   · 실패한 실행은 별도 이슈(<!-- law-watch:broken -->)로 알리고, 오류 구성(코드+소스)이 바뀔 때만
 //     댓글을 단다. 다음 오류 없는 실행에서 자동으로 닫는다.
@@ -92,6 +93,8 @@ export function planActions({ result = null, reportMd = '', code, runUrl = '', n
   const actions = LABELS.map((l) => ({ type: 'label', ...l }));
   const codeNum = Number(code);
   const healthyRun = !!result && (codeNum === 0 || codeNum === 10) && result.status !== 'broken';
+  // --only 로 일부 소스만 본 실행: 범위 밖 소스의 항목은 상태에 남기고, 어떤 이슈도 닫지 않는다
+  const scope = Array.isArray(result?.scope?.sources) ? new Set(result.scope.sources) : null;
   const changes = result?.changes ?? [];
   const ids = [...new Set(changes.map((c) => c.id))].sort();
   const runLine = runUrl ? `\n\n실행: ${runUrl}` : '';
@@ -101,19 +104,21 @@ export function planActions({ result = null, reportMd = '', code, runUrl = '', n
   if (changes.length) {
     const prevIds = new Set(lawIssue ? (parseState(lawIssue.body)?.ids ?? []) : []);
     const failed = new Set((result?.errors ?? []).map((e) => e.sourceId));
-    // 이번에 실패한 소스의 이전 항목은 상태에 남긴다 → 다음 정상 실행에서 "새 항목" 알림이 다시 가지 않는다
-    const carried = healthyRun ? [] : [...prevIds].filter((id) => !ids.includes(id) && failed.has(id.split(':')[0]));
+    // 이번에 보지 못한 소스(실패했거나 --only 범위 밖)의 이전 항목은 상태에 남긴다
+    // → 다음 전체 실행에서 "새 항목" 알림이 다시 가지 않는다
+    const unseen = (src) => (!healthyRun && failed.has(src)) || (scope != null && !scope.has(src));
+    const carried = [...prevIds].filter((id) => !ids.includes(id) && unseen(id.split(':')[0]));
     const stateIds = [...new Set([...ids, ...carried])].sort();
     let body = withState(reportMd || renderReport(result, { runUrl }), stateIds);
-    if (carried.length) body += `\n\n> 이번 실행에서 오류가 난 소스의 이전 항목 ${carried.length}건은 그대로 유지합니다: ${carried.map((id) => `\`${id}\``).join(', ')}`;
+    if (carried.length) body += `\n\n> 이번 실행에서 보지 못한 소스(오류 또는 --only 범위 밖)의 이전 항목 ${carried.length}건은 그대로 유지합니다: ${carried.map((id) => `\`${id}\``).join(', ')}`;
     const title = `법령 개정 반영 필요: ${stateIds.length}건`;
     if (!lawIssue) actions.push({ type: 'create', title, body, labels: ['law-update'] });
     else {
       const newIds = ids.filter((id) => !prevIds.has(id));
-      if (healthyRun || newIds.length) actions.push({ type: 'edit', number: lawIssue.number, title, body });
+      if ((healthyRun && !scope) || newIds.length) actions.push({ type: 'edit', number: lawIssue.number, title, body });
       if (newIds.length) actions.push({ type: 'comment', number: lawIssue.number, body: newIdsComment(newIds, changes, runUrl) });
     }
-  } else if (healthyRun && result.status === 'ok' && lawIssue) {
+  } else if (healthyRun && !scope && result.status === 'ok' && lawIssue) {
     actions.push({ type: 'comment', number: lawIssue.number, body: `반영 확인 — 최신 감시에서 반영할 개정이 없습니다. 이슈를 닫습니다.${runLine}` });
     actions.push({ type: 'close', number: lawIssue.number });
     closingLaw = true;
@@ -144,7 +149,7 @@ export function planActions({ result = null, reportMd = '', code, runUrl = '', n
       actions.push({ type: 'edit', number: brokenIssue.number, title, body });
       if (prevSig !== sig) actions.push({ type: 'comment', number: brokenIssue.number, body: `오류 구성이 바뀌었습니다: \`${sig}\`${runLine}` });
     }
-  } else if (brokenIssue) {
+  } else if (brokenIssue && !scope) {
     actions.push({ type: 'comment', number: brokenIssue.number, body: `정상화 확인 — 오류 없이 실행되었습니다. 이슈를 닫습니다.${runLine}` });
     actions.push({ type: 'close', number: brokenIssue.number });
   }

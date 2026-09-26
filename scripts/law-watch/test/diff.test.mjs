@@ -29,6 +29,7 @@ test('골든: 연혁 기준 39개 소스 → 정확히 13건, exit 10', async ()
   assert.equal(code, 10);
   assert.equal(result.status, 'changes');
   assert.equal(result.todayKst, '20260926');
+  assert.equal(result.scope, null, '전체 실행');
   assert.deepEqual(result.stats.sources, 39);
   assert.equal(result.stats.healthy, 39);
   assert.equal(result.stats.requests, 91);

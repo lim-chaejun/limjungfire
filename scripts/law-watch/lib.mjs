@@ -787,8 +787,9 @@ export function parseState(body) {
 
 export function summaryLine(result) {
   const { stats, changes, errors } = result;
-  const base = `소스 ${stats.sources}개 중 정상 ${stats.healthy}개 · 요청 ${stats.requests}회 · 기준일 ${fmtYmd(result.todayKst)}(KST)`;
-  if (result.status === 'ok') return `**변경 없음** — 모든 소스가 사이트 데이터와 일치합니다. (${base})`;
+  const only = result.scope?.only?.length ? result.scope.only : null;
+  const base = `소스 ${stats.sources}개 중 정상 ${stats.healthy}개 · 요청 ${stats.requests}회 · 기준일 ${fmtYmd(result.todayKst)}(KST)${only ? ` · 부분 실행(--only ${only.join(',')})` : ''}`;
+  if (result.status === 'ok') return `**변경 없음** — ${only ? '지정한' : '모든'} 소스가 사이트 데이터와 일치합니다. (${base})`;
   if (result.status === 'changes') return `**법령 개정 반영 필요: ${changes.length}건** (${base})`;
   const failed = new Set(errors.map((e) => e.sourceId)).size;
   return `**감시 오류: 소스 ${failed}개 실패** — 정상 소스에서 감지된 개정 ${changes.length}건 (${base})`;

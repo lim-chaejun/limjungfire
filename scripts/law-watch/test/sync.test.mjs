@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { MARKER_BROKEN, MARKER_LAW, fingerprint, parseState, renderReport, stateMarker } from '../lib.mjs';
 import { MARKER_REMINDER, errorSignature, ghArgs, pickIssues, planActions, withState } from '../sync-issues.mjs';
-import { tmpDir } from './helpers.mjs';
+import { chainAware, copySnapshot, replay, runCheck, tmpDir } from './helpers.mjs';
 
 const NOW = new Date('2026-09-28T00:10:00Z');
 const RUN = 'https://github.com/o/r/actions/runs/1';
@@ -17,7 +17,7 @@ function change(id, extra = {}) {
   return { id, sourceId, kind: 'law', title: '시행령', efYd: '20260701', ancYd: '20260623', number: '대통령령 제1호', revisionType: '일부개정', seq: '1', isCurrent: true, isFuture: false, link: 'https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=1', target: 'data/law_history_decree.json', suggestedRow: {}, excerpt: null, impactGuess: 'unknown', affects: [], ...extra };
 }
 
-function result({ ids = [], errors = [], code } = {}) {
+function result({ ids = [], errors = [], code, scope = null } = {}) {
   const changes = ids.map((id) => change(id));
   const exitCode = code ?? (errors.length ? 20 : ids.length ? 10 : 0);
   return {
@@ -26,6 +26,7 @@ function result({ ids = [], errors = [], code } = {}) {
     todayKst: '20260928',
     status: exitCode === 0 ? 'ok' : exitCode === 10 ? 'changes' : 'broken',
     exitCode,
+    scope,
     fingerprint: fingerprint(ids),
     stats: { sources: 39, healthy: 39 - new Set(errors.map((e) => e.sourceId)).size, requests: 90, ms: 1 },
     changes,
@@ -129,6 +130,62 @@ test('실패 실행: 정상 소스의 새 개정은 알리고, 실패한 소스�
   // 새 항목이 없으면 실패 실행에서는 이슈를 건드리지 않는다
   const quiet = nonLabel(plan(result({ ids: ['decree:20260701:287375'], errors: [err('nfpc-108', 'FETCH_FAILED')] }), { lawIssue: lawIssue(prev) }));
   assert.deepEqual(quiet.map((x) => x.type), ['create']);
+});
+
+// ───────────── --only 부분 실행 ─────────────
+
+const ALL13 = [
+  'decree:20260324:284781', 'decree:20260701:287375', 'nfpc-108:2100000278572', 'nfpc-201:2100000278574', 'nfpc-205:2100000278570',
+  'nfpc-304:2100000278586', 'nfpc-401:2100000278590', 'nfpc-402:2100000278592', 'nfpc-503:2100000278594', 'nfpc-504:2100000278588',
+  'nfpc-505:2100000278542', 'nfpc-602:2100000278578', 'rules:20260701:287831',
+];
+const scopeOf = (...sources) => ({ only: sources, sources });
+
+test('부분 실행(scope): 범위 안이 모두 반영돼도 law 이슈·broken 이슈를 닫지 않는다', () => {
+  const r = result({ scope: scopeOf('decree', 'rules') });
+  const a = nonLabel(plan(r, { lawIssue: lawIssue(ALL13), brokenIssue: brokenIssue('FETCH_FAILED:nfpc-108') }));
+  assert.deepEqual(a, []);
+  // 같은 결과가 전체 실행이면 둘 다 닫는다 (대조)
+  const full = nonLabel(plan(result(), { lawIssue: lawIssue(ALL13), brokenIssue: brokenIssue('FETCH_FAILED:nfpc-108') }));
+  assert.deepEqual(full.map((x) => `${x.type}:${x.number}`), ['comment:7', 'close:7', 'comment:9', 'close:9']);
+});
+
+test('부분 실행(scope): 범위 밖 항목은 상태에 남기고, 새 항목만 알린다 (상태가 줄지 않는다)', () => {
+  const quiet = nonLabel(plan(result({ ids: ALL13.filter((id) => id.startsWith('decree:')), scope: scopeOf('decree') }), { lawIssue: lawIssue(ALL13) }));
+  assert.deepEqual(quiet, [], '새 항목이 없으면 이슈를 건드리지 않는다');
+
+  const ids = [...ALL13.filter((id) => id.startsWith('decree:')), 'decree:20270101:999999'];
+  const a = nonLabel(plan(result({ ids, scope: scopeOf('decree') }), { lawIssue: lawIssue(ALL13) }));
+  assert.deepEqual(a.map((x) => x.type), ['edit', 'comment']);
+  assert.deepEqual(parseState(a[0].body).ids, [...ALL13, 'decree:20270101:999999'].sort());
+  assert.equal(a[0].title, '법령 개정 반영 필요: 14건');
+  assert.match(a[0].body, /--only 범위 밖\)의 이전 항목 11건/);
+  assert.match(a[1].body, /새로 감지된 개정 1건/);
+  assert.match(a[1].body, /decree:20270101:999999/);
+});
+
+test('부분 실행(scope): 범위 안 소스가 실패해도 이전 항목을 유지하고 broken 이슈는 만든다', () => {
+  const r = result({ ids: [], errors: [err('decree', 'FETCH_FAILED')], scope: scopeOf('decree', 'rules') });
+  const a = nonLabel(plan(r, { lawIssue: lawIssue(ALL13) }));
+  assert.deepEqual(a.map((x) => x.type), ['create']);
+  assert.deepEqual(a[0].labels, ['law-watch-broken']);
+});
+
+test('재현: 연혁 반영 후 --only decree,rules 로 돌린 결과는 이슈를 닫지 않는다 (check.mjs → planActions)', async () => {
+  const dir = copySnapshot();
+  await runCheck({ dataDir: dir, args: ['--apply-history', '--only', 'decree,rules'] });
+  const partial = await runCheck({ dataDir: dir, args: ['--only', 'decree,rules'], fetchImpl: chainAware(replay()) });
+  assert.equal(partial.code, 0);
+  assert.deepEqual(partial.result.scope, { only: ['decree', 'rules'], sources: ['decree', 'rules'] });
+  assert.match(partial.report, /부분 실행\(--only decree,rules\)/);
+  const a = planActions({ result: partial.result, reportMd: partial.report, code: String(partial.code), runUrl: RUN, now: NOW, lawIssue: lawIssue(ALL13), brokenIssue: brokenIssue('FETCH_FAILED:nfpc-108') });
+  assert.deepEqual(nonLabel(a), []);
+
+  // --only decree 로 변경이 남아 있는 실행도 상태를 13건에서 줄이지 않는다
+  const one = await runCheck({ args: ['--only', 'decree'] });
+  assert.equal(one.code, 10);
+  const b = nonLabel(planActions({ result: one.result, reportMd: one.report, code: '10', runUrl: RUN, now: NOW, lawIssue: lawIssue(ALL13) }));
+  assert.deepEqual(b, []);
 });
 
 test('결과 파일이 없으면(설정 오류·충돌) broken 이슈만', () => {

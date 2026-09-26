@@ -441,12 +441,15 @@ async function checkMode(opts, deps) {
     if (e instanceof ConfigError) {
       writeOutputs(outDir, {
         schemaVersion: 1, runAt, todayKst: opts.today ?? todayKst(new Date(t0)), status: 'broken', exitCode: EXIT.CONFIG,
+        scope: opts.only ? { only: opts.only, sources: [] } : null,
         fingerprint: fingerprint([]), stats: { sources: 0, healthy: 0, requests: 0, ms: now() - t0 },
         changes: [], warnings: [], errors: [{ sourceId: '-', code: 'CONFIG_INVALID', detail: e.message }],
       }, runUrl);
     }
     throw e;
   }
+  // --only 로 일부 소스만 본 실행임을 결과에 남긴다 → 이슈 동기화가 부분 결과로 이슈를 닫거나 상태를 줄이지 않는다
+  const scope = opts.only ? { only: opts.only, sources: config.sources.map((s) => s.id) } : null;
 
   const replay = opts.replay ? createReplayFetch(path.resolve(opts.replay)) : null;
   const recordDir = opts.record === true ? path.join(outDir, 'raw') : opts.record ? path.resolve(opts.record) : null;
@@ -485,6 +488,7 @@ async function checkMode(opts, deps) {
     todayKst: today,
     status: statusFor(exitCode),
     exitCode,
+    scope,
     fingerprint: fingerprint(changes.map((c) => c.id)),
     stats: { sources: n, healthy, requests: http.count, ms: now() - t0 },
     changes,
