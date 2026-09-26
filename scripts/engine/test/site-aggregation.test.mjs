@@ -38,7 +38,9 @@ function randomSite(rnd, { blankAreas = false } = {}) {
   const item = (dongNm, gb, no, main, etc) => {
     const area = pick(areas);
     total += area;
-    floors.push({ dongNm, flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area: blankAreas && rnd() < 0.3 ? '' : area });
+    // 면적제외여부는 실제 대장처럼 '0'·빈칸이 대부분(4차 리뷰) — 층 면적은 모두 있어 합친 동 조건 값과는 무관, 면적이 빈 경우의 항등식만 달라진다
+    const flag = pick(['0', '0', '0', ' ', '', '1']);
+    floors.push({ dongNm, flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area: blankAreas && rnd() < 0.3 ? '' : area, areaExctYn: flag });
     return area;
   };
   for (let k = 1; k <= g; k++) item('상가동', '20', k, '제1종근린생활시설', pick(['소매점', '일반음식점']));

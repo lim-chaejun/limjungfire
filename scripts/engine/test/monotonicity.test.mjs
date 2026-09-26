@@ -103,8 +103,17 @@ function generator(rnd) {
     }
     return { '02': { schema_version: 2, type_code: '02', review: { status: 'draft', by: null, date: null }, fire_facilities: facilities } };
   }
-  // 단조성을 깨기 쉬운 건물 모양(2차 리뷰 N1·N2·N2′·면적 항등식) — 기준은 무작위
-  const item = (gb, no, etc, area) => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제2종근린생활시설', etcPurps: etc, area });
+  // 층별개요 행의 면적제외여부·주/부속 구분(4차 리뷰) — 실제 대장처럼 '0'·빈칸이 대부분, 가끔 제외('1'·'Y')·'N'·필로티·부속건축물 행
+  const rowFlags = () => {
+    const out = {};
+    const v = pick(['0', '0', '0', '0', ' ', ' ', '', undefined, '1', 'Y', 'N']);
+    if (v !== undefined) out.areaExctYn = v;
+    if (chance(0.06)) out.mainAtchGbCd = pick(['1', '0', ' ']);
+    if (chance(0.06)) out.etcPurps = pick(['필로티주차장', '다락']);
+    return out;
+  };
+  // 단조성을 깨기 쉬운 건물 모양(2차 리뷰 N1·N2·N2′·면적 항등식) — 기준은 무작위. 행은 대부분 산입('0')이라 면적 항등식이 선다
+  const item = (gb, no, etc, area) => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제2종근린생활시설', etcPurps: etc, area, ...(chance(0.8) ? { areaExctYn: '0' } : rowFlags()) });
   function template() {
     const permit = [{ archPmsDay: '20150601', archGbCdNm: '신축' }];
     const multi = pick(['소매점, 노래연습장', '일반음식점, 노래연습장']);
@@ -132,10 +141,10 @@ function generator(rnd) {
     }
     const g = 1 + Math.floor(rnd() * 3);
     const b = Math.floor(rnd() * 2);
-    const title = { mainPurpsCdNm: '제2종근린생활시설', etcPurps: pick(ETC), totArea: chance(0.85) ? pick([300, 700, 1200, 2400]) : '', grndFlrCnt: chance(0.85) ? g : '', ugrndFlrCnt: chance(0.8) ? b : '' };
+    const title = { mainPurpsCdNm: '제2종근린생활시설', etcPurps: pick(ETC), totArea: chance(0.85) ? pick([300, 700, 1200, 2400]) : '', grndFlrCnt: chance(0.85) ? g : '', ugrndFlrCnt: chance(0.8) ? b : '', ...(chance(0.7) ? { mainAtchGbCd: '0' } : {}) };
     const floors = [];
     const add = (gb, no) => {
-      for (let p = 0; p < (chance(0.2) ? 2 : 1); p++) floors.push({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제2종근린생활시설', etcPurps: pick(ETC), area: chance(0.8) ? pick([100, 200, 400, 600]) : '' });
+      for (let p = 0; p < (chance(0.2) ? 2 : 1); p++) floors.push({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제2종근린생활시설', etcPurps: pick(ETC), area: chance(0.8) ? pick([100, 200, 400, 600]) : '', ...rowFlags() });
     };
     // 빠진 층(보충)·층수 빈칸·층별개요 면적 합 ≠ 연면적이 자주 나오게
     for (let k = 1; k <= g + (chance(0.15) ? 1 : 0); k++) if (chance(0.75)) add('20', k);

@@ -6,8 +6,9 @@ export const v2 = (code, facilities) => ({ schema_version: 2, type_code: code, r
 export const row = (id, conditions, extra = {}) => ({ id, start_date: null, end_date: null, criteria: id, kind: 'trigger', conditions, scope: 'all_floors', ...extra });
 
 const DATA = FIXTURE_SET.dataFiles;
-const nc1 = (no, area, etc = '소매점', gb = '20') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제1종근린생활시설', etcPurps: etc, area });
-const nc2 = (no, etc, area, gb = '20') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제2종근린생활시설', etcPurps: etc, area });
+// 층별개요 행 — 면적제외여부 '0'(연면적 산입, 실제 대장 값). 빈칸(' ')·없음·필로티 등 산입 여부를 모르는 행은 rv4 사례에서 따로
+const nc1 = (no, area, etc = '소매점', gb = '20') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제1종근린생활시설', etcPurps: etc, area, areaExctYn: '0' });
+const nc2 = (no, etc, area, gb = '20') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: '제2종근린생활시설', etcPurps: etc, area, areaExctYn: '0' });
 const permit = (day, kind = '신축') => ({ archPmsDay: day, archGbCdNm: kind });
 
 // 제연설비형 규칙: 지하층·무창층의 근린생활시설 바닥면적 합계 1,000㎡ 이상 (무창층 두 개가 함께여야 넘는다)
@@ -56,6 +57,16 @@ const RV3_SITE = {
   ],
   permit: [permit('20150101')],
 };
+// 4차 리뷰: 연면적 1,000, 지상 3층 — 1층 필로티 주차 200(연면적 불산입), 2층 소매점 400, 3층 행 없음(실제 3층 600).
+// 규칙 "3층 이상 바닥면적 500㎡ 이상인 층". 행마다 면적제외여부(areaExctYn)를 바꿔 본다(없음 = 키 없음)
+const pilotiRow = (extra = {}) => ({ flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '필로티주차장', area: 200, ...extra });
+const retail2F = (extra = {}) => ({ flrGbCd: '20', flrNo: 2, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: 400, ...extra });
+export const pilotiBuilding = ({ piloti = { areaExctYn: '1' }, second = {}, title = {}, withPiloti = true } = {}) => ({
+  title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1000, grndFlrCnt: 3, ugrndFlrCnt: 0, ...title }],
+  floors: [...(withPiloti ? [pilotiRow(piloti)] : []), retail2F(second)],
+  permit: [permit('20150101')],
+});
+export const PILOTI_DATA = { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('fe', { floor_exists: { floors: [{ kind: 'ground', level: { gte: 3 } }], area: { gte: 500 } } }, { scope: 'matching_floors' })] }]) };
 const rv3Data = (excluded) => ({
   '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('big', { m: 'total_area', gte: 1500 })], excluded_if: excluded }]),
   '18': v2('18', []),
@@ -317,6 +328,18 @@ export const CASES = [
     title: '직접 입력 연면적 400, 지상 3층, 지하층수 빈칸(가정 0) — 지상층 면적 답의 합(210)이 연면적보다 작음: 가정값과만 어긋남(지하층이 있으면 맞음)',
     input: { manual: { mainPurpsCdNm: '제2종근린생활시설', totArea: 400, grndFlrCnt: 3, ugrndFlrCnt: '', pmsDay: '20150601' } },
     dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('s', { sum_area: { floors: 'ground' }, gte: 300 })] }]) },
+  },
+  {
+    id: 'rv4-piloti',
+    title: '4차 HIGH(rv4_piloti): 1층 필로티 주차 200 면적제외 "1", 2층 소매점 400 면적제외여부 없음, 3층 행 없음 — 필로티를 연면적에 더해 3층을 400 으로 고정하지 않는다',
+    input: { registry: pilotiBuilding() },
+    dataFiles: PILOTI_DATA,
+  },
+  {
+    id: 'rv4-piloti2',
+    title: '4차 HIGH(rv4_piloti2): 같은 건물, 지하층수 빈칸(층 목록 일부)·필로티 행 면적제외여부 없음 — 상한 좁히기에도 필로티를 넣지 않는다',
+    input: { registry: pilotiBuilding({ piloti: {}, title: { ugrndFlrCnt: '' } }) },
+    dataFiles: PILOTI_DATA,
   },
   {
     id: 'rv3-range',

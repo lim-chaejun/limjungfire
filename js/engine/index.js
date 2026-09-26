@@ -12,7 +12,7 @@ export { SCHEMA_VERSION, NODE_TYPES, COMPARISON_OPS, WORDING_TO_OP, ROW_KINDS, S
 export { T, F, U, CONFIRMED, ASSUMED, UNKNOWN, tv, all, any, not, ite, interval, exact, compareInterval, depKey, makeDep, mergeDeps } from './logic.js';
 export { POLICY_OPTIONS, DEFAULT_POLICY, resolvePolicy } from './policy.js';
 export { buildUseIndex, classifyUses, coverage } from './uses.js';
-export { normalizeRegistry, normalizeManual, effectiveFloors, countOf, mergeDongs, siteLinkCandidate, SITE_DONG_ID } from './facts.js';
+export { normalizeRegistry, normalizeManual, effectiveFloors, countOf, inTotalOf, mergeDongs, siteLinkCandidate, SITE_DONG_ID } from './facts.js';
 export { EARLIEST, resolveDateInfo } from './dates.js';
 export { makeEnv, evalCondition } from './conditions.js';
 export { inputDefsFrom, buildQuestion } from './questions.js';

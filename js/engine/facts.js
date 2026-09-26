@@ -9,7 +9,8 @@
 //   flags: { elevator? }       // 3값
 //   notes: []
 // }
-// Floor = { key: 'B1'|'2F'|'R1', kind: basement|ground|rooftop, level, label, area, parts: [{ terms, area, raw, n }], synthesized }
+// Floor = { key: 'B1'|'2F'|'R1', kind: basement|ground|rooftop, level, label, area, parts: [{ terms, area, raw, n, inTotal }], synthesized }
+//   inTotal: 그 행(부분)의 면적이 표제부 연면적에 들어가는가 — yes · no · maybe(모름). 면적 항등식만 이 값을 본다(rowInTotal)
 //
 // 해석 선택(옥탑·지하층의 층수 산입, 층수 불일치, 수동 입력 빈칸 등)은 policy.js 의 이름 있는 옵션으로만 정한다.
 // 대장끼리 맞지 않거나 빠진 값은 확정값으로 만들지 않고 구간(모름)으로 남겨, 결정적이면 질문한다.
@@ -86,8 +87,39 @@ export function unknownFloorArea(dongId, key, totalArea, label, part) {
 
 const partLabelOf = (raw) => String(raw?.etcPurps || raw?.mainPurpsCdNm || '').trim() || '용도 미상';
 
+// 층별개요 행의 면적제외여부(areaExctYn): '1'·'Y' 제외, '0'·'N' 산입, 그 밖(빈칸 ' '·없음 등)은 모름 — 실제 대장은 대부분 '0' 또는 빈칸
+function areaExcluded(v) {
+  const t = String(v ?? '').trim().toUpperCase();
+  return t === '1' || t === 'Y' ? true : t === '0' || t === 'N' ? false : null;
+}
+
+// 주/부속 구분(mainAtchGbCd '0' 주건축물·'1' 부속건축물, 또는 mainAtchGbCdNm). 모르면 null
+export function mainAtchOf(item) {
+  const nm = String(item?.mainAtchGbCdNm ?? '').trim();
+  if (nm.includes('부속')) return 'annex';
+  if (nm.includes('주')) return 'main';
+  const cd = String(item?.mainAtchGbCd ?? '').trim();
+  return cd === '0' ? 'main' : cd === '1' ? 'annex' : null;
+}
+
+// 연면적에 들어가는지 모를 수 있는 부분: 필로티(주차 등에 쓰면 바닥면적 불산입 — 건축법 시행령 제119조①3호), 다락(층고에 따라 불산입)
+const MAYBE_OUTSIDE_TOTAL = /필로티|피로티|다락/;
+
+// 층별개요 행 하나가 표제부 연면적에 들어가는가(4차 리뷰): no — 면적제외 '1'·'Y', 또는 표제부와 다른 건축물의 행(주건축물 표제부
+// 아래의 부속건축물 행 등). maybe — 면적제외여부를 모름(빈칸·없음), 필로티·다락, 옥탑(시행령 제119조 — 승강기탑·계단탑 등 불산입),
+// 부속건축물 행인데 표제부가 주·부속 어느 쪽인지 모름. 그 밖(면적제외 '0'·'N' 이고 같은 건축물)은 yes.
+// 면적 항등식은 yes 행만 확정으로 더하고 maybe 행은 옥탑처럼 0 ~ 그 면적으로 본다 — 산입되지 않을 수 있는 면적으로 다른 층을
+// 좁히면(연면적 − 그 면적) 틀린 비해당이 난다(4차 리뷰 rv4_piloti: 1층 필로티 주차 200 을 더해 3층을 400 으로 고정)
+function rowInTotal(item, titleMain, kind) {
+  const excluded = areaExcluded(item.areaExctYn);
+  const main = mainAtchOf(item);
+  if (excluded === true || (main && titleMain && main !== titleMain)) return 'no';
+  if (excluded === null || kind === 'rooftop' || (main === 'annex' && !titleMain)) return 'maybe';
+  return MAYBE_OUTSIDE_TOTAL.test(`${item.mainPurpsCdNm ?? ''} ${item.etcPurps ?? ''}`) ? 'maybe' : 'yes';
+}
+
 // 층별개요 항목들 → 층 목록 (같은 층의 여러 행은 부분(part)으로)
-function buildFloors(items, dongId, index, contextGroup, cap, fallbackTerms, warnings) {
+function buildFloors(items, dongId, index, contextGroup, cap, fallbackTerms, warnings, titleMain = null) {
   const byKey = new Map();
   for (const item of items) {
     const kind = floorKind(item);
@@ -112,7 +144,7 @@ function buildFloors(items, dongId, index, contextGroup, cap, fallbackTerms, war
           ? exact(a, [registryDep(multi ? 'part_area' : 'floor_area', dongId, f.key)])
           : unknownFloorArea(dongId, f.key, cap, f.label, multi ? { n: i + 1, label: partLabelOf(raw) } : null);
       // 용도가 비어 표제부 용도를 빌려 온 행은 fromTitle — 표제부 용도가 여럿이면 이 층에 그중 무엇이 있는지 모른다
-      return { terms: cls.terms.length ? cls.terms : fallbackTerms, fromTitle: !cls.terms.length, area, raw, n: i + 1 };
+      return { terms: cls.terms.length ? cls.terms : fallbackTerms, fromTitle: !cls.terms.length, area, raw, n: i + 1, inTotal: rowInTotal(item, titleMain, f.kind) };
     });
     floors.push({ key: f.key, kind: f.kind, level: f.level, label: f.label, parts, area: parts.map((p) => p.area).reduce(addInterval), synthesized: false });
   }
@@ -174,13 +206,33 @@ function countMetric(input, id, c) {
   });
 }
 
+// 부분의 연면적 산입 여부 — 정규화한 행은 rowInTotal 값, 그 밖(직접 만든 층 등)은 옥탑만 모름
+export function inTotalOf(part, floor) {
+  return part.inTotal ?? (floor.kind === 'rooftop' ? 'maybe' : 'yes');
+}
+
+// 층별개요 행들의 연면적 산입 합: lo = 산입(yes) 행 하한 합, hi = 산입 + 모름(maybe) 행 상한 합, known = 모든 행 면적을 앎
+function itemShares(floors) {
+  let lo = 0;
+  let hi = 0;
+  let known = true;
+  for (const f of floors) {
+    for (const p of f.parts) {
+      if (p.area.open.length) known = false;
+      const k = inTotalOf(p, f);
+      if (k === 'yes') lo += p.area.lo;
+      if (k !== 'no') hi += p.area.hi;
+    }
+  }
+  return { lo, hi, known };
+}
+
 // 연면적이 표제부에 없으면: 층별개요가 층수만큼의 모든 층(지상·지하)을 면적과 함께 덮을 때만 그 합을 쓰고,
-// 아니면 [알려진 층 면적 합, ∞) 구간(모름). 옥탑 면적은 바닥면적 산입 여부가 갈리므로(건축법 시행령 제119조) 구간으로 둔다.
+// 아니면 [알려진 층 면적 합, ∞) 구간(모름). 연면적에 들어가는지 모르는 행(옥탑 — 건축법 시행령 제119조, 필로티·다락, 면적제외여부
+// 빈칸)은 0 ~ 그 면적, 면적제외 행은 더하지 않는다(rowInTotal).
 function derivedTotal(id, floors, ground, basement) {
   const body = floors.filter((f) => f.kind !== 'rooftop');
-  const roofs = floors.filter((f) => f.kind === 'rooftop');
-  const known = body.reduce((s, f) => s + f.area.lo, 0);
-  const roofHi = roofs.reduce((s, f) => s + f.area.hi, 0);
+  const { lo: known, hi: knownHi, known: allKnown } = itemShares(floors);
   const exactCount = (c) => (c && c.lo === c.hi ? c.lo : null);
   const g = exactCount(ground);
   const b = exactCount(basement);
@@ -188,21 +240,22 @@ function derivedTotal(id, floors, ground, basement) {
   const covers = g !== null && b !== null && body.length > 0
     && Array.from({ length: g }, (_, i) => floorKey('ground', i + 1)).every((k) => have.has(k))
     && Array.from({ length: b }, (_, i) => floorKey('basement', i + 1)).every((k) => have.has(k))
-    && floors.every((f) => !f.area.open.length);
+    && allKnown;
   const dep = [registryDep('total_area', id, undefined, 'floor_items')];
   const open = [makeDep('total_area', UNKNOWN, { dong: id })];
-  if (covers && !roofs.length) return exact(known, dep);
-  if (covers) return interval(known, known + roofHi, { loDeps: dep, hiDeps: dep, open });
+  if (covers && knownHi - known <= 1e-6) return exact(known, dep);
+  if (covers) return interval(known, knownHi, { loDeps: dep, hiDeps: dep, open });
   return interval(known, Infinity, { loDeps: known > 0 ? dep : [], open });
 }
 
-// 층별개요가 층수만큼의 모든 층을 면적과 함께 덮는데 그 합이 연면적과 맞지 않으면 경고(옥탑은 0 ~ 그 면적만큼 산입될 수 있음).
+// 층별개요가 층수만큼의 모든 층을 면적과 함께 덮는데 그 합이 연면적과 맞지 않으면 경고(산입 여부를 모르는 행 — 옥탑·필로티·다락·
+// 면적제외여부 빈칸 — 은 0 ~ 그 면적만큼 산입될 수 있음, 면적제외 행은 빼고 본다).
 // 평가는 이때 면적 항등식(연면적 = 각 층 바닥면적의 합)으로 층 면적을 추론하지 않는다(conditions.js areaIdentity).
 function areaMismatchWarning(id, floors, ground, basement, total, warnings) {
   const body = floors.filter((f) => f.kind !== 'rooftop');
-  const sum = body.reduce((s, f) => s + f.area.lo, 0); // 알려진 층 면적(빈 칸은 0)
-  const warn = () => warnings.push({ code: 'FLOOR_AREA_MISMATCH', dong: id, message: `${id}: 층별개요 바닥면적 합계 ${fmtNum(sum)}㎡ ↔ 연면적 ${fmtNum(total)}㎡ — 층 면적을 연면적으로 맞추는 추론은 하지 않음` });
-  if (sum > total + 0.5) return warn(); // 알려진 층만으로 이미 연면적을 넘음
+  const { lo: sum, hi: sumHi, known } = itemShares(floors); // 산입 행 합(빈 칸은 0) · 산입 + 모름 행 합
+  const warn = (shown) => warnings.push({ code: 'FLOOR_AREA_MISMATCH', dong: id, message: `${id}: 층별개요 바닥면적 합계 ${fmtNum(shown)}㎡ ↔ 연면적 ${fmtNum(total)}㎡ — 층 면적을 연면적으로 맞추는 추론은 하지 않음` });
+  if (sum > total + 0.5) return warn(sum); // 산입하는 행만으로 이미 연면적을 넘음
   const exactCount = (c) => (c && c.lo === c.hi ? c.lo : null);
   const g = exactCount(ground);
   const b = exactCount(basement);
@@ -210,9 +263,8 @@ function areaMismatchWarning(id, floors, ground, basement, total, warnings) {
   const have = new Set(body.map((f) => f.key));
   const covers = Array.from({ length: g }, (_, i) => floorKey('ground', i + 1)).every((k) => have.has(k))
     && Array.from({ length: b }, (_, i) => floorKey('basement', i + 1)).every((k) => have.has(k));
-  if (!covers || floors.some((f) => f.area.open.length)) return;
-  const roof = floors.filter((f) => f.kind === 'rooftop').reduce((s, f) => s + f.area.hi, 0);
-  if (sum + roof < total - 0.5) warn();
+  if (!covers || !known) return;
+  if (sumHi < total - 0.5) warn(sumHi);
 }
 
 function buildDong(t, id, floorItems, index, policy, warnings) {
@@ -222,7 +274,7 @@ function buildDong(t, id, floorItems, index, policy, warnings) {
   const total = posNum(t.totArea);
   const cap = total !== null ? exact(total, [registryDep('total_area', id)]) : interval(0, Infinity);
 
-  const floors = buildFloors(floorItems, id, index, contextGroup, cap, titleCls.terms, warnings);
+  const floors = buildFloors(floorItems, id, index, contextGroup, cap, titleCls.terms, warnings, mainAtchOf(t));
   const groundItemsTop = Math.max(0, ...floors.filter((f) => f.kind === 'ground').map((f) => f.level));
   const basementItemsTop = Math.max(0, ...floors.filter((f) => f.kind === 'basement').map((f) => f.level));
 
@@ -410,7 +462,7 @@ export function effectiveFloors(dong, groundCount, basementCount) {
         const key = floorKey(kind, level);
         if (have.has(key)) continue;
         const area = unknownFloorArea(dong.id, key, dong.metrics.total_area, floorLabel(kind, level));
-        floors.push({ key, kind, level, label: floorLabel(kind, level), area, parts: [{ terms: dong.synthTerms, fromTitle: true, area, raw: null, n: 1 }], synthesized: true });
+        floors.push({ key, kind, level, label: floorLabel(kind, level), area, parts: [{ terms: dong.synthTerms, fromTitle: true, area, raw: null, n: 1, inTotal: 'yes' }], synthesized: true });
       }
       complete[kind] = true;
     } else if (count && Number.isFinite(count.hi)) {

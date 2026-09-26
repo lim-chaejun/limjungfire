@@ -22,7 +22,7 @@
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
 import { addDays, formatYmd, resolveDateInfo, rowValidAt } from './dates.js';
-import { areaIdentity, evalCondition, floorMember, floorsOf, makeEnv, metric, uncappedFloorArea } from './conditions.js';
+import { areaIdentity, evalCondition, floorMember, floorShares, floorsOf, makeEnv, metric } from './conditions.js';
 import { DATE_INPUTS, buildQuestion, constantsFor, extremeValues, testValues } from './questions.js';
 import { fmtNum } from './format.js';
 
@@ -659,14 +659,15 @@ function areaAnswerWarnings(dong, env, stripEnv, answers) {
   const strippedEnv = stripEnv();
   const total = metric(env, 'total_area');
   const totalText = total.lo === total.hi ? fmtNum(total.lo) : `${fmtNum(total.lo)}~${fmtNum(total.hi)}`;
-  // 층 면적은 연면적 상한을 씌우기 전 값으로 본다 — 상한을 씌우면 부분 면적 답이 연면적을 넘어도 가려진다(3차 리뷰 LOW:
-  // 지하1층 600 + 부분 답 600 = 1,200 > 연면적 700 이 700 으로 잘려 경고가 없었다)
+  // 층의 연면적 산입 몫(floorShares — 면적제외·산입 여부를 모르는 행은 빼고)을 연면적 상한을 씌우기 전 값으로 본다 — 상한을
+  // 씌우면 부분 면적 답이 연면적을 넘어도 가려진다(3차 리뷰 LOW: 지하1층 600 + 부분 답 600 = 1,200 > 연면적 700 이 700 으로 잘려
+  // 경고가 없었다). 필로티 주차처럼 연면적 밖일 수 있는 행이 커서 층 면적이 연면적을 넘는 것은 모순이 아니다
   const overIn = (e) => {
     const t = metric(e, 'total_area');
-    return new Set(floorsOf(e).floors.filter((f) => uncappedFloorArea(e, f).lo > t.hi + 1e-6).map((f) => f.key));
+    return new Set(floorsOf(e).floors.filter((f) => floorShares(e, f).c.lo > t.hi + 1e-6).map((f) => f.key));
   };
   const before = overIn(strippedEnv);
-  const over = floorsOf(env).floors.filter((f) => uncappedFloorArea(env, f).lo > total.hi + 1e-6 && !before.has(f.key));
+  const over = floorsOf(env).floors.filter((f) => floorShares(env, f).c.lo > total.hi + 1e-6 && !before.has(f.key));
   if (over.length) {
     return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: ${over.map((f) => f.label).join('·')} 면적(답변 포함)이 연면적 ${totalText}㎡ 보다 큼 — 면적 답변을 확인해 주세요` }];
   }
@@ -674,7 +675,7 @@ function areaAnswerWarnings(dong, env, stripEnv, answers) {
   if (!id || id.consistent) return [];
   const base = areaIdentity(strippedEnv);
   if (base && !base.consistent) return [];
-  const sum = id.lo === id.hi + id.roofHi ? fmtNum(id.lo) : `${fmtNum(id.lo)}~${fmtNum(id.hi + id.roofHi)}`;
+  const sum = id.lo === id.hi ? fmtNum(id.lo) : `${fmtNum(id.lo)}~${fmtNum(id.hi)}`;
   return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: 답변을 반영한 층 면적 합계 ${sum}㎡ 가 연면적 ${totalText}㎡ 와 맞지 않음 — 면적 답변을 확인해 주세요` }];
 }
 

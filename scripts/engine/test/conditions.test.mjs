@@ -7,7 +7,8 @@ import { inputDefsFrom } from '../../../js/engine/questions.js';
 import { rowConditionRoots } from '../../../js/engine/schema.js';
 
 const DEFS = inputDefsFrom(INPUTS);
-const floor = (gb, no, etc, area, main = '제2종근린생활시설') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area });
+// 층별개요 행 — 면적제외여부 '0'(연면적 산입, 실제 대장 값). 빈칸·필로티 등 산입 여부를 모르는 행은 시험에서 따로 만든다
+const floor = (gb, no, etc, area, main = '제2종근린생활시설') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area, areaExctYn: '0' });
 function dongOf(title, floors = []) {
   return normalizeRegistry({ title: [{ mainPurpsCdNm: '제2종근린생활시설', ugrndFlrCnt: 0, ...title }], floors }, { useIndex: INDEX }).dongs[0];
 }

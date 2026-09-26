@@ -8,7 +8,8 @@ import {
 import { metric } from '../../../js/engine/conditions.js';
 import { INDEX } from './helpers.mjs';
 
-const floor = (dongNm, gb, no, main, etc, area) => ({ dongNm, flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area });
+// 층별개요 행 — 면적제외여부 '0'(연면적 산입). 빈칸 등은 산입 여부 시험에서 따로
+const floor = (dongNm, gb, no, main, etc, area, extra = {}) => ({ dongNm, flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area, areaExctYn: '0', ...extra });
 const reg = (items, policy) => normalizeRegistry(items, { useIndex: INDEX, policy });
 const statusOf = (iv) => [...iv.loDeps, ...iv.hiDeps, ...iv.open].map((d) => d.status);
 
