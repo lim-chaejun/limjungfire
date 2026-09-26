@@ -165,11 +165,16 @@ test('--apply-from: 검토한 result.json 을 네트워크 없이 그대로 반�
   const resultFile = path.join(reviewed.out, 'result.json');
   const { main } = await import('../check.mjs');
   const logs = [];
-  // --replay 없이도 요청하지 않는다: fetch 를 막아 둔다
-  const blocked = () => {
+  // --replay 없이도 요청하지 않는다: 전역 fetch 를 막아 둔 채로 반영한다
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = () => {
     throw new Error('네트워크 금지');
   };
-  assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir], { log: (m) => logs.push(m), fetchImpl: blocked }), 0);
+  try {
+    assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir], { log: (m) => logs.push(m) }), 0);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
   for (const f of fs.readdirSync(viaHistory)) assert.equal(fs.readFileSync(path.join(dir, f), 'utf8'), fs.readFileSync(path.join(viaHistory, f), 'utf8'), f);
   assert.ok(logs.some((l) => /nfsc_history\.json \(\+10행\)/.test(l)), logs.join('\n'));
   const snap = fs.readFileSync(path.join(dir, 'law_history_decree.json'), 'utf8');
