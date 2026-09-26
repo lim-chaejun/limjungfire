@@ -186,6 +186,25 @@ export const CASES = [
     dataFiles: { '02': DATA['02'] },
   },
   {
+    id: 'cross-file-cycle',
+    title: '2차 LOW: 02 파일 시각경보기 → 자동화재탐지설비, 30 파일 자동화재탐지설비 → 시각경보기 — 복합건축물이면 순환',
+    input: {
+      registry: {
+        title: [{ mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점, 업무시설', totArea: 500, grndFlrCnt: 2, ugrndFlrCnt: 0 }],
+        floors: [nc1(1, 250), { flrGbCd: '20', flrNo: 2, mainPurpsCdNm: '업무시설', etcPurps: '사무소', area: 250 }],
+        permit: [permit('20150101')],
+      },
+    },
+    dataFiles: {
+      '02': v2('02', [
+        { facility_id: 'visual_alarm', facility_name: '시각경보기', regulations: [row('a', { facility: 'auto_fire_detection' })] },
+        { facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [row('b', { m: 'total_area', gte: 99999 })] },
+      ]),
+      '12': v2('12', [{ facility_id: 'fire_extinguisher', facility_name: '소화기구', regulations: [row('e', { m: 'total_area', gte: 33 })] }]),
+      '30': v2('30', [{ facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [row('c', { facility: 'visual_alarm' })] }]),
+    },
+  },
+  {
     id: 'area-determined',
     title: '1층 600 + 지하1층 400, 연면적 1,200 → 2층 200(항등식), 2층 이상 바닥면적 합계 150㎡ 미만',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }], floors: [nc2(1, '소매점', 600), nc2(1, '소매점', 400, '10')], permit: [permit('20150101')] } },

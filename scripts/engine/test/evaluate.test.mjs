@@ -262,7 +262,7 @@ test('타 시설 판정 의존: 시각경보기는 자동화재탐지설비를 �
   assert.deepEqual(qkeys(va), qkeys(afd));
 });
 
-test('실행 중 순환 의존은 F 가 아니라 U', () => {
+test('실행 중 순환 의존은 F 가 아니라 U — 순환에 걸린 시설의 원문 확인 질문으로 풀 수 있다', () => {
   const files = {
     '02': v2('02', [
       { facility_id: 'visual_alarm', facility_name: '시각경보기', regulations: [row('a', { facility: 'auto_fire_detection' })] },
@@ -270,7 +270,16 @@ test('실행 중 순환 의존은 F 가 아니라 U', () => {
     ]),
   };
   const r = run(small(), { dataFiles: files });
-  for (const fid of ['visual_alarm', 'auto_fire_detection']) assert.equal(facilityOf(r, '본동', fid).verdict, '확인 필요', fid);
+  const key = 'review[facility:visual_alarm]@본동';
+  for (const fid of ['visual_alarm', 'auto_fire_detection']) {
+    const f = facilityOf(r, '본동', fid);
+    assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', [key]], fid);
+    assert.match(f.questions[0].text, /시각경보기 설치 대상입니까\? \(설치 기준이 다른 시설의 판정과 서로를 참조/);
+  }
+  for (const [answer, verdict] of [[true, '해당'], [false, '비해당']]) {
+    const done = run(small(), { dataFiles: files, answers: { [key]: answer } });
+    for (const fid of ['visual_alarm', 'auto_fire_detection']) assert.equal(facilityOf(done, '본동', fid).verdict, verdict, `${fid} ${answer}`);
+  }
 });
 
 // ───── 출력 호환 ─────

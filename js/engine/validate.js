@@ -47,6 +47,7 @@ export const ERROR_CODES = Object.freeze({
   FACILITY_UNKNOWN_ID: '시설 마스터(facilities.json)에 없는 facility_id',
   FACILITY_DUPLICATE: '파일 안에서 facility_id 가 중복됨',
   FACILITY_CYCLE: '시설 판정 의존(facility 노드)이 순환함',
+  FACILITY_CROSS_FILE_CYCLE: '파일끼리 합쳐 평가하면(복합건축물 동: 구성 용도 파일 + 30번) 시설 판정 의존이 순환함',
   FILE_NOT_OBJECT: '데이터 파일은 객체여야 함',
   FILE_BAD_SCHEMA_VERSION: `schema_version 은 ${SCHEMA_VERSION}`,
   FILE_BAD_TYPE_CODE: "type_code 는 '00'~'30' 문자열",
@@ -67,7 +68,6 @@ export const WARNING_CODES = Object.freeze({
   W_NO_TRIGGER: '판정 행(trigger)이 없는 시설 — 평가 시 원문 확인 질문(확인 필요)이 된다',
   W_LEVEL_WITHOUT_KIND: "층 선택자의 level 에 kind 가 없음 — 지하층 깊이에도 맞는다(지하4층이 '4층 이상'에 해당)",
   W_AUXILIARY_USE: '보조 용도(전기실 등)를 use 로 참조 — 층별개요에 거의 없어 늘 모름이 되므로 지표(electrical_room_area 등)를 권장',
-  W_CROSS_FILE_CYCLE: '파일끼리 합쳐 평가하면(복합건축물 동) 시설 의존이 순환함 — 실행 시 확인 필요로 처리됨',
 });
 
 const MAX_DEPTH = 20;
@@ -473,7 +473,7 @@ export function validateFileSet(files, ctx) {
     for (const cyc of findFacilityCycles(json.fire_facilities)) within.add(cyc.join('>'));
   }
   for (const cyc of findFacilityCycles(facilities)) {
-    if (!within.has(cyc.join('>'))) warnings.push({ ...warn('W_CROSS_FILE_CYCLE', 'files', cyc.join(' → ')), file: null });
+    if (!within.has(cyc.join('>'))) errors.push({ ...err('FACILITY_CROSS_FILE_CYCLE', 'files', cyc.join(' → ')), file: null });
   }
   return { byFile, errors, warnings };
 }

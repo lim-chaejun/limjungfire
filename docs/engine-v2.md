@@ -130,7 +130,7 @@ trigger 행이 하나도 없는 시설(info·modifier 행만 있음)은 비해�
 | `floor_exists` | `{ "floor_exists": { "floors": […], "area": { "gte": 300 }, "use": […] } }` | 조건을 만족하는 층이 하나라도 있는가(해당 층 = 만족한 층) |
 | `use` | `{ "use": ["midwifery_clinic", "02"], "floors": […]? }` | 동(또는 선택 층)에 그 용도가 있는가. 세부 용도 id 또는 용도군 코드. floors 가 있고 그 구분의 층 목록이 불완전하면(층수 모름) F 가 아니라 U |
 | `flag` | `{ "flag": "gas_facility" }` | 동 단위 참/거짓 입력(inputs.json, `engine` 아님) |
-| `facility` | `{ "facility": "auto_fire_detection" }` | 같은 동의 다른 시설 판정(해당=T, 비해당=F, 확인 필요=U). 순환 금지 |
+| `facility` | `{ "facility": "auto_fire_detection" }` | 같은 동의 다른 시설 판정(해당=T, 비해당=F, 확인 필요=U). 순환 금지(검증기 오류) — 실행 중 순환을 만나면 순환에 걸린 시설의 원문 확인 질문(`review[facility:id]`)으로 끊는다 |
 | `installed` | `{ "installed": "co2_extinguishing" }` | 그 설비가 실제로 설치돼 있는가(사용자 답변) |
 | `const` | `{ "const": true }` | 무조건 적용('적용' 행) |
 
@@ -405,7 +405,7 @@ v2 필드: `status`, `dateInfo`, `counts`(해당·확인 필요·비해당 수),
 
 `validateFile(file, makeValidationContext({ inputs, vocabulary, facilities }), { fileName })` → `{ v1, errors, warnings }`. v1 파일은 `{ v1: true }` 로 건너뛴다. 이후 `scripts/validate-data.mjs`(PR2 데이터 가드)의 검사 목록에 연결한다(계획서 E1~E11·W1~W6).
 
-`validateFileSet(files, ctx)` — 파일 묶음(`{ 파일명: json }` 또는 `[{ name, json }]`)을 파일마다 검증하고(`byFile`, 오류·경고에 `file` 표시), 파일끼리 합쳐 평가할 때(복합건축물 동: 구성 용도 파일 + 30번)만 생기는 시설 의존 순환을 `W_CROSS_FILE_CYCLE` 로 경고한다(실행 시에는 확인 필요로 처리됨). 한 파일 안의 순환은 그 파일의 `FACILITY_CYCLE` 오류로만 보고한다.
+`validateFileSet(files, ctx)` — 파일 묶음(`{ 파일명: json }` 또는 `[{ name, json }]`)을 파일마다 검증하고(`byFile`, 오류·경고에 `file` 표시), 파일끼리 합쳐 평가할 때(복합건축물 동: 구성 용도 파일 + 30번)만 생기는 시설 의존 순환을 오류 `FACILITY_CROSS_FILE_CYCLE` 로 보고한다(`file: null`). 한 파일 안의 순환은 그 파일의 `FACILITY_CYCLE` 오류로만 보고한다. 검증을 통과하지 못한 데이터라도 실행은 안전하다 — 순환을 만나면 확인 필요로 두고 순환에 걸린 시설의 원문 확인 질문(`review[facility:id]` — "설치 기준이 다른 시설의 판정과 서로를 참조해 자동으로 판정할 수 없어 원문 확인 필요")을 묻는다. 답하면 순환이 풀린다.
 
 오류 코드:
 
@@ -446,6 +446,7 @@ v2 필드: `status`, `dateInfo`, `counts`(해당·확인 필요·비해당 수),
 | `FACILITY_UNKNOWN_ID` | 시설 마스터에 없는 facility_id |
 | `FACILITY_DUPLICATE` | 파일 안 facility_id 중복 |
 | `FACILITY_CYCLE` | facility 노드 의존 순환 |
+| `FACILITY_CROSS_FILE_CYCLE` | 파일끼리 합쳐 평가하면(복합건축물 동) 시설 의존이 순환(`validateFileSet`) |
 | `FILE_NOT_OBJECT` | 파일이 객체가 아님 |
 | `FILE_BAD_SCHEMA_VERSION` | schema_version 이 2 가 아님 |
 | `FILE_BAD_TYPE_CODE` | type_code 형식 오류 |
@@ -468,7 +469,6 @@ v2 필드: `status`, `dateInfo`, `counts`(해당·확인 필요·비해당 수),
 | `W_NO_TRIGGER` | trigger 행이 없는 시설 — 평가 시 원문 확인 질문(확인 필요) |
 | `W_LEVEL_WITHOUT_KIND` | 층 선택자의 level 에 kind 가 없음 — 지하층 깊이에도 맞는다(§4.5) |
 | `W_AUXILIARY_USE` | 보조 용도(전기실 등)를 use 로 참조 — 지표(`electrical_room_area` 등) 권장(§4.4). `lintRow` 에 검증 문맥(ctx)을 넘길 때만 |
-| `W_CROSS_FILE_CYCLE` | 파일끼리 합쳐 평가하면 시설 의존이 순환(`validateFileSet`) |
 
 **`compareV1Fields(before, after)` 는 데이터 변환(구조화) PR 전용이다.** 변환 전후 파일에서 v2 가 더하는 필드(허용 목록: 파일의 `schema_version`·`type_code`·`review`·`strengthened_retroactive`, 시설의 `excluded_if`, 행의 v2 필드)만 빼고 나머지 전부 — 파일 최상위의 `building_type`·`definition`·`modular_classroom` 같은 필드까지 — 를 위치 기준으로 깊게 비교해, 바뀐 경로마다 `V1_FIELD_CHANGED` 를 낸다. 법령 개정 반영 PR 은 종료일 변경·행 추가가 정상이므로 이 검사를 쓰지 않는다(그 PR 은 `verdict-diff` 로 검토).
 

@@ -50,12 +50,12 @@ const NO_DEPS = Object.freeze([]);
 const whyOf = (env, make) => (env.explain ? make() : NO_WHY);
 const depsOf = (env, make) => (env.track ? make() : NO_DEPS);
 
-function reviewValue(sig, env, criteria, question) {
+function reviewValue(sig, env, criteria, question, unresolved = '조건 구조화 전 — 기준 원문 확인 필요') {
   const a = env.answers[depKey('review', env.dong.id, undefined, sig)];
   if (a === true || a === false) {
     return tv(a ? T : F, depsOf(env, () => [makeDep('review', CONFIRMED, { dong: env.dong.id, sig, source: 'user' })]), whyOf(env, () => [`기준 해당 여부 답변: ${a ? '예' : '아니오'}`]));
   }
-  return tv(U, depsOf(env, () => [makeDep('review', UNKNOWN, { dong: env.dong.id, sig, info: { criteria, question } })]), whyOf(env, () => ['조건 구조화 전 — 기준 원문 확인 필요']));
+  return tv(U, depsOf(env, () => [makeDep('review', UNKNOWN, { dong: env.dong.id, sig, info: { criteria, question } })]), whyOf(env, () => [unresolved]));
 }
 
 // 분기: 앞에서부터 when 이 맞는 첫 분기. when 이 U 여도 양쪽 결과가 같으면 확정 (ite)
@@ -184,7 +184,20 @@ function facilityCore(fid, pass) {
   if (pass.memo.has(fid)) return pass.memo.get(fid);
   const name = pass.dctx.names.get(fid) ?? fid;
   if (pass.visiting.has(fid)) {
-    return { fid, perFile: [], tv: tv(U, [makeDep('facility_cycle', UNKNOWN, { dong: pass.dctx.dong.id, sig: fid })], [`${name} 순환 참조`]) };
+    // 시설 기준이 서로를 참조(순환 — 검증기는 FACILITY_CYCLE·FACILITY_CROSS_FILE_CYCLE 오류) — 자동으로 판정할 수 없으므로
+    // 이 시설의 설치 대상 여부를 원문 확인 질문(review[facility:id])으로 받아 순환을 끊는다(답하면 순환이 풀린다)
+    const dongId = pass.dctx.dong.id;
+    return {
+      fid,
+      perFile: [],
+      tv: reviewValue(
+        `facility:${fid}`,
+        pass.env,
+        `${name} 설치 기준(다른 시설 판정과 서로 참조)`,
+        `${dongId}이(가) ${name} 설치 대상입니까? (설치 기준이 다른 시설의 판정과 서로를 참조해 자동으로 판정할 수 없어 원문 확인 필요)`,
+        `${name} 설치 기준이 다른 시설 판정과 서로 참조(순환) — 원문 확인 필요`,
+      ),
+    };
   }
   pass.visiting.add(fid);
   if (pass.budget) pass.budget.count++;

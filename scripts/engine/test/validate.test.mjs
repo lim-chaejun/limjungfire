@@ -275,7 +275,7 @@ test('경고: 판정 행 없는 시설(W_NO_TRIGGER) · kind 없는 level(W_LEVE
 const CYCLE_ROW = { ...ROW, criteria: '다른 설비를 설치해야 하는 경우', inputs_required: [] };
 const vfile = (code, facilities) => ({ schema_version: 2, type_code: code, review: { status: 'draft', by: null, date: null }, fire_facilities: facilities });
 
-test('파일 묶음 검증: 파일마다 정상이어도 합쳐 평가하면 생기는 순환은 W_CROSS_FILE_CYCLE (복합건축물 동)', () => {
+test('파일 묶음 검증: 파일마다 정상이어도 합쳐 평가하면 생기는 순환은 오류 FACILITY_CROSS_FILE_CYCLE (복합건축물 동)', () => {
   const f02 = vfile('02', [
     { facility_id: 'visual_alarm', facility_name: '시각경보기', regulations: [{ ...CYCLE_ROW, id: 'a', conditions: { facility: 'auto_fire_detection' } }] },
     { facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [{ ...ROW, id: 'b' }] },
@@ -286,9 +286,9 @@ test('파일 묶음 검증: 파일마다 정상이어도 합쳐 평가하면 생
   assert.deepEqual(validateFile(f02, ctx, { fileName: '02_x.json' }).errors, []);
   assert.deepEqual(validateFile(f30, ctx, { fileName: '30_x.json' }).errors, []);
   const set = validateFileSet({ '02_x.json': f02, '30_x.json': f30 }, ctx);
-  assert.deepEqual(set.errors, []);
-  assert.deepEqual(codes(set.warnings), ['W_CROSS_FILE_CYCLE']);
-  assert.match(set.warnings[0].message, /visual_alarm → auto_fire_detection → visual_alarm|auto_fire_detection → visual_alarm → auto_fire_detection/);
+  assert.deepEqual(codes(set.errors), ['FACILITY_CROSS_FILE_CYCLE']);
+  assert.equal(set.errors[0].file, null);
+  assert.match(set.errors[0].message, /visual_alarm → auto_fire_detection → visual_alarm|auto_fire_detection → visual_alarm → auto_fire_detection/);
   assert.deepEqual(Object.keys(set.byFile), ['02_x.json', '30_x.json']);
   // 한 파일 안의 순환은 그 파일의 오류(FACILITY_CYCLE)로만 — 교차 경고로 중복하지 않는다
   const inner = vfile('02', [

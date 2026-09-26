@@ -1,13 +1,15 @@
-// 독립 리뷰(REQUEST CHANGES) 재현 사례의 회귀 시험 — HIGH(H1~H4)·MEDIUM(M1~M7) 사례가 올바른 결과를 내는지 고정한다.
+// 독립 리뷰(REQUEST CHANGES) 재현 사례의 회귀 시험 — 1차 HIGH(H1~H4)·MEDIUM(M1~M7), 2차(N1·N2·N2′·MEDIUM·LOW) 사례가
+// 올바른 결과를 내는지 고정한다.
 // 사례 정의는 review-cases.mjs (성질 시험과 공유). 픽스처·데이터는 모두 TEST-ONLY.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  EARLIEST, classifyUses, coverage, evalCondition, evaluateBuilding, makeEnv, normalizeManual, normalizeRegistry, resolvePolicy,
+  EARLIEST, classifyUses, coverage, evalCondition, evaluateBuilding, makeEnv, makeValidationContext, normalizeManual, normalizeRegistry, resolvePolicy,
+  validateFileSet,
 } from '../../../js/engine/index.js';
 import { addDays } from '../../../js/engine/dates.js';
 import { inputDefsFrom } from '../../../js/engine/questions.js';
-import { FACILITIES, INDEX, INPUTS, TODAY, evaluate, loadBuildingFixtures } from './helpers.mjs';
+import { FACILITIES, INDEX, INPUTS, TODAY, VOCABULARY, evaluate, loadBuildingFixtures } from './helpers.mjs';
 import { caseById, row, v2 } from './review-cases.mjs';
 
 const FIXTURES = loadBuildingFixtures();
@@ -296,6 +298,22 @@ test('2차 MEDIUM: 긴 질문 목록 — 날짜 → 동 → 층 순으로 시설
   // 상한 아래면 moreQuestions 는 0
   const re = fac(r, '직접입력', 'rescue_equipment');
   assert.deepEqual([re.questions.length, re.moreQuestions], [1, 0]);
+});
+
+test('2차 LOW: 파일끼리의 시설 순환은 검증기 오류, 실행 중에는 풀 수 있는 원문 확인 질문(rv_cycle)', () => {
+  const c = caseById('cross-file-cycle');
+  const ctx = makeValidationContext({ inputs: INPUTS, vocabulary: VOCABULARY, facilities: FACILITIES });
+  const set = validateFileSet([{ name: '02_x.json', json: c.dataFiles['02'] }, { name: '30_x.json', json: c.dataFiles['30'] }], ctx);
+  assert.deepEqual(set.errors.map((e) => e.code), ['FACILITY_CROSS_FILE_CYCLE']);
+  const key = 'review[facility:visual_alarm]@본동';
+  const mixed = { 'mixed_use@본동': true };
+  for (const fid of ['visual_alarm', 'auto_fire_detection']) {
+    const f = fac(runCase(c, { answers: mixed }), '본동', fid);
+    assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', [key]], fid);
+    assert.doesNotMatch(f.questions[0].text, /facility_cycle/);
+    assert.equal(fac(runCase(c, { answers: { ...mixed, [key]: true } }), '본동', fid).verdict, '해당', fid);
+    assert.equal(fac(runCase(c, { answers: { ...mixed, [key]: false } }), '본동', fid).verdict, '비해당', fid);
+  }
 });
 
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
