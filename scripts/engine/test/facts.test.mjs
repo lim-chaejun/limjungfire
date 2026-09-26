@@ -181,6 +181,19 @@ test('연결 가능 대지(M7a): 지하층만 있는 동·주차 전용 동이 �
   assert.ok(site.typeCodes.includes('30'));
 });
 
+test('합친 동: 같은 층 키의 부분은 차례로 번호(n)를 갖고, 동 목록(memberDongs)을 들고 있어 평가가 동별 사실·답변을 읽는다(2차 리뷰)', () => {
+  const b = reg({
+    title: [
+      { dongNm: 'A동', mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: 0 },
+      { dongNm: 'B동', mainPurpsCdNm: '자동차관련시설', etcPurps: '주차장', totArea: 300, grndFlrCnt: 1, ugrndFlrCnt: 0 },
+    ],
+    floors: [floor('A동', '20', 1, '제1종근린생활시설', '소매점', 300), floor('A동', '20', 1, '제1종근린생활시설', '일반음식점', 300), floor('B동', '20', 1, '자동차관련시설', '주차장', 300)],
+  });
+  const site = mergeDongs(b.dongs, { useIndex: INDEX });
+  assert.deepEqual(site.floors.find((f) => f.key === '1F').parts.map((p) => p.n), [1, 2, 3]);
+  assert.deepEqual(site.memberDongs.map((d) => d.id), ['A동', 'B동']);
+});
+
 test('지하층만 있는 동(지하주차장): 지상 0층은 확정 0, 그 밖의 0층은 빈 값', () => {
   const d = reg({ title: [{ dongNm: '주차장동', mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', totArea: 5000, grndFlrCnt: 0, ugrndFlrCnt: 1 }] }).dongs[0];
   assert.equal(d.metrics.ground_floors.lo, 0);

@@ -90,7 +90,7 @@ function applySiteLink(building, dongs, bctx) {
     for (const q of d.facilities.flatMap((f) => f.questions)) if (!d.questions.some((x) => x.key === q.key)) d.questions.push(q);
     d.counts = tally(d.facilities);
   }
-  return { id: merged.id, members, status: site.status, typeCodes: site.typeCodes, counts: site.counts, connected: connected ?? null, facilities: site.facilities };
+  return { id: merged.id, members, status: site.status, typeCodes: site.typeCodes, files: site.files, counts: site.counts, connected: connected ?? null, facilities: site.facilities };
 }
 
 export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useIndex, inputs, facilities, exemptions, answers = {}, policy, today } = {}) {
@@ -141,11 +141,16 @@ export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useInde
     dongs,
     site,
     questions,
-    notEvaluated: dongs.flatMap((d) =>
-      d.status === 'unmapped'
-        ? [{ dong: d.id, type_code: null, status: 'unmapped', message: '용도 미분류 — v2 미평가' }]
-        : d.files.filter((f) => f.status !== 'v2').map((f) => ({ dong: d.id, ...f })),
-    ),
+    notEvaluated: [
+      ...dongs.flatMap((d) =>
+        d.status === 'unmapped'
+          ? [{ dong: d.id, type_code: null, status: 'unmapped', message: '용도 미분류 — v2 미평가' }]
+          : d.files.filter((f) => f.status !== 'v2').map((f) => ({ dong: d.id, ...f })),
+      ),
+      // 대지 전체(합친 동)가 쓰는 파일 중 v2 가 아닌 것 — v2 로 평가한 동이 있고 동이 연결되지 않았다고 답하기 전까지는
+      // 합친 판정(연결 여부 질문의 근거)에 빠진 기준이다
+      ...(site && site.connected !== false && evaluated ? (site.files || []).filter((f) => f.status !== 'v2').map((f) => ({ dong: site.id, ...f })) : []),
+    ],
     // 정규화 경고(대장끼리 불일치 등) + 평가 경고(답변한 면적이 연면적과 모순 등)
     warnings: [...(building.warnings || []), ...dongs.flatMap((d) => d.warnings || [])],
     verdictLabels: VERDICT,

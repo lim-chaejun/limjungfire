@@ -253,6 +253,36 @@ test('2차 MEDIUM: 층의 용도별 면적 질문(floor_use_area)에 답하면 �
   assert.equal(fac(runCase(sumCase, { answers: { [key]: 350 } }), '본동', 'smoke_control').verdict, '비해당');
 });
 
+test('2차 MEDIUM: 대지 전체(합친 동) 판정은 동 이름 키의 답을 읽는다 — 같은 질문을 되풀이하지 않는다(rv_site_stuck)', () => {
+  const c = caseById('site-stuck');
+  const sp = (answers) => fac(runCase(c, { answers }), '상가동', 'sprinkler');
+  assert.deepEqual(qkeys(sp({})), ['floor_area@상가동/1F', 'floor_area@상가동/2F']);
+  const areas = { 'floor_area@상가동/1F': 800, 'floor_area@상가동/2F': 800 };
+  // 동별로도, 합친 동에서도 1,000㎡ 이상인 층이 없다 → 연결 여부를 묻지 않고 비해당
+  assert.deepEqual([sp(areas).verdict, qkeys(sp(areas))], ['비해당', []]);
+  assert.deepEqual([sp({ ...areas, site_connected: true }).verdict, qkeys(sp({ ...areas, site_connected: true }))], ['비해당', []]);
+  const big = { 'floor_area@상가동/1F': 1200, 'floor_area@상가동/2F': 400 };
+  assert.equal(sp(big).verdict, '해당');
+});
+
+test('2차 MEDIUM: 합친 동에서만 모르는 사실은 그 동 이름 키로 묻고, 답하면 합친 판정이 정해진다', () => {
+  const c = caseById('site-member-question');
+  const wc = (answers) => fac(runCase(c, { answers }), '상가동', 'wireless_comm');
+  const open = wc({});
+  assert.deepEqual([open.verdict, qkeys(open), open.siteLink.mergedVerdict], ['확인 필요', ['site_connected'], '확인 필요']);
+  const merged = wc({ site_connected: true });
+  assert.equal(merged.verdict, '확인 필요');
+  assert.deepEqual(qkeys(merged).sort(), ['floor_area@주차장동/B1', 'floor_area@주차장동/B2']);
+  assert.equal(wc({ site_connected: true, 'floor_area@주차장동/B1': 1200 }).verdict, '해당');
+  // 지하1층 800 → 지하2층 = 1,500 − 800 = 700(면적 항등식) → 1,000㎡ 이상인 지하층 없음 → 합친 판정도 비해당
+  assert.equal(wc({ site_connected: true, 'floor_area@주차장동/B1': 800 }).verdict, '비해당');
+  assert.equal(wc({ site_connected: false }).verdict, '비해당');
+  // 합친 동이 쓰는 파일 중 v2 가 아닌 것은 notEvaluated 에 '대지 전체'로
+  const noMixed = runCase({ ...c, dataFiles: { '02': c.dataFiles['02'], '18': c.dataFiles['18'] } });
+  assert.deepEqual(noMixed.notEvaluated.map((x) => [x.dong, x.type_code, x.status]), [['대지 전체', '30', 'missing']]);
+  assert.deepEqual(runCase({ ...c, dataFiles: { '02': c.dataFiles['02'], '18': c.dataFiles['18'] } }, { answers: { site_connected: false } }).notEvaluated, []);
+});
+
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
   const r = runCase(caseById('area-determined'));
   const f = fac(r, '본동', 'x');

@@ -20,7 +20,7 @@
   },
   "expect": {
     "status": "partial",
-    "notEvaluated": [{ "dong": "지하주차장", "type_code": "18", "status": "v1" }],
+    "notEvaluated": [{ "dong": "지하주차장", "type_code": "18", "status": "v1" }, { "dong": "대지 전체", "type_code": "18", "status": "v1" }],
     "site": { "members": ["101동", "102동", "상가동", "지하주차장"], "connected": null },
     "dongs": {
       "101동": {

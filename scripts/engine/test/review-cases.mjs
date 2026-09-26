@@ -32,6 +32,15 @@ const N1_BUILDING = { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcP
 const windowlessSum = (cmp) => ({ '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('w', { sum_area: { floors: ['windowless'] }, ...cmp })] }]) });
 // N2: 지하층수 빈칸(층 목록 불완전), 표제부 소매점·노래연습장, 1층 행은 용도 미상
 const N2_BUILDING = { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: '' }], floors: [nc2(1, '', 600)], permit: [permit('20150101')] };
+// 연결 가능 대지: 상가동(2층, 층별개요 없음 — 층 면적 미상) + 지하층만 있는 주차장동
+const SITE_TWO_DONGS = {
+  title: [
+    { dongNm: '상가동', mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 1600, grndFlrCnt: 2, ugrndFlrCnt: 0 },
+    { dongNm: '주차장동', mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', totArea: 900, grndFlrCnt: 0, ugrndFlrCnt: 1 },
+  ],
+  floors: [{ dongNm: '주차장동', flrGbCd: '10', flrNo: 1, mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', area: 900 }],
+  permit: [permit('20150101')],
+};
 // 개정 경계(2026.03.01)를 사이에 둔 두 기준: 옛 기준은 지하층 포함 7개층, 새 기준은 지상 11층
 const STANDPIPE_BOUNDARY = { '02': v2('02', [{ facility_id: 'standpipe', facility_name: '연결송수관설비', regulations: [
   { id: 'old', start_date: null, end_date: '20260228', criteria: '지하층 포함 7개층 이상', kind: 'trigger', conditions: { m: 'floors_incl_basement', gte: 7 }, scope: 'all_floors' },
@@ -140,6 +149,35 @@ export const CASES = [
     title: '2차 MEDIUM: 1층 600㎡ 용도 미상, 지상층 중 노래연습장 300㎡ 이상인 층 — floor_use_area 질문에 답할 수 있어야',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '노래연습장', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: 0 }], floors: [nc2(1, '', 600)], permit: [permit('20150101')] } },
     dataFiles: { '02': v2('02', [{ facility_id: 'smoke_control', facility_name: '제연설비', regulations: [row('fe', { floor_exists: { floors: 'ground', area: { gte: 300 }, use: ['singing_room'] } })] }]) },
+  },
+  {
+    id: 'site-stuck',
+    title: '2차 MEDIUM: 상가동 2층(층 면적 미상) + 주차장동 — 동 이름 키의 면적 답이 대지 전체 판정에도 반영',
+    input: { registry: SITE_TWO_DONGS },
+    dataFiles: {
+      '02': v2('02', [{ facility_id: 'sprinkler', facility_name: '스프링클러설비', regulations: [row('fe', { floor_exists: { floors: 'ground', area: { gte: 1000 } } }, { scope: 'matching_floors' })] }]),
+      '18': v2('18', [{ facility_id: 'sprinkler', facility_name: '스프링클러설비', regulations: [row('p', { m: 'total_area', gte: 99999 })] }]),
+      '30': v2('30', [{ facility_id: 'sprinkler', facility_name: '스프링클러설비', regulations: [row('q', { m: 'total_area', gte: 99999 })] }]),
+    },
+  },
+  {
+    id: 'site-member-question',
+    title: '2차 MEDIUM: 합친 동에서만 미상인 사실(주차장동 지하1층 면적)은 그 동 이름 키로 묻고, 답하면 합친 판정이 정해진다',
+    input: {
+      registry: {
+        title: [
+          { dongNm: '상가동', mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 400, grndFlrCnt: 2, ugrndFlrCnt: 0 },
+          { dongNm: '주차장동', mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', totArea: 1500, grndFlrCnt: 0, ugrndFlrCnt: 2 },
+        ],
+        floors: [],
+        permit: [permit('20150101')],
+      },
+    },
+    dataFiles: {
+      '02': v2('02', [{ facility_id: 'wireless_comm', facility_name: '무선통신보조설비', regulations: [row('w', { floor_exists: { floors: 'basement', area: { gte: 1000 } } })] }]),
+      '18': v2('18', [{ facility_id: 'wireless_comm', facility_name: '무선통신보조설비', regulations: [row('p', { m: 'total_area', gte: 99999 })] }]),
+      '30': v2('30', [{ facility_id: 'wireless_comm', facility_name: '무선통신보조설비', regulations: [row('q', { m: 'total_area', gte: 99999 })] }]),
+    },
   },
   {
     id: 'area-determined',

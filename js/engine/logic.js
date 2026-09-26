@@ -211,6 +211,15 @@ export function addInterval(a, b) {
 }
 
 // 상한을 cap 의 상한으로 제한 (예: 부분 합계 ≤ 동 연면적)
+// 두 구간 중 큰 쪽(층수·높이의 최댓값): [max(lo), max(hi)]
+export function maxInterval(a, b) {
+  return interval(Math.max(a.lo, b.lo), Math.max(a.hi, b.hi), {
+    loDeps: mergeDeps(a.loDeps, b.loDeps),
+    hiDeps: mergeDeps(a.hiDeps, b.hiDeps),
+    open: mergeDeps(a.open, b.open),
+  });
+}
+
 export function capInterval(iv, cap) {
   if (!(cap.hi < iv.hi)) return iv;
   return interval(Math.min(iv.lo, cap.hi), cap.hi, { loDeps: iv.loDeps, hiDeps: cap.hiDeps, open: iv.open });

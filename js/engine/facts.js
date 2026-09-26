@@ -16,7 +16,7 @@
 
 import { resolvePolicy } from './policy.js';
 import { buildUseIndex, classifyUses, isAncillaryTerm, termGroups } from './uses.js';
-import { ASSUMED, CONFIRMED, UNKNOWN, addInterval, any, exact, interval, makeDep, mergeDeps } from './logic.js';
+import { ASSUMED, CONFIRMED, UNKNOWN, addInterval, any, exact, interval, makeDep, maxInterval } from './logic.js';
 import { formatYmd, normalizeYmd } from './dates.js';
 import { fmtNum } from './format.js';
 
@@ -435,14 +435,10 @@ export function siteLinkCandidate(building) {
   return building.dongs.length >= 2 && building.dongs.some((d) => isUndergroundOnly(d) || isParkingOnly(d));
 }
 
-const maxInterval = (a, b) => interval(Math.max(a.lo, b.lo), Math.max(a.hi, b.hi), {
-  loDeps: mergeDeps(a.loDeps, b.loDeps),
-  hiDeps: mergeDeps(a.hiDeps, b.hiDeps),
-  open: mergeDeps(a.open, b.open),
-});
-
 // 대지의 모든 동을 하나의 소방대상물로 합친 가상 동 — 연결된 동을 하나로 볼 때의 판정 확인용
-// (연면적·세대수 합, 층수 최댓값, 같은 층은 부분을 합침. 합친 동의 질문 키는 이 동 이름으로 만든다)
+// (연면적·세대수 합, 층수 최댓값, 같은 층은 부분을 합침). 평가(conditions.js)는 memberDongs 로 동별 사실·답변을 읽어
+// 이 값들을 답변마다 다시 합친다 — 동 이름 키의 질문(층 면적·무창층·층수 등)에 답하면 합친 판정에도 반영된다.
+// 여기 metrics·floors 는 답변 없이 합친 값(용도군·파일 선택·표시용)
 export function mergeDongs(dongs, { useIndex, vocabulary, policy } = {}, id = SITE_DONG_ID) {
   const index = useIndex || buildUseIndex(vocabulary);
   const pol = resolvePolicy(policy);
@@ -451,7 +447,8 @@ export function mergeDongs(dongs, { useIndex, vocabulary, policy } = {}, id = SI
     const { floors } = effectiveFloors(d, countOf(d.metrics.ground_floors), countOf(d.metrics.basement_floors));
     for (const f of floors) {
       if (!byKey.has(f.key)) byKey.set(f.key, { key: f.key, kind: f.kind, level: f.level, label: f.label, parts: [], synthesized: false });
-      byKey.get(f.key).parts.push(...f.parts.map((p) => ({ ...p, n: byKey.get(f.key).parts.length + 1 })));
+      const target = byKey.get(f.key);
+      for (const p of f.parts) target.parts.push({ ...p, n: target.parts.length + 1 });
     }
   }
   const floors = [...byKey.values()];
@@ -478,5 +475,6 @@ export function mergeDongs(dongs, { useIndex, vocabulary, policy } = {}, id = SI
     flags: elevators.length ? { elevator: any(elevators) } : {},
     notes: ['SITE_MERGED'],
     members: dongs.map((d) => d.id),
+    memberDongs: dongs,
   };
 }

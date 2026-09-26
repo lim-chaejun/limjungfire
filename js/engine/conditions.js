@@ -9,18 +9,21 @@
 import { comparisonOps, nodeType, normalizeFloors, selectorKinds, selectorsKey, stableKey } from './schema.js';
 import {
   ASSUMED, CONFIRMED, F, T, U, UNKNOWN,
-  addInterval, all, any, capInterval, compareInterval, depCollector, depKey, exact, interval, makeDep, mergeDeps, not, tv,
+  addInterval, all, any, capInterval, compareInterval, depCollector, depKey, exact, interval, makeDep, maxInterval, mergeDeps, not, tv,
 } from './logic.js';
 import { coverage, describeUses } from './uses.js';
-import { countOf, effectiveFloors } from './facts.js';
+import { countOf, effectiveFloors, sortFloors } from './facts.js';
 import { describeFloors, fmtCondition, fmtInterval } from './format.js';
 
 const NO_WHY = Object.freeze([]);
 const EMPTY = Object.freeze([]);
 
 export function makeEnv({ dong, index, answers = {}, policy, inputDefs = new Map(), names = new Map(), facility, release = false, explain = true, track = true }) {
+  // 대지 전체(합친 동): 층·지표·플래그 사실은 각 동의 평가(그 동의 답변 키)에 맡긴다 — 합친 동 이름의 키로 묻지 않는다
+  const members = dong.memberDongs ? dong.memberDongs.map((m) => makeEnv({ dong: m, index, answers, policy, inputDefs, names, release, explain, track })) : null;
   return {
     dong,
+    members,
     index,
     answers,
     policy,
@@ -92,8 +95,14 @@ function releasedMetric(env, id) {
 }
 
 // 정책을 반영하지 않은 원값 (답변 > 사실 > 모름). 재평가(release)에서는 가정값 사실을 모름으로
+const SITE_MAX_METRICS = new Set(['ground_floors', 'basement_floors', 'height']);
+
 function rawMetric(env, id) {
   return memo(env, `raw:${id}`, () => {
+    if (env.members) {
+      const values = env.members.map((m) => rawMetric(m, id));
+      return values.reduce(SITE_MAX_METRICS.has(id) ? maxInterval : addInterval);
+    }
     const a = numAnswer(env.answers[depKey(id, env.dong.id)]);
     if (a !== null) return exact(a, D(env, () => [userDep(id, env)]));
     const m = env.dong.metrics[id];
@@ -121,6 +130,7 @@ export function metric(env, id) {
 // 평가에 쓰는 층 목록과 구분(지하·지상·옥탑)별 완전성. 불완전한 구분의 층 조건은 F 가 아니라 U(층수 질문)
 export function floorsOf(env) {
   return memo(env, 'floors', () => {
+    if (env.members) return siteFloors(env);
     const g = rawMetric(env, 'ground_floors');
     const b = rawMetric(env, 'basement_floors');
     const gc = countOf(g);
@@ -134,6 +144,32 @@ export function floorsOf(env) {
     // exactCounts: 층수를 정확히 안다(층 목록 = 실제 층) — 면적 항등식은 이때만 세운다
     return { floors, kinds, allComplete: complete.ground && complete.basement, exactCounts: Number.isInteger(gc) && Number.isInteger(bc) };
   });
+}
+
+// 대지 전체의 층 목록: 같은 층 키의 동별 층을 한 층으로(면적 합·무창층·용도는 동별 층에서). 구분별 완전성은 모든 동이 완전할 때
+function siteFloors(env) {
+  const byKey = new Map();
+  const kinds = {};
+  for (const k of ['ground', 'basement', 'rooftop']) kinds[k] = { complete: true, deps: EMPTY, open: EMPTY };
+  let exactCounts = true;
+  for (const m of env.members) {
+    const fo = floorsOf(m);
+    exactCounts = exactCounts && fo.exactCounts;
+    for (const k of ['ground', 'basement']) {
+      kinds[k] = {
+        complete: kinds[k].complete && fo.kinds[k].complete,
+        deps: mergeDeps(kinds[k].deps, fo.kinds[k].deps),
+        open: mergeDeps(kinds[k].open, fo.kinds[k].open),
+      };
+    }
+    for (const f of fo.floors) {
+      let mf = byKey.get(f.key);
+      if (!mf) byKey.set(f.key, (mf = { key: f.key, kind: f.kind, level: f.level, label: f.label, parts: [], members: [], synthesized: false }));
+      mf.members.push({ env: m, floor: f });
+      for (const p of f.parts) mf.parts.push({ ...p, n: mf.parts.length + 1 });
+    }
+  }
+  return { floors: sortFloors([...byKey.values()]), kinds, allComplete: kinds.ground.complete && kinds.basement.complete, exactCounts };
 }
 
 // 선택자가 고르는 구분들의 층 목록 정보: 완전한가, 목록 근거(층수 입력), 모르는 층수 입력
@@ -160,6 +196,7 @@ function narrowedOpen(env, open, lo, hi) {
 // 층 면적(항등식으로 좁히기 전): 층 면적 답변 > 부분 면적 합(부분 답변 반영), 동 연면적으로 상한
 export function rawFloorArea(env, floor) {
   return memoOn(env.rawAreaMemo, floor, () => {
+    if (floor.members) return floor.members.map(({ env: m, floor: f }) => floorArea(m, f)).reduce(addInterval);
     const a = numAnswer(env.answers[depKey('floor_area', env.dong.id, floor.key)]);
     if (a !== null) return exact(a, D(env, () => [userDep('floor_area', env, { floor: floor.key })]));
     const sum = floor.parts.length === 1 ? floor.parts[0].area : floor.parts.map((_, i) => partAreaRaw(env, floor, i)).reduce(addInterval);
@@ -174,6 +211,7 @@ export function rawFloorArea(env, floor) {
 // 판정이 뒤집히기 때문이다(단조성 — 리뷰 N1). 모순 없는 답변은 모순을 만들지 않는다(질문 범위가 이 항등식으로 좁혀져 있음).
 export function areaIdentity(env) {
   return memo(env, 'areaIdentity', () => {
+    if (env.members) return siteAreaIdentity(env);
     const { floors, allComplete, exactCounts } = floorsOf(env);
     const total = metric(env, 'total_area');
     if (!allComplete || !exactCounts || !floors.length || !Number.isFinite(total.hi)) return null;
@@ -199,11 +237,27 @@ export function areaIdentity(env) {
   });
 }
 
+// 대지 전체의 면적 항등식 = 동별 항등식의 합 — 모든 동이 항등식을 세울 수 있고 모순이 없을 때만(한 동의 빈 면적을 다른 동에 몰지 않는다)
+function siteAreaIdentity(env) {
+  const parts = env.members.map((m) => areaIdentity(m));
+  if (parts.some((p) => !p || !p.consistent)) return null;
+  const sum = (k) => parts.reduce((acc, p) => acc + p[k], 0);
+  return {
+    total: metric(env, 'total_area'),
+    lo: sum('lo'),
+    hi: sum('hi'),
+    roofHi: sum('roofHi'),
+    consistent: true,
+    loDeps: mergeDeps(...parts.map((p) => p.loDeps)),
+    hiDeps: mergeDeps(...parts.map((p) => p.hiDeps)),
+  };
+}
+
 // 층 면적: 항등식으로 좁힌 값 — 나머지 층 면적이 정해지면 이 층도 정해진다(예: 1층 600 + 지하1층 400, 연면적 1,200 → 2층 200)
 export function floorArea(env, floor) {
   return memoOn(env.floorAreaMemo, floor, () => {
     const raw = rawFloorArea(env, floor);
-    if (raw.lo === raw.hi || floor.kind === 'rooftop') return raw;
+    if (raw.lo === raw.hi || floor.kind === 'rooftop' || floor.members) return raw; // 대지의 층은 동별로 이미 좁혀짐
     const id = areaIdentity(env);
     if (!id || !id.consistent) return raw;
     const lo = Math.max(raw.lo, id.total.lo - (id.hi - raw.hi) - id.roofHi);
@@ -266,6 +320,7 @@ function partArea(env, floor, i) {
 // 무창층은 지상층에만 있다(소방시설법 시행령 제2조제1호). 지하층·옥탑은 확정 F
 function windowless(env, floor) {
   return memoOn(env.windowlessMemo, floor, () => {
+    if (floor.members) return any(floor.members.map(({ env: m, floor: f }) => windowless(m, f)));
     const a = boolAnswer(env.answers[depKey('windowless', env.dong.id, floor.key)]);
     if (a !== null) return tv(a ? T : F, D(env, () => [userDep('windowless', env, { floor: floor.key })]), why(env, () => [`${floor.label} 무창층 ${a ? '예' : '아니오'}`]));
     if (floor.kind !== 'ground') return tv(F);
@@ -292,6 +347,7 @@ function partCoverage(env, part, targets) {
 // 층에 대상 용도가 있는가 (층 부분의 용도 목록 기준)
 function floorUsePresence(env, floor, targets) {
   return memoIn(env.usePresenceMemo, usesKey(targets), floor, () => {
+    if (floor.members) return any(floor.members.map(({ env: m, floor: f }) => floorUsePresence(m, f, targets)));
     const cs = floor.parts.map((p) => partCoverage(env, p, targets));
     if (cs.some((c) => c === 'all' || c === 'some')) return tv(T, D(env, () => [usesDep(env, floor)]), why(env, () => [`${floor.label} ${describeUses(targets, env.index)} 용도 있음`]));
     if (cs.every((c) => c === 'none')) return tv(F, D(env, () => [usesDep(env, floor)]));
@@ -335,6 +391,7 @@ function floorUseArea(env, floor, targets, openDep) {
   const sig = useSig(targets);
   const ans = numAnswer(env.answers[depKey('floor_use_area', env.dong.id, floor.key, sig)]);
   if (ans !== null) return exact(ans, D(env, () => [userDep('floor_use_area', env, { floor: floor.key, sig })]));
+  if (floor.members) return floor.members.map(({ env: m, floor: f }) => floorUseArea(m, f, targets, openDep)).reduce(addInterval);
   let sum = exact(0);
   floor.parts.forEach((part, i) => {
     const a = partArea(env, floor, i);
@@ -508,6 +565,7 @@ function evalUse(node, env) {
 }
 
 function evalFlag(node, env) {
+  if (env.members) return any(env.members.map((m) => evalFlag(node, m)));
   const id = node.flag;
   const a = boolAnswer(env.answers[depKey(id, env.dong.id)]);
   const label = () => labelOf(env, id);
@@ -518,6 +576,7 @@ function evalFlag(node, env) {
 }
 
 function evalInstalled(node, env) {
+  if (env.members) return any(env.members.map((m) => evalInstalled(node, m)));
   const id = node.installed;
   const a = boolAnswer(env.answers[depKey('installed', env.dong.id, undefined, id)]);
   const name = () => env.names.get(id) ?? id;
