@@ -5,12 +5,13 @@
 //   node scripts/law-watch/check.mjs [--out DIR] [--only id,..] [--no-crosscheck]
 //        [--record [DIR]] [--replay DIR] [--data-dir DIR] [--registry FILE]
 //        [--today YYYYMMDD] [--apply-history]
-//   node scripts/law-watch/check.mjs --apply-from RESULT.json [--data-dir DIR]
+//   node scripts/law-watch/check.mjs --apply-from RESULT.json [--data-dir DIR] [--registry FILE]
 //   node scripts/law-watch/check.mjs --bootstrap ID [--as-of YYYY-MM-DD]
 //   node scripts/law-watch/check.mjs --ack ID[,ID..]
 //
 //   --apply-history  이번 실행에서 가져온 결과의 제안 행을 연혁 파일에 넣는다
-//   --apply-from     이미 검토한 result.json 의 제안 행을 그대로 넣는다 (네트워크 없음 — 검토한 것 = 반영한 것)
+//   --apply-from     이미 검토한 result.json 의 제안 행을 그대로 넣는다 (네트워크 없음 — 검토한 것 = 반영한 것).
+//                    대상은 레지스트리 소스의 연혁 파일·기준명·종류와 같아야 하고, 하나라도 틀리면 아무것도 쓰지 않는다
 //
 // 종료 코드
 //   0  모든 소스를 가져와 해석·대조했고 반영할 개정이 없음 (유일한 "최신" 판정)
@@ -39,12 +40,12 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
-  DATA_FILE_RE,
   DEFAULT_HTTP,
   ENRICH_CAP,
-  LAW_GO_KR,
+  HISTORY_ROW_FIELDS,
   admChainRequest,
   admDocRequest,
+  admLink,
   analyzeSource,
   baselineKeys,
   buildChange,
@@ -53,11 +54,11 @@ import {
   exitCodeFor,
   expandSources,
   fingerprint,
-  historyRowKey,
   insertHistoryRow,
   isValidKey,
   isValidYmd,
   lawDocRequest,
+  lawLink,
   lawListRequest,
   parseAdmChain,
   parseLawList,
@@ -65,6 +66,8 @@ import {
   parseWrapper,
   renderReport,
   requestKey,
+  sanitizeHistoryRow,
+  seqFromLink,
   snippet,
   statusFor,
   todayKst,
@@ -84,7 +87,7 @@ export const USAGE = `사용법:
   node scripts/law-watch/check.mjs [--out DIR] [--only id,..] [--no-crosscheck]
        [--record [DIR]] [--replay DIR] [--data-dir DIR] [--registry FILE]
        [--today YYYYMMDD] [--apply-history]
-  node scripts/law-watch/check.mjs --apply-from RESULT.json [--data-dir DIR]
+  node scripts/law-watch/check.mjs --apply-from RESULT.json [--data-dir DIR] [--registry FILE]
   node scripts/law-watch/check.mjs --bootstrap ID [--as-of YYYY-MM-DD]
   node scripts/law-watch/check.mjs --ack ID[,ID..]
 종료 코드: 0 최신 · 10 개정 있음 · 20 소스 오류 · 30 설정/사용법 오류`;
@@ -451,6 +454,9 @@ function appendStepSummary(file, report, log) {
   }
 }
 
+// 제안 행을 연혁 파일에 넣는다. 파일마다 결과를 메모리에서 먼저 만들고, 모든 항목이 맞을 때만 쓴다
+// (하나라도 틀리면 ConfigError 로 아무 파일도 쓰지 않는다). 파일 모양이 맞지 않으면 거부한다:
+// targetKey 없는 변경 → 파일 전체가 연혁 배열, targetKey 있는 변경 → {기준명: 연혁 배열} 객체에 그 키가 이미 있음.
 export function applyHistory(changes, dataDir = DEFAULT_DATA_DIR) {
   const byFile = new Map();
   for (const c of changes) {
@@ -458,39 +464,38 @@ export function applyHistory(changes, dataDir = DEFAULT_DATA_DIR) {
     if (!byFile.has(c.target)) byFile.set(c.target, []);
     byFile.get(c.target).push(c);
   }
-  const written = [];
+  const outputs = [];
   for (const [file, list] of byFile) {
     const p = dataPath(file, dataDir);
     let json = readJson(p);
     for (const c of list) {
+      const row = sanitizeHistoryRow(c.kind, c.suggestedRow);
       if (c.targetKey != null) {
-        if (!Array.isArray(json[c.targetKey])) throw new ConfigError(`${file} 에 키 '${c.targetKey}' 가 없음 (키 이름은 바꾸지 않는다)`);
-        json[c.targetKey] = insertHistoryRow(json[c.targetKey], c.suggestedRow, c.kind);
-      } else json = insertHistoryRow(json, c.suggestedRow, c.kind);
+        const keyed = json && typeof json === 'object' && !Array.isArray(json) && Object.hasOwn(json, c.targetKey);
+        if (!keyed || !Array.isArray(json[c.targetKey])) throw new ConfigError(`${file} 에 키 '${c.targetKey}' 의 연혁 배열이 없음 (키 이름은 바꾸지 않는다)`);
+        json[c.targetKey] = insertHistoryRow(json[c.targetKey], row, c.kind);
+      } else {
+        if (!Array.isArray(json)) throw new ConfigError(`${file} 는 연혁 배열 파일이 아님 — targetKey 없는 변경으로 덮어쓰지 않는다`);
+        json = insertHistoryRow(json, row, c.kind);
+      }
     }
-    fs.writeFileSync(p, JSON.stringify(json, null, 2)); // 저장소 형식: 끝 개행 없음
-    written.push({ file: p, rows: list.length });
+    outputs.push({ file: p, text: JSON.stringify(json, null, 2), rows: list.length }); // 저장소 형식: 끝 개행 없음
   }
-  return written;
+  for (const o of outputs) fs.writeFileSync(o.file, o.text);
+  return outputs.map(({ file, rows }) => ({ file, rows }));
 }
 
-// result.json 의 변경 항목을 연혁 파일에 넣어도 되는지 — --apply-from 은 파일 내용을 그대로 믿지 않는다
-function applicableChange(c) {
-  if (!c || typeof c !== 'object' || !['law', 'admrul'].includes(c.kind)) return false;
+// result.json 의 변경 항목을 연혁 파일에 넣어도 되는지 — --apply-from 은 결과 파일을 그대로 믿지 않는다.
+// 대상 파일·기준명(targetKey)·종류는 레지스트리의 그 소스와 같아야 하고, 행은 연혁 행 형식이어야 한다.
+function applicableChange(c, src) {
+  if (!c || typeof c !== 'object' || !src) return false; // 레지스트리에 없는 소스
+  if (c.kind !== src.kind) return false; // 고시 행을 법령 연혁에(또는 반대로) 넣지 않는다
+  if ((c.target ?? null) !== src.target || (c.targetKey ?? null) !== (src.targetKey ?? null)) return false;
   if (c.target == null) return true; // inline 소스: 연혁 파일 없음(반영하지 않고 --ack 안내)
-  if (typeof c.target !== 'string' || !DATA_FILE_RE.test(c.target)) return false;
-  if (c.targetKey != null && typeof c.targetKey !== 'string') return false;
   const r = c.suggestedRow;
-  const fields = ['name', 'effective_date', c.kind === 'law' ? 'law_no' : 'notice_no', 'promulgation_date', 'revision_type', 'link'];
-  return (
-    !!r &&
-    typeof r === 'object' &&
-    fields.every((k) => typeof r[k] === 'string' && r[k].length > 0) &&
-    isValidYmd(r.effective_date) &&
-    isValidYmd(r.promulgation_date) &&
-    r.link.startsWith(`${LAW_GO_KR}/LSW/`) &&
-    historyRowKey(c.kind, r).seq != null
-  );
+  if (!r || typeof r !== 'object' || !HISTORY_ROW_FIELDS[c.kind].every((k) => typeof r[k] === 'string' && r[k].length > 0)) return false;
+  const seq = seqFromLink(r.link, c.kind === 'law' ? 'lsiSeq' : 'admRulSeq');
+  return isValidYmd(r.effective_date) && isValidYmd(r.promulgation_date) && seq != null && r.link === (c.kind === 'law' ? lawLink(seq) : admLink(seq));
 }
 
 // 검토한 result.json 의 제안 행을 그대로 반영한다 (네트워크 없음). --apply-history 는 그 자리에서 다시
@@ -500,9 +505,13 @@ async function applyFromMode(opts, deps) {
   const file = path.resolve(opts.applyFrom);
   const res = readJson(file, `결과 파일(${file})`);
   if (res?.schemaVersion !== 1 || !Array.isArray(res.changes)) throw new ConfigError(`--apply-from: ${file} 는 check.mjs 의 result.json 이 아님`);
-  const bad = res.changes.filter((c) => !applicableChange(c)).map((c) => c?.id ?? '?');
-  if (bad.length) throw new ConfigError(`--apply-from: 반영할 수 없는 항목 ${bad.join(', ')} (target 은 data/*.json, suggestedRow 는 law.go.kr 연혁 행 형식)`);
-  const written = applyHistory(res.changes, opts.dataDir ?? DEFAULT_DATA_DIR);
+  // 반영할 수 있는 곳은 레지스트리의 연혁 기준선 파일·기준명뿐이다 (지금 데이터로 소스를 펼쳐 대조)
+  const { allSources, dataDir } = loadConfig({ registry: opts.registry, dataDir: opts.dataDir });
+  const bad = res.changes.filter((c) => !applicableChange(c, allSources.find((s) => s.id === c?.sourceId))).map((c) => c?.id ?? '?');
+  if (bad.length) {
+    throw new ConfigError(`--apply-from: 반영할 수 없는 항목 ${bad.join(', ')} (대상 파일·기준명·종류는 레지스트리 소스와 같아야 하고, suggestedRow 는 law.go.kr 연혁 행 형식)`);
+  }
+  const written = applyHistory(res.changes, dataDir);
   for (const w of written) log(`연혁 반영: ${w.file} (+${w.rows}행)`);
   const inline = res.changes.filter((c) => !c.target);
   if (inline.length) log(`inline 소스 변경 ${inline.length}건은 연혁 파일이 없으므로 --ack 로 확인 처리하세요.`);

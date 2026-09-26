@@ -743,6 +743,17 @@ export function buildChange(src, row, { today, currentKey = null, doc = null } =
 
 // ───────────────────────── 연혁 파일 반영 ─────────────────────────
 
+// 연혁 파일 행의 필드와 순서 (suggestedRow() 가 만드는 모양)
+export const HISTORY_ROW_FIELDS = Object.freeze({
+  law: Object.freeze(['name', 'effective_date', 'law_no', 'promulgation_date', 'revision_type', 'link']),
+  admrul: Object.freeze(['name', 'effective_date', 'notice_no', 'promulgation_date', 'revision_type', 'link']),
+});
+
+// 연혁 파일에 넣을 행: 정해진 필드만 정해진 순서로, 문자열은 cleanName (사이트가 이름 등을 HTML 에 그대로 넣는다)
+export function sanitizeHistoryRow(kind, row) {
+  return Object.fromEntries(HISTORY_ROW_FIELDS[kind].map((k) => [k, cleanName(row?.[k])]));
+}
+
 function numTuple(row) {
   const m = /제\s*(\d+)(?:-(\d+))?\s*호/.exec(String(row?.law_no ?? row?.notice_no ?? ''));
   return m ? [+m[1], m[2] != null ? +m[2] : -1] : [-1, -1];
@@ -760,9 +771,11 @@ export function historyCmp(a, b) {
   return b1 - a1 || b2 - a2;
 }
 
-// 기존 행 순서는 건드리지 않고, 새 행을 규칙에 맞는 자리에 끼운 뒤 no 를 1..N 으로 다시 매긴다
+// 기존 행 순서는 건드리지 않고, 새 행을 규칙에 맞는 자리에 끼운 뒤 no 를 1..N 으로 다시 매긴다.
+// 배열이 아니면 던진다 — 예전에는 [] 로 보고 [새 행] 을 돌려줘, 객체 파일이 통째로 덮어써질 수 있었다.
 export function insertHistoryRow(rows, newRow, kind) {
-  const list = Array.isArray(rows) ? rows.slice() : [];
+  if (!Array.isArray(rows)) throw new TypeError('연혁은 배열이어야 함');
+  const list = rows.slice();
   const newKey = historyRowKey(kind, newRow).key;
   if (newKey && list.some((r) => historyRowKey(kind, r).key === newKey)) return renumber(list);
   let at = list.findIndex((r) => historyCmp(newRow, r) < 0);

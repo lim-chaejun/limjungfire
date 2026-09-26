@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { runChecks, loadDataDir, CHECKS } from '../../validate-data.mjs';
-import { MARKER_LAW, historyRowKey, parseState, wrapperRequest } from '../lib.mjs';
-import { SNAPSHOT, chainAware, copySnapshot, fakeClock, mutating, readJson, replay, runCheck, tmpDir, writeRegistry } from './helpers.mjs';
+import { HISTORY_ROW_FIELDS, MARKER_LAW, historyRowKey, parseState, wrapperRequest } from '../lib.mjs';
+import { REGISTRY, SNAPSHOT, chainAware, copySnapshot, fakeClock, mutating, readJson, replay, runCheck, tmpDir, writeRegistry } from './helpers.mjs';
 
 // 2026-09-26 law.go.kr 기준, origin/main 연혁 데이터에 없는 개정 13건
 const GOLDEN = [
@@ -171,21 +171,26 @@ test('--apply-from: 검토한 result.json 을 네트워크 없이 그대로 반�
     throw new Error('네트워크 금지');
   };
   try {
-    assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir], { log: (m) => logs.push(m) }), 0);
+    assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir, '--registry', REGISTRY], { log: (m) => logs.push(m) }), 0);
   } finally {
     globalThis.fetch = realFetch;
   }
   for (const f of fs.readdirSync(viaHistory)) assert.equal(fs.readFileSync(path.join(dir, f), 'utf8'), fs.readFileSync(path.join(viaHistory, f), 'utf8'), f);
   assert.ok(logs.some((l) => /nfsc_history\.json \(\+10행\)/.test(l)), logs.join('\n'));
   const snap = fs.readFileSync(path.join(dir, 'law_history_decree.json'), 'utf8');
-  assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir], { log: () => {} }), 0);
+  assert.equal(await main(['--apply-from', resultFile, '--data-dir', dir, '--registry', REGISTRY], { log: () => {} }), 0);
   assert.equal(fs.readFileSync(path.join(dir, 'law_history_decree.json'), 'utf8'), snap, '멱등');
 });
 
-test('--apply-from: data/*.json 밖을 가리키거나 행 형식이 틀리면 아무것도 쓰지 않고 exit 30', async () => {
+const fileTexts = (dir) => Object.fromEntries(fs.readdirSync(dir).map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')]));
+
+test('--apply-from: 대상 파일·기준명·종류가 레지스트리 소스와 다르거나 행 형식이 틀리면 아무것도 쓰지 않고 exit 30', async () => {
   const dir = copySnapshot();
+  // 레지스트리의 연혁 파일이 아닌 data 파일도 둔다 — 예전에는 [새 행] 으로 통째로 덮어써졌다
+  fs.writeFileSync(path.join(dir, 'facilities.json'), JSON.stringify({ facilities: [{ id: 'powder', nfsc_key: 'x' }] }, null, 2));
+  fs.copyFileSync(REGISTRY, path.join(dir, 'law_watch.json'));
   const reviewed = await runCheck({ dataDir: dir });
-  const before = Object.fromEntries(fs.readdirSync(dir).map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')]));
+  const before = fileTexts(dir);
   const { main } = await import('../check.mjs');
   const tamper = (edit) => {
     const r = structuredClone(reviewed.result);
@@ -194,19 +199,69 @@ test('--apply-from: data/*.json 밖을 가리키거나 행 형식이 틀리면 �
     fs.writeFileSync(p, JSON.stringify(r));
     return p;
   };
+  const nfpc = (r) => r.changes.find((c) => c.sourceId === 'nfpc-108');
   const logs = [];
   const cases = [
     (r) => (r.changes[0].target = '../package.json'),
     (r) => (r.changes[0].target = 'scripts/law-watch/lib.mjs'),
+    (r) => (r.changes[0].target = 'data/facilities.json'), // 레지스트리 연혁 파일이 아님(객체 파일)
+    (r) => (r.changes[0].target = 'data/law_watch.json'),
+    (r) => delete nfpc(r).targetKey, // 리뷰 재현: 기준명 없이 nfsc_history.json → 파일 전체가 [새 행] 이 되던 문제
+    (r) => (delete nfpc(r).targetKey, (nfpc(r).target = 'data/law_history_decree.json')), // 리뷰 재현: 고시 행이 시행령 연혁에
+    (r) => (nfpc(r).targetKey = '없는 기준(NFSC 999)'),
+    (r) => (r.changes[0].kind = 'admrul'), // 종류가 소스와 다름
+    (r) => (r.changes[0].sourceId = 'no-such-source'),
     (r) => (r.changes.at(-1).suggestedRow.link = 'https://example.com/LSW/lsInfoP.do?lsiSeq=1'),
+    (r) => (r.changes[0].suggestedRow.link = 'https://www.law.go.kr/LSW/admRulInfoP.do?lsiSeq=287375'), // 종류에 맞는 원문 링크가 아님
     (r) => (r.changes.at(-1).suggestedRow.effective_date = '2026-07-01'),
     (r) => delete r.changes[1].suggestedRow.revision_type,
     (r) => (r.schemaVersion = 2),
   ];
-  for (const edit of cases) assert.equal(await main(['--apply-from', tamper(edit), '--data-dir', dir], { log: (m) => logs.push(m) }), 30, String(edit));
-  for (const [f, text] of Object.entries(before)) assert.equal(fs.readFileSync(path.join(dir, f), 'utf8'), text, f);
+  for (const edit of cases) assert.equal(await main(['--apply-from', tamper(edit), '--data-dir', dir, '--registry', REGISTRY], { log: (m) => logs.push(m) }), 30, String(edit));
+  assert.deepEqual(fileTexts(dir), before, '나머지 12건이 정상이어도 아무 파일도 쓰지 않는다');
   assert.match(logs.join('\n'), /반영할 수 없는 항목/);
   assert.equal(await main(['--apply-from', path.join(reviewed.out, 'result.json'), '--only', 'decree'], { log: () => {} }), 30, '--only 와 함께 못 씀');
+});
+
+test('--apply-from: 제안 행은 정해진 필드만 넣고 문자열은 cleanName (사이트가 이름을 HTML 에 그대로 넣는다)', async () => {
+  const dir = copySnapshot();
+  const reviewed = await runCheck({ dataDir: dir });
+  const r = structuredClone(reviewed.result);
+  const c = r.changes.find((x) => x.sourceId === 'nfpc-108');
+  c.suggestedRow.name = '  <img src=x onerror="alert(1)">분말소화설비의   화재안전성능기준(NFPC 108)  ';
+  c.suggestedRow.onclick = 'evil()';
+  r.changes = [c];
+  const p = path.join(tmpDir('law-watch-apply-'), 'result.json');
+  fs.writeFileSync(p, JSON.stringify(r));
+  const { main } = await import('../check.mjs');
+  assert.equal(await main(['--apply-from', p, '--data-dir', dir, '--registry', REGISTRY], { log: () => {} }), 0);
+  const row = readJson(path.join(dir, 'nfsc_history.json'))['분말소화설비의 화재안전기준(NFSC 108)'][0];
+  assert.deepEqual(Object.keys(row), ['no', ...HISTORY_ROW_FIELDS.admrul]);
+  assert.equal(row.name, 'img src=x onerror=alert(1)분말소화설비의 화재안전성능기준(NFPC 108)');
+  assert.equal(row.notice_no, '소방청고시 제2026-15호');
+});
+
+test('applyHistory: 파일 모양이 맞지 않으면 거부하고, 여러 파일 중 하나라도 실패하면 아무 파일도 쓰지 않는다', async () => {
+  const { applyHistory, ConfigError } = await import('../check.mjs');
+  const dir = copySnapshot();
+  fs.writeFileSync(path.join(dir, 'facilities.json'), JSON.stringify({ facilities: [{ id: 'powder' }] }, null, 2));
+  const { result } = await runCheck({ dataDir: dir });
+  const before = fileTexts(dir);
+  const decree = result.changes.find((c) => c.sourceId === 'decree');
+  const nfpc = result.changes.find((c) => c.sourceId === 'nfpc-108');
+  const { targetKey, ...nfpcNoKey } = nfpc;
+  assert.ok(targetKey);
+  const cases = [
+    ['객체 파일(nfsc_history)에 targetKey 없이', [nfpcNoKey]],
+    ['객체 파일(facilities)에 targetKey 없이', [{ ...decree, target: 'data/facilities.json' }]],
+    ['배열 파일에 targetKey', [{ ...decree, targetKey: '분말소화설비의 화재안전기준(NFSC 108)' }]],
+    ['없는 기준명', [{ ...nfpc, targetKey: '없는 기준(NFSC 999)' }]],
+    ['첫 파일(시행령)은 맞고 둘째 파일에서 실패 — 첫 파일도 쓰지 않는다', [decree, { ...nfpc, targetKey: '없는 기준(NFSC 999)' }]],
+  ];
+  for (const [label, changes] of cases) assert.throws(() => applyHistory(changes, dir), ConfigError, label);
+  assert.deepEqual(fileTexts(dir), before);
+  // 정상 입력은 그대로 반영 (대조)
+  assert.deepEqual(applyHistory([decree, nfpc], dir).map((w) => path.basename(w.file)), ['law_history_decree.json', 'nfsc_history.json']);
 });
 
 // ───────────── 고장 시나리오 ─────────────

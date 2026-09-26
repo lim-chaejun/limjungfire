@@ -16,6 +16,7 @@ import {
   isSubstitutionOnly,
   parseState,
   renderReport,
+  sanitizeHistoryRow,
   todayKst,
   validateRegistry,
 } from '../lib.mjs';
@@ -265,6 +266,27 @@ test('insertHistoryRow: 시행일 내림차순, 동률이면 공포일 늦은 �
   assert.deepEqual(insertHistoryRow(rows, row('20240517', '20240507', 85, 6), 'law'), rows);
   // 고시 번호 "2023-40" > "2023-39"
   assert.ok(historyCmp({ effective_date: '1', promulgation_date: '1', notice_no: '소방청고시 제2023-40호' }, { effective_date: '1', promulgation_date: '1', notice_no: '소방청고시 제2023-39호' }) < 0);
+});
+
+test('sanitizeHistoryRow: 정해진 필드만 정해진 순서로, 문자열은 cleanName · insertHistoryRow 는 배열이 아니면 던진다', () => {
+  const dirty = {
+    onclick: 'evil()',
+    link: 'https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=1',
+    name: ' <b>"시행령"</b>\n',
+    effective_date: '20260701',
+    law_no: '제1호',
+    promulgation_date: '20260623',
+    revision_type: '일부개정',
+  };
+  const clean = sanitizeHistoryRow('law', dirty);
+  assert.deepEqual(Object.keys(clean), ['name', 'effective_date', 'law_no', 'promulgation_date', 'revision_type', 'link']);
+  assert.equal(clean.name, 'b시행령/b');
+  const good = row('20260701', '20260623', 1, 1);
+  const { no, ...fields } = good;
+  assert.deepEqual(sanitizeHistoryRow('law', good), fields, '정상 행은 그대로');
+  // 예전에는 배열이 아니면 [] 로 보고 [새 행] 을 돌려줘 객체 파일이 통째로 덮어써질 수 있었다
+  assert.throws(() => insertHistoryRow({ '기준(NFSC 108)': [] }, good, 'law'), TypeError);
+  assert.throws(() => insertHistoryRow(undefined, good, 'law'), TypeError);
 });
 
 // ───────────── 영향 추정 ─────────────
