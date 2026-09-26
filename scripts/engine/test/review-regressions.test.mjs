@@ -283,6 +283,21 @@ test('2차 MEDIUM: 합친 동에서만 모르는 사실은 그 동 이름 키로
   assert.deepEqual(runCase({ ...c, dataFiles: { '02': c.dataFiles['02'], '18': c.dataFiles['18'] } }, { answers: { site_connected: false } }).notEvaluated, []);
 });
 
+test('2차 MEDIUM: 긴 질문 목록 — 날짜 → 동 → 층 순으로 시설마다 5개까지, 나머지는 moreQuestions (rv_q33)', () => {
+  const sp = fac(runCase(caseById('q33-long-list')), '직접입력', 'sprinkler');
+  assert.equal(sp.verdict, '확인 필요');
+  assert.equal(sp.questions.length, 5);
+  assert.ok(sp.moreQuestions >= 20, String(sp.moreQuestions));
+  assert.deepEqual(sp.questions.slice(0, 2).map((q) => q.input), ['application_date', 'use_area']);
+  assert.deepEqual(sp.questions.slice(2).map((q) => q.key), ['floor_area@직접입력/B3', 'floor_area@직접입력/B2', 'floor_area@직접입력/B1']);
+  // 동의 질문 목록은 시설별로 줄인 질문의 합
+  const r = runCase(caseById('q33-long-list'));
+  assert.ok(r.dongs[0].questions.length <= 5 * r.dongs[0].facilities.length);
+  // 상한 아래면 moreQuestions 는 0
+  const re = fac(r, '직접입력', 'rescue_equipment');
+  assert.deepEqual([re.questions.length, re.moreQuestions], [1, 0]);
+});
+
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
   const r = runCase(caseById('area-determined'));
   const f = fac(r, '본동', 'x');

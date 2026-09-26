@@ -180,6 +180,12 @@ export const CASES = [
     },
   },
   {
+    id: 'q33-long-list',
+    title: '2차 MEDIUM: 수동 입력 30층+지하3층 33,000㎡, 허가 2018.3.2 — 층마다 "결정적"인 면적 질문이 32개',
+    input: { manual: { mainPurpsCdNm: '제2종근린생활시설', totArea: 33000, grndFlrCnt: 30, ugrndFlrCnt: 3, pmsDay: '20180302' } },
+    dataFiles: { '02': DATA['02'] },
+  },
+  {
     id: 'area-determined',
     title: '1층 600 + 지하1층 400, 연면적 1,200 → 2층 200(항등식), 2층 이상 바닥면적 합계 150㎡ 미만',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }], floors: [nc2(1, '소매점', 600), nc2(1, '소매점', 400, '10')], permit: [permit('20150101')] } },

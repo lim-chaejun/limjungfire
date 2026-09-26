@@ -14,7 +14,9 @@
 //   그러면 푼 평가에서도 F 인 비해당은 어떤 가정값·시기 조합에서도 F 다 — property.test.mjs(끝값·무작위 답변 조합)와
 //   monotonicity.test.mjs(무작위 건물·기준에서 묻는 질문에 답해 가는 산책)가 확인한다.
 // 질문 선별: 확인 필요일 때 확정이 아닌 입력마다 시험값을 넣어 판정이 바뀌는지 본다(한 입력으로 바뀌면 결정적).
-//   결정적 입력이 없으면 관련 입력을 모두 함께 묻는다(jointQuestions). 시험 예산을 넘겨도 모두 함께 묻는다.
+//   결정적 입력이 하나도 없으면 관련 입력을 모두 함께 묻는다(jointQuestions). 시험 예산을 다 쓰면 그때까지 찾은 결정적 입력을,
+//   하나도 못 찾았으면 역시 모두 함께 묻는다. 물을 질문은 날짜 → 대지 → 동 → 층 순으로 늘어놓고 시설마다 QUESTION_LIMIT 개까지만
+//   내보낸다(나머지는 moreQuestions 수로 — 답을 받으면 다시 골라 다음 질문이 나온다).
 
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
@@ -27,6 +29,19 @@ export const VERDICT = Object.freeze({ T: '해당', U: '확인 필요', F: '비�
 
 // 시설 하나의 질문 선별에 쓰는 시설 평가 횟수 상한. 넘으면 선별을 멈추고 관련 입력을 모두 함께 묻는다.
 export const DECISIVE_TEST_BUDGET = 400;
+
+// 시설 하나가 한 번에 내보내는 질문 수 상한. 넘는 것은 moreQuestions 수로만 알린다.
+export const QUESTION_LIMIT = 5;
+
+// 질문 순서: 날짜(허가일·신청일) → 대지 단위 → 동 단위(층수·연면적·플래그·용도 합계 등) → 층 단위(층 순서대로).
+// 날짜·동 단위 답 하나가 여러 층 질문을 한꺼번에 없애는 경우가 많다.
+function orderQuestions(questions, floorOrder) {
+  const rank = (q) => (DATE_INPUTS.has(q.input) ? 0 : !q.dong ? 1 : !q.floor ? 2 : 3);
+  return questions
+    .map((q, i) => ({ q, i, r: rank(q), f: q.floor ? floorOrder.get(q.floor) ?? 999 : -1 }))
+    .sort((a, b) => a.r - b.r || a.f - b.f || a.i - b.i)
+    .map((x) => x.q);
+}
 
 // ───────────── 행 ─────────────
 
@@ -322,7 +337,8 @@ function hashKey(s) {
 //      안 바뀌면 — 조건이 그 입력에 단조이면 — 하나만 답해서도 바뀌지 않으므로 개별 시험을 건너뛴다.
 //   2. 끝값 시험: 입력마다 참/거짓, 수치는 범위 양 끝, 날짜는 각 시기.
 //   3. 여전히 결정적 입력이 없으면 기준값 앞뒤와 좁은 정수 범위 전체(폭 1짜리 구간 조건용).
-//   결정적 입력이 없거나(여러 답이 함께 있어야 풀림) 예산을 다 쓰면 후보 전부를 함께 묻는다(jointQuestions).
+//   결정적 입력이 하나도 없으면(여러 답이 함께 있어야 풀림, 또는 예산을 다 쓸 때까지 못 찾음) 후보 전부를 함께 묻는다(jointQuestions).
+//   예산을 다 썼어도 찾은 결정적 입력이 있으면 그것만 묻는다(나머지는 답을 받은 뒤 다시 고른다).
 function chooseQuestions(fid, dctx, j, candidates) {
   const budget = { count: 0, limit: DECISIVE_TEST_BUDGET };
   const constants = facilityConstants(fid, dctx);
@@ -497,8 +513,10 @@ export function finalizeFacility(fid, dctx) {
 
   const first = defs[0]?.facility || {};
   const qctx = { inputDefs: dctx.inputDefs, index: dctx.index, names: dctx.names };
-  const questions = [];
-  for (const d of questionDeps) if (!questions.some((q) => q.key === d.key)) questions.push(buildQuestion(d, qctx));
+  const asked = [];
+  for (const d of questionDeps) if (!asked.some((q) => q.key === d.key)) asked.push(buildQuestion(d, qctx));
+  const ordered = orderQuestions(asked, order);
+  const questions = ordered.slice(0, QUESTION_LIMIT);
   const assumptions = core.tv.deps.filter((d) => d.status === ASSUMED).map((d) => describeDep(d, dctx));
   const dateAssumption = describeDateAssumption(di);
   if (dateAssumption) assumptions.push(dateAssumption);
@@ -517,6 +535,7 @@ export function finalizeFacility(fid, dctx) {
     possibleScope: v === U && (uRows.length || tRows.length) ? mergeScopes([...uRows, ...(boundary ? tRows : [])].map((r) => r.scope), order) : null,
     extensions: decided.flatMap((r) => r.rows.filter((x) => x.kind === 'modifier' && x.value.v === T).map((x) => x.row.specs?.label ?? x.row.criteria)),
     questions,
+    moreQuestions: ordered.length - questions.length,
     jointQuestions: joint,
     assumptions,
     boundary,

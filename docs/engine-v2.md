@@ -237,11 +237,13 @@ trigger 행이 하나도 없는 시설(info·modifier 행만 있음)은 비해�
 
 U 인 시설에서 **무엇을 물을지** 고른다(비해당의 안전성과는 별개 — §5.4). 후보는 각 시기의 보통 평가와 재평가에서 확정이 아닌 입력(+날짜가 판정을 가르면 날짜 질문)이다. 후보 입력 하나에 값을 넣어 다시 판정해(`judge`) 판정이 확정되면(T 또는 F) 그 입력은 **결정적**이다. 결정적 입력이 없으면(여러 답이 함께 있어야 풀리는 경우) 후보를 모두 묻고 `jointQuestions: true` 로 표시한다. 답을 받으면 다시 평가해 다음 질문을 고른다.
 
-비용을 제한하기 위해 단계적으로 시험한다(시설마다 시험 예산 `DECISIVE_TEST_BUDGET` = 400회, 다 쓰면 후보 전부를 함께 묻는다):
+비용을 제한하기 위해 단계적으로 시험한다. 시설마다 시험 예산 `DECISIVE_TEST_BUDGET` = 400회 — 다 쓰면 그때까지 찾은 결정적 입력을 묻고, 하나도 못 찾았으면 후보 전부를 함께 묻는다(`jointQuestions`, `diagnostics.budgetExhausted`):
 
 1. **묶음 확인** — 같은 종류 입력이 셋 이상(예: 층마다 무창층)이면 모두 한쪽 끝값으로 두어 본다. 어느 끝으로도 판정이 안 바뀌면 — 조건이 그 입력에 단조이면 하나만 답해서도 바뀌지 않으므로 — 개별 시험을 건너뛴다.
 2. **끝값 시험** — 입력마다 참/거짓, 수치는 가능한 범위의 양 끝(위 끝이 무한이면 가장 큰 기준값 + 1), 날짜는 각 시기.
 3. 여전히 결정적 입력이 없으면 **기준값 앞뒤**(±ε, 정수는 ±1)와 **좁은 정수 범위 전체**(범위 폭 40 이하 — 예: 지상 2층 + 지하 x층 = 정확히 7개층 같은 폭 1짜리 조건).
+
+**질문 순서와 상한**: 물을 질문은 날짜(허가일·신청일) → 대지 단위 → 동 단위(층수·연면적·플래그·용도 합계 등) → 층 단위(층 순서) 로 늘어놓는다 — 날짜·동 단위 답 하나가 층 질문 여럿을 없애는 경우가 많다. 시설마다 `QUESTION_LIMIT` = 5개까지만 `questions` 에 싣고 나머지 수는 `moreQuestions` 로 알린다(답을 받으면 다시 골라 다음 질문이 나온다). 예: 수동 입력 30층+지하3층 33,000㎡(허가 2018.3.2.) 스프링클러 — 층마다 면적이 결정적(한 층에 연면적이 몰리면 '1,000㎡ 이상인 층')이라 32개였는데, 신청일 → 조산원·산후조리원 면적 합계 → 지하3·2·1층 면적 5개와 `moreQuestions: 27`. ('한 층에 연면적이 몰리는' 극단 배분에서만 결정적인 질문을 뒤로 미루는 선별은 하지 않았다 — 이 예에서는 평균 배분(층당 1,000㎡)에서도 층마다 결정적이라 순서가 바뀌지 않는다. 상한이 질문 수를 줄이는 역할을 한다.)
 
 평가 결과는 (기준일, 가정 풀기 여부, 가상 답변) 단위로 시설끼리 공유하고, 질문 선별용 평가는 근거·설명을 만들지 않는 값 전용 평가로 한다. 리뷰의 적대적 사례(미확인 입력 수십 개인 시설 30개 × 30층 동 3개)가 약 0.3초, 30층 × 3개 동 실제형 건물이 50ms 안팎이다(§10). UI 에서 답변마다 다시 평가할 때 메인 스레드를 막지 않도록, 이후 UI 단계에서 Web Worker 로 옮기는 것을 권장한다.
 
@@ -372,7 +374,7 @@ U 인 시설에서 **무엇을 물을지** 고른다(비해당의 안전성과�
 
 v2 필드: `status`, `dateInfo`, `counts`(해당·확인 필요·비해당 수), `dongs[]`(동별 `status`·`groups`·`typeCodes`·`mixedUseCandidate`·`files`·`facilities`·`questions`·`counts`·`pendingV1`), `site`(§6.6, 대지 연결 후보가 아니면 `null`), `questions`(전체 결정적 질문), `notEvaluated`, `warnings`(§6.7), `engine`(버전·정책).
 
-시설 항목(v2): `id`·`verdict`('해당'|'확인 필요'|'비해당')·`value`(T/U/F)·`scope`(`{ type, floors, maybeFloors, parts }`)·`possibleScope`·`extensions`·`questions`·`jointQuestions`·`reasons`·`assumptions`(가정값·가정한 기준일)·`boundary`(시기별 보통·재평가 값)·`exemption`·`retroactive`·`review`·`info`·`files`(파일별 값)·`rows`(행별 값·범위·질문 후보·근거)·`pendingV1`(§5.8)·`siteLink`(§6.6)·`diagnostics`(`{ questionTests, budgetExhausted }` — 질문 선별 시험 횟수)·`dongs`·`dong`(결합 목록에서).
+시설 항목(v2): `id`·`verdict`('해당'|'확인 필요'|'비해당')·`value`(T/U/F)·`scope`(`{ type, floors, maybeFloors, parts }`)·`possibleScope`·`extensions`·`questions`(최대 5개, §5.5)·`moreQuestions`(더 있는 질문 수)·`jointQuestions`·`reasons`·`assumptions`(가정값·가정한 기준일)·`boundary`(시기별 보통·재평가 값)·`exemption`·`retroactive`·`review`·`info`·`files`(파일별 값)·`rows`(행별 값·범위·질문 후보·근거)·`pendingV1`(§5.8)·`siteLink`(§6.6)·`diagnostics`(`{ questionTests, budgetExhausted }` — 질문 선별 시험 횟수)·`dongs`·`dong`(결합 목록에서).
 
 모든 문자열은 이스케이프하지 않은 평문이다(§3).
 

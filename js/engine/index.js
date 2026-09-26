@@ -16,7 +16,7 @@ export { normalizeRegistry, normalizeManual, effectiveFloors, countOf, mergeDong
 export { EARLIEST, resolveDateInfo } from './dates.js';
 export { makeEnv, evalCondition } from './conditions.js';
 export { inputDefsFrom, buildQuestion } from './questions.js';
-export { VERDICT, DECISIVE_TEST_BUDGET, evaluateRow, evaluateDong, classifyFile } from './evaluate.js';
+export { VERDICT, DECISIVE_TEST_BUDGET, QUESTION_LIMIT, evaluateRow, evaluateDong, classifyFile } from './evaluate.js';
 export { ENGINE_VERSION, evaluateBuilding, requiredTypeCodes, facilityNames } from './building.js';
 export {
   ERROR_CODES, WARNING_CODES, makeValidationContext, validateConditions, validateRow, validateFile, validateFileSet, checkItemKeyOverlaps,
