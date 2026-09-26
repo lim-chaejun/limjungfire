@@ -30,7 +30,6 @@ export const KNOWN_ISSUES = [];
 
 const LAW_HISTORY_RE = /^law_history_.+\.json$/;
 const NFSC_FILE = 'nfsc_history.json';
-const CATEGORY_RE = /^[0-3][0-9]_.+\.json$/;
 const LINK_RE = /^https:\/\/www\.law\.go\.kr\/LSW\/(?:lsInfoP|admRulInfoP)\.do\?/;
 
 // ───────────────────────── 파일 적재 ─────────────────────────
@@ -241,12 +240,14 @@ export const CHECKS = [
     },
   },
   {
+    // 이름은 그대로 두었다(KNOWN_ISSUES 가 이름으로 가리킨다). 용도별 파일만이 아니라 exemption_criteria.json 처럼
+    // start_date/end_date 를 가진 모든 파일을 본다 — law-update 절차가 criteria 변경 때 고치는 파일들이다.
     name: 'category-date-range',
-    description: '용도별 파일의 기준 행: 날짜는 YYYYMMDD, 둘 다 있으면 end_date ≥ start_date',
+    description: '기준 행(start_date/end_date 가 있는 모든 파일): 날짜는 YYYYMMDD, 둘 다 있으면 end_date ≥ start_date',
     run(ctx) {
       const out = [];
       for (const [name, f] of ctx.files) {
-        if (!CATEGORY_RE.test(name) || f.error) continue;
+        if (f.error) continue;
         const visit = (x, at) => {
           if (Array.isArray(x)) return x.forEach((v, i) => visit(v, `${at}[${i}]`));
           if (!x || typeof x !== 'object') return;

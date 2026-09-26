@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { CHECKS, filesFromObject, formatReport, runChecks } from '../../validate-data.mjs';
-import { REGISTRY, readJson } from './helpers.mjs';
+import { CHECKS, filesFromObject, formatReport, loadDataDir, runChecks } from '../../validate-data.mjs';
+import { REGISTRY, REPO_DATA, readJson } from './helpers.mjs';
 
 const LAW = (no, ef, prom, num, seq) => ({
   no,
@@ -126,13 +126,23 @@ test('facilities.json 의 nfsc_key 는 연혁에 있어야 한다', () => {
   assert.match(e[0].at, /ghost/);
 });
 
-test('용도별 파일: end_date < start_date 와 잘못된 날짜', () => {
+test('기준 행 날짜: end_date < start_date 와 잘못된 날짜 — 용도별 파일, exemption_criteria.json 등 start/end 가 있는 모든 파일', () => {
   const d = good();
   d['01_residential_complex.json'].fire_facilities[0].regulations.push({ start_date: '20200101', end_date: '20191231' }, { start_date: '2020-01-01', end_date: null });
-  d['ref03_emergency_power.json'] = { rows: [{ start_date: '20200101', end_date: '20000101' }] }; // 용도별 파일이 아니면 검사 안 함
+  // law-update 절차가 criteria 변경 때 고치는 파일 — 예전에는 검사하지 않아 '2026701' 같은 오타가 통과했다
+  d['exemption_criteria.json'] = { exemptions: [{ facility: 'x', criteria: [{ start_date: '2026701', end_date: null }, { start_date: '20260701', end_date: '20260630' }] }] };
+  d['ref03_emergency_power.json'] = { rows: [{ start_date: '20200101', end_date: '20000101' }] };
   const e = errorsOf(run(d, ['category-date-range']), 'category-date-range');
-  assert.equal(e.length, 2);
+  assert.deepEqual(e.map((p) => p.file), ['01_residential_complex.json', '01_residential_complex.json', 'exemption_criteria.json', 'exemption_criteria.json', 'ref03_emergency_power.json']);
   assert.match(e[0].detail, /end_date 20191231 < start_date 20200101/);
+  assert.match(e[2].detail, /start_date 가 올바른 날짜가 아님: 2026701/);
+  assert.equal(e[2].at, '.exemptions[0].criteria[0]');
+});
+
+test('저장소 data/ 는 날짜 범위 검사를 통과한다 (exemption_criteria.json 포함)', () => {
+  const files = loadDataDir(REPO_DATA);
+  assert.ok(files.has('exemption_criteria.json'));
+  assert.deepEqual(errorsOf(runChecks(files, { checks: CHECKS.filter((c) => c.name === 'category-date-range') }), 'category-date-range'), []);
 });
 
 test('레지스트리 형식과 기준 연혁 파일 존재', () => {
