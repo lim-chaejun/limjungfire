@@ -21,7 +21,8 @@
 //
 // 장애 대비 — 어떤 경우든 result.json 은 끝까지 온 만큼 남긴다
 //   · 실행 전체 기한 http.deadlineMs(기본 15분): 넘으면 남은 소스는 요청 없이 DEADLINE_EXCEEDED
-//   · 회로 차단: 연속 3개 소스의 목록 요청이 전송 오류·5xx·429 로 실패하면 나머지는 SKIPPED_OUTAGE
+//   · 회로 차단(목록 endpoint 별): 법령 목록(lsHstListR.do)·고시 체인(admRulHstListR.do) 중 한 endpoint 에서
+//     연속 3개 소스의 목록 요청이 전송 오류·5xx·429 로 실패하면, 그 endpoint 를 쓰는 나머지 소스만 SKIPPED_OUTAGE
 //   · 소스 하나에서 예상 못 한 예외가 나도 INTERNAL_ERROR 로 기록하고 다음 소스로 넘어간다
 //
 // 기준선(baseline)
@@ -81,7 +82,7 @@ const DEFAULT_REGISTRY = path.join(REPO_ROOT, 'data', 'law_watch.json');
 const DEFAULT_DATA_DIR = path.join(REPO_ROOT, 'data');
 
 export const EXIT = Object.freeze({ OK: 0, CHANGES: 10, BROKEN: 20, CONFIG: 30 });
-export const OUTAGE_TRIP = 3; // 연속 N개 소스의 목록 요청이 전송·5xx·429 로 실패하면 law.go.kr 장애로 본다
+export const OUTAGE_TRIP = 3; // 같은 목록 endpoint 에서 연속 N개 소스의 목록 요청이 전송·5xx·429 로 실패하면 그 endpoint 장애로 본다
 // 이름 교차검증을 시도한 소스가 이만큼은 돼야 "절반 이상 불가"를 실행 오류로 올린다 — 작은 --only 실행에서
 // 래퍼 한 번의 일시 오류로 exit 20 이 되지 않도록 (그보다 적으면 소스별 경고만)
 export const CROSSCHECK_MIN_TRIED = 4;
@@ -335,6 +336,9 @@ export function createReplayFetch(dir) {
 
 // ───────────────────────── 소스 하나 점검 ─────────────────────────
 
+// 소스의 연혁 목록 요청 — 법령은 lsHstListR.do, 고시는 admRulHstListR.do (회로 차단도 이 endpoint 단위)
+const listRequest = (src) => (src.kind === 'law' ? lawListRequest(src.lsId) : admChainRequest(src.anchorSeq));
+
 async function checkSource(src, ctx) {
   const { http, baselines, today, crosscheck, enrich } = ctx;
   const out = { changes: [], warnings: [], errors: [] };
@@ -361,10 +365,11 @@ async function checkSource(src, ctx) {
   }
 
   // 1) 연혁 목록
-  const req = src.kind === 'law' ? lawListRequest(src.lsId) : admChainRequest(src.anchorSeq);
+  const req = listRequest(src);
   const got = await get(req);
   if (got.budget) return fail(got.error.code, { url: req.url, detail: got.error.message });
-  // 전송 오류·5xx·429 로 목록을 못 받으면 장애 신호(outage) — 연속되면 checkMode 가 나머지를 건너뛴다
+  // 전송 오류·5xx·429 로 목록을 못 받으면 장애 신호(outage) — 같은 endpoint 에서 연속되면 checkMode 가
+  // 그 endpoint 를 쓰는 나머지 소스를 건너뛴다
   out.outage = !!got.error || got.res.status >= 500 || got.res.status === 429;
   if (got.error) return fail('FETCH_FAILED', { url: req.url, detail: got.error.message });
   const res = got.res;
@@ -566,14 +571,15 @@ async function checkMode(opts, deps) {
   const warnings = [];
   const errors = [];
   let healthy = 0;
-  let outageRun = 0; // 목록 요청이 장애로 실패한 연속 소스 수
+  const outageRun = new Map(); // 목록 endpoint URL → 그 endpoint 에서 목록 요청이 장애로 연속 실패한 소스 수
   const cc = { tried: 0, missed: 0 }; // 이름 교차검증을 시도한 소스 / 그중 하지 못한 소스
   const n = config.sources.length;
   for (const [i, src] of config.sources.entries()) {
+    const endpoint = listRequest(src).url;
     let r;
-    if (outageRun >= OUTAGE_TRIP) {
-      const detail = `연속 ${OUTAGE_TRIP}개 소스의 목록 요청이 실패해 law.go.kr 장애로 보고 요청하지 않음`;
-      r = { changes: [], warnings: [], errors: [{ sourceId: src.id, code: 'SKIPPED_OUTAGE', detail }] };
+    if ((outageRun.get(endpoint) ?? 0) >= OUTAGE_TRIP) {
+      const detail = `${new URL(endpoint).pathname} 목록 요청이 연속 ${OUTAGE_TRIP}개 소스에서 실패해 장애로 보고 요청하지 않음 (다른 목록을 쓰는 소스는 계속 확인)`;
+      r = { changes: [], warnings: [], errors: [{ sourceId: src.id, code: 'SKIPPED_OUTAGE', url: endpoint, detail }] };
     } else {
       try {
         r = await checkSource(src, ctx);
@@ -581,7 +587,7 @@ async function checkMode(opts, deps) {
         // 소스 하나의 예상 못 한 예외로 나머지 결과(result.json)까지 잃지 않는다
         r = { changes: [], warnings: [], errors: [{ sourceId: src.id, code: 'INTERNAL_ERROR', detail: String(e?.stack ?? e).slice(0, 500) }] };
       }
-      outageRun = r.outage ? outageRun + 1 : 0;
+      outageRun.set(endpoint, r.outage ? (outageRun.get(endpoint) ?? 0) + 1 : 0);
     }
     if (r.crosscheck) {
       cc.tried++;
@@ -656,7 +662,7 @@ async function bootstrapMode(opts, deps) {
     sleep: deps.sleep ?? (replay ? noSleep : realSleep), // 실제 요청이면 재시도 백오프를 지킨다
     config: config.registry.http ?? {},
   });
-  const req = src.kind === 'law' ? lawListRequest(src.lsId) : admChainRequest(src.anchorSeq);
+  const req = listRequest(src);
   let res;
   try {
     res = await http.request(req);

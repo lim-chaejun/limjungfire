@@ -457,27 +457,41 @@ test('고장: 503 이 4번 이어지면 재시도(5/15/45초) 후 FETCH_FAILED, 
   assert.deepEqual([result.errors[0].code, result.errors[0].http], ['FETCH_FAILED', 503]);
 });
 
-test('장애: 모든 요청이 503·전송 오류·시간 초과면 3개 소스(12회) 뒤 나머지는 SKIPPED_OUTAGE — exit 20, result.json 기록', async () => {
+test('장애: 모든 요청이 503·전송 오류면 목록 endpoint 마다 3개 소스(각 4회) 뒤 나머지는 SKIPPED_OUTAGE — exit 20, result.json 기록', async () => {
   const MIN = 60000;
   const cases = [
-    ['503', () => async () => new Response('Service Unavailable', { status: 503 }), 5 * MIN],
-    ['전송 오류', () => async () => { throw new TypeError('fetch failed'); }, 5 * MIN],
-    ['30초 매달림', (clock) => async () => { clock.advance(30000); throw new DOMException('The operation was aborted due to timeout', 'TimeoutError'); }, 12 * MIN],
+    ['503', async () => new Response('Service Unavailable', { status: 503 })],
+    ['전송 오류', async () => { throw new TypeError('fetch failed'); }],
   ];
-  for (const [label, make, bound] of cases) {
+  for (const [label, fetchImpl] of cases) {
     const clock = fakeClock();
-    const { code, result } = await runCheck({ fetchImpl: make(clock), sleep: clock.sleep, now: clock.now, random: () => 0.5 });
+    const { code, result } = await runCheck({ fetchImpl, sleep: clock.sleep, now: clock.now, random: () => 0.5 });
     assert.equal(code, 20, label);
-    assert.equal(result.stats.requests, 3 * 4, `${label}: 소스 3개 × 시도 4회만 요청`);
+    assert.equal(result.stats.requests, 2 * 3 * 4, `${label}: endpoint 2개 × 소스 3개 × 시도 4회만 요청`);
     assert.equal(result.stats.healthy, 0);
-    assert.deepEqual(result.errors.slice(0, 3).map((e) => `${e.sourceId}:${e.code}`), ['act:FETCH_FAILED', 'decree:FETCH_FAILED', 'rules:FETCH_FAILED'], label);
-    assert.equal(result.errors.filter((e) => e.code === 'SKIPPED_OUTAGE').length, 36, label);
-    assert.ok(clock.elapsed() < bound, `${label}: ${clock.elapsed() / MIN}분`);
+    const failed = result.errors.filter((e) => e.code === 'FETCH_FAILED').map((e) => e.sourceId);
+    assert.deepEqual(failed.slice(0, 3), ['act', 'decree', 'rules'], label);
+    assert.equal(failed.length, 6, label);
+    assert.equal(result.errors.filter((e) => e.code === 'SKIPPED_OUTAGE').length, 33, label);
+    assert.ok(clock.elapsed() < 8 * MIN, `${label}: ${clock.elapsed() / MIN}분`);
   }
-  // 목록 하나가 살아나면 연속 횟수는 다시 센다 (실패 2 · 성공 · 실패 2 → 차단하지 않음)
+  // 요청마다 30초씩 매달리면 회로 차단보다 실행 기한(15분)이 먼저 — 그래도 제한 안에서 끝난다
+  const clock = fakeClock();
+  const hang = async () => {
+    clock.advance(30000);
+    throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+  };
+  const { code, result } = await runCheck({ fetchImpl: hang, sleep: clock.sleep, now: clock.now, random: () => 0.5 });
+  assert.equal(code, 20);
+  assert.equal(result.stats.healthy, 0);
+  assert.ok(clock.elapsed() <= 15 * MIN + 30000, `${clock.elapsed() / MIN}분`);
+  assert.ok(result.stats.requests < 2 * 3 * 4, String(result.stats.requests));
+  assert.deepEqual([...new Set(result.errors.map((e) => e.code))].sort(), ['DEADLINE_EXCEEDED', 'FETCH_FAILED']);
+
+  // 같은 endpoint 에서 목록 하나가 살아나면 연속 횟수는 다시 센다 (고시 체인: 실패 2 · 성공 · 실패 2 → 차단하지 않음)
   const lists = [];
   const flaky = mutating(replay(), (r) => {
-    if (!/\/(?:lsHstListR|admRulHstListR)\.do$/.test(r.url)) return null;
+    if (!r.url.endsWith('/admRulHstListR.do')) return null;
     if (!lists.includes(r.body)) lists.push(r.body);
     return [0, 1, 3, 4].includes(lists.indexOf(r.body)) ? { status: 503, text: 'busy' } : null;
   });
@@ -485,6 +499,31 @@ test('장애: 모든 요청이 503·전송 오류·시간 초과면 3개 소스(
   assert.equal(f.code, 20);
   assert.deepEqual(f.result.errors.map((e) => e.code), ['FETCH_FAILED', 'FETCH_FAILED', 'FETCH_FAILED', 'FETCH_FAILED']);
   assert.equal(f.result.stats.healthy, 35);
+});
+
+test('회로 차단은 목록 endpoint 별 — 법령 목록만 죽으면 고시는 계속, 고시 체인만 죽으면 법령은 계속', async () => {
+  // 법령 목록을 쓰는 소스를 고시 36개 뒤에 하나 더 둔다 (차단된 endpoint 의 뒤쪽 소스만 건너뛰는지 보려고)
+  const known = readJson(path.join(SNAPSHOT, 'law_history_decree.json')).map((r) => historyRowKey('law', r).key);
+  const registry = writeRegistry((reg) => {
+    reg.sources.push({ id: 'decree-late', kind: 'law', lsId: '009694', name: '소방시설 설치 및 관리에 관한 법률 시행령', baseline: { from: 'inline', asOf: '2026-01-20', known } });
+  });
+  const down = (endpoint) => mutating(replay(), (r) => (r.url.endsWith(endpoint) ? { status: 503, text: 'busy' } : null));
+  const quick = { sleep: async () => {}, random: () => 0.5 };
+
+  const law = await runCheck({ registry, fetchImpl: down('/lsHstListR.do'), ...quick });
+  assert.equal(law.code, 20);
+  assert.deepEqual(law.result.errors.map((e) => `${e.sourceId}:${e.code}`), ['act:FETCH_FAILED', 'decree:FETCH_FAILED', 'rules:FETCH_FAILED', 'decree-late:SKIPPED_OUTAGE']);
+  assert.match(law.result.errors.at(-1).detail, /\/LSW\/lsHstListR\.do 목록 요청이 연속 3개 소스에서 실패/);
+  assert.equal(law.result.stats.healthy, 36, '고시 36개는 계속 확인');
+  assert.equal(law.result.changes.length, 10);
+
+  const adm = await runCheck({ registry, fetchImpl: down('/admRulHstListR.do'), ...quick });
+  assert.equal(adm.code, 20);
+  const codes = adm.result.errors.map((e) => e.code);
+  assert.deepEqual([codes.filter((c) => c === 'FETCH_FAILED').length, codes.filter((c) => c === 'SKIPPED_OUTAGE').length], [3, 33]);
+  assert.ok(adm.result.errors.every((e) => e.sourceId.startsWith('nfpc-')), JSON.stringify(adm.result.errors.map((e) => e.sourceId)));
+  assert.equal(adm.result.stats.healthy, 4, '법령 3개 + 끝의 decree-late 는 계속 확인');
+  assert.deepEqual(adm.result.changes.map((c) => c.sourceId).sort(), ['decree', 'decree', 'decree-late', 'decree-late', 'rules']);
 });
 
 test('장애: 느리지만 응답하는 서버 — 실행 기한(15분)에 멈추고 남은 소스는 DEADLINE_EXCEEDED, 끝난 소스의 개정은 보고', async () => {
