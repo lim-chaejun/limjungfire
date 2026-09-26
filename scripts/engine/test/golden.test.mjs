@@ -17,6 +17,9 @@ function check(result, expect, label, { exact }) {
   if (expect.dateSource) assert.equal(result.dateInfo.source, expect.dateSource, `${label}: 기준일 출처`);
   if (expect.refDate) assert.equal(result.permitDate, expect.refDate, `${label}: 기준일`);
   if (expect.usedApprovalDate !== undefined) assert.equal(result.usedApprovalDate, expect.usedApprovalDate, `${label}: 사용승인일 사용`);
+  if (expect.site !== undefined) {
+    assert.deepEqual(result.site && { members: result.site.members, connected: result.site.connected }, expect.site, `${label}: 대지 연결`);
+  }
   if (expect.notEvaluated) {
     assert.deepEqual(
       result.notEvaluated.map(({ dong, type_code, status }) => ({ dong, type_code, status })),

@@ -67,7 +67,8 @@ test('불변식: 무창층 정책 assume_none 이어도 가정 F 로 비해당�
   assert.deepEqual(qkeys(sp), ['windowless@본동/1F', 'windowless@본동/2F']);
 });
 
-test('모든 비해당은 확정 근거만 갖거나 결정적이지 않은 가정만 갖는다 (골든 전체)', () => {
+// 출력 형식만 본다 — "가정값·미확인 입력에 어떤 값을 답해도 비해당"이라는 안전성 자체는 property.test.mjs 가 확인한다
+test('출력 형식: 비해당에는 질문이 없고 required=false (골든 전체)', () => {
   for (const fx of Object.values(FX)) {
     const r = evaluate(fx.input, { answers: fx.answers || {} });
     for (const d of r.dongs) {
@@ -205,9 +206,11 @@ test('데이터 파일이 없으면 missing, v1 이면 v1 — 호출자가 기�
   assert.deepEqual(v1.facilities, []);
 });
 
-test('필요한 데이터 파일 목록 (동별 용도 + 복합건축물 후보의 30번)', () => {
+test('필요한 데이터 파일 목록 (동별 용도 + 복합건축물 후보의 30번 + 연결 가능 대지면 합친 동의 용도군)', () => {
   const b = normalizeRegistry(FX['site-3dong-parking'].input.registry, { useIndex: INDEX });
   assert.deepEqual(requiredTypeCodes(b), ['01', '02', '18']);
+  // 용도 어휘를 넘기면 대지 전체(합친 동)가 복합건축물 후보라 30번도 필요
+  assert.deepEqual(requiredTypeCodes(b, { useIndex: INDEX }), ['01', '02', '18', '30']);
   const m = normalizeRegistry(FX['mixed-use-candidate'].input.registry, { useIndex: INDEX });
   assert.deepEqual(requiredTypeCodes(m), ['02', '12', '30']);
 });
@@ -294,12 +297,72 @@ test('v1 호환 결과: facilities[].required·regulations·allRegulations·reas
   assert.ok(r.engine.version && r.engine.policy.applicationWindowDays === 180);
 });
 
-test('여러 동 결합: 시설별로 가장 강한 판정과 동별 내역', () => {
-  const r = evaluate(FX['site-3dong-parking'].input);
+test('여러 동 결합: 시설별로 가장 강한 판정 — 근거·범위·질문·가정은 모두 그 한 동에서(서로 어긋나지 않게), 동별 내역', () => {
+  const r = evaluate(FX['site-3dong-parking'].input, { answers: { site_connected: false } });
   const ea = r.facilities.find((f) => f.id === 'emergency_alarm');
   assert.equal(ea.verdict, '해당');
   assert.deepEqual(ea.dongs, { 상가동: '해당' });
   const sp = r.facilities.find((f) => f.id === 'sprinkler');
   assert.deepEqual(sp.dongs, { '101동': '해당', '102동': '해당', 상가동: '비해당' });
   assert.equal(sp.verdict, '해당');
+  assert.equal(sp.dong, '101동');
+  const from = facilityOf(r, '101동', 'sprinkler');
+  for (const k of Object.keys(from)) if (!['regulations', 'allRegulations'].includes(k)) assert.deepEqual(sp[k], from[k], k);
+  // v1 모달용 규정 행은 동들의 합집합
+  for (const row of facilityOf(r, '상가동', 'sprinkler').allRegulations) assert.ok(sp.allRegulations.includes(row));
+  // 판정이 U 인 동이 가장 강하면 그 동의 질문을 그대로 (다른 동의 F 근거와 섞지 않음)
+  const open = evaluate(FX['site-3dong-parking'].input);
+  const ih = open.facilities.find((f) => f.id === 'indoor_hydrant');
+  assert.deepEqual([ih.verdict, ih.dong, ih.questions.map((q) => q.key)], ['확인 필요', '상가동', ['site_connected']]);
+});
+
+test('연결 가능 대지(M7a, CP1 Q11 검수 전): 동별로 비해당이어도 합치면 해당이면 확인 필요(site_connected) — 답하면 합친 판정 또는 동별 판정', () => {
+  const fx = FX['site-3dong-parking'];
+  const open = evaluate(fx.input);
+  assert.deepEqual([open.site.id, open.site.members, open.site.connected], ['대지 전체', ['101동', '102동', '상가동', '지하주차장'], null]);
+  const sp = facilityOf(open, '상가동', 'sprinkler');
+  assert.equal(sp.verdict, '확인 필요');
+  assert.deepEqual(qkeys(sp), ['site_connected']);
+  assert.equal(sp.siteLink.mergedVerdict, '해당');
+  assert.match(sp.reason, /연결 여부 확인 필요/);
+  assert.equal(open.questions[0].key, 'site_connected');
+  // 동별로 이미 해당인 시설은 그대로
+  assert.equal(facilityOf(open, '상가동', 'emergency_alarm').siteLink, undefined);
+  const yes = facilityOf(evaluate(fx.input, { answers: { site_connected: true } }), '상가동', 'sprinkler');
+  assert.deepEqual([yes.verdict, yes.siteLink.merged], ['해당', true]);
+  const no = facilityOf(evaluate(fx.input, { answers: { site_connected: false } }), '상가동', 'sprinkler');
+  assert.deepEqual([no.verdict, no.siteLink], ['비해당', undefined]);
+  // 지하층만 있는 동·주차 전용 동이 없는 건물은 연결 질문 없음
+  assert.equal(evaluate(FX['nc-3f-450'].input).site, null);
+});
+
+test('일부 파일만 v2 인 동(M7b): v2 파일 기준으로 비해당이어도 v1 파일 기준이 빠졌으므로 비해당으로 확정하지 않는다', () => {
+  const files = { ...FIXTURE_SET.dataFiles, 12: { building_type: '업무시설', fire_facilities: [] } };
+  const r = evaluate(FX['mixed-use-candidate'].input, { set: { ...FIXTURE_SET, dataFiles: files } });
+  const d = r.dongs.find((x) => x.id === '본동');
+  assert.equal(d.status, 'partial');
+  assert.deepEqual(r.notEvaluated.map((x) => [x.dong, x.type_code, x.status]), [['본동', '12', 'v1']]);
+  assert.ok(d.facilities.length > 0);
+  for (const f of d.facilities) {
+    assert.notEqual(f.verdict, '비해당', f.id);
+    assert.deepEqual(f.pendingV1, ['12']);
+  }
+  const downgraded = d.facilities.filter((f) => /12번 기준 파일이 v1/.test(f.reason));
+  assert.ok(downgraded.length > 0);
+  assert.ok(downgraded.every((f) => f.verdict === '확인 필요' && f.required));
+});
+
+test('판정 행(trigger)이 없는 시설(안내·수정 행만)은 비해당이 아니라 원문 확인 질문 — 답하면 확정', () => {
+  for (const regulation of [
+    { id: 'i1', start_date: null, end_date: null, criteria: '피난구유도등 설치(NFPC 303)', kind: 'info' },
+    { id: 'm1', start_date: null, end_date: null, criteria: '부속 보일러실 포함', kind: 'modifier', conditions: { const: true }, scope: 'all_floors' },
+  ]) {
+    const files = { '02': v2('02', [{ facility_id: 'guide_light', facility_name: '유도등', regulations: [regulation] }]) };
+    const f = facilityOf(run(small(), { dataFiles: files }), '본동', 'guide_light');
+    assert.equal(f.verdict, '확인 필요', regulation.kind);
+    assert.deepEqual(qkeys(f), ['review[facility:guide_light]@본동']);
+    const key = 'review[facility:guide_light]@본동';
+    assert.equal(facilityOf(run(small(), { dataFiles: files, answers: { [key]: true } }), '본동', 'guide_light').verdict, '해당');
+    assert.equal(facilityOf(run(small(), { dataFiles: files, answers: { [key]: false } }), '본동', 'guide_light').verdict, '비해당');
+  }
 });

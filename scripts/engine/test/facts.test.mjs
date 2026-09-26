@@ -1,7 +1,10 @@
 // 건물 사실 정규화 — 동별 분리, 옥탑·지하층 정책, 용도 혼재 층, 수동 입력, 허가일 선택
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ASSUMED, CONFIRMED, UNKNOWN, effectiveFloors, makeEnv, normalizeManual, normalizeRegistry, resolvePolicy } from '../../../js/engine/index.js';
+import {
+  ASSUMED, CONFIRMED, UNKNOWN, classifyUses, countOf, effectiveFloors, makeEnv, mergeDongs, normalizeManual, normalizeRegistry, resolvePolicy,
+  siteLinkCandidate,
+} from '../../../js/engine/index.js';
 import { metric } from '../../../js/engine/conditions.js';
 import { INDEX } from './helpers.mjs';
 
@@ -77,22 +80,105 @@ test('같은 층의 여러 행은 한 층의 부분들 — 층 면적은 합, �
 test('층별개요가 없으면 층수만큼 층을 보충 — 면적은 [0, 연면적] 미상, 층 목록은 완전', () => {
   const d = reg({ title: [{ mainPurpsCdNm: '제2종근린생활시설', totArea: 450, grndFlrCnt: 3, ugrndFlrCnt: 1 }] }).dongs[0];
   const { floors, complete } = effectiveFloors(d, 3, 1);
-  assert.equal(complete, true);
+  assert.deepEqual(complete, { ground: true, basement: true, rooftop: true });
   assert.deepEqual(floors.map((f) => f.key), ['B1', '1F', '2F', '3F']);
   assert.ok(floors.every((f) => f.synthesized && f.area.lo === 0 && f.area.hi === 450));
   assert.equal(floors[1].area.open[0].key, 'floor_area@본동/1F');
-  assert.equal(effectiveFloors(d, null, 1).complete, false);
+  // 구분별 완전성: 지상층수를 모르면 지상만 불완전(지하층 조건은 그대로 결정된다)
+  assert.deepEqual(effectiveFloors(d, null, 1).complete, { ground: false, basement: true, rooftop: true });
 });
 
-test('층수 출처 정책: 표제부 vs 층별개요 (불일치 표시)', () => {
+test('층수가 구간이면 층별개요가 상한까지 모든 층을 덮을 때만 그 구분이 완전', () => {
+  const items = { title: [{ mainPurpsCdNm: '업무시설', totArea: 900, grndFlrCnt: 2, ugrndFlrCnt: 0 }], floors: [1, 2, 3].map((n) => floor('', '20', n, '업무시설', '사무소', 300)) };
+  const d = reg(items).dongs[0];
+  assert.deepEqual([d.metrics.ground_floors.lo, d.metrics.ground_floors.hi], [2, 3]);
+  assert.equal(effectiveFloors(d, { lo: 2, hi: 3 }, 0).complete.ground, true);
+  assert.equal(effectiveFloors(d, { lo: 2, hi: 4 }, 0).complete.ground, false);
+});
+
+test('층수 불일치(M1): 층별개요가 표제부보다 높은 층을 보이면 구간(모름)+경고, 정책으로 한쪽 선택', () => {
+  const items = {
+    title: [{ mainPurpsCdNm: '업무시설', totArea: 1800, grndFlrCnt: 5, ugrndFlrCnt: 2 }],
+    floors: [...[1, 2, 3, 4, 5, 6].map((n) => floor('', '20', n, '업무시설', '사무소', 300)), floor('', '10', 3, '업무시설', '사무소', 100)],
+  };
+  const b = reg(items);
+  const g = b.dongs[0].metrics.ground_floors;
+  assert.deepEqual([g.lo, g.hi], [5, 6]);
+  assert.equal(g.open[0].key, 'ground_floors@본동');
+  assert.deepEqual(g.open[0].range, [5, 6]);
+  const bf = b.dongs[0].metrics.basement_floors;
+  assert.deepEqual([bf.lo, bf.hi], [2, 3]);
+  assert.deepEqual(b.warnings.map((w) => w.code).sort(), ['BASEMENT_COUNT_MISMATCH', 'FLOOR_COUNT_MISMATCH']);
+  assert.equal(reg(items, { floorCountConflict: 'title' }).dongs[0].metrics.ground_floors.hi, 5);
+  assert.equal(reg(items, { floorCountConflict: 'floor_items' }).dongs[0].metrics.ground_floors.lo, 6);
+});
+
+test('층별개요가 표제부보다 적은 층만 보이면 충돌이 아니라 덜 적힌 목록 — 표제부 층수, 빠진 층은 보충', () => {
   const items = {
     title: [{ mainPurpsCdNm: '업무시설', totArea: 1000, grndFlrCnt: 5, ugrndFlrCnt: 0 }],
     floors: [floor('', '20', 1, '업무시설', '사무소', 500), floor('', '20', 2, '업무시설', '사무소', 500)],
   };
-  const byTitle = reg(items).dongs[0];
-  assert.equal(byTitle.metrics.ground_floors.lo, 5);
-  assert.ok(byTitle.notes.includes('FLOOR_COUNT_MISMATCH'));
-  assert.equal(reg(items, { groundFloorsFrom: 'floor_items' }).dongs[0].metrics.ground_floors.lo, 2);
+  const b = reg(items);
+  assert.equal(b.dongs[0].metrics.ground_floors.lo, 5);
+  assert.equal(b.dongs[0].metrics.ground_floors.hi, 5);
+  assert.ok(b.warnings.some((w) => w.code === 'FLOOR_ITEMS_PARTIAL'));
+  assert.deepEqual(effectiveFloors(b.dongs[0], 5, 0).floors.map((f) => f.key), ['1F', '2F', '3F', '4F', '5F']);
+});
+
+test('연면적이 표제부에 없으면(M2): 층별개요가 모든 층을 덮을 때만 합계, 아니면 [알려진 합, ∞)', () => {
+  const partial = reg({ title: [{ mainPurpsCdNm: '제1종근린생활시설', grndFlrCnt: 9, ugrndFlrCnt: 0 }], floors: [floor('', '20', 1, '', '소매점', 500), floor('', '20', 2, '', '소매점', 500)] }).dongs[0];
+  const t = partial.metrics.total_area;
+  assert.deepEqual([t.lo, t.hi], [1000, Infinity]);
+  assert.equal(t.open[0].key, 'total_area@본동');
+  const full = reg({ title: [{ mainPurpsCdNm: '제1종근린생활시설', grndFlrCnt: 2, ugrndFlrCnt: 0 }], floors: [floor('', '20', 1, '', '소매점', 500), floor('', '20', 2, '', '소매점', 400)] }).dongs[0];
+  assert.deepEqual([full.metrics.total_area.lo, full.metrics.total_area.hi, full.metrics.total_area.open.length], [900, 900, 0]);
+  // 옥탑 면적은 바닥면적 산입 여부가 갈리므로 구간
+  const roof = reg({
+    title: [{ mainPurpsCdNm: '제1종근린생활시설', grndFlrCnt: 1, ugrndFlrCnt: 0 }],
+    floors: [floor('', '20', 1, '', '소매점', 500), { flrGbCd: '30', flrNo: 1, mainPurpsCdNm: '제1종근린생활시설', etcPurps: '계단실', area: 20 }],
+  }).dongs[0];
+  assert.deepEqual([roof.metrics.total_area.lo, roof.metrics.total_area.hi], [500, 520]);
+});
+
+test('여러 행으로 나뉜 층(M6): 면적이 빈 부분은 부분 질문 키 part_area[n]', () => {
+  const d = reg({
+    title: [{ mainPurpsCdNm: '제2종근린생활시설', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: 0 }],
+    floors: [floor('', '20', 1, '제2종근린생활시설', '소매점', 300), floor('', '20', 1, '제2종근린생활시설', '노래연습장', '')],
+  }).dongs[0];
+  const [p1, p2] = d.floors[0].parts;
+  assert.equal(p1.area.lo, 300);
+  assert.equal(p2.area.open[0].key, 'part_area[2]@본동/1F');
+  assert.equal(p2.area.open[0].info.partLabel, '노래연습장');
+});
+
+test('별칭은 동의 주용도 군에 따라 달라진다(M5): 자동차관련시설 동의 주차장 = 주차용 건축물', () => {
+  assert.deepEqual(classifyUses('자동차관련시설', '주차장', INDEX).terms, [{ use: 'parking_structure' }]);
+  assert.deepEqual(classifyUses('제1종근린생활시설', '주차장', INDEX).terms, [{ use: 'indoor_parking' }]);
+  // 층별개요 행은 동(표제부)의 주용도 군을 기준으로: 근생 동 지하의 '자동차관련시설/주차장' 은 내부 주차장(부수)
+  const d = reg({
+    title: [{ mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 400, grndFlrCnt: 1, ugrndFlrCnt: 1 }],
+    floors: [floor('', '10', 1, '자동차관련시설', '주차장', 200), floor('', '20', 1, '제1종근린생활시설', '소매점', 200)],
+  }).dongs[0];
+  assert.deepEqual(d.floors[0].parts[0].terms, [{ use: 'indoor_parking' }]);
+  assert.deepEqual(d.typeCodes, ['02']);
+});
+
+test('연결 가능 대지(M7a): 지하층만 있는 동·주차 전용 동이 있으면 후보, 합친 동은 면적 합·층수 최댓값', () => {
+  const b = reg({
+    title: [
+      { dongNm: 'A동', mainPurpsCdNm: '공동주택', etcPurps: '아파트', totArea: 3000, grndFlrCnt: 10, ugrndFlrCnt: 0 },
+      { dongNm: 'B동', mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 200, grndFlrCnt: 1, ugrndFlrCnt: 0 },
+      { dongNm: '주차장', mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', totArea: 4000, grndFlrCnt: 0, ugrndFlrCnt: 2 },
+    ],
+  });
+  assert.equal(siteLinkCandidate(b), true);
+  assert.equal(siteLinkCandidate(reg({ title: [b.dongs[0], b.dongs[1]].map(() => ({ mainPurpsCdNm: '업무시설', totArea: 100, grndFlrCnt: 1, ugrndFlrCnt: 0 })) })), false);
+  const site = mergeDongs(b.dongs, { useIndex: INDEX });
+  assert.equal(site.metrics.total_area.lo, 7200);
+  assert.equal(site.metrics.ground_floors.lo, 10);
+  assert.equal(site.metrics.basement_floors.lo, 2);
+  assert.deepEqual(site.members, ['A동', 'B동', '주차장']);
+  assert.ok(site.typeCodes.includes('30'));
 });
 
 test('지하층만 있는 동(지하주차장): 지상 0층은 확정 0, 그 밖의 0층은 빈 값', () => {
@@ -101,6 +187,18 @@ test('지하층만 있는 동(지하주차장): 지상 0층은 확정 0, 그 밖
   assert.deepEqual(statusOf(d.metrics.ground_floors), [CONFIRMED, CONFIRMED]);
   const blank = reg({ title: [{ mainPurpsCdNm: '업무시설', totArea: 100, grndFlrCnt: 0, ugrndFlrCnt: 0 }] }).dongs[0];
   assert.equal(blank.metrics.ground_floors.open[0].status, UNKNOWN);
+});
+
+test('표제부 층수가 빈칸이면 층별개요의 최고층은 하한일 뿐 — [최고층, ∞) 모름, 그 구분의 층 목록은 불완전', () => {
+  const d = reg({
+    title: [{ mainPurpsCdNm: '업무시설', totArea: 900, grndFlrCnt: '', ugrndFlrCnt: '' }],
+    floors: [floor('', '10', 1, '업무시설', '사무소', 300), floor('', '20', 1, '업무시설', '사무소', 300)],
+  }).dongs[0];
+  for (const id of ['ground_floors', 'basement_floors']) {
+    const m = d.metrics[id];
+    assert.deepEqual([m.lo, m.hi, m.open[0].key, m.hiDeps.length], [1, Infinity, `${id}@본동`, 0], id);
+  }
+  assert.deepEqual(effectiveFloors(d, countOf(d.metrics.ground_floors), countOf(d.metrics.basement_floors)).complete, { ground: false, basement: false, rooftop: true });
 });
 
 test('부수 용도(내부 주차장)는 복합건축물 후보 판단에서 제외 — 정책으로 끌 수 있음', () => {
@@ -143,10 +241,15 @@ test('승강기·세대수: 대장 값으로 확정, 주거용 0세대는 빈 �
   assert.equal(shop.metrics.households.lo, 0);
 });
 
-test('허가일: 인허가 신축 우선 → 후보가 여럿이면 가장 이른 날(가정) → 총괄표제부 → 표제부, 사용승인일', () => {
+test('허가일(H4): 인허가가 여럿이면 신축·증축 등 모두 후보로 두고 가장 이른 신축을 기준(가정)+경고 → 총괄표제부 → 표제부', () => {
   const one = reg({ title: [{ mainPurpsCdNm: '업무시설', useAprDay: '20200101' }], permit: [{ archPmsDay: '20190505', archGbCdNm: '증축' }, { archPmsDay: '20150101', archGbCdNm: '신축' }] });
-  assert.deepEqual(one.dates.permit, { value: '20150101', source: 'permit_api', status: CONFIRMED, candidates: ['20150101'] });
+  assert.equal(one.dates.permit.value, '20150101');
+  assert.equal(one.dates.permit.status, ASSUMED);
+  assert.deepEqual(one.dates.permit.candidates, ['20150101', '20190505']);
+  assert.match(one.warnings.find((w) => w.code === 'MULTIPLE_PERMITS').message, /2015\.01\.01 신축, 2019\.05\.05 증축/);
   assert.equal(one.dates.approval.value, '20200101');
+  const single = reg({ title: [{ mainPurpsCdNm: '업무시설' }], permit: [{ archPmsDay: '20150101', archGbCdNm: '신축' }] });
+  assert.equal(single.dates.permit.status, CONFIRMED);
   const many = reg({ title: [{ mainPurpsCdNm: '업무시설' }], permit: [{ archPmsDay: '20190505' }, { archPmsDay: '20150101' }] });
   assert.equal(many.dates.permit.status, ASSUMED);
   assert.deepEqual(many.dates.permit.candidates, ['20150101', '20190505']);

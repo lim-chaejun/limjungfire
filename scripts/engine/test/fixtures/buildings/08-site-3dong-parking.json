@@ -1,6 +1,6 @@
 {
   "id": "site-3dong-parking",
-  "title": "아파트 2개 동 + 상가동 + 지하주차장 동 — 대지 합산이 아니라 동별 판정, 지하주차장 동(18번 v1 파일)은 v1 대체",
+  "title": "아파트 2개 동 + 상가동 + 지하주차장 동 — 동별 판정, 지하주차장 동(18번 v1 파일)은 v1 대체, 동 연결 미확인이면 합치면 달라지는 비해당은 확인 필요(site_connected)",
   "input": {
     "registry": {
       "title": [
@@ -21,6 +21,7 @@
   "expect": {
     "status": "partial",
     "notEvaluated": [{ "dong": "지하주차장", "type_code": "18", "status": "v1" }],
+    "site": { "members": ["101동", "102동", "상가동", "지하주차장"], "connected": null },
     "dongs": {
       "101동": {
         "status": "v2",
@@ -31,9 +32,10 @@
           "emergency_broadcast": "해당",
           "evacuation_equipment": "해당",
           "emergency_outlet": "해당",
-          "wireless_comm": "비해당",
+          "wireless_comm": "확인 필요",
           "standpipe": "해당"
         },
+        "questions": { "wireless_comm": ["site_connected"] },
         "scope": { "emergency_outlet": ["11F", "12F", "13F", "14F", "15F"] }
       },
       "102동": {
@@ -45,7 +47,7 @@
           "emergency_broadcast": "해당",
           "evacuation_equipment": "해당",
           "emergency_outlet": "해당",
-          "wireless_comm": "비해당",
+          "wireless_comm": "확인 필요",
           "standpipe": "해당"
         }
       },
@@ -53,21 +55,73 @@
         "status": "v2",
         "verdicts": {
           "fire_extinguisher": "해당",
-          "indoor_hydrant": "비해당",
-          "sprinkler": "비해당",
-          "simple_sprinkler": "비해당",
-          "standalone_detector": "비해당",
+          "indoor_hydrant": "확인 필요",
+          "sprinkler": "확인 필요",
+          "simple_sprinkler": "확인 필요",
+          "standalone_detector": "확인 필요",
           "emergency_alarm": "해당",
-          "auto_fire_detection": "비해당",
-          "visual_alarm": "비해당",
-          "emergency_broadcast": "비해당",
-          "evacuation_equipment": "비해당",
+          "auto_fire_detection": "확인 필요",
+          "visual_alarm": "확인 필요",
+          "emergency_broadcast": "확인 필요",
+          "evacuation_equipment": "확인 필요",
           "rescue_equipment": "확인 필요",
           "guide_light": "해당",
-          "standpipe": "비해당"
-        }
+          "standpipe": "확인 필요"
+        },
+        "questions": { "sprinkler": ["site_connected"], "standalone_detector": ["site_connected"] }
       },
       "지하주차장": { "status": "v1", "verdicts": {} }
     }
-  }
+  },
+  "variants": [
+    {
+      "name": "동이 연결되지 않음(site_connected=false) → 동별 판정 그대로",
+      "answers": { "site_connected": false },
+      "expect": {
+        "site": { "members": ["101동", "102동", "상가동", "지하주차장"], "connected": false },
+        "dongs": {
+          "101동": { "verdicts": { "wireless_comm": "비해당" } },
+          "102동": { "verdicts": { "wireless_comm": "비해당" } },
+          "상가동": {
+            "verdicts": {
+              "indoor_hydrant": "비해당",
+              "sprinkler": "비해당",
+              "simple_sprinkler": "비해당",
+              "standalone_detector": "비해당",
+              "emergency_alarm": "해당",
+              "auto_fire_detection": "비해당",
+              "visual_alarm": "비해당",
+              "emergency_broadcast": "비해당",
+              "evacuation_equipment": "비해당",
+              "rescue_equipment": "확인 필요",
+              "standpipe": "비해당"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "동이 연결됨(site_connected=true) → 대지 전체를 합친 판정",
+      "answers": { "site_connected": true },
+      "expect": {
+        "site": { "members": ["101동", "102동", "상가동", "지하주차장"], "connected": true },
+        "dongs": {
+          "101동": { "verdicts": { "wireless_comm": "해당" } },
+          "상가동": {
+            "verdicts": {
+              "indoor_hydrant": "해당",
+              "sprinkler": "해당",
+              "simple_sprinkler": "해당",
+              "standalone_detector": "확인 필요",
+              "auto_fire_detection": "해당",
+              "visual_alarm": "해당",
+              "emergency_broadcast": "해당",
+              "evacuation_equipment": "해당",
+              "standpipe": "해당"
+            }
+          }
+        }
+      }
+    }
+  ]
 }

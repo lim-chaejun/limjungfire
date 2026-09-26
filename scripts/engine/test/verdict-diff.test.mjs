@@ -5,8 +5,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { diffResults, formatDiff, main, parseArgs } from '../verdict-diff.mjs';
-import { FIXTURE_DATA, FIXTURE_SET, ROOT, TODAY, evaluate, loadBuildingFixtures } from './helpers.mjs';
+import { diffResults, formatDiff, kstToday, loadDataSet, main, parseArgs } from '../verdict-diff.mjs';
+import { FIXTURE_DATA, FIXTURE_SET, ROOT, TODAY, evaluate, loadBuildingFixtures, readJson } from './helpers.mjs';
 
 const SCRIPT = path.join(ROOT, 'scripts', 'engine', 'verdict-diff.mjs');
 const FX = Object.fromEntries(loadBuildingFixtures().map((f) => [f.id, f]));
@@ -35,8 +35,37 @@ test('diffResults: 같은 데이터면 차이 없음, 기준을 바꾸면 판정
   const r2 = evaluate(FX['nc-3f-450'].input, { set: { ...FIXTURE_SET, dataFiles: files } });
   const diffs = diffResults(r, r2);
   assert.equal(diffs.length, 1);
-  assert.deepEqual(diffs[0].before, { verdict: '해당', scope: '모든 층', questions: '-' });
-  assert.deepEqual(diffs[0].after, { verdict: '비해당', scope: '-', questions: '-' });
+  const rest = { exemption: '-', retroactive: '-', extensions: '-' };
+  assert.deepEqual(diffs[0].before, { verdict: '해당', scope: '모든 층', questions: '-', ...rest });
+  assert.deepEqual(diffs[0].after, { verdict: '비해당', scope: '-', questions: '-', ...rest });
+});
+
+test('diffResults: 판정이 같아도 면제 가능 여부가 바뀌면 차이 (면제·소급·범위 확장도 비교)', () => {
+  const fx = FX['nc-windowless-decisive'];
+  const r = evaluate(fx.input, { answers: fx.answers });
+  const r2 = evaluate(fx.input, { answers: fx.answers, set: { ...FIXTURE_SET, exemptions: undefined } });
+  const diffs = diffResults(r, r2);
+  assert.deepEqual(diffs.map((d) => [d.facility, d.before.verdict, d.after.verdict, d.before.exemption, d.after.exemption]), [
+    ['simple_sprinkler', '해당', '해당', '면제 가능(1)', '-'],
+  ]);
+  assert.match(formatDiff({ a: 'A', b: 'B', today: TODAY, buildings: 1, diffs: diffs.map((d) => ({ building: 'x', ...d })) }), /간이스프링클러설비: 해당 → 해당 | 면제 면제 가능(1) → -/);
+});
+
+test('데이터 디렉터리에 면제기준이 없으면 저장소 data/exemption_criteria.json 을 쓴다', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'verdict-diff-ex-'));
+  try {
+    fs.copyFileSync(path.join(FIXTURE_DATA, '02_neighborhood_facilities.json'), path.join(dir, '02_neighborhood_facilities.json'));
+    assert.deepEqual(loadDataSet(dir).exemptions, readJson(path.join(ROOT, 'data', 'exemption_criteria.json')));
+    assert.deepEqual(loadDataSet(FIXTURE_DATA).exemptions, FIXTURE_SET.exemptions);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('기본 오늘 날짜는 한국 시간(KST) — UTC 15시부터 다음 날', () => {
+  assert.equal(kstToday(new Date('2026-09-26T14:59:59Z')), '20260926');
+  assert.equal(kstToday(new Date('2026-09-26T15:00:00Z')), '20260927');
+  assert.equal(kstToday(new Date('2026-12-31T16:00:00Z')), '20270101');
 });
 
 test('diffResults: 동 상태가 바뀌면(v1 → v2 전환) 동 단위 차이', () => {

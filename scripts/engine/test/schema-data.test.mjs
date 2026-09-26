@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEFAULT_POLICY, ERROR_CODES, POLICY_OPTIONS, classifyUses, resolvePolicy } from '../../../js/engine/index.js';
+import { DEFAULT_POLICY, ERROR_CODES, POLICY_OPTIONS, WARNING_CODES, classifyUses, resolvePolicy } from '../../../js/engine/index.js';
 import { TYPE_CODE_RE } from '../../../js/engine/schema.js';
 import { inputDefsFrom } from '../../../js/engine/questions.js';
 import { INDEX, INPUTS, ROOT, VOCABULARY, readJson } from './helpers.mjs';
@@ -74,7 +74,7 @@ test('기타용도 분류: 세부 용도·혼재·주용도 군 우선·부분 �
 
 const VALID_TYPES = ['number', 'integer', 'boolean', 'date', 'uses'];
 const VALID_SOURCES = ['registry', 'user', 'derived'];
-const PLACEHOLDERS = ['dong', 'floor', 'where', 'area', 'uses', 'floors', 'facility', 'criteria', 'boundary', 'groups'];
+const PLACEHOLDERS = ['dong', 'floor', 'part', 'where', 'area', 'uses', 'floors', 'facility', 'criteria', 'boundary', 'groups'];
 
 test('inputs.json: id 유일, 필수 필드, 유형·출처·범위 값, 질문 틀의 자리표시자', () => {
   const ids = INPUTS.inputs.map((d) => d.id);
@@ -109,8 +109,8 @@ test('정책: 기본값 동결, 모르는 키·값은 예외, 옵션마다 문�
   for (const key of Object.keys(POLICY_OPTIONS)) assert.ok(DOC.includes(`\`${key}\``), `docs/engine-v2.md 에 정책 ${key} 설명 없음`);
 });
 
-test('문서: 오류 코드 전부와 CP1 법령 검수 질문 절이 있다', () => {
-  for (const code of Object.keys(ERROR_CODES)) assert.ok(DOC.includes(code), `docs/engine-v2.md 에 ${code} 없음`);
+test('문서: 오류·경고 코드 전부와 CP1 법령 검수 질문 절이 있다', () => {
+  for (const code of [...Object.keys(ERROR_CODES), ...Object.keys(WARNING_CODES)]) assert.ok(DOC.includes(code), `docs/engine-v2.md 에 ${code} 없음`);
   assert.match(DOC, /CP1 법령 검수 질문/);
 });
 
@@ -120,7 +120,13 @@ test('엔진 모듈은 순수 ES 모듈: 상대 경로 import 만, Node 내장·
     const src = fs.readFileSync(path.join(ENGINE_DIR, name), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
     for (const m of src.matchAll(/(?:import|export)[^'"]*from\s+['"]([^'"]+)['"]/g)) assert.ok(m[1].startsWith('./'), `${name}: ${m[1]}`);
     assert.ok(!/\bimport\s*\(/.test(src), `${name}: 동적 import`);
-    for (const bad of [/\bfetch\s*\(/, /\bdocument\./, /\bwindow\./, /\brequire\s*\(/, /\bprocess\./, /['"]node:/, /localStorage/]) {
+    // 전역 이름만 본다: 속성 접근(di.window.question 등)은 허용
+    const globalRef = (name, rest) => new RegExp(`(^|[^.\\w$])${name}${rest}`, 'm');
+    const bads = [
+      globalRef('fetch', '\\s*\\('), globalRef('document', '\\.'), globalRef('window', '\\.'), globalRef('require', '\\s*\\('),
+      globalRef('process', '\\.'), /['"]node:/, /localStorage/,
+    ];
+    for (const bad of bads) {
       assert.ok(!bad.test(src), `${name}: ${bad}`);
     }
   }

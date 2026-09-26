@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  ERROR_CODES, checkItemKeyOverlaps, compareV1Fields, findFacilityCycles, lintRow, makeValidationContext, validateConditions, validateFile, validateRow,
+  ERROR_CODES, WARNING_CODES, checkItemKeyOverlaps, compareV1Fields, findFacilityCycles, lintRow, makeValidationContext, validateConditions, validateFile,
+  validateFileSet, validateRow,
 } from '../../../js/engine/index.js';
 import { FACILITIES, FIXTURE_DATA, INPUTS, ROOT, VOCABULARY, readJson } from './helpers.mjs';
 
@@ -12,8 +13,8 @@ const ctx = makeValidationContext({ inputs: INPUTS, vocabulary: VOCABULARY, faci
 const codes = (errs) => errs.map((e) => e.code);
 const condCodes = (node) => codes(validateConditions(node, ctx));
 
-test('모든 오류 코드에는 한국어 설명이 있다', () => {
-  for (const [code, msg] of Object.entries(ERROR_CODES)) assert.ok(typeof msg === 'string' && msg.length > 5, code);
+test('모든 오류·경고 코드에는 한국어 설명이 있다', () => {
+  for (const [code, msg] of Object.entries({ ...ERROR_CODES, ...WARNING_CODES })) assert.ok(typeof msg === 'string' && msg.length > 5, code);
 });
 
 test('유효한 조건 트리는 오류 없음', () => {
@@ -248,4 +249,72 @@ test('원문 대조 경고: 이상/초과/미만/이하 ↔ 연산자, 빠진 �
   assert.deepEqual(w({ criteria: '바닥면적 1,000㎡ 이상인 층이 있는 경우 해당 층', conditions: { floor_exists: { area: { gte: 1000 } } }, scope: 'all_floors' }), ['W_SCOPE_WORDING']);
   assert.deepEqual(w({ criteria: '30층 이상은 16층 이상의 층', conditions: { m: 'ground_floors', gte: 30 }, scope: { type: 'floors', floors: [{ kind: 'ground', level: { gte: 16 } }] } }), []);
   assert.deepEqual(w({ criteria: '구조화 전', needs_review: { reason: '검토' } }), ['W_NEEDS_REVIEW']);
+});
+
+test('경고: 판정 행 없는 시설(W_NO_TRIGGER) · kind 없는 level(W_LEVEL_WITHOUT_KIND) · 보조 용도 use(W_AUXILIARY_USE)', () => {
+  const file = FILE();
+  file.fire_facilities.push({
+    facility_id: 'guide_light',
+    facility_name: '유도등',
+    regulations: [{ id: 'i1', start_date: null, end_date: null, criteria: '피난구유도등 설치', kind: 'info' }],
+  });
+  const r = validateFile(file, ctx, { fileName: '02_neighborhood_facilities.json' });
+  assert.deepEqual(r.errors, []);
+  const noTrigger = r.warnings.filter((w) => w.code === 'W_NO_TRIGGER');
+  assert.deepEqual(noTrigger.map((w) => [w.path, w.message.endsWith('guide_light')]), [['fire_facilities[2]', true]]);
+  const lw =(conditions, criteria) => codes(lintRow({ ...ROW, criteria, conditions, scope: 'all_floors' }, 'row', ctx));
+  assert.deepEqual(lw({ floor_exists: { floors: [{ level: { gte: 4 } }] } }, '4층 이상인 층이 있는 경우'), ['W_LEVEL_WITHOUT_KIND']);
+  assert.deepEqual(lw({ floor_exists: { floors: [{ kind: 'ground', level: { gte: 4 } }] } }, '4층 이상인 층이 있는 경우'), []);
+  assert.deepEqual(lw({ sum_area: { floors: [{ level: { gte: 4 } }] }, gte: 100 }, '4층 이상 바닥면적 합계 100㎡ 이상'), ['W_LEVEL_WITHOUT_KIND']);
+  assert.deepEqual(lw({ use: ['electrical_room'] }, '전기실이 있는 경우'), ['W_AUXILIARY_USE']);
+  assert.deepEqual(lw({ use: ['singing_room', '02'] }, '노래연습장이 있는 경우'), []);
+  // 문맥(ctx) 없이 부르면 보조 용도 검사는 건너뜀
+  assert.deepEqual(codes(lintRow({ ...ROW, criteria: '전기실', conditions: { use: ['electrical_room'] } })), []);
+});
+
+const CYCLE_ROW = { ...ROW, criteria: '다른 설비를 설치해야 하는 경우', inputs_required: [] };
+const vfile = (code, facilities) => ({ schema_version: 2, type_code: code, review: { status: 'draft', by: null, date: null }, fire_facilities: facilities });
+
+test('파일 묶음 검증: 파일마다 정상이어도 합쳐 평가하면 생기는 순환은 W_CROSS_FILE_CYCLE (복합건축물 동)', () => {
+  const f02 = vfile('02', [
+    { facility_id: 'visual_alarm', facility_name: '시각경보기', regulations: [{ ...CYCLE_ROW, id: 'a', conditions: { facility: 'auto_fire_detection' } }] },
+    { facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [{ ...ROW, id: 'b' }] },
+  ]);
+  const f30 = vfile('30', [
+    { facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [{ ...CYCLE_ROW, id: 'c', conditions: { facility: 'visual_alarm' } }] },
+  ]);
+  assert.deepEqual(validateFile(f02, ctx, { fileName: '02_x.json' }).errors, []);
+  assert.deepEqual(validateFile(f30, ctx, { fileName: '30_x.json' }).errors, []);
+  const set = validateFileSet({ '02_x.json': f02, '30_x.json': f30 }, ctx);
+  assert.deepEqual(set.errors, []);
+  assert.deepEqual(codes(set.warnings), ['W_CROSS_FILE_CYCLE']);
+  assert.match(set.warnings[0].message, /visual_alarm → auto_fire_detection → visual_alarm|auto_fire_detection → visual_alarm → auto_fire_detection/);
+  assert.deepEqual(Object.keys(set.byFile), ['02_x.json', '30_x.json']);
+  // 한 파일 안의 순환은 그 파일의 오류(FACILITY_CYCLE)로만 — 교차 경고로 중복하지 않는다
+  const inner = vfile('02', [
+    { facility_id: 'visual_alarm', facility_name: '시각경보기', regulations: [{ ...CYCLE_ROW, id: 'a', conditions: { facility: 'auto_fire_detection' } }] },
+    { facility_id: 'auto_fire_detection', facility_name: '자동화재탐지설비', regulations: [{ ...CYCLE_ROW, id: 'b', conditions: { facility: 'visual_alarm' } }] },
+  ]);
+  const one = validateFileSet([{ name: '02_x.json', json: inner }], ctx);
+  assert.deepEqual(codes(one.errors), ['FACILITY_CYCLE']);
+  assert.equal(one.errors[0].file, '02_x.json');
+  assert.deepEqual(codes(one.warnings), []);
+});
+
+test('v1 필드 불변(변환 PR 전용): v2 추가 필드(허용 목록)만 빼고 파일 최상위·시설·행의 나머지를 깊게 비교', () => {
+  const before = readJson(path.join(ROOT, 'data', '08_education_research.json'));
+  const dropped = structuredClone(before);
+  delete dropped.modular_classroom;
+  assert.deepEqual(compareV1Fields(before, dropped).map((e) => [e.code, e.path]), [['V1_FIELD_CHANGED', 'modular_classroom']]);
+  const nested = structuredClone(before);
+  nested.modular_classroom.fire_facilities[0].criteria = '바뀐 문구';
+  assert.deepEqual(compareV1Fields(before, nested).map((e) => e.path), ['modular_classroom.fire_facilities[0].criteria']);
+  const renamed = structuredClone(before);
+  renamed.fire_facilities[0].category = '다른 분류';
+  assert.deepEqual(compareV1Fields(before, renamed).map((e) => e.path), ['fire_facilities[0].category']);
+  const additive = structuredClone(before);
+  Object.assign(additive, { schema_version: 2, type_code: '08', review: { status: 'draft', by: null, date: null }, strengthened_retroactive: [] });
+  additive.fire_facilities[0].excluded_if = { const: false };
+  Object.assign(additive.fire_facilities[0].regulations[0], { id: 'x', kind: 'trigger', conditions: { const: true }, scope: 'all_floors' });
+  assert.deepEqual(compareV1Fields(before, additive), []);
 });

@@ -2,8 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ASSUMED, F, T, U, evalCondition, makeEnv, normalizeManual, normalizeRegistry, resolvePolicy, tv } from '../../../js/engine/index.js';
-import { INDEX, INPUTS } from './helpers.mjs';
+import { FIXTURE_SET, INDEX, INPUTS, loadBuildingFixtures, normalizeInput } from './helpers.mjs';
 import { inputDefsFrom } from '../../../js/engine/questions.js';
+import { rowConditionRoots } from '../../../js/engine/schema.js';
 
 const DEFS = inputDefsFrom(INPUTS);
 const floor = (gb, no, etc, area, main = '제2종근린생활시설') => ({ flrGbCd: gb, flrNo: no, mainPurpsCdNm: main, etcPurps: etc, area });
@@ -119,4 +120,99 @@ test('형식이 틀린 노드는 F 가 아니라 U (비해당으로 흘리지 �
   const d = dongOf({ totArea: 100, grndFlrCnt: 1 });
   assert.equal(run({ mystery: 1 }, d).v, U);
   assert.equal(run({ m: 'total_area', gte: 1, flag: 'x' }, d).v, U);
+});
+
+test('use 노드 + floors(H2): 층 목록이 불완전하면(지하층수 모름) 빠진 층에 있을 수 있으므로 F 가 아니라 U — 층수 질문', () => {
+  const node = { use: ['singing_room'], floors: ['basement'] };
+  const ground = [floor('20', 1, '일반음식점', 300), floor('20', 2, '일반음식점', 300)];
+  const unknownB = dongOf({ etcPurps: '일반음식점, 노래연습장', totArea: 900, grndFlrCnt: 2, ugrndFlrCnt: '' }, ground);
+  const r = run(node, unknownB);
+  assert.equal(r.v, U);
+  assert.deepEqual(keys(r), ['basement_floors@본동']);
+  // 층도 층수도 없으면 역시 U
+  assert.equal(run(node, dongOf({ etcPurps: '노래연습장', totArea: 500, grndFlrCnt: '', ugrndFlrCnt: '' })).v, U);
+  // 지하층이 없다고 확정되면 F, 층별개요가 지하층을 모두 보이면 그 용도로 결정
+  assert.equal(run(node, dongOf({ etcPurps: '일반음식점', totArea: 600, grndFlrCnt: 2, ugrndFlrCnt: 0 }, ground)).v, F);
+  const listed = dongOf({ etcPurps: '일반음식점', totArea: 900, grndFlrCnt: 2, ugrndFlrCnt: 1 }, [floor('10', 1, '노래연습장', 300), ...ground]);
+  assert.equal(run(node, listed).v, T);
+  const listedNone = dongOf({ etcPurps: '일반음식점', totArea: 900, grndFlrCnt: 2, ugrndFlrCnt: 1 }, [floor('10', 1, '일반음식점', 300), ...ground]);
+  assert.equal(run(node, listedNone).v, F);
+  // 같은 데이터를 floor_exists 로 써도 결과가 같다
+  assert.equal(run({ floor_exists: { floors: ['basement'], use: ['singing_room'] } }, unknownB).v, U);
+});
+
+test('층 목록 완전성은 구분별: 지상층수를 몰라도 지하층 조건은 결정되고, 지상층 조건만 층수 질문', () => {
+  const d = dongOf({ totArea: 900, grndFlrCnt: '', ugrndFlrCnt: 1 }, [floor('10', 1, '', 300), floor('20', 1, '', 300)]);
+  assert.equal(run({ floor_exists: { floors: ['basement'], area: { gte: 200 } } }, d).v, T);
+  assert.equal(run({ floor_exists: { floors: [{ kind: 'basement', level: { gte: 2 } }] } }, d).v, F);
+  assert.equal(run({ sum_area: { floors: ['basement'] }, gte: 301 }, d).v, F);
+  const g = run({ floor_exists: { floors: [{ kind: 'ground', level: { gte: 6 } }] } }, d);
+  assert.equal(g.v, U);
+  assert.deepEqual(keys(g), ['ground_floors@본동']);
+});
+
+test('여러 행으로 나뉜 층(M6): 부분 면적 답변 part_area[n] 이 그 부분의 용도 면적 — 층 면적 답변이면 나머지로 역산', () => {
+  const d = dongOf({ etcPurps: '소매점, 노래연습장', totArea: 600, grndFlrCnt: 1 }, [floor('20', 1, '소매점', 300), floor('20', 1, '노래연습장', '')]);
+  const node = { sum_area: { use: ['singing_room'] }, gte: 150 };
+  const r = run(node, d);
+  assert.equal(r.v, U);
+  assert.ok(keys(r).includes('part_area[2]@본동/1F'), keys(r).join());
+  assert.equal(run(node, d, { answers: { 'part_area[2]@본동/1F': 200 } }).v, T);
+  assert.equal(run(node, d, { answers: { 'part_area[2]@본동/1F': 100 } }).v, F);
+  assert.equal(run(node, d, { answers: { 'floor_area@본동/1F': 420 } }).v, F);
+  assert.equal(run(node, d, { answers: { 'floor_area@본동/1F': 500 } }).v, T);
+});
+
+test('재평가(release, H1): 가정값(무창층 assume_none · 수동 입력 지하층 빈칸 0)을 모름으로 풀어 다시 평가', () => {
+  const d = dongOf({ totArea: 1200, grndFlrCnt: 2 }, [floor('20', 1, '', 600), floor('20', 2, '', 600)]);
+  const node = { floor_exists: { floors: ['windowless'] } };
+  const envW = (release) => makeEnv({ dong: d, index: INDEX, answers: {}, policy: resolvePolicy({ windowless: 'assume_none' }), inputDefs: DEFS, release });
+  const normal = evalCondition(node, envW(false));
+  assert.equal(normal.v, F);
+  assert.deepEqual(normal.deps.filter((x) => x.status === ASSUMED).map((x) => x.key), ['windowless@본동/1F', 'windowless@본동/2F']);
+  const released = evalCondition(node, envW(true));
+  assert.equal(released.v, U);
+  assert.deepEqual(keys(released), ['windowless@본동/1F', 'windowless@본동/2F']);
+  assert.ok(released.deps.every((x) => x.released));
+
+  const m = normalizeManual({ mainPurpsCdNm: '제2종근린생활시설', totArea: 3000, grndFlrCnt: 5, ugrndFlrCnt: 0, pmsDay: '20240101' }, { useIndex: INDEX }).dongs[0];
+  const envM = (release, answers = {}) => makeEnv({ dong: m, index: INDEX, answers, policy: resolvePolicy(), inputDefs: DEFS, release });
+  const b = { m: 'floors_incl_basement', gte: 7 };
+  assert.equal(evalCondition(b, envM(false)).v, F);
+  const rb = evalCondition(b, envM(true));
+  assert.equal(rb.v, U);
+  assert.deepEqual(keys(rb), ['basement_floors@직접입력']);
+  // 답변은 확정값이라 풀지 않는다
+  assert.equal(evalCondition(b, envM(true, { 'basement_floors@직접입력': 1 })).v, F);
+  assert.equal(evalCondition(b, envM(true, { 'basement_floors@직접입력': 2 })).v, T);
+});
+
+test('보조 용도(전기실 등, M5)는 층별개요에 거의 적히지 않으므로 다른 세부 용도 층에서도 F 가 아니라 미확인', () => {
+  const d = dongOf({ mainPurpsCdNm: '제1종근린생활시설', etcPurps: '소매점', totArea: 600, grndFlrCnt: 1 }, [floor('20', 1, '소매점', 600, '제1종근린생활시설')]);
+  assert.equal(run({ use: ['electrical_room'] }, d).v, U);
+  assert.equal(run({ use: ['singing_room'] }, d).v, F);
+});
+
+test('값 전용 평가(track·explain 끔)는 근거를 모으는 평가와 같은 값 — 골든 건물 × TEST-ONLY 데이터의 모든 조건 (보통·재평가)', () => {
+  let n = 0;
+  for (const fx of loadBuildingFixtures()) {
+    for (const dong of normalizeInput(fx.input).dongs) {
+      for (const code of dong.typeCodes) {
+        const file = FIXTURE_SET.dataFiles[code];
+        if (file?.schema_version !== 2) continue;
+        for (const fac of file.fire_facilities) {
+          for (const r of fac.regulations) {
+            for (const [node, where] of rowConditionRoots(r)) {
+              for (const release of [false, true]) {
+                const mk = (track) => makeEnv({ dong, index: INDEX, answers: fx.answers || {}, policy: resolvePolicy(), inputDefs: DEFS, release, track, explain: track });
+                assert.equal(evalCondition(node, mk(false)).v, evalCondition(node, mk(true)).v, `${fx.id}/${dong.id}/${r.id}.${where} release=${release}`);
+                n++;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  assert.ok(n > 100, `비교한 조건 ${n}개`);
 });
