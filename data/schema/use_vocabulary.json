@@ -12,7 +12,9 @@
     "uses[].id": "세부 용도 id (조건 트리·답변 키에 쓰임, 바꾸지 말 것)",
     "uses[].ref01": "ref01 sub_types 의 항목명",
     "uses[].aliases": "건축물대장 기타용도에서 이 용도로 볼 말 (다른 군과 겹치면 층의 주용도 군을 우선)",
-    "uses[].ancillary": "부수 용도 — 복합건축물 후보 판단의 용도군 수에서 제외(정책 mixedUseIgnoreAncillary)"
+    "uses[].ancillary": "부수 용도 — 복합건축물 후보 판단의 용도군 수에서 제외(정책 mixedUseIgnoreAncillary)",
+    "context_aliases": "이 용도군이 주용도인 동 안에서는 별칭의 뜻이 달라지는 경우(예: 자동차관련시설 동의 '주차장' = 주차용 건축물, 다른 동의 '주차장' = 건축물 내부 주차장)",
+    "auxiliary": "용도군이 없는 방(전기실·기계실 등). 층별개요에 거의 적히지 않으므로 어느 층에나 있을 수 있다고(모름) 보고, 기준은 지표(electrical_room_area 등)로 쓰는 것을 권장"
   },
   "groups": [
     {
@@ -273,6 +275,7 @@
       "file": "18_aviation_automotive.json",
       "ref01_numbers": ["18"],
       "registry_names": ["항공기및자동차관련시설", "자동차관련시설"],
+      "context_aliases": { "주차장": "parking_structure", "지하주차장": "parking_structure", "옥내주차장": "parking_structure", "부설주차장": "parking_structure", "필로티주차장": "parking_structure" },
       "uses": [
         { "id": "aircraft_hangar", "name": "항공기 격납고", "ref01": "항공기 격납고", "aliases": ["항공기격납고", "격납고"] },
         { "id": "garage", "name": "차고", "ref01": "차고", "aliases": ["차고"] },
