@@ -1,0 +1,77 @@
+{
+  "id": "apt-25f-200",
+  "title": "아파트 25층 200세대(승강기 있음), 2019.5.20. 허가 — 층·세대 기준, 11층 이상의 층 범위",
+  "input": {
+    "registry": {
+      "title": [
+        {
+          "dongNm": "101동",
+          "mainPurpsCdNm": "공동주택",
+          "etcPurps": "아파트",
+          "totArea": 19950,
+          "archArea": 900,
+          "grndFlrCnt": 25,
+          "ugrndFlrCnt": 1,
+          "heit": 75,
+          "hhldCnt": 200,
+          "rideUseElvtCnt": 2,
+          "emgenUseElvtCnt": 1
+        }
+      ],
+      "floors": [
+        { "dongNm": "101동", "flrGbCd": "10", "flrGbCdNm": "지하", "flrNo": 1, "mainPurpsCdNm": "공동주택", "etcPurps": "주차장", "area": 1200 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 1, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 2, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 3, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 4, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 5, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 6, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 7, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 8, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 9, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 10, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 11, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 12, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 13, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 14, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 15, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 16, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 17, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 18, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 19, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 20, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 21, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 22, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 23, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 24, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 25, "mainPurpsCdNm": "공동주택", "etcPurps": "아파트", "area": 750 },
+        { "dongNm": "101동", "flrGbCd": "30", "flrGbCdNm": "옥탑", "flrNo": 1, "flrNoNm": "옥탑1층", "mainPurpsCdNm": "공동주택", "etcPurps": "계단실", "area": 45 }
+      ],
+      "permit": [{ "archPmsDay": "20190520", "archGbCdNm": "신축" }]
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dongs": {
+      "101동": {
+        "status": "v2",
+        "mixedUseCandidate": false,
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "sprinkler": "해당",
+          "auto_fire_detection": "해당",
+          "emergency_broadcast": "해당",
+          "evacuation_equipment": "해당",
+          "emergency_outlet": "해당",
+          "wireless_comm": "비해당",
+          "standpipe": "해당"
+        },
+        "scope": {
+          "emergency_outlet": ["11F", "12F", "13F", "14F", "15F", "16F", "17F", "18F", "19F", "20F", "21F", "22F", "23F", "24F", "25F"],
+          "evacuation_equipment": ["3F", "4F", "5F", "6F", "7F", "8F", "9F", "10F"]
+        },
+        "parts": { "evacuation_equipment": ["공기안전매트"] }
+      }
+    }
+  }
+}

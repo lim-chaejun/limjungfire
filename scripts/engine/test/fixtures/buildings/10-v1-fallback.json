@@ -1,0 +1,25 @@
+{
+  "id": "v1-fallback",
+  "title": "v2 파일이 없는 용도 — 주차타워(18번은 v1 파일)와 용도 미분류(야영장시설) 동은 v2 가 평가하지 않고 v1 대체로 보고",
+  "input": {
+    "registry": {
+      "title": [
+        { "dongNm": "주차타워", "mainPurpsCdNm": "자동차관련시설", "etcPurps": "주차타워", "totArea": 1200, "grndFlrCnt": 5, "ugrndFlrCnt": 0 },
+        { "dongNm": "관리동", "mainPurpsCdNm": "야영장시설", "etcPurps": "", "totArea": 90, "grndFlrCnt": 1, "ugrndFlrCnt": 0 }
+      ],
+      "floors": [],
+      "permit": [{ "archPmsDay": "20200110", "archGbCdNm": "신축" }]
+    }
+  },
+  "expect": {
+    "status": "v1",
+    "notEvaluated": [
+      { "dong": "주차타워", "type_code": "18", "status": "v1" },
+      { "dong": "관리동", "type_code": null, "status": "unmapped" }
+    ],
+    "dongs": {
+      "주차타워": { "status": "v1", "verdicts": {} },
+      "관리동": { "status": "unmapped", "verdicts": {} }
+    }
+  }
+}

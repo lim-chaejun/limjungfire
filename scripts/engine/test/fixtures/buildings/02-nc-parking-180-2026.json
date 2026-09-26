@@ -1,0 +1,79 @@
+{
+  "id": "nc-parking-180-2026",
+  "title": "지하주차장 180㎡ 근린생활시설, 2026.9.15. 허가 — 2026.3.1. '200㎡ 미만' 신설 기준 적용",
+  "input": {
+    "registry": {
+      "title": [
+        {
+          "dongNm": "",
+          "mainPurpsCdNm": "제1종근린생활시설",
+          "etcPurps": "소매점,사무소",
+          "totArea": 380,
+          "grndFlrCnt": 2,
+          "ugrndFlrCnt": 1,
+          "heit": 8.2,
+          "rideUseElvtCnt": 0,
+          "emgenUseElvtCnt": 0
+        }
+      ],
+      "floors": [
+        { "flrGbCd": "10", "flrGbCdNm": "지하", "flrNo": 1, "flrNoNm": "지1층", "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "주차장", "area": 180 },
+        { "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 1, "flrNoNm": "1층", "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 100 },
+        { "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 2, "flrNoNm": "2층", "mainPurpsCdNm": "제2종근린생활시설", "etcPurps": "사무소", "area": 100 }
+      ],
+      "permit": [{ "archPmsDay": "20260915", "archGbCdNm": "신축" }]
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dateSource": "permit",
+    "dongs": {
+      "본동": {
+        "status": "v2",
+        "mixedUseCandidate": false,
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "indoor_hydrant": "비해당",
+          "sprinkler": "비해당",
+          "simple_sprinkler": "비해당",
+          "standalone_detector": "해당",
+          "emergency_alarm": "해당",
+          "auto_fire_detection": "비해당",
+          "visual_alarm": "비해당",
+          "emergency_broadcast": "비해당",
+          "evacuation_equipment": "비해당",
+          "rescue_equipment": "확인 필요",
+          "guide_light": "해당",
+          "standpipe": "비해당"
+        },
+        "parts": { "standalone_detector": ["지하 차고·주차장 부분"] }
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "2026.4.15. 허가 — 시행일(2026.3.1.)이 허가일 전 180일 안이라 단독경보형감지기는 신청일 확인 필요",
+      "patch": { "permit": [{ "archPmsDay": "20260415", "archGbCdNm": "신축" }] },
+      "expect": {
+        "dongs": {
+          "본동": {
+            "verdicts": { "standalone_detector": "확인 필요", "emergency_alarm": "해당", "auto_fire_detection": "비해당" },
+            "questions": { "standalone_detector": ["application_date"] }
+          }
+        }
+      }
+    },
+    {
+      "name": "신청일 2026.2.1. — 개정 전 기준",
+      "patch": { "permit": [{ "archPmsDay": "20260415", "archGbCdNm": "신축" }] },
+      "answers": { "application_date": "20260201" },
+      "expect": { "dateSource": "application", "dongs": { "본동": { "verdicts": { "standalone_detector": "비해당" } } } }
+    },
+    {
+      "name": "신청일 2026.3.10. — 개정 후 기준",
+      "patch": { "permit": [{ "archPmsDay": "20260415", "archGbCdNm": "신축" }] },
+      "answers": { "application_date": "2026-03-10" },
+      "expect": { "dateSource": "application", "dongs": { "본동": { "verdicts": { "standalone_detector": "해당" } } } }
+    }
+  ]
+}

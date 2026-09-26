@@ -1,0 +1,57 @@
+{
+  "id": "mixed-use-candidate",
+  "title": "근린생활시설(지하2~지상2층) + 업무시설(3~5층), 연면적 6,300㎡ — 복합건축물 후보: 30번 기준(5,000㎡ 이상 스프링클러)만 걸려 복합건축물 여부를 물음",
+  "input": {
+    "registry": {
+      "title": [{ "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점, 업무시설", "totArea": 6300, "grndFlrCnt": 5, "ugrndFlrCnt": 2, "heit": 19 }],
+      "floors": [
+        { "flrGbCd": "10", "flrNo": 2, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 900 },
+        { "flrGbCd": "10", "flrNo": 1, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 900 },
+        { "flrGbCd": "20", "flrNo": 1, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 900 },
+        { "flrGbCd": "20", "flrNo": 2, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 900 },
+        { "flrGbCd": "20", "flrNo": 3, "mainPurpsCdNm": "업무시설", "etcPurps": "사무소", "area": 900 },
+        { "flrGbCd": "20", "flrNo": 4, "mainPurpsCdNm": "업무시설", "etcPurps": "사무소", "area": 900 },
+        { "flrGbCd": "20", "flrNo": 5, "mainPurpsCdNm": "업무시설", "etcPurps": "사무소", "area": 900 }
+      ],
+      "permit": [{ "archPmsDay": "20150101", "archGbCdNm": "신축" }]
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dongs": {
+      "본동": {
+        "status": "v2",
+        "mixedUseCandidate": true,
+        "typeCodes": ["02", "12", "30"],
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "indoor_hydrant": "해당",
+          "sprinkler": "확인 필요",
+          "simple_sprinkler": "해당",
+          "standalone_detector": "비해당",
+          "emergency_alarm": "해당",
+          "auto_fire_detection": "해당",
+          "visual_alarm": "해당",
+          "emergency_broadcast": "해당",
+          "evacuation_equipment": "해당",
+          "rescue_equipment": "확인 필요",
+          "guide_light": "해당",
+          "standpipe": "해당"
+        },
+        "questions": { "sprinkler": ["mixed_use@본동"] }
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "복합건축물 맞음 — 30번 기준으로 스프링클러 해당(모든 층)",
+      "answers": { "mixed_use@본동": true },
+      "expect": { "dongs": { "본동": { "verdicts": { "sprinkler": "해당" }, "scope": { "sprinkler": ["B2", "B1", "1F", "2F", "3F", "4F", "5F"] } } } }
+    },
+    {
+      "name": "복합건축물 아님(부수 용도) — 구성 용도 기준만: 스프링클러 비해당",
+      "answers": { "mixed_use@본동": false },
+      "expect": { "dongs": { "본동": { "verdicts": { "sprinkler": "비해당" } } } }
+    }
+  ]
+}

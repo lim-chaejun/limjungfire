@@ -1,0 +1,401 @@
+{
+  "schema_version": 2,
+  "type_code": "02",
+  "building_type": "근린생활시설",
+  "note": "TEST-ONLY 합성 데이터 — data/02_neighborhood_facilities.json 의 변환본이 아니다. 엔진 테스트에 필요한 시설·행만 골라 구조화했고, 6층 스프링클러 시행일은 부칙(2018.1.27) 가정으로 적었다.",
+  "review": { "status": "draft", "by": null, "date": null },
+  "strengthened_retroactive": [],
+  "fire_facilities": [
+    {
+      "category": "소화설비",
+      "facility_name": "소화기구",
+      "facility_id": "fire_extinguisher",
+      "regulations": [
+        {
+          "id": "t02-fe-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 33㎡ 이상인 것",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 33 },
+          "scope": "all_floors",
+          "item_key": "t02-fe-area",
+          "inputs_required": ["total_area"]
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "옥내소화전설비",
+      "facility_id": "indoor_hydrant",
+      "regulations": [
+        {
+          "id": "t02-ih-01",
+          "start_date": "19920728",
+          "end_date": null,
+          "criteria": "연면적 1,500㎡ 이상",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 1500 },
+          "scope": "all_floors",
+          "item_key": "t02-ih-area"
+        },
+        {
+          "id": "t02-ih-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층·4층 이상인 층이 바닥면적이 300㎡ 이상인 층이 있는 것은 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": {
+            "floor_exists": { "floors": ["basement", "windowless", { "kind": "ground", "level": { "gte": 4 } }], "area": { "gte": 300 } }
+          },
+          "scope": "all_floors",
+          "item_key": "t02-ih-floor",
+          "inputs_required": ["floor_area", "windowless"]
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "스프링클러설비",
+      "facility_id": "sprinkler",
+      "regulations": [
+        {
+          "id": "t02-sp-01",
+          "start_date": "20180127",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 6 },
+          "scope": "all_floors",
+          "item_key": "t02-sp-6f"
+        },
+        {
+          "id": "t02-sp-02",
+          "start_date": "20180127",
+          "end_date": null,
+          "criteria": "부속된 보일러실·연결통로 포함",
+          "applicable_to": "근린생활시설",
+          "kind": "modifier",
+          "scope": "inherit",
+          "specs": { "label": "부속된 보일러실·연결통로 포함" }
+        },
+        {
+          "id": "t02-sp-03",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "조산원·산후조리원의 바닥면적 합계가 600㎡ 이상인 것은 모든 층",
+          "applicable_to": "조산원, 산후조리원",
+          "kind": "trigger",
+          "conditions": { "sum_area": { "use": ["midwifery_clinic", "postpartum_care"] }, "gte": 600 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-sp-04",
+          "start_date": "19840701",
+          "end_date": null,
+          "criteria": "지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 층이 있는 경우 해당 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": {
+            "floor_exists": { "floors": ["basement", "windowless", { "kind": "ground", "level": { "gte": 4 } }], "area": { "gte": 1000 } }
+          },
+          "scope": "matching_floors"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "간이스프링클러설비",
+      "facility_id": "simple_sprinkler",
+      "regulations": [
+        {
+          "id": "t02-ssp-01",
+          "start_date": "20040530",
+          "end_date": null,
+          "criteria": "바닥면적의 합계가 1,000㎡ 이상 모든 층",
+          "applicable_to": "근린생활시설",
+          "note": "2001.5.21. 다중 적용, 2004.5.30. 근생 적용",
+          "kind": "trigger",
+          "conditions": { "sum_area": {}, "gte": 1000 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-ssp-02",
+          "start_date": "20190806",
+          "end_date": null,
+          "criteria": "의원·치과의원·한의원으로서 입원실이 있는 시설",
+          "applicable_to": "의원급 의료기관",
+          "kind": "trigger",
+          "conditions": { "all": [{ "use": ["clinic"] }, { "flag": "inpatient_room" }] },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "단독경보형감지기",
+      "facility_id": "standalone_detector",
+      "regulations": [
+        {
+          "id": "t02-sd-01",
+          "start_date": "20260301",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만인 부분",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": {
+            "sum_area": { "floors": ["basement"], "use": ["garage", "indoor_parking", "parking_structure"] },
+            "gt": 0,
+            "lt": 200
+          },
+          "scope": { "type": "part", "label": "지하 차고·주차장 부분" }
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상경보설비",
+      "facility_id": "emergency_alarm",
+      "regulations": [
+        {
+          "id": "t02-ea-01",
+          "start_date": "19900701",
+          "end_date": null,
+          "criteria": "연면적 400㎡ 이상 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 400 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-ea-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층 바닥면적 150㎡ 이상(공연장 100㎡ 이상) 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "branches": [
+            {
+              "when": { "use": ["performance_small"] },
+              "conditions": { "floor_exists": { "floors": ["basement", "windowless"], "area": { "gte": 100 } } }
+            },
+            { "conditions": { "floor_exists": { "floors": ["basement", "windowless"], "area": { "gte": 150 } } } }
+          ],
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-ea-03",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "50명 이상 근로자가 작업하는 옥내 작업장",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "scope": "all_floors",
+          "needs_review": { "reason": "옥내 작업장 근로자 수 입력 연결 전(P1에서 workers_indoor로 구조화)", "question": "50명 이상의 근로자가 작업하는 옥내 작업장이 있습니까?" }
+        },
+        {
+          "id": "t02-ea-04",
+          "start_date": "20260301",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 미만 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": {
+            "sum_area": { "floors": ["basement"], "use": ["garage", "indoor_parking", "parking_structure"] },
+            "gt": 0,
+            "lt": 200
+          },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "자동화재탐지설비",
+      "facility_id": "auto_fire_detection",
+      "regulations": [
+        {
+          "id": "t02-afd-01",
+          "start_date": "20221201",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 6 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-afd-02",
+          "start_date": "19811106",
+          "end_date": null,
+          "criteria": "연면적 600㎡ 이상 *목욕탕은 연면적 1,000㎡ 이상",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "branches": [
+            { "when": { "use": ["bathhouse"] }, "conditions": { "m": "total_area", "gte": 1000 } },
+            { "conditions": { "m": "total_area", "gte": 600 } }
+          ],
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-afd-03",
+          "start_date": "20260301",
+          "end_date": null,
+          "criteria": "지하에 차고·주차장이 200㎡ 이상 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "sum_area": { "floors": ["basement"], "use": ["garage", "indoor_parking", "parking_structure"] }, "gte": 200 },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "시각경보기",
+      "facility_id": "visual_alarm",
+      "regulations": [
+        {
+          "id": "t02-va-01",
+          "start_date": "20040530",
+          "end_date": null,
+          "criteria": "자동화재탐지설비 설치 대상",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "facility": "auto_fire_detection" },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상방송설비",
+      "facility_id": "emergency_broadcast",
+      "regulations": [
+        {
+          "id": "t02-eb-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 3,500㎡ 이상",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 3500 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-eb-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "층수가 11층 이상",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 11 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-eb-03",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층의 층수가 3층 이상인 것 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "basement_floors", "gte": 3 },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "피난기구",
+      "facility_id": "evacuation_equipment",
+      "regulations": [
+        {
+          "id": "t02-ev-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지상3층 ~ 지상10층까지 설치(피난층 제외)",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "floor_exists": { "floors": [{ "kind": "ground", "level": { "gte": 3, "lte": 10 } }] } },
+          "scope": { "type": "floors", "floors": [{ "kind": "ground", "level": { "gte": 3, "lte": 10 } }] }
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "인명구조기구",
+      "facility_id": "rescue_equipment",
+      "regulations": [
+        {
+          "id": "t02-re-01",
+          "start_date": "20120205",
+          "end_date": null,
+          "criteria": "이산화탄소소화설비가 설치 장소(출입구 외부 인근 공기호흡기 1대 이상 비치)",
+          "applicable_to": "근린생활시설",
+          "note": "2012.2.5. 신규대상 적용, 2013.2.5.까지 기 대상 소급",
+          "kind": "trigger",
+          "conditions": { "installed": "co2_extinguishing" },
+          "scope": { "type": "part", "label": "이산화탄소소화설비 설치 장소" },
+          "specs": { "equipment": "공기호흡기", "count": 1 },
+          "retroactive": { "deadline": "20130205" }
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "유도등",
+      "facility_id": "guide_light",
+      "regulations": [
+        {
+          "id": "t02-gl-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "적용",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "const": true },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-gl-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "피난구유도등·통로유도등·유도표지 설치 (NFPC 303)",
+          "applicable_to": "근린생활시설",
+          "kind": "info",
+          "specs": { "types": ["피난구유도등", "통로유도등", "유도표지"] }
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "연결송수관설비",
+      "facility_id": "standpipe",
+      "regulations": [
+        {
+          "id": "t02-stp-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "5층 이상이고 연면적 6,000㎡ 이상 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "all": [{ "m": "ground_floors", "gte": 5 }, { "m": "total_area", "gte": 6000 }] },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t02-stp-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층 포함 7개층 이상 모든 층",
+          "applicable_to": "근린생활시설",
+          "kind": "trigger",
+          "conditions": { "m": "floors_incl_basement", "gte": 7 },
+          "scope": "all_floors"
+        }
+      ]
+    }
+  ]
+}
