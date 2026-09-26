@@ -512,13 +512,15 @@ export function finalizeFacility(fid, dctx) {
     reasons.push(`이 동의 ${dctx.pendingV1.join('·')}번 기준 파일이 v1 이라 판정에 빠짐 — 기존(v1) 판정과 함께 확인 필요`);
   }
 
-  // 답변한 면적이 연면적·층별개요와 모순이면(AREA_ANSWER_MISMATCH) 면적에 기대는 비해당은 확정하지 않는다 — 모형 밖의 답이라
-  // 판정이 답에 따라 뒤집힐 수 있다. 면적 답변 확인 질문(area_check)에 '예'(지금 답이 맞다)라고 하면 그 답대로 판정한다
-  let areaCheck = false;
-  if (v === F && dctx.areaMismatch && dctx.answers[depKey('area_check', dctx.dong.id)] !== true && dependsOnAreas(j)) {
+  // 답변한 면적이 연면적·층별개요와 모순이면(AREA_ANSWER_MISMATCH) 그 동의 면적에 기대는 비해당은 확정하지 않는다 — 모형 밖의
+  // 답이라 판정이 답에 따라 뒤집힐 수 있다. 면적 답변 확인 질문(area_check@동)에 '예'(지금 답이 맞다)라고 하면 그 답대로 판정한다.
+  // 합친 동(대지 전체)은 모순인 동별로 본다
+  const areaCheck = v === F
+    ? dctx.areaMismatch.filter((id) => dctx.answers[depKey('area_check', id)] !== true && dependsOnAreas(j, id))
+    : [];
+  if (areaCheck.length) {
     v = U;
-    areaCheck = true;
-    reasons.push('답변한 면적이 연면적과 맞지 않아(AREA_ANSWER_MISMATCH) 면적에 기대는 비해당을 확정하지 않음 — 면적 답변 확인 필요');
+    reasons.push(`답변한 면적이 연면적과 맞지 않아(AREA_ANSWER_MISMATCH, ${areaCheck.join('·')}) 면적에 기대는 비해당을 확정하지 않음 — 면적 답변 확인 필요`);
   }
 
   const defs = dctx.defs.get(fid) || [];
@@ -542,7 +544,7 @@ export function finalizeFacility(fid, dctx) {
   const first = defs[0]?.facility || {};
   const qctx = { inputDefs: dctx.inputDefs, index: dctx.index, names: dctx.names };
   const asked = [];
-  if (areaCheck) asked.push(buildQuestion(makeDep('area_check', UNKNOWN, { dong: dctx.dong.id }), qctx));
+  for (const id of areaCheck) asked.push(buildQuestion(makeDep('area_check', UNKNOWN, { dong: id }), qctx));
   for (const d of questionDeps) if (!asked.some((q) => q.key === d.key)) asked.push(buildQuestion(d, qctx));
   // 순서만 정하고 상한·면적 질문 묶음은 건물 단위에서(limitQuestions) — 여러 시설·동의 질문을 함께 봐야 해서
   const questions = orderQuestions(asked, order);
@@ -599,9 +601,9 @@ const tally = (facilities) => ({
 const AREA_ANSWER_RE = /^(floor_area|part_area\[[^\]]*\]|total_area)@(.*)$/;
 const AREA_INPUTS = new Set(['floor_area', 'part_area', 'total_area', 'use_area', 'floor_use_area']);
 
-// 비해당(모든 시기에서 가정값을 푼 평가도 F)의 근거에 면적 입력이 있는가
-function dependsOnAreas(j) {
-  return [...(j.released || []), ...(j.normal || [])].some((e) => e.tv.deps.some((d) => AREA_INPUTS.has(d.input)));
+// 비해당(모든 시기에서 가정값을 푼 평가도 F)의 근거에 그 동의 면적 입력이 있는가
+function dependsOnAreas(j, dongId) {
+  return [...(j.released || []), ...(j.normal || [])].some((e) => e.tv.deps.some((d) => AREA_INPUTS.has(d.input) && d.dong === dongId));
 }
 
 // 면적 항등식(연면적 = 각 층 바닥면적의 합)으로 묶인 입력 — 한 동에서 여러 개를 한꺼번에 답하면 각자 범위 안이어도
@@ -644,15 +646,17 @@ export function limitQuestions(dongResults) {
 }
 
 // 답변한 면적이 답변끼리·확정 사실과 맞지 않으면 경고 — 한 층이 연면적보다 크거나, 층 면적 합이 연면적과 모순
-// (이때 엔진은 모순된 쪽으로 추론하지 않으며, 그런 답은 단조성 보장 밖이다). env·strippedEnv 는 가정값을 푼 평가다(evaluateDong)
+// (이때 엔진은 모순된 쪽으로 추론하지 않으며, 그런 답은 단조성 보장 밖이다). env 와 stripEnv()(면적 답을 뺀 평가 — 이 동에
+// 면적 답이 있을 때만 만든다)는 가정값을 푼 평가다(evaluateDong)
 // 모순이 면적 답변 때문인가: 이 동의 면적 답변(층·부분 면적, 연면적)만 뺀 평가(stripped)에서는 모순이 없어야 한다 — 대장 자체의
 // 불일치(FLOOR_AREA_MISMATCH)는 답변 탓이 아니므로 경고·비해당 보류 대상이 아니다(그때는 면적 항등식을 아예 쓰지 않는다)
-function areaAnswerWarnings(dong, env, strippedEnv, answers) {
+function areaAnswerWarnings(dong, env, stripEnv, answers) {
   const mine = Object.keys(answers).some((k) => {
     const m = AREA_ANSWER_RE.exec(k);
     return m && (m[2] === dong.id || m[2].startsWith(`${dong.id}/`));
   });
   if (!mine) return [];
+  const strippedEnv = stripEnv();
   const total = metric(env, 'total_area');
   const totalText = total.lo === total.hi ? fmtNum(total.lo) : `${fmtNum(total.lo)}~${fmtNum(total.hi)}`;
   // 층 면적은 연면적 상한을 씌우기 전 값으로 본다 — 상한을 씌우면 부분 면적 답이 연면적을 넘어도 가려진다(3차 리뷰 LOW:
@@ -722,10 +726,15 @@ export function evaluateDong(dong, bctx) {
   dctx.floorOrder = new Map(floorsOf(baseEnv).floors.map((f, i) => [f.key, i]));
   // 면적 답변의 모순은 가정값을 푼 평가에서 본다 — 답변끼리 또는 확정 사실과 어긋날 때만 답변 탓이다. 가정값(예: 지하층수 0)과만
   // 어긋나면 가정값을 푼 재평가가 비해당을 지키고, 가정값 층수는 면적보다 먼저 묻는다(chooseQuestions)
+  // 합친 동(대지 전체)은 동별 평가 환경(members)에서 동마다 본다 — 경고는 동별 평가가 이미 내므로 여기서는 모순인 동만 기억한다
   const checkEnv = getPass(dctx, dctx.dateInfo.refDate, true, dctx.answers, '').env;
-  const strippedEnv = makePass(dctx, dctx.dateInfo.refDate, withoutAreaAnswers(dong, dctx.answers), { release: true }).env;
-  const warnings = areaAnswerWarnings(dong, checkEnv, strippedEnv, dctx.answers);
-  dctx.areaMismatch = warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH');
+  const stripped = (d) => makePass(dctx, dctx.dateInfo.refDate, withoutAreaAnswers(d, dctx.answers), { release: true }).env;
+  const parts = dong.memberDongs
+    ? dong.memberDongs.map((m, i) => ({ d: m, env: checkEnv.members[i], strip: () => stripped(m).members[i] }))
+    : [{ d: dong, env: checkEnv, strip: () => stripped(dong) }];
+  const found = parts.map((p) => ({ id: p.d.id, warnings: areaAnswerWarnings(p.d, p.env, p.strip, dctx.answers) }));
+  const warnings = dong.memberDongs ? [] : found[0].warnings;
+  dctx.areaMismatch = found.filter((x) => x.warnings.length).map((x) => x.id);
   const facilities = [...defs.keys()].map((fid) => finalizeFacility(fid, dctx));
   const questions = [];
   for (const q of facilities.flatMap((f) => f.questions)) if (!questions.some((x) => x.key === q.key)) questions.push(q);

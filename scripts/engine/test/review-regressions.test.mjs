@@ -451,6 +451,23 @@ test('3차 MEDIUM: 한 동의 면적 항등식 묶음 질문(층·부분 면적,
   assert.ok(groups > 20, String(groups));
 });
 
+test('3차 MEDIUM: 합친 동(대지 전체)도 동별 면적 답변 모순이면 그 동 면적에 기대는 비해당을 보류 — 질문은 그 동의 area_check', () => {
+  const c = caseById('site-area-mismatch');
+  const base = runCase(c, { answers: { site_connected: true } });
+  assert.deepEqual([fac(base, '상가동', 'x').verdict, base.site.facilities.find((f) => f.id === 'x').verdict], ['비해당', '비해당']);
+  // 상가동 1층·2층 각 1,200 → 합 2,400 ≠ 연면적 1,600
+  const both = { 'floor_area@상가동/1F': 1200, 'floor_area@상가동/2F': 1200 };
+  for (const connected of [true, undefined]) {
+    const r = runCase(c, { answers: { ...both, ...(connected === undefined ? {} : { site_connected: connected }) } });
+    assert.ok(r.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH' && w.dong === '상가동'));
+    const site = r.site.facilities.find((f) => f.id === 'x');
+    assert.deepEqual([site.verdict, qkeys(site)], ['확인 필요', ['area_check@상가동']], String(connected));
+    assert.deepEqual([fac(r, '상가동', 'x').verdict, qkeys(fac(r, '상가동', 'x'))], ['확인 필요', ['area_check@상가동']], String(connected));
+  }
+  const ok = runCase(c, { answers: { ...both, site_connected: true, 'area_check@상가동': true } });
+  assert.deepEqual([fac(ok, '상가동', 'x').verdict, ok.site.facilities.find((f) => f.id === 'x').verdict], ['비해당', '비해당']);
+});
+
 test('3차 MEDIUM: 면적 답변 모순은 답변끼리·확정 사실과의 모순만 — 대장 자체의 모순(상한에 가려진 층)이나 가정값과만 어긋난 답은 아니다', () => {
   // 3층 400 > 연면적 300: 대장 자체가 모순 → 면적 항등식을 쓰지 않아 1·2층을 0 으로 몰지 않고, 다른 층 답변은 답변 탓 모순이 아니다
   const base = runCase(caseById('data-over-total'));

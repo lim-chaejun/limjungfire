@@ -297,6 +297,16 @@ export const CASES = [
     },
   },
   {
+    id: 'site-area-mismatch',
+    title: '3차 MEDIUM: 상가동(2층, 연면적 1,600, 층 면적 미상) + 주차장동 — "바닥면적 2,000㎡ 이상인 지상층" 은 동별·대지 전체 모두 층 면적(연면적 상한)에 기대는 비해당',
+    input: { registry: SITE_TWO_DONGS },
+    dataFiles: {
+      '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('g', { floor_exists: { floors: 'ground', area: { gte: 2000 } } })] }]),
+      '18': v2('18', []),
+      '30': v2('30', []),
+    },
+  },
+  {
     id: 'data-over-total',
     title: '층별개요의 3층(400)이 이미 연면적 300 보다 큼 — 대장 자체의 모순이라 면적 항등식을 쓰지 않고, 다른 층 면적 답변은 답변 탓 모순이 아니다',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 300, grndFlrCnt: 3, ugrndFlrCnt: 0 }], floors: [nc2(3, '소매점', 400)], permit: [permit('20150101')] } },
