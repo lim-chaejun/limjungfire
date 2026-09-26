@@ -243,7 +243,8 @@ test('원문 대조 경고: 이상/초과/미만/이하 ↔ 연산자, 빠진 �
   const w = (row) => lintRow({ id: 'x', kind: 'trigger', ...row }).map((x) => x.code);
   assert.deepEqual(w({ criteria: '연면적 600㎡ 이상', conditions: { m: 'total_area', gte: 600 }, scope: 'all_floors' }), []);
   assert.deepEqual(w({ criteria: '연면적 600㎡ 이상', conditions: { m: 'total_area', gt: 600 }, scope: 'all_floors' }), ['W_OP_MISMATCH']);
-  assert.deepEqual(w({ criteria: '지하에 차고·주차장이 200㎡ 미만', conditions: { sum_area: { floors: ['basement'] }, gt: 0, lt: 200 }, scope: 'all_floors' }), []);
+  // 문구는 맞지만 '미만' 면적 기준이라 면적이 클수록 덜 적용된다 — 검수 경고(W_ANTIMONOTONE_AREA, CP1 Q19(a))
+  assert.deepEqual(w({ criteria: '지하에 차고·주차장이 200㎡ 미만', conditions: { sum_area: { floors: ['basement'] }, gt: 0, lt: 200 }, scope: 'all_floors' }), ['W_ANTIMONOTONE_AREA']);
   assert.deepEqual(w({ criteria: '수용인원 100명(460㎡) 이상', conditions: { m: 'occupants', gte: 100 }, scope: 'all_floors' }), ['W_NUMBER_MISSING']);
   assert.deepEqual(w({ criteria: '연면적 400㎡ 이상 모든 층', conditions: { m: 'total_area', gte: 400 }, scope: 'matching_floors' }), ['W_SCOPE_WORDING']);
   assert.deepEqual(w({ criteria: '바닥면적 1,000㎡ 이상인 층이 있는 경우 해당 층', conditions: { floor_exists: { area: { gte: 1000 } } }, scope: 'all_floors' }), ['W_SCOPE_WORDING']);
@@ -270,6 +271,35 @@ test('경고: 판정 행 없는 시설(W_NO_TRIGGER) · kind 없는 level(W_LEVE
   assert.deepEqual(lw({ use: ['singing_room', '02'] }, '노래연습장이 있는 경우'), []);
   // 문맥(ctx) 없이 부르면 보조 용도 검사는 건너뜀
   assert.deepEqual(codes(lintRow({ ...ROW, criteria: '전기실', conditions: { use: ['electrical_room'] } })), []);
+});
+
+test('경고: 면적이 클수록 덜 적용되는 층 면적 조건(W_ANTIMONOTONE_AREA) — 제외 조건·not 아래, 미만·이하·같음·구간 (CP1 Q19(a))', () => {
+  const at = (conditions) => codes(lintRow({ ...ROW, criteria: '바닥면적 기준', conditions, scope: 'all_floors' }, 'row', ctx)).filter((c) => c === 'W_ANTIMONOTONE_AREA');
+  const fe = (area) => ({ floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area } });
+  const sa = (cmp) => ({ sum_area: { floors: 'ground' }, ...cmp });
+  // 설치 조건: 이상·초과는 괜찮고, 미만·이하·같음·구간, not 아래의 이상은 경고
+  assert.deepEqual([fe({ gte: 500 }), fe({ gt: 500 }), sa({ gte: 1000 })].map(at), [[], [], []]);
+  assert.deepEqual([fe({ lt: 500 }), sa({ lte: 1000 }), sa({ gt: 0, lt: 1000 }), fe({ eq: 500 })].map(at), [['W_ANTIMONOTONE_AREA'], ['W_ANTIMONOTONE_AREA'], ['W_ANTIMONOTONE_AREA'], ['W_ANTIMONOTONE_AREA']]);
+  assert.deepEqual(at({ all: [{ m: 'total_area', gte: 900 }, { not: fe({ gte: 500 }) }] }), ['W_ANTIMONOTONE_AREA']);
+  assert.deepEqual(at({ not: { not: fe({ gte: 500 }) } }), []);
+  // 면적 없는 층 조건·표제부 지표(m)는 대상이 아니다
+  assert.deepEqual([{ floor_exists: { floors: 'basement' } }, { not: { m: 'total_area', gte: 900 } }, { m: 'total_area', lt: 900 }].map(at), [[], [], []]);
+  // 분기 조건(when)도 설치 조건처럼 본다
+  const br = codes(lintRow({ ...ROW, criteria: '분기', conditions: undefined, branches: [{ when: sa({ lt: 300 }), conditions: { const: true } }, { conditions: { const: false } }], scope: 'all_floors' }, 'row', ctx));
+  assert.ok(br.includes('W_ANTIMONOTONE_AREA'));
+  // 제외 조건: 방향이 반대 — 이상이면 경고(rv5_blank: 1층 ≥ 500 이면 제외), not 아래의 이상은 괜찮다
+  const file = (excluded_if) => {
+    const f = FILE();
+    f.fire_facilities[0].excluded_if = excluded_if;
+    return validateFile(f, ctx, { fileName: '02_neighborhood_facilities.json' });
+  };
+  const r = file(fe({ gte: 500 }));
+  assert.deepEqual(r.errors, []);
+  const w = r.warnings.filter((x) => x.code === 'W_ANTIMONOTONE_AREA');
+  assert.deepEqual(w.map((x) => x.path), ['fire_facilities[0].excluded_if']);
+  assert.match(w[0].message, /면적제외여부가 빈칸인 보통 층별개요 행은 면적을 그대로 넣으므로\(CP1 Q19\(a\)\)/);
+  assert.deepEqual(codes(file({ not: fe({ gte: 500 }) }).warnings).filter((c) => c === 'W_ANTIMONOTONE_AREA'), []);
+  assert.deepEqual(codes(file(sa({ lt: 300 })).warnings).filter((c) => c === 'W_ANTIMONOTONE_AREA'), []);
 });
 
 const CYCLE_ROW = { ...ROW, criteria: '다른 설비를 설치해야 하는 경우', inputs_required: [] };

@@ -5,7 +5,7 @@
 import {
   FLOOR_KINDS, FLOOR_SHORTHANDS, NODE_ALLOWED_KEYS, REVIEW_STATUSES, ROW_KINDS, SCHEMA_VERSION, SELECTOR_KEYS, TYPE_CODE_RE,
   V1_ROW_FIELDS, V2_ROW_FIELDS, WORDING_TO_OP, comparisonOps, isPlainObject, nodeType, normalizeFloors, normalizeScope,
-  numericConstants, referencedFacilities, referencedInputs, rowConditionRoots, stableKey, walkConditions,
+  childNodes, numericConstants, referencedFacilities, referencedInputs, rowConditionRoots, stableKey, walkConditions,
 } from './schema.js';
 import { isValidYmd } from './dates.js';
 import { buildUseIndex, isGroupCode } from './uses.js';
@@ -68,6 +68,7 @@ export const WARNING_CODES = Object.freeze({
   W_NO_TRIGGER: '판정 행(trigger)이 없는 시설 — 평가 시 원문 확인 질문(확인 필요)이 된다',
   W_LEVEL_WITHOUT_KIND: "층 선택자의 level 에 kind 가 없음 — 지하층 깊이에도 맞는다(지하4층이 '4층 이상'에 해당)",
   W_AUXILIARY_USE: '보조 용도(전기실 등)를 use 로 참조 — 층별개요에 거의 없어 늘 모름이 되므로 지표(electrical_room_area 등)를 권장',
+  W_ANTIMONOTONE_AREA: "면적이 클수록 덜 적용되는 층 면적 조건(제외 조건·not 아래의 floor_exists 면적·sum_area, 미만·이하·같음 기준) — 면적제외여부가 빈칸인 보통 층별개요 행은 면적을 그대로 넣으므로(CP1 Q19(a)) 그 행이 실제로 바닥면적 밖이면 비해당이 틀릴 수 있다. 검수 필요",
 });
 
 const MAX_DEPTH = 20;
@@ -374,10 +375,32 @@ function lintSelectorsAndUses(row, path, ctx, out) {
   }
 }
 
+// 면적이 클수록 덜 적용되는 층 면적 조건(4차 리뷰 후속 — CP1 Q19(a)): 설치 조건·분기(+)와 제외 조건(−)에서 not 을 지날 때마다
+// 방향을 뒤집어, floor_exists 면적·sum_area 비교가 '면적이 커지면 거짓'(미만·이하) 쪽으로 적용을 줄이는지 본다. 구간(이상 + 미만)·같음은
+// 늘 대상이다. 층 면적은 층별개요 행의 합이라 면적제외여부가 빈칸인 보통 행도 그대로 들어간다 — 그 행이 실제로 바닥면적 밖이면 이런
+// 조건에서 비해당이 틀릴 수 있어(정책 floorAreaBasis 는 필로티·다락·옥탑·부속·면적제외 행만 해석 대상으로 본다) 작성자에게 알린다.
+// 연면적 등 표제부 지표(m)는 층별개요 행으로 셈하지 않으므로 대상이 아니다
+function lintAntimonotoneArea(node, sign, path, out) {
+  const t = nodeType(node);
+  if (t === 'not') return lintAntimonotoneArea(node.not, -sign, `${path}.not`, out);
+  if (t === 'all' || t === 'any') {
+    for (const [c, p] of childNodes(node, path)) lintAntimonotoneArea(c, sign, p, out);
+    return;
+  }
+  let ops = [];
+  if (t === 'sum_area' && isPlainObject(node.sum_area)) ops = comparisonOps(node);
+  else if (t === 'floor_exists' && isPlainObject(node.floor_exists) && isPlainObject(node.floor_exists.area)) ops = comparisonOps(node.floor_exists.area);
+  if (!ops.length) return;
+  const up = ops.some((op) => op === 'gte' || op === 'gt');
+  const down = ops.some((op) => op === 'lte' || op === 'lt' || op === 'eq');
+  if ((up && down) || (sign > 0 ? down : up)) out.push(warn('W_ANTIMONOTONE_AREA', path, JSON.stringify(node)));
+}
+
 export function lintRow(row, path = 'row', ctx = null) {
   const out = [];
   if (row.needs_review) out.push(warn('W_NEEDS_REVIEW', path, row.needs_review.reason));
   lintSelectorsAndUses(row, path, ctx, out);
+  for (const [node, p] of rowConditionRoots(row)) lintAntimonotoneArea(node, 1, `${path}.${p}`, out);
   const roots = rowConditionRoots(row);
   if (!roots.length || typeof row.criteria !== 'string') return out;
   const consts = [];
@@ -430,7 +453,10 @@ export function validateFile(file, ctx, { fileName } = {}) {
       if (ids.has(fac.facility_id)) errors.push(err('FACILITY_DUPLICATE', `${p}.facility_id`, fac.facility_id));
       ids.add(fac.facility_id);
     }
-    if (fac?.excluded_if !== undefined) validateConditions(fac.excluded_if, ctx, `${p}.excluded_if`, 0, errors);
+    if (fac?.excluded_if !== undefined) {
+      validateConditions(fac.excluded_if, ctx, `${p}.excluded_if`, 0, errors);
+      lintAntimonotoneArea(fac.excluded_if, -1, `${p}.excluded_if`, warnings);
+    }
     if (!Array.isArray(fac?.regulations)) {
       errors.push(err('FILE_BAD_FACILITIES', `${p}.regulations`));
       return;
