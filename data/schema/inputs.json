@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "description": "판정 엔진 v2 입력 항목 정의. 조건 트리의 m(수치)·flag(참/거짓)·installed 노드와, 엔진이 만드는 질문이 이 id를 참조한다. engine=true 인 항목은 엔진이 조건 평가 중에 만드는 질문용이라 조건 트리에서 직접 쓰지 않는다.",
+  "fields": {
+    "id": "영문 식별자 (조건 트리·답변 키에 쓰임, 바꾸지 말 것)",
+    "label": "한국어 이름",
+    "type": "number | integer | boolean | date | uses",
+    "unit": "단위",
+    "source": "registry(건축물대장) | user(사용자 답변) | derived(다른 입력에서 계산)",
+    "scope": "building(동) | floor(층) | site(대지·허가 단위)",
+    "range": "있을 수 있는 값의 범위(선택) — 입력 검사와 결정적 질문 시험값에 쓴다",
+    "question": "질문 문장 틀. {dong} 동 이름, {floor} 층 이름, {where} 동(+층) 이름, {area} 층 면적(괄호 포함), {uses} 용도, {floors} 층 범위, {facility} 시설, {criteria} 기준 원문, {boundary} 개정 시행일, {groups} 용도군. {dong:은/는}처럼 쓰면 받침에 맞는 조사를 붙인다"
+  },
+  "inputs": [
+    {
+      "id": "total_area",
+      "label": "연면적",
+      "type": "number",
+      "unit": "㎡",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "totArea",
+      "question": "{dong}의 연면적은 몇 ㎡입니까?"
+    },
+    {
+      "id": "building_area",
+      "label": "건축면적",
+      "type": "number",
+      "unit": "㎡",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "archArea",
+      "question": "{dong}의 건축면적은 몇 ㎡입니까?"
+    },
+    {
+      "id": "ground_floors",
+      "label": "층수(지상)",
+      "type": "integer",
+      "unit": "층",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "grndFlrCnt",
+      "range": [0, 200],
+      "question": "{dong}의 지상 층수는 몇 층입니까? (옥탑·지하층 제외)"
+    },
+    {
+      "id": "basement_floors",
+      "label": "지하층수",
+      "type": "integer",
+      "unit": "층",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "ugrndFlrCnt",
+      "range": [0, 30],
+      "question": "{dong}의 지하 층수는 몇 층입니까? (지하층이 없으면 0)"
+    },
+    {
+      "id": "floors_incl_basement",
+      "label": "지하층 포함 층수",
+      "type": "integer",
+      "unit": "층",
+      "source": "derived",
+      "scope": "building",
+      "derived_from": ["ground_floors", "basement_floors"],
+      "range": [0, 230],
+      "question": "{dong}의 지하층을 포함한 전체 층수는 몇 개 층입니까?"
+    },
+    {
+      "id": "height",
+      "label": "높이",
+      "type": "number",
+      "unit": "m",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "heit",
+      "question": "{dong}의 높이는 몇 m입니까?"
+    },
+    {
+      "id": "households",
+      "label": "세대수",
+      "type": "integer",
+      "unit": "세대",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "hhldCnt",
+      "question": "{dong}의 세대수는 몇 세대입니까?"
+    },
+    {
+      "id": "elevator",
+      "label": "승강기 설치",
+      "type": "boolean",
+      "source": "registry",
+      "scope": "building",
+      "registry_field": "rideUseElvtCnt + emgenUseElvtCnt",
+      "question": "{dong}에 승강기가 설치되어 있습니까?"
+    },
+    {
+      "id": "occupants",
+      "label": "수용인원",
+      "type": "integer",
+      "unit": "명",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 수용인원은 몇 명입니까?"
+    },
+    {
+      "id": "floor_area",
+      "label": "층 바닥면적",
+      "type": "number",
+      "unit": "㎡",
+      "source": "registry",
+      "scope": "floor",
+      "registry_field": "area",
+      "question": "{dong} {floor}의 바닥면적은 몇 ㎡입니까?"
+    },
+    {
+      "id": "uses",
+      "label": "용도",
+      "type": "uses",
+      "source": "registry",
+      "scope": "floor",
+      "registry_field": "mainPurpsCdNm + etcPurps",
+      "question": "{dong} {floor}의 용도는 무엇입니까?"
+    },
+    {
+      "id": "windowless",
+      "label": "무창층 여부",
+      "type": "boolean",
+      "source": "user",
+      "scope": "floor",
+      "question": "{dong} {floor}{area}이 무창층입니까?",
+      "help": "무창층: 지상층 중 채광·환기·출입 등에 쓰는 개구부 면적의 합계가 그 층 바닥면적의 30분의 1 이하인 층 (소방시설법 시행령 제2조제1호)"
+    },
+    {
+      "id": "use_area",
+      "label": "용도별 바닥면적 합계",
+      "type": "number",
+      "unit": "㎡",
+      "source": "derived",
+      "scope": "building",
+      "engine": true,
+      "question": "{dong}의 {floors} 중 {uses} 용도로 쓰는 바닥면적의 합계는 몇 ㎡입니까?"
+    },
+    {
+      "id": "floor_use_area",
+      "label": "층의 용도별 면적",
+      "type": "number",
+      "unit": "㎡",
+      "source": "derived",
+      "scope": "floor",
+      "engine": true,
+      "question": "{dong} {floor} 중 {uses} 용도로 쓰는 면적은 몇 ㎡입니까?"
+    },
+    {
+      "id": "use_presence",
+      "label": "용도 존재 여부",
+      "type": "boolean",
+      "source": "derived",
+      "scope": "building",
+      "engine": true,
+      "question": "{where}에 {uses} 용도로 쓰는 부분이 있습니까?"
+    },
+    {
+      "id": "gas_facility",
+      "label": "가스시설 설치",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}에 가스시설(가스 제조·저장·취급시설)이 설치되어 있습니까?"
+    },
+    {
+      "id": "inpatient_room",
+      "label": "입원실 유무",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 의원·치과의원·한의원·조산원에 입원실이 있습니까?"
+    },
+    {
+      "id": "multi_use_business",
+      "label": "다중이용업소",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}에 다중이용업소(음식점·노래연습장·PC방·고시원 등 「다중이용업소법」 대상 영업장)가 있습니까?"
+    },
+    {
+      "id": "window_bars",
+      "label": "창살 설치",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 정신의료기관·의료재활시설에 창살(사람의 탈출을 막기 위한 철재·플라스틱·목재 등)이 설치되어 있습니까?"
+    },
+    {
+      "id": "noncombustible_structure",
+      "label": "불연재료·내화구조",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 지붕과 외벽이 불연재료이거나 내화구조입니까?"
+    },
+    {
+      "id": "mechanical_parking_spaces",
+      "label": "기계장치 주차대수",
+      "type": "integer",
+      "unit": "대",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 기계장치에 의한 주차시설은 몇 대를 주차할 수 있습니까? (없으면 0)"
+    },
+    {
+      "id": "workers_indoor",
+      "label": "옥내 작업장 근로자 수",
+      "type": "integer",
+      "unit": "명",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 옥내 작업장에서 작업하는 근로자는 몇 명입니까?"
+    },
+    {
+      "id": "electrical_room_area",
+      "label": "전기실 등 바닥면적",
+      "type": "number",
+      "unit": "㎡",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 전기실·발전실·변전실·축전지실·통신기기실·전산실 바닥면적의 합계는 몇 ㎡입니까?"
+    },
+    {
+      "id": "stage_area",
+      "label": "무대부 바닥면적",
+      "type": "number",
+      "unit": "㎡",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}의 무대부 바닥면적은 몇 ㎡입니까? (무대부가 없으면 0)"
+    },
+    {
+      "id": "special_combustibles_multiple",
+      "label": "특수가연물 저장·취급량",
+      "type": "number",
+      "unit": "배",
+      "source": "user",
+      "scope": "building",
+      "question": "{dong}에서 저장·취급하는 특수가연물은 지정수량의 몇 배입니까? (없으면 0)"
+    },
+    {
+      "id": "tunnel_length",
+      "label": "터널 길이",
+      "type": "number",
+      "unit": "m",
+      "source": "user",
+      "scope": "building",
+      "question": "터널의 길이는 몇 m입니까?"
+    },
+    {
+      "id": "installed",
+      "label": "설치 여부",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "engine": true,
+      "question": "{dong}에 {facility:이/가} 설치되어 있습니까?",
+      "targets": [
+        { "id": "co2_extinguishing", "name": "이산화탄소소화설비" },
+        { "id": "halon_extinguishing", "name": "할론소화설비" },
+        { "id": "clean_agent_extinguishing", "name": "할로겐화합물 및 불활성기체소화설비" }
+      ]
+    },
+    {
+      "id": "mixed_use",
+      "label": "복합건축물 해당 여부",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "engine": true,
+      "question": "{dong:은/는} {groups} 용도를 함께 쓰는 복합건축물입니까? (주된 용도의 부수시설·주차장·구내식당 등은 용도에서 제외)"
+    },
+    {
+      "id": "review",
+      "label": "기준 해당 여부(원문 확인)",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "engine": true,
+      "question": "{dong:이/가} 다음 기준에 해당합니까? 「{criteria}」"
+    },
+    {
+      "id": "permit_date",
+      "label": "건축허가일",
+      "type": "date",
+      "source": "registry",
+      "scope": "site",
+      "registry_field": "archPmsDay | pmsDay",
+      "question": "건축허가일은 언제입니까? 개정 시행일({boundary}) 전후로 적용 기준이 달라집니다."
+    },
+    {
+      "id": "application_date",
+      "label": "건축허가 신청일",
+      "type": "date",
+      "source": "user",
+      "scope": "site",
+      "question": "건축허가 신청일(또는 소방본부의 건축허가 동의 요구일)은 언제입니까? 개정 시행일({boundary}) 전후로 적용 기준이 달라집니다."
+    },
+    {
+      "id": "use_approval_date",
+      "label": "사용승인일",
+      "type": "date",
+      "source": "registry",
+      "scope": "site",
+      "registry_field": "useAprDay",
+      "question": "사용승인일은 언제입니까?"
+    }
+  ]
+}
