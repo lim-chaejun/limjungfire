@@ -1,0 +1,50 @@
+{
+  "id": "nc-windowless-decisive",
+  "title": "근린생활시설 3층(1·2층 1,050㎡, 3층 500㎡) — 스프링클러는 1·2층 무창층 여부만 묻고 3층은 묻지 않음, 옥내소화전은 연면적으로 해당이라 묻지 않음",
+  "input": {
+    "registry": {
+      "title": [{ "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "totArea": 2600, "grndFlrCnt": 3, "ugrndFlrCnt": 0 }],
+      "floors": [
+        { "flrGbCd": "20", "flrNo": 1, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 1050 },
+        { "flrGbCd": "20", "flrNo": 2, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 1050 },
+        { "flrGbCd": "20", "flrNo": 3, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 500 }
+      ],
+      "permit": [{ "archPmsDay": "20150101", "archGbCdNm": "신축" }]
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dongs": {
+      "본동": {
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "indoor_hydrant": "해당",
+          "sprinkler": "확인 필요",
+          "simple_sprinkler": "해당",
+          "standalone_detector": "비해당",
+          "emergency_alarm": "해당",
+          "auto_fire_detection": "해당",
+          "visual_alarm": "해당",
+          "emergency_broadcast": "비해당",
+          "evacuation_equipment": "해당",
+          "rescue_equipment": "확인 필요",
+          "guide_light": "해당",
+          "standpipe": "비해당"
+        },
+        "questions": { "sprinkler": ["windowless@본동/1F", "windowless@본동/2F"], "indoor_hydrant": [] }
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "2층만 무창층 — 해당 층(2층)에만 스프링클러",
+      "answers": { "windowless@본동/1F": false, "windowless@본동/2F": true },
+      "expect": { "dongs": { "본동": { "verdicts": { "sprinkler": "해당" }, "scope": { "sprinkler": ["2F"] } } } }
+    },
+    {
+      "name": "둘 다 무창층 아님 — 비해당",
+      "answers": { "windowless@본동/1F": false, "windowless@본동/2F": false },
+      "expect": { "dongs": { "본동": { "verdicts": { "sprinkler": "비해당" } } } }
+    }
+  ]
+}

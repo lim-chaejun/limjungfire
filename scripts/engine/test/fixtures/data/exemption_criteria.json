@@ -1,0 +1,36 @@
+{
+  "description": "TEST-ONLY 면제기준 일부 — data/exemption_criteria.json 의 모양을 따른 합성 데이터",
+  "exemption_rules": [
+    {
+      "facility_name": "간이스프링클러설비",
+      "facility_id": "simple_sprinkler",
+      "regulations": [
+        {
+          "start_date": "20221201",
+          "end_date": null,
+          "criteria": "간이스프링클러설비를 설치해야 하는 특정소방대상물에 스프링클러설비, 물분무소화설비 또는 미분무소화설비를 화재안전기준에 적합하게 설치한 경우에는 그 설비의 유효범위에서 설치가 면제된다.",
+          "source": "별표5"
+        },
+        {
+          "start_date": "20140708",
+          "end_date": "20221130",
+          "criteria": "간이스프링클러설비를 설치하여야 하는 특정소방대상물에 스프링클러설비, 물분무소화설비 또는 미분무소화설비를 화재안전기준에 적합하게 설치한 경우에는 그 설비의 유효범위에서 설치가 면제된다.",
+          "source": "별표6"
+        }
+      ]
+    },
+    {
+      "facility_name": "비상경보설비",
+      "facility_id": "emergency_alarm",
+      "regulations": [
+        {
+          "start_date": "20221201",
+          "end_date": null,
+          "criteria": "비상경보설비를 설치해야 하는 특정소방대상물에 자동화재탐지설비를 설치한 경우 그 설비의 유효범위에서 설치가 면제된다.",
+          "source": "별표5",
+          "exempt_if": { "facility": "auto_fire_detection" }
+        }
+      ]
+    }
+  ]
+}

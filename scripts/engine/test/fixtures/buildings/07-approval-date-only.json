@@ -1,0 +1,52 @@
+{
+  "id": "approval-date-only",
+  "title": "허가일 없이 사용승인일(2019.3.1.)만 있는 근린생활시설 7층 — 허가일 추정 구간 안에 6층 스프링클러 강화가 있어 허가일 확인 필요",
+  "input": {
+    "registry": {
+      "title": [{ "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "totArea": 1400, "grndFlrCnt": 7, "ugrndFlrCnt": 0, "pmsDay": "", "useAprDay": "20190301" }],
+      "floors": [
+        { "flrGbCd": "20", "flrNo": 1, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 },
+        { "flrGbCd": "20", "flrNo": 2, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 },
+        { "flrGbCd": "20", "flrNo": 3, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 },
+        { "flrGbCd": "20", "flrNo": 4, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 },
+        { "flrGbCd": "20", "flrNo": 5, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 },
+        { "flrGbCd": "20", "flrNo": 6, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 },
+        { "flrGbCd": "20", "flrNo": 7, "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 200 }
+      ],
+      "permit": []
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dateSource": "approval",
+    "usedApprovalDate": true,
+    "refDate": "20190301",
+    "dongs": {
+      "본동": {
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "indoor_hydrant": "비해당",
+          "sprinkler": "확인 필요",
+          "simple_sprinkler": "해당",
+          "standalone_detector": "비해당",
+          "emergency_alarm": "해당",
+          "auto_fire_detection": "해당",
+          "visual_alarm": "해당",
+          "emergency_broadcast": "비해당",
+          "evacuation_equipment": "해당",
+          "rescue_equipment": "확인 필요",
+          "guide_light": "해당",
+          "standpipe": "해당"
+        },
+        "questions": { "sprinkler": ["permit_date"] }
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "허가일 2017.3.1. 답변 — 강화 전(신청 구간에도 경계 없음)이라 비해당",
+      "answers": { "permit_date": "20170301" },
+      "expect": { "dateSource": "permit", "usedApprovalDate": false, "dongs": { "본동": { "verdicts": { "sprinkler": "비해당" } } } }
+    }
+  ]
+}

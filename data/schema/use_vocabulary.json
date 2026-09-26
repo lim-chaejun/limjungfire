@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "description": "판정 엔진 v2 세부 용도 어휘. 특정소방대상물 용도군(type_code = data/NN_*.json 번호)과 세부 용도(id)를 정의하고, 건축물대장 주용도·기타용도 문자열을 이 어휘로 분류한다. 조건 트리의 use·sum_area·floor_exists 는 세부 용도 id 또는 용도군 코드('02' 등)를 참조한다.",
+  "source": {
+    "file": "data/ref01_fire_target_classification.json",
+    "reference_id": "ref_01",
+    "note": "그룹·세부 용도는 ref01(시행령 별표2 요약)을 따른다. ref01 의 한 항목을 판정에 필요한 만큼 더 나눈 경우 ref01 필드에 원래 항목명을 적었고, ref01 에 없는 세부 용도(카테고리 파일 definition 에서 가져온 것)는 ref01 을 null 로 두고 source_note 에 출처를 적었다."
+  },
+  "fields": {
+    "type_code": "용도군 코드(데이터 파일 번호)",
+    "registry_names": "이 용도군으로 보는 건축물대장 주용도명(공백·가운뎃점 무시)",
+    "uses[].id": "세부 용도 id (조건 트리·답변 키에 쓰임, 바꾸지 말 것)",
+    "uses[].ref01": "ref01 sub_types 의 항목명",
+    "uses[].aliases": "건축물대장 기타용도에서 이 용도로 볼 말 (다른 군과 겹치면 층의 주용도 군을 우선)",
+    "uses[].ancillary": "부수 용도 — 복합건축물 후보 판단의 용도군 수에서 제외(정책 mixedUseIgnoreAncillary)",
+    "context_aliases": "이 용도군이 주용도인 동 안에서는 별칭의 뜻이 달라지는 경우(예: 자동차관련시설 동의 '주차장' = 주차용 건축물, 다른 동의 '주차장' = 건축물 내부 주차장)",
+    "auxiliary": "용도군이 없는 방(전기실·기계실 등). 층별개요에 거의 적히지 않으므로 어느 층에나 있을 수 있다고(모름) 보고, 기준은 지표(electrical_room_area 등)로 쓰는 것을 권장"
+  },
+  "groups": [
+    {
+      "type_code": "00",
+      "name": "단독주택",
+      "file": "00_house.json",
+      "ref01_numbers": [],
+      "registry_names": ["단독주택", "다중주택", "다가구주택", "공관"],
+      "note": "특정소방대상물이 아님 — 주택용 소방시설(소화기·단독경보형감지기) 대상(소방시설법 제10조). ref01 에 없음",
+      "uses": [
+        { "id": "house", "name": "단독주택", "ref01": null, "source_note": "건축법 시행령 별표1 제1호", "aliases": ["단독주택", "다중주택", "다가구주택", "공관"] }
+      ]
+    },
+    {
+      "type_code": "01",
+      "name": "공동주택",
+      "file": "01_residential_complex.json",
+      "ref01_numbers": ["1"],
+      "registry_names": ["공동주택"],
+      "uses": [
+        { "id": "apartment", "name": "아파트등", "ref01": "아파트등", "aliases": ["아파트", "아파트등", "주상복합아파트"], "definition": "주택으로 쓰이는 층수가 5층 이상인 주택" },
+        { "id": "row_house", "name": "연립주택", "ref01": "연립주택", "aliases": ["연립주택"], "definition": "바닥면적 합계 660㎡ 초과, 층수 4개 층 이하인 주택" },
+        { "id": "multiplex_house", "name": "다세대주택", "ref01": "다세대주택", "aliases": ["다세대주택"], "definition": "바닥면적 합계 660㎡ 이하, 층수 4개 층 이하인 주택" },
+        { "id": "dormitory", "name": "기숙사", "ref01": "기숙사", "aliases": ["기숙사", "학생복지주택", "공공매입임대주택"] }
+      ]
+    },
+    {
+      "type_code": "02",
+      "name": "근린생활시설",
+      "file": "02_neighborhood_facilities.json",
+      "ref01_numbers": ["2"],
+      "registry_names": ["근린생활시설", "제1종근린생활시설", "제2종근린생활시설"],
+      "uses": [
+        { "id": "retail_small", "name": "소매점", "ref01": "소매점", "aliases": ["소매점", "슈퍼마켓", "일용품소매점", "편의점"] },
+        { "id": "restaurant", "name": "음식점", "ref01": "음식점", "aliases": ["음식점", "휴게음식점", "제과점", "일반음식점", "커피숍", "카페"] },
+        { "id": "karaoke_bar_small", "name": "단란주점(근린생활시설)", "ref01": "단란주점", "aliases": ["단란주점"] },
+        { "id": "singing_room", "name": "노래연습장", "ref01": "노래연습장", "aliases": ["노래연습장", "노래방"] },
+        { "id": "clinic", "name": "의원", "ref01": "의원등", "aliases": ["의원", "치과의원", "한의원"] },
+        { "id": "acupuncture_clinic", "name": "침술원", "ref01": "의원등", "aliases": ["침술원"] },
+        { "id": "bonesetting_clinic", "name": "접골원", "ref01": "의원등", "aliases": ["접골원"] },
+        { "id": "midwifery_clinic", "name": "조산원", "ref01": "의원등", "aliases": ["조산원", "조산소"] },
+        { "id": "postpartum_care", "name": "산후조리원", "ref01": "의원등", "aliases": ["산후조리원"] },
+        { "id": "massage_parlor", "name": "안마원", "ref01": "의원등", "aliases": ["안마원", "안마시술소"] },
+        { "id": "sports_small", "name": "체육시설(근린생활시설)", "ref01": "체육시설", "aliases": ["탁구장", "테니스장", "체육도장", "에어로빅장", "볼링장", "당구장", "실내낚시터", "골프연습장", "물놀이형시설"] },
+        { "id": "fitness_center", "name": "체력단련장", "ref01": "체육시설", "aliases": ["체력단련장", "헬스장"] },
+        { "id": "performance_small", "name": "공연장(근린생활시설)", "ref01": "공연장등", "aliases": ["공연장", "비디오물감상실", "비디오물소극장"] },
+        { "id": "religious_small", "name": "종교집회장(근린생활시설)", "ref01": "공연장등", "aliases": ["종교집회장"] },
+        { "id": "office_small", "name": "사무소(근린생활시설)", "ref01": "사무소등", "aliases": ["사무소", "금융업소", "부동산중개사무소", "결혼상담소", "소개업소", "출판사", "서점"] },
+        { "id": "manufacturing_small", "name": "제조업소", "ref01": "제조업소", "aliases": ["제조업소", "수리점"] },
+        { "id": "game_room", "name": "게임제공업소", "ref01": "게임제공업", "aliases": ["게임제공업소", "청소년게임제공업", "일반게임제공업", "인터넷컴퓨터게임시설제공업", "PC방", "복합유통게임제공업"] },
+        { "id": "academy_small", "name": "학원(근린생활시설)", "ref01": "학원등", "aliases": ["학원", "교습소"] },
+        { "id": "reading_room", "name": "독서실", "ref01": "학원등", "aliases": ["독서실", "스터디카페"] },
+        { "id": "gosiwon_small", "name": "고시원(근린생활시설)", "ref01": "학원등", "aliases": ["고시원"] },
+        { "id": "misc_service", "name": "사진관 등", "ref01": "학원등", "aliases": ["사진관", "표구점", "장의사", "동물병원", "총포판매사", "총포판매소"] },
+        { "id": "pharmacy", "name": "의약품 판매소 등", "ref01": "판매소", "aliases": ["의약품판매소", "약국", "의료기기판매소", "자동차영업소"] },
+        { "id": "barber_beauty", "name": "이용원·미용원", "ref01": null, "source_note": "02_neighborhood_facilities.json definition", "aliases": ["이용원", "미용원", "미용실"] },
+        { "id": "bathhouse", "name": "목욕장", "ref01": null, "source_note": "02_neighborhood_facilities.json definition", "aliases": ["목욕장", "목욕탕", "찜질방", "사우나"] },
+        { "id": "laundry", "name": "세탁소", "ref01": null, "source_note": "02_neighborhood_facilities.json definition", "aliases": ["세탁소"] }
+      ]
+    },
+    {
+      "type_code": "03",
+      "name": "문화 및 집회시설",
+      "file": "03_cultural_assembly.json",
+      "ref01_numbers": ["3"],
+      "registry_names": ["문화및집회시설"],
+      "uses": [
+        { "id": "performance_hall", "name": "공연장", "ref01": "공연장", "aliases": ["공연장", "극장", "영화관", "연예장", "음악당", "서커스장"] },
+        { "id": "assembly_hall", "name": "집회장", "ref01": "집회장", "aliases": ["집회장", "예식장", "공회당", "회의장", "마권장외발매소", "마권전화투표소"] },
+        { "id": "spectator_hall", "name": "관람장", "ref01": "관람장", "aliases": ["관람장", "경마장", "경륜장", "경정장", "자동차경기장"] },
+        { "id": "exhibition_hall", "name": "전시장", "ref01": "전시장", "aliases": ["전시장", "박물관", "미술관", "과학관", "문화관", "체험관", "기념관", "산업전시장", "박람회장", "견본주택"] },
+        { "id": "zoo_botanical", "name": "동·식물원", "ref01": "동·식물원", "aliases": ["동식물원", "동물원", "식물원", "수족관"] }
+      ]
+    },
+    {
+      "type_code": "04",
+      "name": "종교시설",
+      "file": "04_religious.json",
+      "ref01_numbers": ["4"],
+      "registry_names": ["종교시설"],
+      "uses": [
+        { "id": "religious_assembly", "name": "종교집회장", "ref01": "종교집회장", "aliases": ["종교집회장", "교회", "성당", "사찰", "기도원", "수도원", "수녀원", "제실", "사당"] },
+        { "id": "religious_columbarium", "name": "봉안당(종교시설)", "ref01": "봉안당", "aliases": ["봉안당", "납골당"] }
+      ]
+    },
+    {
+      "type_code": "05",
+      "name": "판매시설",
+      "file": "05_retail.json",
+      "ref01_numbers": ["5"],
+      "registry_names": ["판매시설"],
+      "uses": [
+        { "id": "wholesale_market", "name": "도매시장", "ref01": "도매시장", "aliases": ["도매시장", "농수산물도매시장", "농수산물공판장"] },
+        { "id": "retail_market", "name": "소매시장", "ref01": "소매시장", "aliases": ["소매시장", "시장", "대규모점포", "백화점", "대형마트", "쇼핑센터"] },
+        { "id": "traditional_market", "name": "전통시장", "ref01": "전통시장", "aliases": ["전통시장"] },
+        { "id": "store", "name": "상점", "ref01": "상점", "aliases": ["상점"] }
+      ]
+    },
+    {
+      "type_code": "06",
+      "name": "운수시설",
+      "file": "06_transportation.json",
+      "ref01_numbers": ["6"],
+      "registry_names": ["운수시설"],
+      "uses": [
+        { "id": "bus_terminal", "name": "여객자동차터미널", "ref01": "여객자동차터미널", "aliases": ["여객자동차터미널", "버스터미널"] },
+        { "id": "railway_station", "name": "철도 및 도시철도 시설", "ref01": "철도 및 도시철도 시설", "aliases": ["철도역사", "철도시설", "도시철도시설", "정비창"] },
+        { "id": "airport", "name": "공항시설", "ref01": "공항시설", "aliases": ["공항시설", "공항", "항공관제탑"] },
+        { "id": "port", "name": "항만시설 및 종합여객시설", "ref01": "항만시설 및 종합여객시설", "aliases": ["항만시설", "종합여객시설", "여객선터미널"] }
+      ]
+    },
+    {
+      "type_code": "07",
+      "name": "의료시설",
+      "file": "07_medical.json",
+      "ref01_numbers": ["7"],
+      "registry_names": ["의료시설"],
+      "uses": [
+        { "id": "hospital", "name": "병원", "ref01": "병원", "aliases": ["종합병원", "병원", "치과병원", "한방병원"] },
+        { "id": "nursing_hospital", "name": "요양병원", "ref01": "병원", "aliases": ["요양병원"] },
+        { "id": "isolation_hospital", "name": "격리병원", "ref01": "격리병원", "aliases": ["격리병원", "전염병원", "마약진료소"] },
+        { "id": "mental_hospital", "name": "정신의료기관", "ref01": "정신의료기관", "aliases": ["정신의료기관", "정신병원"] },
+        { "id": "rehab_medical", "name": "장애인 의료재활시설", "ref01": "장애인 의료재활시설", "aliases": ["장애인의료재활시설", "의료재활시설"] }
+      ]
+    },
+    {
+      "type_code": "08",
+      "name": "교육연구시설",
+      "file": "08_education_research.json",
+      "ref01_numbers": ["8"],
+      "registry_names": ["교육연구시설", "교육연구및복지시설"],
+      "uses": [
+        { "id": "school", "name": "학교", "ref01": "학교", "aliases": ["학교", "초등학교", "중학교", "고등학교", "대학", "대학교", "전문대학", "특수학교"] },
+        { "id": "training_institute", "name": "교육원", "ref01": "교육원", "aliases": ["교육원", "연수원"] },
+        { "id": "vocational_school", "name": "직업훈련소", "ref01": "직업훈련소", "aliases": ["직업훈련소"] },
+        { "id": "academy", "name": "학원(교육연구시설)", "ref01": "학원", "aliases": ["학원"] },
+        { "id": "research_institute", "name": "연구소", "ref01": "연구소", "aliases": ["연구소", "시험소", "계량계측소"] },
+        { "id": "library", "name": "도서관", "ref01": "도서관", "aliases": ["도서관"] }
+      ]
+    },
+    {
+      "type_code": "09",
+      "name": "노유자시설",
+      "file": "09_elderly_childcare.json",
+      "ref01_numbers": ["9"],
+      "registry_names": ["노유자시설"],
+      "uses": [
+        { "id": "elderly_facility", "name": "노인관련시설", "ref01": "노인관련시설", "aliases": ["노인관련시설", "노인요양시설", "노인복지시설", "노인주거복지시설", "노인의료복지시설", "경로당", "노인복지관", "주야간보호시설"] },
+        { "id": "child_facility", "name": "아동관련시설", "ref01": "아동관련시설", "aliases": ["아동관련시설", "어린이집", "아동복지시설", "유치원", "병설유치원"] },
+        { "id": "disabled_facility", "name": "장애인관련시설", "ref01": "장애인관련시설", "aliases": ["장애인관련시설", "장애인거주시설", "장애인복지시설"] },
+        { "id": "mental_patient_facility", "name": "정신질환자관련시설", "ref01": "정신질환자관련시설", "aliases": ["정신질환자관련시설", "정신요양시설", "정신재활시설"] },
+        { "id": "homeless_facility", "name": "노숙인관련시설", "ref01": "노숙인관련시설", "aliases": ["노숙인관련시설", "노숙인복지시설"] },
+        { "id": "social_welfare", "name": "사회복지시설", "ref01": "사회복지시설", "aliases": ["사회복지시설", "결핵환자요양시설", "한센인요양시설"] }
+      ]
+    },
+    {
+      "type_code": "10",
+      "name": "수련시설",
+      "file": "10_training.json",
+      "ref01_numbers": ["10"],
+      "registry_names": ["수련시설"],
+      "uses": [
+        { "id": "youth_center", "name": "생활권 수련시설", "ref01": "생활권 수련시설", "aliases": ["생활권수련시설", "청소년수련관", "청소년문화의집", "청소년특화시설"] },
+        { "id": "youth_camp", "name": "자연권 수련시설", "ref01": "자연권 수련시설", "aliases": ["자연권수련시설", "청소년수련원", "청소년야영장"] },
+        { "id": "youth_hostel", "name": "유스호스텔", "ref01": "유스호스텔", "aliases": ["유스호스텔"] }
+      ]
+    },
+    {
+      "type_code": "11",
+      "name": "운동시설",
+      "file": "11_sports.json",
+      "ref01_numbers": ["11"],
+      "registry_names": ["운동시설"],
+      "uses": [
+        { "id": "indoor_sports", "name": "실내체육시설", "ref01": "실내체육시설", "aliases": ["실내체육시설", "탁구장", "체육도장", "테니스장", "체력단련장", "에어로빅장", "볼링장", "당구장", "실내낚시터", "골프연습장", "물놀이형시설"] },
+        { "id": "gymnasium", "name": "체육관", "ref01": "체육관", "aliases": ["체육관"] },
+        { "id": "stadium", "name": "운동장", "ref01": "운동장", "aliases": ["운동장", "육상장", "구기장", "수영장", "스케이트장", "롤러스케이트장", "승마장", "사격장", "궁도장", "골프장"] }
+      ]
+    },
+    {
+      "type_code": "12",
+      "name": "업무시설",
+      "file": "12_office.json",
+      "ref01_numbers": ["12"],
+      "registry_names": ["업무시설"],
+      "uses": [
+        { "id": "public_office", "name": "공공업무시설", "ref01": "공공업무시설", "aliases": ["공공업무시설", "청사", "외국공관"] },
+        { "id": "general_office", "name": "일반업무시설", "ref01": "일반업무시설", "aliases": ["일반업무시설", "사무소", "금융업소", "신문사"] },
+        { "id": "officetel", "name": "오피스텔", "ref01": "일반업무시설", "aliases": ["오피스텔"] },
+        { "id": "public_service", "name": "공공시설", "ref01": "공공시설", "aliases": ["주민자치센터", "경찰서", "지구대", "파출소", "소방서", "119안전센터", "우체국", "보건소", "공공도서관", "국민건강보험공단"] },
+        { "id": "village_facility", "name": "마을시설", "ref01": "마을시설", "aliases": ["마을회관", "마을공동작업소", "마을공동구판장"] },
+        { "id": "infrastructure", "name": "기반시설", "ref01": "기반시설", "aliases": ["변전소", "양수장", "정수장", "대피소", "공중화장실"] }
+      ]
+    },
+    {
+      "type_code": "13",
+      "name": "숙박시설",
+      "file": "13_accommodation.json",
+      "ref01_numbers": ["13"],
+      "registry_names": ["숙박시설"],
+      "uses": [
+        { "id": "general_lodging", "name": "일반형 숙박시설", "ref01": "일반형 숙박시설", "aliases": ["일반형숙박시설", "일반숙박시설", "호텔", "여관", "여인숙", "모텔", "관광숙박시설", "관광호텔", "가족호텔", "호스텔"] },
+        { "id": "residential_lodging", "name": "생활형 숙박시설", "ref01": "생활형 숙박시설", "aliases": ["생활형숙박시설", "생활숙박시설", "레지던스"] },
+        { "id": "gosiwon", "name": "고시원(숙박시설)", "ref01": "고시원", "aliases": ["고시원"] }
+      ]
+    },
+    {
+      "type_code": "14",
+      "name": "위락시설",
+      "file": "14_entertainment.json",
+      "ref01_numbers": ["14"],
+      "registry_names": ["위락시설"],
+      "uses": [
+        { "id": "karaoke_bar", "name": "단란주점(위락시설)", "ref01": "단란주점", "aliases": ["단란주점"] },
+        { "id": "nightclub", "name": "유흥주점", "ref01": "유흥주점", "aliases": ["유흥주점"] },
+        { "id": "amusement", "name": "유원시설업", "ref01": "유원시설업", "aliases": ["유원시설업", "유원시설"] },
+        { "id": "dance_hall", "name": "무도장 및 무도학원", "ref01": "무도장 및 무도학원", "aliases": ["무도장", "무도학원", "콜라텍"] },
+        { "id": "casino", "name": "카지노영업소", "ref01": "카지노영업소", "aliases": ["카지노영업소", "카지노"] }
+      ]
+    },
+    {
+      "type_code": "15",
+      "name": "공장",
+      "file": "15_factory.json",
+      "ref01_numbers": ["15"],
+      "registry_names": ["공장"],
+      "uses": [
+        { "id": "factory", "name": "공장", "ref01": null, "source_note": "ref01 제15호(세부 항목 없음)", "aliases": ["공장", "제조공장"], "definition": "물품의 제조·가공 또는 수리에 계속적으로 이용되는 건축물" }
+      ]
+    },
+    {
+      "type_code": "16",
+      "name": "창고시설",
+      "file": "16_warehouse.json",
+      "ref01_numbers": ["16"],
+      "registry_names": ["창고시설"],
+      "uses": [
+        { "id": "warehouse", "name": "창고", "ref01": "창고", "aliases": ["창고", "냉장창고", "냉동창고", "물류창고"] },
+        { "id": "loading_dock", "name": "하역장", "ref01": "하역장", "aliases": ["하역장"] },
+        { "id": "logistics_terminal", "name": "물류터미널", "ref01": "물류터미널", "aliases": ["물류터미널"] },
+        { "id": "distribution_center", "name": "집배송시설", "ref01": "집배송시설", "aliases": ["집배송시설"] }
+      ]
+    },
+    {
+      "type_code": "17",
+      "name": "위험물 저장 및 처리 시설",
+      "file": "17_hazardous_materials.json",
+      "ref01_numbers": ["17"],
+      "registry_names": ["위험물저장및처리시설"],
+      "uses": [
+        { "id": "hazardous_facility", "name": "위험물 제조소등", "ref01": "위험물 제조소등", "aliases": ["위험물제조소등", "위험물제조소", "위험물저장소", "위험물취급소", "주유소", "석유판매소"] },
+        { "id": "gas_plant", "name": "가스시설", "ref01": "가스시설", "aliases": ["가스시설", "가스제조시설", "가스저장시설", "가스취급시설", "가스충전소", "액화석유가스충전소"] }
+      ]
+    },
+    {
+      "type_code": "18",
+      "name": "항공기 및 자동차 관련 시설",
+      "file": "18_aviation_automotive.json",
+      "ref01_numbers": ["18"],
+      "registry_names": ["항공기및자동차관련시설", "자동차관련시설"],
+      "context_aliases": { "주차장": "parking_structure", "지하주차장": "parking_structure", "옥내주차장": "parking_structure", "부설주차장": "parking_structure", "필로티주차장": "parking_structure" },
+      "uses": [
+        { "id": "aircraft_hangar", "name": "항공기 격납고", "ref01": "항공기 격납고", "aliases": ["항공기격납고", "격납고"] },
+        { "id": "garage", "name": "차고", "ref01": "차고", "aliases": ["차고"] },
+        { "id": "parking_structure", "name": "주차용 건축물", "ref01": "주차용 건축물", "aliases": ["주차용건축물", "주차전용건축물", "철골조립식주차시설", "기계식주차시설", "기계식주차장", "주차타워"] },
+        { "id": "car_wash", "name": "세차장", "ref01": "세차장", "aliases": ["세차장"] },
+        { "id": "scrapyard", "name": "폐차장", "ref01": "폐차장", "aliases": ["폐차장"] },
+        { "id": "car_inspection", "name": "자동차 검사장", "ref01": "자동차 검사장", "aliases": ["자동차검사장"] },
+        { "id": "car_dealer", "name": "자동차 매매장", "ref01": "자동차 매매장", "aliases": ["자동차매매장", "중고차매매장"] },
+        { "id": "car_repair", "name": "자동차 정비공장", "ref01": "자동차 정비공장", "aliases": ["자동차정비공장", "정비공장", "자동차정비소"] },
+        { "id": "driving_school", "name": "운전학원·정비학원", "ref01": "운전학원·정비학원", "aliases": ["운전학원", "정비학원"] },
+        { "id": "garage_apron", "name": "차고 및 주기장", "ref01": "차고 및 주기장", "aliases": ["주기장"] },
+        { "id": "indoor_parking", "name": "건축물 내부 주차장", "ref01": "건축물 내부 주차장", "ancillary": true, "aliases": ["주차장", "지하주차장", "옥내주차장", "부설주차장", "필로티주차장"] }
+      ]
+    },
+    {
+      "type_code": "19",
+      "name": "동물 및 식물 관련 시설",
+      "file": "19_animal_plant.json",
+      "ref01_numbers": ["19"],
+      "registry_names": ["동물및식물관련시설"],
+      "uses": [
+        { "id": "livestock_barn", "name": "축사", "ref01": "축사", "aliases": ["축사", "부화장"] },
+        { "id": "livestock_facility", "name": "가축시설", "ref01": "가축시설", "aliases": ["가축시설", "가축용운동시설", "인공수정센터", "가축시장", "동물검역소", "실험동물사육시설"] },
+        { "id": "slaughterhouse", "name": "도축장", "ref01": "도축장", "aliases": ["도축장"] },
+        { "id": "poultry_slaughterhouse", "name": "도계장", "ref01": "도계장", "aliases": ["도계장"] },
+        { "id": "crop_cultivation", "name": "작물재배사", "ref01": "작물재배사", "aliases": ["작물재배사"] },
+        { "id": "seedling_facility", "name": "종묘배양시설", "ref01": "종묘배양시설", "aliases": ["종묘배양시설"] },
+        { "id": "greenhouse", "name": "온실", "ref01": "온실", "aliases": ["온실"] }
+      ]
+    },
+    {
+      "type_code": "20",
+      "name": "자원순환 관련 시설",
+      "file": "20_resource_recycling.json",
+      "ref01_numbers": ["20"],
+      "registry_names": ["자원순환관련시설", "분뇨.쓰레기처리시설", "분뇨및쓰레기처리시설"],
+      "uses": [
+        { "id": "sewage_treatment", "name": "하수 등 처리시설", "ref01": "하수 등 처리시설", "aliases": ["하수처리시설", "분뇨처리시설"] },
+        { "id": "junkyard", "name": "고물상", "ref01": "고물상", "aliases": ["고물상"] },
+        { "id": "waste_recycling", "name": "폐기물재활용시설", "ref01": "폐기물재활용시설", "aliases": ["폐기물재활용시설"] },
+        { "id": "waste_disposal", "name": "폐기물처분시설", "ref01": "폐기물처분시설", "aliases": ["폐기물처분시설"] },
+        { "id": "waste_reduction", "name": "폐기물감량화시설", "ref01": "폐기물감량화시설", "aliases": ["폐기물감량화시설"] }
+      ]
+    },
+    {
+      "type_code": "21",
+      "name": "교정 및 군사시설",
+      "file": "21_correctional_military.json",
+      "ref01_numbers": ["21"],
+      "registry_names": ["교정및군사시설", "교정시설", "국방·군사시설"],
+      "uses": [
+        { "id": "correctional", "name": "교정시설", "ref01": "교정시설", "aliases": ["교도소", "구치소", "보호감호소", "보호관찰소", "갱생보호시설", "치료감호시설", "소년원", "소년분류심사원"] },
+        { "id": "immigration_detention", "name": "출입국 보호시설", "ref01": "출입국 보호시설", "aliases": ["출입국보호시설", "외국인보호소"] },
+        { "id": "police_lockup", "name": "경찰서 유치장", "ref01": "경찰서 유치장", "aliases": ["유치장"] },
+        { "id": "military", "name": "국방·군사시설", "ref01": "국방·군사시설", "aliases": ["군사시설"] }
+      ]
+    },
+    {
+      "type_code": "22",
+      "name": "방송통신시설",
+      "file": "22_broadcasting.json",
+      "ref01_numbers": ["22"],
+      "registry_names": ["방송통신시설"],
+      "uses": [
+        { "id": "broadcasting_station", "name": "방송국", "ref01": "방송국", "aliases": ["방송국", "방송프로그램제작시설", "송신시설", "수신시설", "중계시설"] },
+        { "id": "telephone_office", "name": "전신전화국", "ref01": "전신전화국", "aliases": ["전신전화국"] },
+        { "id": "filming_studio", "name": "촬영소", "ref01": "촬영소", "aliases": ["촬영소"] },
+        { "id": "telecom_facility", "name": "통신용 시설", "ref01": "통신용 시설", "aliases": ["통신용시설", "통신시설"] },
+        { "id": "data_center", "name": "데이터센터", "ref01": "데이터센터", "aliases": ["데이터센터"] }
+      ]
+    },
+    {
+      "type_code": "23",
+      "name": "발전시설",
+      "file": "23_power_generation.json",
+      "ref01_numbers": ["23"],
+      "registry_names": ["발전시설"],
+      "uses": [
+        { "id": "nuclear_plant", "name": "원자력발전소", "ref01": "원자력발전소", "aliases": ["원자력발전소"] },
+        { "id": "thermal_plant", "name": "화력발전소", "ref01": "화력발전소", "aliases": ["화력발전소"] },
+        { "id": "hydro_plant", "name": "수력(조력)발전소", "ref01": "수력(조력)발전소", "aliases": ["수력발전소", "조력발전소"] },
+        { "id": "wind_plant", "name": "풍력발전소", "ref01": "풍력발전소", "aliases": ["풍력발전소"] },
+        { "id": "district_energy", "name": "집단에너지 공급시설", "ref01": "집단에너지 공급시설", "aliases": ["집단에너지공급시설"] },
+        { "id": "energy_storage", "name": "전기저장시설", "ref01": "전기저장시설", "aliases": ["전기저장시설", "ESS", "에너지저장장치"] }
+      ]
+    },
+    {
+      "type_code": "24",
+      "name": "묘지 관련 시설",
+      "file": "24_cemetery.json",
+      "ref01_numbers": ["24"],
+      "registry_names": ["묘지관련시설"],
+      "uses": [
+        { "id": "crematorium", "name": "화장시설", "ref01": "화장시설", "aliases": ["화장시설", "화장장"] },
+        { "id": "columbarium", "name": "봉안당(묘지 관련 시설)", "ref01": "봉안당", "aliases": ["봉안당", "납골당"] },
+        { "id": "cemetery_building", "name": "묘지부수건축물", "ref01": "묘지부수건축물", "aliases": ["묘지부수건축물"] },
+        { "id": "animal_crematorium", "name": "동물화장시설 등", "ref01": "동물시설", "aliases": ["동물화장시설", "동물건조장", "동물전용납골시설"] }
+      ]
+    },
+    {
+      "type_code": "25",
+      "name": "관광 휴게시설",
+      "file": "25_tourism_leisure.json",
+      "ref01_numbers": ["25"],
+      "registry_names": ["관광휴게시설"],
+      "uses": [
+        { "id": "outdoor_music_hall", "name": "야외음악당", "ref01": "야외음악당", "aliases": ["야외음악당"] },
+        { "id": "outdoor_theater", "name": "야외극장", "ref01": "야외극장", "aliases": ["야외극장"] },
+        { "id": "children_hall", "name": "어린이회관", "ref01": "어린이회관", "aliases": ["어린이회관"] },
+        { "id": "observation_tower", "name": "관망탑", "ref01": "관망탑", "aliases": ["관망탑"] },
+        { "id": "rest_area", "name": "휴게소", "ref01": "휴게소", "aliases": ["휴게소"] },
+        { "id": "park_resort", "name": "공원·유원지", "ref01": "공원·유원지", "aliases": ["공원", "유원지", "관광지부수시설"] }
+      ]
+    },
+    {
+      "type_code": "26",
+      "name": "장례시설",
+      "file": "26_funeral.json",
+      "ref01_numbers": ["26"],
+      "registry_names": ["장례시설"],
+      "uses": [
+        { "id": "funeral_hall", "name": "장례식장", "ref01": "장례식장", "aliases": ["장례식장"] },
+        { "id": "animal_funeral_hall", "name": "동물 전용의 장례식장", "ref01": "동물 전용의 장례식장", "aliases": ["동물전용장례식장", "동물전용의장례식장"] }
+      ]
+    },
+    {
+      "type_code": "27",
+      "name": "지하상가·터널",
+      "file": "27_underground_mall.json",
+      "ref01_numbers": ["27", "27-2"],
+      "registry_names": ["지하상가", "지하가"],
+      "uses": [
+        { "id": "underground_mall", "name": "지하상가", "ref01": null, "source_note": "ref01 제27호(세부 항목 없음)", "aliases": ["지하상가", "지하도상가"], "definition": "지하인공구조물로 상점 등이 연속하여 지하도에 면하여 설치된 것과 그 지하도를 합한 것" },
+        { "id": "tunnel", "name": "터널", "ref01": "일반터널", "aliases": ["터널", "일반터널"] },
+        { "id": "noise_tunnel", "name": "방음터널", "ref01": "방음터널", "aliases": ["방음터널"] }
+      ]
+    },
+    {
+      "type_code": "28",
+      "name": "지하구",
+      "file": "28_underground_passage.json",
+      "ref01_numbers": ["28"],
+      "registry_names": ["지하구"],
+      "uses": [
+        { "id": "power_tunnel", "name": "전력구", "ref01": "전력구", "aliases": ["전력구"] },
+        { "id": "telecom_tunnel", "name": "통신구", "ref01": "통신구", "aliases": ["통신구"] },
+        { "id": "underground_structure", "name": "지하인공구조물", "ref01": "지하인공구조물", "aliases": ["지하인공구조물"] },
+        { "id": "utility_conduit", "name": "공동구", "ref01": "공동구", "aliases": ["공동구"] }
+      ]
+    },
+    {
+      "type_code": "29",
+      "name": "국가유산",
+      "file": "29_national_heritage.json",
+      "ref01_numbers": ["29"],
+      "registry_names": ["국가유산", "문화재"],
+      "uses": [
+        { "id": "designated_heritage", "name": "지정문화유산", "ref01": "지정문화유산", "aliases": ["지정문화유산"] },
+        { "id": "natural_monument", "name": "천연기념물등", "ref01": "천연기념물등", "aliases": ["천연기념물"] }
+      ]
+    },
+    {
+      "type_code": "30",
+      "name": "복합건축물",
+      "file": "30_mixed_use.json",
+      "ref01_numbers": ["30"],
+      "registry_names": [],
+      "note": "건축물대장 주용도로는 나오지 않는다. 동의 용도군이 둘 이상이면 엔진이 후보로 표시하고 사용자 확인을 받는다.",
+      "uses": [
+        { "id": "mixed_use_a", "name": "복합건축물(가)", "ref01": "복합건축물(가)", "aliases": [] },
+        { "id": "mixed_use_b", "name": "복합건축물(나)", "ref01": "복합건축물(나)", "aliases": [] }
+      ]
+    }
+  ],
+  "auxiliary": [
+    { "id": "electrical_room", "name": "전기실 등", "source_note": "별표4 물분무등소화설비 '전기실·발전실·변전실·축전지실·통신기기실·전산실'", "aliases": ["전기실", "발전실", "변전실", "축전지실", "통신기기실", "전산실"] },
+    { "id": "machine_room", "name": "기계실 등", "source_note": "부속실(용도군 없음)", "aliases": ["기계실", "보일러실", "전기기계실"] }
+  ],
+  "not_covered": [
+    { "name": "야영장시설", "reason": "건축법 시행령 별표1 제29호 야영장 시설 — 특정소방대상물 용도 대응 검수 전" }
+  ]
+}
