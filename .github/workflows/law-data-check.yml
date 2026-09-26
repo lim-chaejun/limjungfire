@@ -1,0 +1,27 @@
+name: law-data-check
+
+# data/ 나 scripts/ 를 바꾸는 PR 마다 감시 도구 테스트와 데이터 가드를 돌린다 (네트워크 없음)
+on:
+  pull_request:
+    paths:
+      - 'data/**'
+      - 'scripts/**'
+      - '.github/workflows/law-*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 감시 도구 테스트 (기록 재생)
+        # 셸이 펼치는 파일 목록 — Node 20 과 22+ 모두 동작 (22+ 는 --test 에 디렉터리를 받지 않는다)
+        run: node --test scripts/law-watch/test/*.test.mjs
+      - name: 데이터 가드
+        run: node scripts/validate-data.mjs
