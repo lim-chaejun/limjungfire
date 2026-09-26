@@ -48,6 +48,12 @@ export const POLICY_OPTIONS = Object.freeze({
   // (별표2 제30호: 주된 용도의 부수시설·주차 등은 복합건축물 판단에서 제외). 해석 — CP1.
   mixedUseIgnoreAncillary: { default: true, values: [true, false] },
 
+  // 조건(… ㎡ 이상인 층·바닥면적 합계·그 용도 바닥면적)에 쓰는 층·부분 면적에 연면적에서 빠지는(빠질 수 있는) 층별개요 행 —
+  // 면적제외 '1'·'Y', 다른 건축물의 행, 필로티·다락·옥탑 — 을 넣는가(바닥면적 산입, 건축법 시행령 제119조①3호). 해석 — CP1 Q19.
+  // 'uncertain' = 두 읽기 사이 구간(판정이 갈리면 확인 필요 + 검수 질문 review[floor_area_basis] — 운영 정책으로 답하면 그 읽기로),
+  // 'all_rows' = 모든 행(4차 리뷰 수정 46e0b42 까지의 동작), 'counted_only' = 그 행들을 뺀다. 면적 항등식(연면적 추론)과는 무관
+  floorAreaBasis: { default: 'uncertain', values: ['uncertain', 'all_rows', 'counted_only'] },
+
   // 제13조 강화기준 소급(파일의 strengthened_retroactive). 'apply' = 현행 기준을 기존 건물에도 적용해 판정,
   // 'badge' = 판정은 허가일 기준으로 두고 '강화기준 소급 대상' 표시만, 'off' = 고려 안 함('badge'·'off' 는 비해당이 늘어난다).
   strengthenedRetroactive: { default: 'apply', values: ['apply', 'badge', 'off'] },

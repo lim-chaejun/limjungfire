@@ -22,7 +22,7 @@
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
 import { addDays, formatYmd, resolveDateInfo, rowValidAt } from './dates.js';
-import { areaIdentity, evalCondition, floorMember, floorShares, floorsOf, makeEnv, metric } from './conditions.js';
+import { FLOOR_AREA_BASIS_KEY, areaIdentity, evalCondition, floorMember, floorShares, floorsOf, makeEnv, metric } from './conditions.js';
 import { DATE_INPUTS, buildQuestion, constantsFor, extremeValues, testValues } from './questions.js';
 import { fmtNum } from './format.js';
 
@@ -500,6 +500,9 @@ export function finalizeFacility(fid, dctx) {
     selection = chooseQuestions(fid, dctx, j, candidates);
     questionDeps = selection.deps;
     joint = selection.joint;
+    if (questionDeps.some((d) => d.key === FLOOR_AREA_BASIS_KEY)) {
+      reasons.push('필로티·다락·옥탑·부속건축물 등 연면적에서 빠지는 부분을 바닥면적에 넣는지(법령 검수 전 — CP1 Q19)에 따라 판정이 갈림 — 운영 정책(floorAreaBasis) 또는 검수 질문으로 정함');
+    }
     if (j.released && j.normal.every((n) => n.tv.v === F)) {
       const released = candidates.filter((d) => !d.isDate);
       reasons.push(`가정값·미확인 입력을 모름으로 두면 비해당이 확정되지 않음${released.length ? `: ${released.map((d) => describeDep(d, dctx)).join(', ')}` : ''}`);

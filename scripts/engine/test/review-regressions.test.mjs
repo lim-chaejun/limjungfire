@@ -10,7 +10,7 @@ import {
 import { addDays } from '../../../js/engine/dates.js';
 import { inputDefsFrom } from '../../../js/engine/questions.js';
 import { FACILITIES, INDEX, INPUTS, TODAY, VOCABULARY, evaluate, loadBuildingFixtures } from './helpers.mjs';
-import { CASES, PILOTI_DATA, caseById, pilotiBuilding, row, v2 } from './review-cases.mjs';
+import { BASIS_DATA, CASES, PILOTI_DATA, caseById, pilotiBuilding, pilotiFloor, row, v2 } from './review-cases.mjs';
 
 const FIXTURES = loadBuildingFixtures();
 const qkeys = (f) => f.questions.map((q) => q.key);
@@ -580,7 +580,9 @@ test('4차 HIGH: 산입 여부가 다른 행이 섞인 층 — 좁히는 것은 
     permit: [{ archPmsDay: '20150101', archGbCdNm: '신축' }],
   };
   const dong = normalizeRegistry(registry, { useIndex: INDEX }).dongs[0];
-  const at = (node, answers = {}) => evalCondition(node, makeEnv({ dong, index: INDEX, answers, policy: resolvePolicy(), inputDefs: inputDefsFrom(INPUTS) }));
+  // 층 면적 값 자체(모든 행)는 바탕 all_rows 로 본다 — 기본(uncertain)은 아래 5차 시험
+  const ALL = resolvePolicy({ floorAreaBasis: 'all_rows' });
+  const at = (node, answers = {}) => evalCondition(node, makeEnv({ dong, index: INDEX, answers, policy: ALL, inputDefs: inputDefsFrom(INPUTS) }));
   // 소매점 행 = 1,000 − 600 = 400 (정해짐 — 묻지 않음), 1층 면적 = 400 + 700 = 1,100 (연면적보다 커도 모순 아님)
   const ge = (n) => at({ floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: n } } });
   assert.deepEqual([ge(1100).v, ge(1101).v], ['T', 'F']);
@@ -596,11 +598,11 @@ test('4차 HIGH: 산입 여부가 다른 행이 섞인 층 — 좁히는 것은 
   const both = { ...registry, floors: registry.floors.map((f) => (f.etcPurps === '필로티주차장' ? { ...f, area: '' } : f)) };
   const mixed = normalizeRegistry(both, { useIndex: INDEX }).dongs[0];
   const node = { sum_area: { floors: [{ kind: 'ground', level: { lte: 1 } }], use: ['retail_small'] }, gte: 300 };
-  const v = evalCondition(node, makeEnv({ dong: mixed, index: INDEX, answers: {}, policy: resolvePolicy(), inputDefs: inputDefsFrom(INPUTS) }));
+  const v = evalCondition(node, makeEnv({ dong: mixed, index: INDEX, answers: {}, policy: ALL, inputDefs: inputDefsFrom(INPUTS) }));
   assert.deepEqual([v.v, v.deps.some((d) => d.key === 'part_area[1]@본동/1F')], ['T', false]); // 소매점 행 = 400 으로 정해짐
   // 행 면적을 다 알 때: 소매점 400 + 필로티 700 = 1층 1,100 — 연면적 1,000 으로 자르지 않는다(예전: 층 전체에 상한 → 1,000)
   const known = normalizeRegistry({ ...registry, floors: registry.floors.map((f) => (f.etcPurps === '소매점' && f.flrNo === 1 ? { ...f, area: 400 } : f)) }, { useIndex: INDEX }).dongs[0];
-  const envK = makeEnv({ dong: known, index: INDEX, answers: {}, policy: resolvePolicy(), inputDefs: inputDefsFrom(INPUTS) });
+  const envK = makeEnv({ dong: known, index: INDEX, answers: {}, policy: ALL, inputDefs: inputDefsFrom(INPUTS) });
   assert.equal(evalCondition({ floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: 1100 } } }, envK).v, 'T');
 });
 
@@ -620,6 +622,98 @@ test('4차 HIGH: 층수 질문의 범위도 연면적 밖 행은 빼고 본다 �
   };
   assert.deepEqual(range('1'), [['basement_floors@본동'], [1, 30]]);
   assert.deepEqual(range(' '), [['basement_floors@본동'], [0, 30]]); // 필로티가 산입될 수도 있으면 0층도 가능
+});
+
+// ───── 4차 후속: 조건의 바닥면적 바탕(floorAreaBasis — CP1 Q19) ─────
+
+test('4차 후속: 필로티 주차(면적제외) 층 — 기본(uncertain)은 설치·제외 조건 모두 확인 필요 + 검수 질문, 답하면 그 읽기, all_rows 는 이전과 같다', () => {
+  const c = caseById('basis-piloti');
+  const verdicts = (r) => ['t', 'e', 's'].map((id) => fac(r, '본동', id).verdict);
+  // 기본: 1층 바닥면적 [300, 1,000] — 설치 조건은 해당 대신 확인 필요, 제외 조건은 필로티만으로 발동하지 않음(확인 필요)
+  const base = runCase(c);
+  assert.deepEqual(verdicts(base), ['확인 필요', '확인 필요', '확인 필요']);
+  for (const id of ['t', 'e', 's']) {
+    const f = fac(base, '본동', id);
+    assert.deepEqual(qkeys(f), ['review[floor_area_basis]'], id);
+    assert.match(f.reasons.join(' '), /CP1 Q19/);
+    assert.match(f.questions[0].text, /운영 정책 — CP1 Q19/);
+  }
+  assert.deepEqual(base.questions.map((q) => q.key), ['review[floor_area_basis]']);
+  // 검수 질문에 답하면 그 읽기 — 막다른 확인 필요가 아니다('예' = 넣음 = all_rows, '아니오' = 뺌 = counted_only)
+  const yes = runCase(c, { answers: { 'review[floor_area_basis]': true } });
+  const no = runCase(c, { answers: { 'review[floor_area_basis]': false } });
+  assert.deepEqual([verdicts(yes), yes.questions.length], [['해당', '비해당', '해당'], 0]);
+  assert.deepEqual([verdicts(no), no.questions.length], [['비해당', '해당', '비해당'], 0]);
+  // 정책으로 정하면 묻지 않는다 — all_rows 는 이전(4차 수정 전후) 동작 그대로, 정책이 정해져 있으면 답은 보지 않는다
+  assert.deepEqual(verdicts(runCase(c, { policy: { floorAreaBasis: 'all_rows' } })), ['해당', '비해당', '해당']);
+  assert.deepEqual(verdicts(runCase(c, { policy: { floorAreaBasis: 'counted_only' } })), ['비해당', '해당', '비해당']);
+  assert.deepEqual(verdicts(runCase(c, { policy: { floorAreaBasis: 'all_rows' }, answers: { 'review[floor_area_basis]': false } })), ['해당', '비해당', '해당']);
+  // 면적제외여부만 빈칸인 보통 행(일반음식점)은 해석이 갈리지 않는다 — 바닥면적으로 본다. 필로티는 빈칸이어도 해석이 갈린다
+  const plain = runCase({ ...c, input: { registry: pilotiFloor({ areaExctYn: ' ' }, '일반음식점') } });
+  assert.deepEqual([verdicts(plain), plain.questions.length], [['해당', '비해당', '해당'], 0]);
+  assert.deepEqual(verdicts(runCase({ ...c, input: { registry: pilotiFloor({ areaExctYn: ' ' }) } })), ['확인 필요', '확인 필요', '확인 필요']);
+  // 용도 면적(그 용도 바닥면적 합계·그 용도 N㎡ 이상인 층)도 같은 바탕 — 필로티 주차 행은 넣음 700 · 뺌 0 · 모름 0~700
+  const dong = normalizeRegistry(pilotiFloor(), { useIndex: INDEX }).dongs[0];
+  const parking = [
+    { sum_area: { floors: [{ kind: 'ground', level: { lte: 1 } }], use: ['indoor_parking', 'garage'] }, gte: 500 },
+    { floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], use: ['indoor_parking', 'garage'], area: { gte: 500 } } },
+  ];
+  for (const [floorAreaBasis, want] of [['all_rows', 'T'], ['counted_only', 'F'], ['uncertain', 'U']]) {
+    const env = makeEnv({ dong, index: INDEX, answers: {}, policy: resolvePolicy({ floorAreaBasis }), inputDefs: inputDefsFrom(INPUTS) });
+    assert.deepEqual(parking.map((n) => evalCondition(n, env).v), [want, want], floorAreaBasis);
+  }
+  // 층 면적 답변도 모든 행의 면적이라 바탕을 그대로 적용한다 — 1층 1,000 을 답해도 [300, 1,000] 이라 여전히 검수 질문
+  const answered = runCase(c, { answers: { 'floor_area@본동/1F': 1000 } });
+  assert.deepEqual([fac(answered, '본동', 't').verdict, qkeys(fac(answered, '본동', 't'))], ['확인 필요', ['review[floor_area_basis]']]);
+});
+
+test('4차 후속(퍼즈): 산입 행이 이미 연면적을 넘는 동에는 바닥면적 합계의 연면적 상한을 씌우지 않는다 — 막다른 확인 필요 없음', () => {
+  // 연면적 300 인데 지하 산입 행만 600(층별개요 불일치). 무창층 가정(assume_none) 평가는 1층이 대상이 아니라 상한 300 으로 잘려 F,
+  // 가정값을 푼 재평가는 1층(산입 여부 모름 200)이 대상일 수 있어 상한 500 — 예전에는 둘이 엇갈려 물을 것 없는 확인 필요였다
+  const registry = {
+    title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '노래연습장', totArea: 300, grndFlrCnt: 1, ugrndFlrCnt: 2 }],
+    floors: [
+      { flrGbCd: '10', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '노래연습장', area: 200, areaExctYn: '0' },
+      { flrGbCd: '10', flrNo: 2, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '노래연습장', area: 400, areaExctYn: '0' },
+      { flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '노래연습장', area: 200, areaExctYn: ' ' },
+    ],
+    permit: [{ archPmsDay: '20150101', archGbCdNm: '신축' }],
+  };
+  const c = { input: { registry }, policy: { windowless: 'assume_none' }, dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('s', { sum_area: { floors: ['basement', 'windowless'], use: ['02'] }, gt: 362 })] }]) } };
+  const r = runCase(c);
+  assert.ok(r.warnings.some((w) => w.code === 'FLOOR_AREA_MISMATCH'));
+  const f = fac(r, '본동', 'x');
+  assert.deepEqual([f.verdict, qkeys(f)], ['해당', []]);
+  // 상한을 씌운 뒤 답으로 하한이 그 위로 오르면 뒤집힌다: 연면적 700 인데 산입 행 1,600 — 무창층을 모를 때 "무창층 합계 1,283 이하"가
+  // 상한(700)으로 잘려 T 였다가, 1·2층 무창층·3층 600 을 답하면 1,600 → F. 상한을 씌우지 않으면 처음부터 확인 필요(U)
+  const over = normalizeRegistry({
+    title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 700, grndFlrCnt: 3, ugrndFlrCnt: 1 }],
+    floors: [
+      { flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: 400, areaExctYn: '0' },
+      { flrGbCd: '20', flrNo: 2, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '일반음식점', area: 600, areaExctYn: '0' },
+      { flrGbCd: '10', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: 600, areaExctYn: '0' },
+    ],
+  }, { useIndex: INDEX }).dongs[0];
+  const leaf = (answers) => evalCondition({ sum_area: { floors: 'windowless' }, lte: 1283 }, makeEnv({ dong: over, index: INDEX, answers, policy: resolvePolicy(), inputDefs: inputDefsFrom(INPUTS), release: true })).v;
+  assert.deepEqual([leaf({}), leaf({ 'windowless@본동/1F': true, 'windowless@본동/2F': true, 'windowless@본동/3F': true, 'floor_area@본동/3F': 600 })], ['U', 'F']);
+});
+
+test('4차 후속: 바닥면적 합계의 연면적 하한 보강도 바탕을 따른다 — counted_only 읽기에서는 해석이 갈리는 행 면적만큼 낮춘다', () => {
+  // 1층 = 필로티 주차 700(면적제외 '0' 이지만 필로티) + 소매점(면적 빈칸), 2층 소매점 300, 연면적 1,000.
+  // 모든 행으로 보면 1층 ≥ 1,000 − 300 = 700, 필로티를 빼면 1층 소매점 = 0 ~ 700(필로티가 연면적에 들면 0)
+  const registry = {
+    title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1000, grndFlrCnt: 2, ugrndFlrCnt: 0 }],
+    floors: [
+      { flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '필로티주차장', area: 700, areaExctYn: '0' },
+      { flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: '', areaExctYn: '0' },
+      { flrGbCd: '20', flrNo: 2, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: 300, areaExctYn: '0' },
+    ],
+    permit: [{ archPmsDay: '20150101', archGbCdNm: '신축' }],
+  };
+  const dong = normalizeRegistry(registry, { useIndex: INDEX }).dongs[0];
+  const node = { sum_area: { floors: [{ kind: 'ground', level: { lte: 1 } }] }, gte: 500 };
+  const at = (floorAreaBasis) => evalCondition(node, makeEnv({ dong, index: INDEX, answers: {}, policy: resolvePolicy({ floorAreaBasis }), inputDefs: inputDefsFrom(INPUTS) })).v;
+  assert.deepEqual(['all_rows', 'counted_only', 'uncertain'].map(at), ['T', 'U', 'U']);
 });
 
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {

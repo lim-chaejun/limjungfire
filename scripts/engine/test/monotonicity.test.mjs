@@ -183,6 +183,7 @@ function factUniverse(dong, dateInfo, data) {
   if (!isExactConfirmed(m.total_area)) out.set(`total_area@${id}`, [Math.max(m.total_area.lo, 1), m.total_area.lo + 400, m.total_area.lo + 1500].map(Math.round));
   for (const k of ['occupants', 'households']) if (!m[k] || !isExactConfirmed(m[k])) out.set(`${k}@${id}`, [0, 30, 99, 100, 150, 300]);
   out.set(`gas_facility@${id}`, B);
+  out.set('review[floor_area_basis]', B); // 바닥면적 바탕 검수 질문(CP1 Q19) — 정책이 uncertain 일 때만 읽힌다
   if (!dong.flags?.elevator) out.set(`elevator@${id}`, B);
   out.set(`installed[co2_extinguishing]@${id}`, B);
   if (dong.mixedUseCandidate) out.set(`mixed_use@${id}`, B);
@@ -232,7 +233,7 @@ function fuzz(seed) {
   const stats = { cases: 0, notApplicable: 0, checks: 0, released: 0 };
   for (let c = 0; c < CASES; c++) {
     const b = G.building();
-    const policy = { windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'ask', 'title']) };
+    const policy = { windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'ask', 'title']), floorAreaBasis: G.pick(['uncertain', 'uncertain', 'all_rows', 'counted_only']) };
     const sc = { input: b.input, data: G.data(b.permit), policy };
     const base = run(sc, {});
     stats.cases++;
@@ -297,7 +298,7 @@ function leafFuzz(seed) {
   const stats = { cases: 0, definite: 0, checks: 0 };
   for (let c = 0; c < CASES; c++) {
     const b = G.building();
-    const policy = resolvePolicy({ windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'ask', 'title']) });
+    const policy = resolvePolicy({ windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'ask', 'title']), floorAreaBasis: G.pick(['uncertain', 'uncertain', 'all_rows', 'counted_only']) });
     const sc = { input: b.input, policy };
     const building = normalize(sc);
     const dong = building.dongs[0];
@@ -357,7 +358,7 @@ function roundsFuzz(seed) {
   let rounds = 0;
   for (let c = 0; c < CASES; c++) {
     const b = G.building();
-    const policy = { windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'title']) };
+    const policy = { windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'title']), floorAreaBasis: G.pick(['uncertain', 'uncertain', 'all_rows', 'counted_only']) };
     const sc = { input: b.input, data: G.data(b.permit), policy };
     let r = run(sc, {});
     if (r.status !== 'v2') continue;

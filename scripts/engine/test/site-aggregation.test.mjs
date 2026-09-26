@@ -68,7 +68,9 @@ const floorKey = (it) => (it.flrGbCd === '10' ? `B${it.flrNo}` : `${it.flrNo}F`)
 function oracleCase(rnd) {
   const pick = (xs) => xs[Math.floor(rnd() * xs.length)];
   const registry = randomSite(rnd);
-  const members = registry.floors.map((it) => ({ dong: it.dongNm, key: floorKey(it), kind: it.flrGbCd === '10' ? 'basement' : 'ground', level: it.flrNo, area: it.area }));
+  // 조건의 바닥면적 바탕(floorAreaBasis — CP1 Q19): 면적제외 '1' 행은 counted_only 에서 0, uncertain 이면 두 읽기가 같을 때만 그 값
+  const basis = pick(['all_rows', 'counted_only', 'uncertain']);
+  const members = registry.floors.map((it) => ({ dong: it.dongNm, key: floorKey(it), kind: it.flrGbCd === '10' ? 'basement' : 'ground', level: it.flrNo, area: it.area, excluded: it.areaExctYn === '1' }));
   const answers = { site_connected: true };
   for (const m of members) {
     m.windowless = m.kind === 'ground' ? rnd() < 0.5 : false;
@@ -83,8 +85,8 @@ function oracleCase(rnd) {
   if (choice !== undefined) answers['site_combined_floors@대지 전체'] = choice;
   const building = normalizeRegistry(registry, { useIndex: INDEX });
   const site = mergeDongs(building.dongs, { useIndex: INDEX });
-  const env = makeEnv({ dong: site, index: INDEX, answers, policy: POLICY, inputDefs: DEFS });
-  return { pick, members, flags, choice, env };
+  const env = makeEnv({ dong: site, index: INDEX, answers, policy: resolvePolicy({ floorAreaBasis: basis }), inputDefs: DEFS });
+  return { pick, members, flags, choice, env, basis };
 }
 
 const V = (b) => (b ? T : F);
@@ -98,25 +100,26 @@ function combinedExists(selected, x) {
 }
 
 function oracleChecks(c) {
-  const { pick, members, flags, choice, env } = c;
+  const { pick, members, flags, choice, env, basis } = c;
   const checks = [];
   const X = pick([300, 500, 800, 1000, 1400, 1800]);
   const L = pick([1, 2, 3]);
+  // 바탕 읽기마다 계산하고, uncertain 이면 두 읽기가 같을 때만 그 값(아니면 U)
+  const byBasis = (f) => {
+    const all = f((m) => m.area);
+    const counted = f((m) => (m.excluded ? 0 : m.area));
+    return basis === 'all_rows' ? all : basis === 'counted_only' ? counted : all === counted ? all : U;
+  };
   const windowlessFloors = members.filter((m) => m.windowless);
-  const sumW = windowlessFloors.reduce((s, m) => s + m.area, 0);
-  checks.push([{ sum_area: { floors: ['windowless'] }, gte: X }, V(sumW >= X)]);
-  checks.push([{ sum_area: { floors: ['windowless'] }, lt: X }, V(sumW < X)]);
+  const sumW = (area) => windowlessFloors.reduce((s, m) => s + area(m), 0);
+  checks.push([{ sum_area: { floors: ['windowless'] }, gte: X }, byBasis((area) => V(sumW(area) >= X))]);
+  checks.push([{ sum_area: { floors: ['windowless'] }, lt: X }, byBasis((area) => V(sumW(area) < X))]);
   checks.push([{ floor_exists: { floors: ['windowless'] } }, V(windowlessFloors.length > 0)]);
-  checks.push([
-    { floor_exists: { floors: ['windowless'], area: { gte: X } } },
-    consensus(V(windowlessFloors.some((m) => m.area >= X)), V(combinedExists(windowlessFloors, X)), choice),
-  ]);
+  const exists = (floors) => (area) => consensus(V(floors.some((m) => area(m) >= X)), V(combinedExists(floors.map((m) => ({ ...m, area: area(m) })), X)), choice);
+  checks.push([{ floor_exists: { floors: ['windowless'], area: { gte: X } } }, byBasis(exists(windowlessFloors))]);
   const upper = members.filter((m) => m.kind === 'ground' && m.level >= L);
-  checks.push([
-    { floor_exists: { floors: [{ kind: 'ground', level: { gte: L } }], area: { gte: X } } },
-    consensus(V(upper.some((m) => m.area >= X)), V(combinedExists(upper, X)), choice),
-  ]);
-  checks.push([{ sum_area: { floors: [{ kind: 'ground', level: { gte: L } }] }, gte: X }, V(upper.reduce((s, m) => s + m.area, 0) >= X)]);
+  checks.push([{ floor_exists: { floors: [{ kind: 'ground', level: { gte: L } }], area: { gte: X } } }, byBasis(exists(upper))]);
+  checks.push([{ sum_area: { floors: [{ kind: 'ground', level: { gte: L } }] }, gte: X }, byBasis((area) => V(upper.reduce((s, m) => s + area(m), 0) >= X))]);
   checks.push([{ flag: 'gas_facility' }, V(flags['상가동'].gas_facility || flags['주차동'].gas_facility)]);
   checks.push([{ flag: 'noncombustible_structure' }, V(flags['상가동'].noncombustible_structure && flags['주차동'].noncombustible_structure)]);
   // 부정: Kleene not
@@ -132,7 +135,7 @@ for (const seed of SEEDS) {
       const c = oracleCase(rnd);
       for (const { node, want, got } of oracleChecks(c)) {
         n++;
-        assert.equal(got, want, `${JSON.stringify(node)} — 사례 ${i}: ${JSON.stringify(c.members)} ${JSON.stringify(c.flags)} 합친 층=${c.choice}`);
+        assert.equal(got, want, `${JSON.stringify(node)} — 사례 ${i}: ${JSON.stringify(c.members)} ${JSON.stringify(c.flags)} 합친 층=${c.choice} 바탕=${c.basis}`);
       }
     }
     assert.ok(n > 0);
@@ -170,7 +173,7 @@ function siteData(rnd) {
 
 function run(sc, answers) {
   const building = normalizeRegistry(sc.registry, { useIndex: INDEX });
-  return evaluateBuilding({ building, dataFiles: sc.data, useIndex: INDEX, inputs: INPUTS, facilities: FACILITIES, answers, today: TODAY });
+  return evaluateBuilding({ building, dataFiles: sc.data, useIndex: INDEX, inputs: INPUTS, facilities: FACILITIES, answers, today: TODAY, policy: sc.policy });
 }
 
 function questionValues(q) {
@@ -187,7 +190,8 @@ for (const seed of SEEDS) {
     const pick = (xs) => xs[Math.floor(rnd() * xs.length)];
     let checks = 0;
     for (let i = 0; i < CASES; i++) {
-      const sc = { registry: randomSite(rnd, { blankAreas: true }), data: siteData(rnd) };
+      // 바닥면적 바탕(CP1 Q19)도 무작위 — uncertain 이면 검수 질문 review[floor_area_basis] 도 다른 질문처럼 답해 간다
+      const sc = { registry: randomSite(rnd, { blankAreas: true }), data: siteData(rnd), policy: { floorAreaBasis: pick(['uncertain', 'uncertain', 'all_rows', 'counted_only']) } };
       const base = run(sc, {});
       const initial = base.dongs.flatMap((d) => d.facilities.filter((f) => f.verdict === '비해당').map((f) => [d.id, f.id]));
       let answers = {};

@@ -67,6 +67,22 @@ export const pilotiBuilding = ({ piloti = { areaExctYn: '1' }, second = {}, titl
   permit: [permit('20150101')],
 });
 export const PILOTI_DATA = { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('fe', { floor_exists: { floors: [{ kind: 'ground', level: { gte: 3 } }], area: { gte: 500 } } }, { scope: 'matching_floors' })] }]) };
+// 4차 후속: 1층 = 소매점 300(산입) + 필로티 주차 700(면적제외 '1'), 2층 소매점 700, 연면적 1,000. 1층 바닥면적 = 1,000(모든 행) 또는 300(뺌)
+export const pilotiFloor = (flag = { areaExctYn: '1' }, etc = '필로티주차장') => ({
+  title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1000, grndFlrCnt: 2, ugrndFlrCnt: 0 }],
+  floors: [
+    { flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: 300, areaExctYn: '0' },
+    { flrGbCd: '20', flrNo: 1, mainPurpsCdNm: '제2종근린생활시설', etcPurps: etc, area: 700, ...flag },
+    { flrGbCd: '20', flrNo: 2, mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', area: 700, areaExctYn: '0' },
+  ],
+  permit: [permit('20150101')],
+});
+const FIRST_800 = { floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: 800 } } };
+export const BASIS_DATA = { '02': v2('02', [
+  { facility_id: 't', facility_name: 'T(설치 조건)', regulations: [row('t', FIRST_800)] },
+  { facility_id: 'e', facility_name: 'E(제외 조건)', regulations: [row('e', { m: 'total_area', gte: 33 })], excluded_if: FIRST_800 },
+  { facility_id: 's', facility_name: 'S(합계)', regulations: [row('s', { sum_area: { floors: 'ground' }, gte: 1500 })] },
+]) };
 const rv3Data = (excluded) => ({
   '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('big', { m: 'total_area', gte: 1500 })], excluded_if: excluded }]),
   '18': v2('18', []),
@@ -340,6 +356,12 @@ export const CASES = [
     title: '4차 HIGH(rv4_piloti2): 같은 건물, 지하층수 빈칸(층 목록 일부)·필로티 행 면적제외여부 없음 — 상한 좁히기에도 필로티를 넣지 않는다',
     input: { registry: pilotiBuilding({ piloti: {}, title: { ugrndFlrCnt: '' } }) },
     dataFiles: PILOTI_DATA,
+  },
+  {
+    id: 'basis-piloti',
+    title: '4차 후속(floorAreaBasis): 1층 필로티 주차 700(면적제외) — "1층 바닥면적 800㎡ 이상" 설치 조건·제외 조건, "지상층 바닥면적 합계 1,500㎡ 이상"',
+    input: { registry: pilotiFloor() },
+    dataFiles: BASIS_DATA,
   },
   {
     id: 'rv3-range',

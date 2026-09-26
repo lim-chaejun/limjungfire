@@ -12,7 +12,7 @@ import {
   addInterval, all, any, capInterval, compareInterval, depCollector, depKey, exact, interval, makeDep, maxInterval, mergeDeps, not, tv,
 } from './logic.js';
 import { coverage, describeUses } from './uses.js';
-import { countOf, effectiveFloors, inTotalOf, sortFloors } from './facts.js';
+import { countOf, doubtfulOf, effectiveFloors, inTotalOf, sortFloors } from './facts.js';
 import { describeFloors, fmtCondition, fmtInterval } from './format.js';
 
 const NO_WHY = Object.freeze([]);
@@ -38,6 +38,8 @@ export function makeEnv({ dong, index, answers = {}, policy, inputDefs = new Map
     rawAreaMemo: new Map(),
     floorAreaMemo: new Map(),
     sharesMemo: new Map(),
+    basisMemo: new Map(),
+    condAreaMemo: new Map(),
     windowlessMemo: new Map(),
     memberMemo: new Map(),
     usePresenceMemo: new Map(),
@@ -479,6 +481,89 @@ export function floorArea(env, floor) {
 
 const partSig = (part, i) => String(part.n ?? i + 1);
 
+// ───────────── 조건의 바닥면적 바탕(CP1 Q19) ─────────────
+
+// 조건에 쓰는 층·부분 면적에 연면적에서 빠지는(빠질 수 있는) 행(facts.js rowDoubtful — 면적제외·다른 건축물 행, 필로티·다락·옥탑)을 넣는가는
+// 법령 검수 전이다(CP1 Q19). 정책 floorAreaBasis: all_rows — 넣음(모든 행), counted_only — 뺌, uncertain(기본) — 두 읽기 사이 구간이라
+// 판정이 이 해석에 걸리면 확인 필요 + 검수 질문 review[floor_area_basis](사용자가 아니라 운영 정책으로 정하는 값 — '예' 넣음, '아니오' 뺌).
+// 답하면 그 읽기로 정해져 막다른 확인 필요가 되지 않는다. 정책이 all_rows·counted_only 로 정해져 있으면 답을 보지 않는다
+export const FLOOR_AREA_BASIS_KEY = depKey('review', undefined, undefined, 'floor_area_basis');
+const BASIS_QUESTION = "[운영 정책 — CP1 Q19 법령 검수 전] 필로티(주차)·다락·옥탑·부속건축물처럼 연면적에서 빠지는(빠질 수 있는) 층별개요 행의 면적을 소방 기준의 '바닥면적'(… ㎡ 이상인 층, 바닥면적 합계)에 넣습니까? '예'면 넣고(all_rows), '아니오'면 뺍니다(counted_only).";
+const BASIS_DEP = Object.freeze(makeDep('review', UNKNOWN, { sig: 'floor_area_basis', info: { question: BASIS_QUESTION, criteria: '바닥면적 산입(CP1 Q19)' } }));
+
+function areaBasis(env) {
+  const policy = env.policy.floorAreaBasis ?? 'uncertain';
+  if (policy !== 'uncertain') return policy;
+  const a = boolAnswer(env.answers[FLOOR_AREA_BASIS_KEY]);
+  return a === null ? 'uncertain' : a ? 'all_rows' : 'counted_only';
+}
+
+const FLOOR_DOUBT = new WeakMap(); // 층 → 해석이 갈리는 행이 있는가(사실 — 답변과 무관)
+function hasDoubtful(floor) {
+  let v = FLOOR_DOUBT.get(floor);
+  if (v === undefined) FLOOR_DOUBT.set(floor, (v = floor.parts.some((p) => doubtfulOf(p, floor))));
+  return v;
+}
+
+// 층의 해석이 갈리는 행(d)과 나머지 행(f) 면적 합(부분 답변 반영, 좁히기 전)
+function basisShares(env, floor) {
+  return memoOn(env.basisMemo, floor, () => {
+    let f = ZERO;
+    let d = ZERO;
+    floor.parts.forEach((p, i) => {
+      const a = partAreaRaw(env, floor, i);
+      if (doubtfulOf(p, floor)) d = addInterval(d, a);
+      else f = addInterval(f, a);
+    });
+    return { f, d };
+  });
+}
+
+// 조건에 쓰는 층 면적(evalFloorExists·sumArea): 층 면적(floorArea — 모든 행, 층 면적 답변도 모든 행의 면적)에서 바탕에 따라
+// 해석이 갈리는 행을 뺀다. counted_only = 층 면적 − 그 행, uncertain = [counted_only 하한, 모든 행 상한]. 층 면적 답변에도 같이
+// 적용한다 — 답이 바탕을 건너뛰면 counted_only 에서 0 이던 필로티 층이 답한 면적으로 바뀌어 답을 받을수록 판정이 뒤집힌다(단조성)
+function conditionFloorArea(env, floor) {
+  return memoOn(env.condAreaMemo, floor, () => {
+    if (floor.members) return floor.members.map(({ env: m, floor: f }) => conditionFloorArea(m, f)).reduce(addInterval);
+    const a = floorArea(env, floor);
+    if (!hasDoubtful(floor)) return a;
+    const basis = areaBasis(env);
+    if (basis === 'all_rows') return a;
+    const { f, d } = basisShares(env, floor);
+    if (!(d.hi > AREA_EPS)) return a;
+    const lo = Math.max(f.lo, a.lo - d.hi);
+    const hi = Math.max(lo, Math.min(f.hi, a.hi - d.lo));
+    const loDeps = D(env, () => mergeDeps(a.loDeps, d.hiDeps, f.loDeps));
+    if (basis === 'counted_only') return interval(lo, hi, { loDeps, hiDeps: D(env, () => mergeDeps(a.hiDeps, d.loDeps)), open: a.open });
+    return interval(lo, a.hi, { loDeps, hiDeps: a.hiDeps, open: env.track ? mergeDeps(a.open, [BASIS_DEP]) : a.open });
+  });
+}
+
+// 조건에 쓰는 부분 면적(floorUseArea): 해석이 갈리는 행이면 바탕에 따라 그 면적(넣음)·0(뺌)·0 ~ 그 면적(모름 + 검수 질문)
+function conditionPartArea(env, floor, i) {
+  const p = partArea(env, floor, i);
+  if (!doubtfulOf(floor.parts[i], floor)) return p;
+  const basis = areaBasis(env);
+  if (basis === 'all_rows' || !(p.hi > AREA_EPS)) return p;
+  if (basis === 'counted_only') return exact(0);
+  return interval(0, p.hi, { hiDeps: p.hiDeps, open: env.track ? mergeDeps(p.open, [BASIS_DEP]) : p.open });
+}
+
+// 동(대지)의 확정 산입 몫 하한 합이 연면적을 넘는가 — 층별개요·답변이 연면적과 맞지 않는 동(합계 상한을 씌우지 않는다)
+function countedOverTotal(env, total) {
+  return memo(env, 'countedOverTotal', () => {
+    let lo = 0;
+    for (const f of floorsOf(env).floors) lo += floorShares(env, f).c.lo;
+    return lo > total.hi + AREA_EPS;
+  });
+}
+
+// 대상 층의 해석이 갈리는 행 면적 상한 — 바닥면적 합계 하한 보강(연면적 − 나머지 층)을 counted_only 읽기에도 맞게 낮출 때
+function doubtfulHi(env, floor) {
+  if (floor.members) return floor.members.reduce((s, { env: m, floor: f }) => s + doubtfulHi(m, f), 0);
+  return hasDoubtful(floor) ? basisShares(env, floor).d.hi : 0;
+}
+
 // 부분 면적(답변만 반영, 층 면적에서 역산하지 않음)
 function partAreaRaw(env, floor, i) {
   const part = floor.parts[i];
@@ -599,7 +684,7 @@ function floorUseArea(env, floor, targets, openDep) {
   if (floor.members) return floor.members.map(({ env: m, floor: f }) => floorUseArea(m, f, targets, openDep)).reduce(addInterval);
   let sum = exact(0);
   floor.parts.forEach((part, i) => {
-    const a = partArea(env, floor, i);
+    const a = conditionPartArea(env, floor, i);
     const c = partCoverage(env, part, targets);
     const ud = D(env, () => [usesDep(env, floor)]);
     if (c === 'all') sum = addInterval(sum, { ...a, loDeps: mergeDeps(a.loDeps, ud), hiDeps: mergeDeps(a.hiDeps, ud) });
@@ -650,6 +735,8 @@ function sumArea(env, spec) {
   const maybe = [];
   let restHi = 0; // 대상 층이 아닌(또는 미확정인) 층 면적 상한 — 연면적에서 빼 하한을 좁힐 때 쓴다
   let outsideHi = 0; // 대상 층의 연면적 밖일 수 있는 면적(산입 여부를 모르는·제외 행) 상한 — 합계 상한을 연면적으로 씌울 때 더한다
+  let doubtHi = 0; // 대상 층의 바닥면적 산입 해석이 갈리는 행 면적 상한(바탕이 all_rows 가 아니면 하한 보강에서 뺀다)
+  const basis = areaBasis(env);
   for (const f of floors) {
     const m = floorMember(env, f, selectors);
     if (m.v !== F) {
@@ -668,8 +755,9 @@ function sumArea(env, spec) {
       if (track) hiC.add(m.deps);
       continue;
     }
-    const a = targets ? floorUseArea(env, f, targets, sumDep) : floorArea(env, f);
+    const a = targets ? floorUseArea(env, f, targets, sumDep) : conditionFloorArea(env, f);
     if (m.v === T) {
+      if (basis !== 'all_rows') doubtHi += doubtfulHi(env, f);
       lo += a.lo;
       if (track) {
         loC.add(m.deps);
@@ -692,15 +780,20 @@ function sumArea(env, spec) {
   if (!list.complete) {
     hi = Infinity;
     if (track) openC.add(list.open);
-  } else if (!targets && allComplete && total.lo - restHi > lo && areaIdentity(env)?.consistent && areaIdentity(env).complete) {
+  } else if (!targets && allComplete && total.lo - restHi - doubtHi > lo && areaIdentity(env)?.consistent && areaIdentity(env).complete) {
     // 면적 항등식이 성립하면(층 목록 완전, 층 면적과 연면적이 모순 없음) 대상 층 면적 합계 ≥ 연면적 − 나머지 층 면적 상한.
     // 모순이면 쓰지 않는다 — 층별개요에 없는 면적을 대상 층에 몰아 주는 셈이라 답에 따라 뒤집힌다(리뷰 N1)
-    lo = Math.min(total.lo - restHi, hi);
+    lo = Math.min(total.lo - restHi - doubtHi, hi);
     loDeps = track ? mergeDeps(total.loDeps, restC.list(), list.deps) : EMPTY;
   }
-  // 합계 상한은 연면적(+ 대상 층의 연면적 밖일 수 있는 면적) — 산입 몫은 모두 합쳐도 연면적을 넘지 못한다
-  const cap = outsideHi > 0 ? { hi: total.hi + outsideHi, hiDeps: total.hiDeps } : total;
-  const iv = capInterval(interval(lo, hi, { loDeps, hiDeps: hiC.list(), open: openC.list() }), cap);
+  // 합계 상한은 연면적(+ 대상 층의 연면적 밖일 수 있는 면적) — 산입 몫은 모두 합쳐도 연면적을 넘지 못한다. 층별개요·답변의 산입 몫이
+  // 이미 연면적을 넘는 동(불일치)이면 이 상한은 근거가 없어 씌우지 않는다: 대상 층 선택(무창층 가정·가정값을 푼 재평가)에 따라 달라지는
+  // 상한이 알려진 하한을 깎으면 가정 평가(F)와 재평가(T)가 엇갈려 물을 것 없는 확인 필요가 되고, 상한을 씌운 뒤 답으로 하한이 그 위로
+  // 오르면 판정이 뒤집힌다(5차 퍼즈). 모순 없는 동에서는 알려진 하한이 이 상한을 넘을 수 없다
+  const capHi = total.hi + outsideHi;
+  const iv = capHi < hi && !countedOverTotal(env, total)
+    ? interval(lo, Math.max(lo, capHi), { loDeps, hiDeps: total.hiDeps, open: openC.list() })
+    : interval(lo, hi, { loDeps, hiDeps: hiC.list(), open: openC.list() });
   if (sumDep) sumDep.range = [iv.lo, iv.hi];
   return { iv, members, maybe, desc };
 }
@@ -728,7 +821,7 @@ function evalFloorExists(node, env) {
       const floorDep = spec.use && env.track
         ? makeDep('floor_use_area', UNKNOWN, { dong: env.dong.id, floor: f.key, sig: useSig(spec.use), info: { floorLabel: f.label, use: spec.use } })
         : null;
-      a = spec.use ? floorUseArea(env, f, spec.use, floorDep) : floorArea(env, f);
+      a = spec.use ? floorUseArea(env, f, spec.use, floorDep) : conditionFloorArea(env, f);
       if (floorDep) floorDep.range = [a.lo, a.hi];
       const area = a;
       const r = compareInterval(area, spec.area, comparisonOps(spec.area));

@@ -196,6 +196,7 @@ function answerUniverse(sc, base) {
     }
   }
   if (base.site) add('site_connected', BOOL);
+  add('review[floor_area_basis]', BOOL); // 바닥면적 바탕(CP1 Q19) — 기본 정책 uncertain 에서 어느 읽기로 정해도 비해당은 그대로여야 한다
   // 날짜: 엔진의 검사 구간(dateInfo.window)이 아니라 건물의 날짜 사실에서 직접 — 허가일 후보가 여럿·사용승인일만·날짜 없음이면
   // 허가일을, 허가일이 하나로 확정이면 신청일을 답한다(모형이 문서로 정한 범위 안의 값만)
   const question = dateQuestion(building.dates || {}, sc.answers || {}, resolvePolicy(sc.policy));

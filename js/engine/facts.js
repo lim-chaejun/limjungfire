@@ -11,6 +11,7 @@
 // }
 // Floor = { key: 'B1'|'2F'|'R1', kind: basement|ground|rooftop, level, label, area, parts: [{ terms, area, raw, n, inTotal }], synthesized }
 //   inTotal: 그 행(부분)의 면적이 표제부 연면적에 들어가는가 — yes · no · maybe(모름). 면적 항등식만 이 값을 본다(rowInTotal)
+//   doubtful: 조건의 바닥면적에 넣을지 해석이 갈리는 행(rowDoubtful — 정책 floorAreaBasis, CP1 Q19)
 //
 // 해석 선택(옥탑·지하층의 층수 산입, 층수 불일치, 수동 입력 빈칸 등)은 policy.js 의 이름 있는 옵션으로만 정한다.
 // 대장끼리 맞지 않거나 빠진 값은 확정값으로 만들지 않고 구간(모름)으로 남겨, 결정적이면 질문한다.
@@ -118,6 +119,15 @@ function rowInTotal(item, titleMain, kind) {
   return MAYBE_OUTSIDE_TOTAL.test(`${item.mainPurpsCdNm ?? ''} ${item.etcPurps ?? ''}`) ? 'maybe' : 'yes';
 }
 
+// 조건의 '바닥면적'(… ㎡ 이상인 층·바닥면적 합계)에 넣을지 법령 해석이 갈리는 행(CP1 Q19 — 정책 floorAreaBasis): 연면적에서 빠지는 행
+// (면적제외 '1'·'Y', 표제부와 다른 건축물의 행)과 빠질 수 있는 구조(필로티·다락·옥탑, 표제부 구분을 모르는 부속건축물 행).
+// 면적제외여부만 빈칸인 보통 행은 아니다 — 그 행은 면적 항등식에서만 모름(maybe)이고 바닥면적으로는 본다
+function rowDoubtful(item, titleMain, kind) {
+  const main = mainAtchOf(item);
+  return areaExcluded(item.areaExctYn) === true || Boolean(main && titleMain && main !== titleMain) || kind === 'rooftop'
+    || (main === 'annex' && !titleMain) || MAYBE_OUTSIDE_TOTAL.test(`${item.mainPurpsCdNm ?? ''} ${item.etcPurps ?? ''}`);
+}
+
 // 층별개요 항목들 → 층 목록 (같은 층의 여러 행은 부분(part)으로)
 function buildFloors(items, dongId, index, contextGroup, cap, fallbackTerms, warnings, titleMain = null) {
   const byKey = new Map();
@@ -144,7 +154,7 @@ function buildFloors(items, dongId, index, contextGroup, cap, fallbackTerms, war
           ? exact(a, [registryDep(multi ? 'part_area' : 'floor_area', dongId, f.key)])
           : unknownFloorArea(dongId, f.key, cap, f.label, multi ? { n: i + 1, label: partLabelOf(raw) } : null);
       // 용도가 비어 표제부 용도를 빌려 온 행은 fromTitle — 표제부 용도가 여럿이면 이 층에 그중 무엇이 있는지 모른다
-      return { terms: cls.terms.length ? cls.terms : fallbackTerms, fromTitle: !cls.terms.length, area, raw, n: i + 1, inTotal: rowInTotal(item, titleMain, f.kind) };
+      return { terms: cls.terms.length ? cls.terms : fallbackTerms, fromTitle: !cls.terms.length, area, raw, n: i + 1, inTotal: rowInTotal(item, titleMain, f.kind), doubtful: rowDoubtful(item, titleMain, f.kind) };
     });
     floors.push({ key: f.key, kind: f.kind, level: f.level, label: f.label, parts, area: parts.map((p) => p.area).reduce(addInterval), synthesized: false });
   }
@@ -209,6 +219,11 @@ function countMetric(input, id, c) {
 // 부분의 연면적 산입 여부 — 정규화한 행은 rowInTotal 값, 그 밖(직접 만든 층 등)은 옥탑만 모름
 export function inTotalOf(part, floor) {
   return part.inTotal ?? (floor.kind === 'rooftop' ? 'maybe' : 'yes');
+}
+
+// 부분이 조건의 바닥면적 산입 해석(CP1 Q19)에 걸리는가 — 정규화한 행은 rowDoubtful 값, 그 밖(직접 만든 층 등)은 옥탑만
+export function doubtfulOf(part, floor) {
+  return part.doubtful ?? floor.kind === 'rooftop';
 }
 
 // 층별개요 행들의 연면적 산입 합: lo = 산입(yes) 행 하한 합, hi = 산입 + 모름(maybe) 행 상한 합, known = 모든 행 면적을 앎
@@ -462,7 +477,7 @@ export function effectiveFloors(dong, groundCount, basementCount) {
         const key = floorKey(kind, level);
         if (have.has(key)) continue;
         const area = unknownFloorArea(dong.id, key, dong.metrics.total_area, floorLabel(kind, level));
-        floors.push({ key, kind, level, label: floorLabel(kind, level), area, parts: [{ terms: dong.synthTerms, fromTitle: true, area, raw: null, n: 1, inTotal: 'yes' }], synthesized: true });
+        floors.push({ key, kind, level, label: floorLabel(kind, level), area, parts: [{ terms: dong.synthTerms, fromTitle: true, area, raw: null, n: 1, inTotal: 'yes', doubtful: false }], synthesized: true });
       }
       complete[kind] = true;
     } else if (count && Number.isFinite(count.hi)) {
