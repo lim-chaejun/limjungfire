@@ -103,12 +103,89 @@ function rawMetric(env, id) {
       const values = env.members.map((m) => rawMetric(m, id));
       return values.reduce(SITE_MAX_METRICS.has(id) ? maxInterval : addInterval);
     }
-    const a = numAnswer(env.answers[depKey(id, env.dong.id)]);
-    if (a !== null) return exact(a, D(env, () => [userDep(id, env)]));
-    const m = env.dong.metrics[id];
-    if (m && env.release && hasAssumedDep(m)) return releasedMetric(env, id);
-    return m || interval(0, Infinity, { open: D(env, () => [makeDep(id, UNKNOWN, { dong: env.dong.id })]) });
+    const v = baseMetric(env, id);
+    if (!v.open.length) return v;
+    if (id === 'total_area') return totalFromFloors(env, v);
+    if (COUNT_METRICS.has(id) && env.track) return countFromAreas(env, id, v);
+    return v;
   });
+}
+
+function baseMetric(env, id) {
+  const a = numAnswer(env.answers[depKey(id, env.dong.id)]);
+  if (a !== null) return exact(a, D(env, () => [userDep(id, env)]));
+  const m = env.dong.metrics[id];
+  if (m && env.release && hasAssumedDep(m)) return releasedMetric(env, id);
+  return m || interval(0, Infinity, { open: D(env, () => [makeDep(id, UNKNOWN, { dong: env.dong.id })]) });
+}
+
+const COUNT_METRICS = new Set(['ground_floors', 'basement_floors']);
+
+// 층수 질문의 답할 수 있는 범위를 면적 항등식에 맞춘다: 다른 구분의 층수를 정확히 알면 이 층수로 층 목록이 전부가 되므로,
+// 그 목록의 층 면적 상한 합(옥탑 포함)이 연면적 하한에 못 미치는 층수(층이 모자라 연면적을 채울 수 없음)는 범위에서 뺀다.
+// 층이 늘수록 상한 합도 늘어 가능한 층수는 [가장 작은 가능한 값, 상한]. 층수 값(구간)은 그대로 두고 질문 범위만 좁힌다
+// (3차 리뷰 fz_rounds: 1층 800 을 답한 뒤 나온 지하층수 질문에 0 을 답하면 연면적 1,600 과 모순)
+function countFromAreas(env, id, v) {
+  const other = countOf(baseMetric(env, id === 'ground_floors' ? 'basement_floors' : 'ground_floors'));
+  const totalLo = numAnswer(env.answers[depKey('total_area', env.dong.id)]) ?? env.dong.metrics.total_area?.lo ?? 0;
+  if (!Number.isInteger(other) || !(totalLo > AREA_EPS)) return v;
+  const [defLo, defHi] = env.inputDefs.get(id)?.range ?? [0, Infinity];
+  const lo = Math.max(Math.ceil(v.lo), defLo);
+  const hi = Math.min(v.hi, defHi);
+  if (!Number.isFinite(hi)) return v;
+  for (let n = lo; n <= hi; n++) {
+    const { floors } = id === 'ground_floors' ? effectiveFloors(env.dong, n, other) : effectiveFloors(env.dong, other, n);
+    let sum = 0;
+    for (const f of floors) sum += uncappedFloorArea(env, f).hi;
+    if (sum >= totalLo - AREA_EPS) return n === lo ? v : { ...v, open: v.open.map((d) => (d.input === id ? { ...d, range: [n, hi] } : d)) };
+  }
+  return v;
+}
+
+// 모르는 연면적(표제부·답변 없음 — 층별개요 합으로 구한 하한뿐)을 층 면적(답변 포함)으로 좁힌다: 연면적 ≥ 층 면적 하한의 합,
+// 층 목록이 전부면 연면적 ≤ 층 면적 상한의 합(옥탑 포함). 층 면적을 답할 때마다 연면적 질문 범위도 좁혀져, 한 번에 하나씩
+// 범위 안에서 답하면 면적 항등식과 모순이 생기지 않는다(3차 리뷰: 2층 0 을 답한 뒤 범위 없는 연면적 질문에 1,500)
+function totalFromFloors(env, m) {
+  const { floors, allComplete, exactCounts } = floorsOf(env);
+  let lo = 0;
+  let hi = 0;
+  const loC = depCollector();
+  const hiC = depCollector();
+  for (const f of floors) {
+    const a = uncappedFloorArea(env, f);
+    if (f.kind !== 'rooftop') {
+      lo += a.lo;
+      if (env.track) loC.add(a.loDeps);
+    }
+    hi += a.hi;
+    if (env.track) hiC.add(a.hiDeps);
+  }
+  const complete = allComplete && exactCounts;
+  const nlo = Math.max(m.lo, lo);
+  let nhi = complete ? Math.min(m.hi, hi) : m.hi;
+  const counts = !complete && Number.isFinite(hi) ? countOpen(env) : EMPTY; // 층수를 알면 상한이 생긴다
+  if (nhi < nlo - AREA_EPS) return m; // 답변끼리 모순 — 면적 답변 경고(AREA_ANSWER_MISMATCH)가 알린다
+  if (nlo <= m.lo && nhi >= m.hi && !counts.length && !env.track) return m; // 출처를 모을 때는 질문 범위(알려진 층 면적 합 이상)를 붙인다
+  if (nhi - nlo <= AREA_EPS) nhi = nlo;
+  const listDeps = () => {
+    const { kinds } = floorsOf(env);
+    return mergeDeps(kinds.ground.deps, kinds.basement.deps);
+  };
+  return interval(nlo, nhi, {
+    loDeps: nlo > m.lo ? D(env, () => loC.list()) : m.loDeps,
+    hiDeps: nhi < m.hi ? D(env, () => mergeDeps(hiC.list(), listDeps())) : m.hiDeps,
+    open: nhi === nlo ? EMPTY : mergeDeps(env.track ? m.open.map((d) => ({ ...d, range: [nlo, nhi] })) : m.open, counts),
+  });
+}
+
+// 층수를 정확히 몰라 면적 항등식이 일부만 설 때는 층수도 면적의 미확정 근거다 — 층수를 알면 항등식이 온전해져 면적이 더
+// 좁혀질 수 있다. 그래서 층수 입력(모름·충돌, 가정값을 푼 층수)을 층·부분 면적과 연면적의 미확정 근거에 함께 넣어 질문 후보로
+// 올리고, 면적 질문보다 먼저 묻는다(evaluate.js limitQuestions). 면적만 물으면 가정값 층수를 푼 재평가에서 나온 면적 범위 안의
+// 답이 가정값 층수로 온전해진 항등식(본 평가)과 모순될 수 있다(3차 리뷰 fz_rounds: 지하층수 0 가정, 1층 면적 [0, 1,600] 에서
+// 0 을 답하면 연면적 1,600 과 모순)
+function countOpen(env) {
+  const { kinds } = floorsOf(env);
+  return mergeDeps(kinds.ground.open, kinds.basement.open);
 }
 
 export function metric(env, id) {
@@ -141,7 +218,7 @@ export function floorsOf(env) {
       basement: { complete: complete.basement, deps: mergeDeps(b.loDeps, b.hiDeps), open: b.open },
       rooftop: { complete: true, deps: EMPTY, open: EMPTY },
     };
-    // exactCounts: 층수를 정확히 안다(층 목록 = 실제 층) — 면적 항등식은 이때만 세운다
+    // exactCounts: 층수를 정확히 안다(층 목록 = 실제 층) — 면적 항등식의 '합 = 연면적'(하한 추론)은 이때만 쓴다
     return { floors, kinds, allComplete: complete.ground && complete.basement, exactCounts: Number.isInteger(gc) && Number.isInteger(bc) };
   });
 }
@@ -194,31 +271,77 @@ function narrowedOpen(env, open, lo, hi) {
   return env.track ? open.map((d) => (d.range ? { ...d, range: [lo, hi] } : d)) : open;
 }
 
+function floorAreaAnswer(env, floor) {
+  const a = numAnswer(env.answers[depKey('floor_area', env.dong.id, floor.key)]);
+  return a !== null ? exact(a, D(env, () => [userDep('floor_area', env, { floor: floor.key })])) : null;
+}
+
+const partsSum = (env, floor) => (floor.parts.length === 1 ? floor.parts[0].area : floor.parts.map((_, i) => partAreaRaw(env, floor, i)).reduce(addInterval));
+
+// 층 면적(연면적 상한 없이): 층 면적 답변 > 부분 면적 합(부분 답변 반영) — 연면적을 층 면적으로 좁힐 때와
+// 답변한 면적이 연면적을 넘는지 볼 때(상한을 씌우면 넘는 답이 가려진다) 쓴다
+export function uncappedFloorArea(env, floor) {
+  return floorAreaAnswer(env, floor) ?? partsSum(env, floor);
+}
+
+// 층 면적 구간 [lo, hi] 에 맞춘 질문 범위: 층 면적 질문은 그 구간, 여러 부분 층의 빈 부분 질문은 그 구간 − 다른 부분.
+// 부분 질문에 층 구간을 그대로 보이면 그 안의 답이 다른 부분과 합쳐 층 면적·연면적을 넘는다(3차 리뷰 fz_rounds:
+// 지하1층 = 100 + 빈 부분, 층 구간 [100, 400] 을 부분 범위로 보여 400 을 답하면 합계가 연면적을 넘음)
+function floorOpen(env, floor, open, lo, hi) {
+  if (hi - lo <= AREA_EPS) return EMPTY;
+  if (!env.track) return open;
+  return open.map((d) => {
+    if (!d.range) return d;
+    if (d.input !== 'part_area') return { ...d, range: [lo, hi] };
+    let own = null;
+    let othersLo = 0;
+    let othersHi = 0;
+    floor.parts.forEach((p, j) => {
+      const a = partAreaRaw(env, floor, j);
+      if (depKey('part_area', env.dong.id, floor.key, partSig(p, j)) === d.key) own = a;
+      else {
+        othersLo += a.lo;
+        othersHi += a.hi;
+      }
+    });
+    if (!own) return d;
+    const plo = Math.max(own.lo, lo - othersHi);
+    return { ...d, range: [plo, Math.max(plo, Math.min(own.hi, hi - othersLo))] };
+  });
+}
+
 // 층 면적(항등식으로 좁히기 전): 층 면적 답변 > 부분 면적 합(부분 답변 반영), 동 연면적으로 상한
 export function rawFloorArea(env, floor) {
   return memoOn(env.rawAreaMemo, floor, () => {
     if (floor.members) return floor.members.map(({ env: m, floor: f }) => floorArea(m, f)).reduce(addInterval);
-    const a = numAnswer(env.answers[depKey('floor_area', env.dong.id, floor.key)]);
-    if (a !== null) return exact(a, D(env, () => [userDep('floor_area', env, { floor: floor.key })]));
-    const sum = floor.parts.length === 1 ? floor.parts[0].area : floor.parts.map((_, i) => partAreaRaw(env, floor, i)).reduce(addInterval);
-    return capInterval(sum, metric(env, 'total_area'));
+    const answered = floorAreaAnswer(env, floor);
+    if (answered) return answered;
+    const sum = partsSum(env, floor);
+    const capped = capInterval(sum, metric(env, 'total_area'));
+    return capped === sum ? sum : { ...capped, open: floorOpen(env, floor, capped.open, capped.lo, capped.hi) };
   });
 }
 
-// 면적 항등식: 연면적 = 각 층 바닥면적의 합(옥탑은 0 ~ 그 층 면적). 층수를 정확히 알고(층 목록 = 실제 층) 연면적이
-// 유한할 때만 세운다 — 층수가 구간(표제부↔층별개요 충돌)이면 세우지 않는다.
-// 층 면적들과 모순이면(확정 층 면적 합이 연면적보다 작거나 큼 — 층별개요에 없는 면적 등) consistent=false 로 두고
+// 면적 항등식: 연면적 = 각 층 바닥면적의 합(옥탑은 0 ~ 그 층 면적). 연면적이 유한할 때 세운다.
+// 층 면적들과 모순이면(확정 층 면적 합이 연면적보다 작거나 큼 — 층별개요에 없는 면적 등, 한 층이 상한 전에 이미 연면적보다 큼)
+// consistent=false 로 두고
 // 이 항등식으로는 아무것도 좁히지 않는다. 어느 층에 있는지 모르는 면적을 특정 층에 몰아 주면 답을 받을수록
-// 판정이 뒤집히기 때문이다(단조성 — 리뷰 N1). 모순 없는 답변은 모순을 만들지 않는다(질문 범위가 이 항등식으로 좁혀져 있음).
+// 판정이 뒤집히기 때문이다(단조성 — 리뷰 N1). 질문 범위는 이 항등식으로 좁혀져 있어 한 번에 하나씩 범위 안에서 답하면 모순이
+// 생기지 않는다. 여러 면적을 한꺼번에 답하면 각자 범위 안이어도 합이 어긋날 수 있어, 질문은 동마다 면적 하나씩만 낸다
+// (evaluate.js limitQuestions). 그래도 모순이면 AREA_ANSWER_MISMATCH — 면적에 기대는 비해당을 확정하지 않는다.
+// complete: 층수를 정확히 알아 층 목록이 실제 층 전부 — 이때만 합이 연면적과 '같다'(하한 추론). 목록이 일부여도
+// '알려진 층 면적의 합 ≤ 연면적'은 늘 성립하므로 상한 추론(층 면적 ≤ 연면적 − 다른 층 면적 하한)은 늘 쓴다
 export function areaIdentity(env) {
   return memo(env, 'areaIdentity', () => {
     if (env.members) return siteAreaIdentity(env);
     const { floors, allComplete, exactCounts } = floorsOf(env);
     const total = metric(env, 'total_area');
-    if (!allComplete || !exactCounts || !floors.length || !Number.isFinite(total.hi)) return null;
+    if (!floors.length || !Number.isFinite(total.hi)) return null;
+    const complete = allComplete && exactCounts;
     let lo = 0;
     let hi = 0;
     let roofHi = 0;
+    let over = false; // 연면적 상한을 씌우기 전의 층 면적이 이미 연면적보다 큼(층별개요·답변의 모순 — 상한에 가려지지 않게)
     const loC = depCollector();
     const hiC = depCollector();
     for (const f of floors) {
@@ -227,27 +350,29 @@ export function areaIdentity(env) {
       else {
         lo += a.lo;
         hi += a.hi;
+        over = over || uncappedFloorArea(env, f).lo > total.hi + AREA_EPS;
       }
       if (env.track) {
         loC.add(a.loDeps);
         hiC.add(a.hiDeps);
       }
     }
-    const consistent = lo <= total.hi + AREA_EPS && hi + roofHi >= total.lo - AREA_EPS;
-    return { total, lo, hi, roofHi, consistent, loDeps: loC.list(), hiDeps: hiC.list() };
+    const consistent = !over && lo <= total.hi + AREA_EPS && (!complete || hi + roofHi >= total.lo - AREA_EPS);
+    return { total, lo, hi, roofHi, complete, consistent, loDeps: loC.list(), hiDeps: hiC.list() };
   });
 }
 
 // 대지 전체의 면적 항등식 = 동별 항등식의 합 — 모든 동이 항등식을 세울 수 있고 모순이 없을 때만(한 동의 빈 면적을 다른 동에 몰지 않는다)
 function siteAreaIdentity(env) {
   const parts = env.members.map((m) => areaIdentity(m));
-  if (parts.some((p) => !p || !p.consistent)) return null;
+  if (parts.some((p) => !p || !p.consistent || !p.complete)) return null;
   const sum = (k) => parts.reduce((acc, p) => acc + p[k], 0);
   return {
     total: metric(env, 'total_area'),
     lo: sum('lo'),
     hi: sum('hi'),
     roofHi: sum('roofHi'),
+    complete: true,
     consistent: true,
     loDeps: mergeDeps(...parts.map((p) => p.loDeps)),
     hiDeps: mergeDeps(...parts.map((p) => p.hiDeps)),
@@ -261,9 +386,11 @@ export function floorArea(env, floor) {
     if (raw.lo === raw.hi || floor.kind === 'rooftop' || floor.members) return raw; // 대지의 층은 동별로 이미 좁혀짐
     const id = areaIdentity(env);
     if (!id || !id.consistent) return raw;
-    const lo = Math.max(raw.lo, id.total.lo - (id.hi - raw.hi) - id.roofHi);
+    // 하한(연면적 − 다른 층 상한)은 층 목록이 전부일 때만, 상한(연면적 − 다른 층 하한)은 늘
+    const lo = id.complete ? Math.max(raw.lo, id.total.lo - (id.hi - raw.hi) - id.roofHi) : raw.lo;
     let hi = Math.min(raw.hi, id.total.hi - (id.lo - raw.lo));
-    if (lo <= raw.lo && hi >= raw.hi) return raw;
+    const counts = id.complete ? EMPTY : countOpen(env);
+    if (lo <= raw.lo && hi >= raw.hi && !counts.length) return raw;
     if (hi - lo <= AREA_EPS) hi = lo;
     const listDeps = () => {
       const { kinds } = floorsOf(env);
@@ -272,7 +399,7 @@ export function floorArea(env, floor) {
     return interval(lo, hi, {
       loDeps: lo > raw.lo ? D(env, () => mergeDeps(id.total.loDeps, id.hiDeps, listDeps())) : raw.loDeps,
       hiDeps: hi < raw.hi ? D(env, () => mergeDeps(id.total.hiDeps, id.loDeps, listDeps())) : raw.hiDeps,
-      open: narrowedOpen(env, raw.open, lo, hi),
+      open: hi === lo ? EMPTY : mergeDeps(floorOpen(env, floor, raw.open, lo, hi), counts),
     });
   });
 }
@@ -309,12 +436,13 @@ function partArea(env, floor, i) {
   });
   const lo = Math.max(own.lo, fl.lo - othersHi);
   let hi = Math.min(own.hi, fl.hi - othersLo);
-  if (lo <= own.lo && hi >= own.hi) return own;
+  const counts = fl.open.length ? fl.open.filter((d) => COUNT_METRICS.has(d.input)) : EMPTY; // 층 면적의 층수 근거(countOpen)
+  if (lo <= own.lo && hi >= own.hi && !counts.length) return own;
   if (hi - lo <= AREA_EPS) hi = lo;
   return interval(lo, hi, {
     loDeps: lo > own.lo ? D(env, () => mergeDeps(fl.loDeps, loC.list())) : own.loDeps,
     hiDeps: hi < own.hi ? D(env, () => mergeDeps(fl.hiDeps, hiC.list())) : own.hiDeps,
-    open: narrowedOpen(env, own.open, lo, hi),
+    open: hi === lo ? EMPTY : mergeDeps(narrowedOpen(env, own.open, lo, hi), counts),
   });
 }
 
@@ -483,7 +611,7 @@ function sumArea(env, spec) {
   if (!list.complete) {
     hi = Infinity;
     if (track) openC.add(list.open);
-  } else if (!targets && allComplete && total.lo - restHi > lo && areaIdentity(env)?.consistent) {
+  } else if (!targets && allComplete && total.lo - restHi > lo && areaIdentity(env)?.consistent && areaIdentity(env).complete) {
     // 면적 항등식이 성립하면(층 목록 완전, 층 면적과 연면적이 모순 없음) 대상 층 면적 합계 ≥ 연면적 − 나머지 층 면적 상한.
     // 모순이면 쓰지 않는다 — 층별개요에 없는 면적을 대상 층에 몰아 주는 셈이라 답에 따라 뒤집힌다(리뷰 N1)
     lo = Math.min(total.lo - restHi, hi);

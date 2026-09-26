@@ -15,8 +15,9 @@
 //   monotonicity.test.mjs(무작위 건물·기준에서 묻는 질문에 답해 가는 산책)가 확인한다.
 // 질문 선별: 확인 필요일 때 확정이 아닌 입력마다 시험값을 넣어 판정이 바뀌는지 본다(한 입력으로 바뀌면 결정적).
 //   결정적 입력이 하나도 없으면 관련 입력을 모두 함께 묻는다(jointQuestions). 시험 예산을 다 쓰면 그때까지 찾은 결정적 입력을,
-//   하나도 못 찾았으면 역시 모두 함께 묻는다. 물을 질문은 날짜 → 대지 → 동 → 층 순으로 늘어놓고 시설마다 QUESTION_LIMIT 개까지만
-//   내보낸다(나머지는 moreQuestions 수로 — 답을 받으면 다시 골라 다음 질문이 나온다).
+//   하나도 못 찾았으면 역시 모두 함께 묻는다. 물을 질문은 날짜 → 대지 → 동 → 층 순으로 늘어놓고, 건물 단위(limitQuestions)에서
+//   면적 항등식으로 묶인 질문(층·부분 면적, 연면적, 층수)은 동마다 한 번에 하나만, 시설마다 QUESTION_LIMIT 개까지만 내보낸다
+//   (나머지는 moreQuestions 수로 — 답을 받으면 다시 골라 다음 질문이 나온다).
 
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
@@ -422,7 +423,12 @@ function chooseQuestions(fid, dctx, j, candidates) {
     }
   }
   const joint = !decisive.size;
-  return { deps: joint ? candidates : candidates.filter((d) => decisive.has(d.key)), joint, exhausted, tests: budget.count };
+  // 면적 질문(층·부분 면적, 연면적)을 고르면 같은 동의 층수(모름·가정값)도 함께 묻는다 — 층수가 정해지기 전의 면적 범위는
+  // 층수 가정값을 푼 재평가의 범위라, 그 안의 답이 가정값 층수로 온전해진 면적 항등식(본 평가)과 모순될 수 있다.
+  // 층수가 먼저 나온다(limitQuestions)
+  const areaDongs = new Set(candidates.filter((d) => decisive.has(d.key) && AREA_IDENTITY_INPUTS.has(d.input)).map((d) => d.dong));
+  const chosen = (d) => decisive.has(d.key) || (COUNT_INPUTS.has(d.input) && areaDongs.has(d.dong));
+  return { deps: joint ? candidates : candidates.filter(chosen), joint, exhausted, tests: budget.count };
 }
 
 // ───────────── 확정·출력 ─────────────
@@ -506,6 +512,15 @@ export function finalizeFacility(fid, dctx) {
     reasons.push(`이 동의 ${dctx.pendingV1.join('·')}번 기준 파일이 v1 이라 판정에 빠짐 — 기존(v1) 판정과 함께 확인 필요`);
   }
 
+  // 답변한 면적이 연면적·층별개요와 모순이면(AREA_ANSWER_MISMATCH) 면적에 기대는 비해당은 확정하지 않는다 — 모형 밖의 답이라
+  // 판정이 답에 따라 뒤집힐 수 있다. 면적 답변 확인 질문(area_check)에 '예'(지금 답이 맞다)라고 하면 그 답대로 판정한다
+  let areaCheck = false;
+  if (v === F && dctx.areaMismatch && dctx.answers[depKey('area_check', dctx.dong.id)] !== true && dependsOnAreas(j)) {
+    v = U;
+    areaCheck = true;
+    reasons.push('답변한 면적이 연면적과 맞지 않아(AREA_ANSWER_MISMATCH) 면적에 기대는 비해당을 확정하지 않음 — 면적 답변 확인 필요');
+  }
+
   const defs = dctx.defs.get(fid) || [];
   const allRows = core.perFile.flatMap((r) => r.rows);
   const decided = core.perFile.filter((r) => r.value.v === T);
@@ -527,9 +542,10 @@ export function finalizeFacility(fid, dctx) {
   const first = defs[0]?.facility || {};
   const qctx = { inputDefs: dctx.inputDefs, index: dctx.index, names: dctx.names };
   const asked = [];
+  if (areaCheck) asked.push(buildQuestion(makeDep('area_check', UNKNOWN, { dong: dctx.dong.id }), qctx));
   for (const d of questionDeps) if (!asked.some((q) => q.key === d.key)) asked.push(buildQuestion(d, qctx));
-  const ordered = orderQuestions(asked, order);
-  const questions = ordered.slice(0, QUESTION_LIMIT);
+  // 순서만 정하고 상한·면적 질문 묶음은 건물 단위에서(limitQuestions) — 여러 시설·동의 질문을 함께 봐야 해서
+  const questions = orderQuestions(asked, order);
   const assumptions = core.tv.deps.filter((d) => d.status === ASSUMED).map((d) => describeDep(d, dctx));
   const dateAssumption = describeDateAssumption(di);
   if (dateAssumption) assumptions.push(dateAssumption);
@@ -548,7 +564,7 @@ export function finalizeFacility(fid, dctx) {
     possibleScope: v === U && (uRows.length || tRows.length) ? mergeScopes([...uRows, ...(boundary ? tRows : [])].map((r) => r.scope), order) : null,
     extensions: decided.flatMap((r) => r.rows.filter((x) => x.kind === 'modifier' && x.value.v === T).map((x) => x.row.specs?.label ?? x.row.criteria)),
     questions,
-    moreQuestions: ordered.length - questions.length,
+    moreQuestions: 0,
     jointQuestions: joint,
     assumptions,
     boundary,
@@ -581,10 +597,57 @@ const tally = (facilities) => ({
 });
 
 const AREA_ANSWER_RE = /^(floor_area|part_area\[[^\]]*\]|total_area)@(.*)$/;
+const AREA_INPUTS = new Set(['floor_area', 'part_area', 'total_area', 'use_area', 'floor_use_area']);
 
-// 답변한 면적이 연면적·층별개요와 맞지 않으면 경고 — 한 층이 연면적보다 크거나, 층수를 알 때 층 면적 합이 연면적과 모순
-// (이때 엔진은 모순된 쪽으로 추론하지 않으며, 그런 답은 단조성 보장 밖이다)
-function areaAnswerWarnings(dong, env, answers) {
+// 비해당(모든 시기에서 가정값을 푼 평가도 F)의 근거에 면적 입력이 있는가
+function dependsOnAreas(j) {
+  return [...(j.released || []), ...(j.normal || [])].some((e) => e.tv.deps.some((d) => AREA_INPUTS.has(d.input)));
+}
+
+// 면적 항등식(연면적 = 각 층 바닥면적의 합)으로 묶인 입력 — 한 동에서 여러 개를 한꺼번에 답하면 각자 범위 안이어도
+// 합이 어긋날 수 있다(3차 리뷰: 2층·3층을 각각 [0, 600] 에서 550·550). 층수도 묶음이다 — 층수가 층 목록(항등식이 온전한지)을
+// 정한다(지하층수와 1층 면적을 함께 물어 0·0 을 답하면 연면적과 모순). 그래서 한 번에 동마다 하나만 묻고(층수가 먼저),
+// 답을 받으면 나머지 범위를 다시 좁혀 묻는다
+const AREA_IDENTITY_INPUTS = new Set(['floor_area', 'part_area', 'total_area']);
+const COUNT_INPUTS = new Set(['ground_floors', 'basement_floors']);
+const IDENTITY_INPUTS = new Set([...AREA_IDENTITY_INPUTS, ...COUNT_INPUTS]);
+
+// 건물 단위 질문 정리: 면적 항등식 묶음(동)마다 질문 하나(층수 질문이 있으면 층수, 없으면 가장 먼저 나온 것)만 남기고,
+// 시설마다 QUESTION_LIMIT 개까지.
+// 그 묶음의 다른 면적 질문만 있던 시설에는 대표 질문을 대신 넣는다(답하면 범위가 좁혀져 다음에 자기 질문이 나온다)
+export function limitQuestions(dongResults) {
+  const rep = new Map();
+  for (const d of dongResults) {
+    for (const f of d.facilities || []) {
+      for (const q of f.questions) {
+        if (!IDENTITY_INPUTS.has(q.input) || !q.dong) continue;
+        const cur = rep.get(q.dong);
+        if (!cur || (COUNT_INPUTS.has(q.input) && !COUNT_INPUTS.has(cur.input))) rep.set(q.dong, q);
+      }
+    }
+  }
+  for (const d of dongResults) {
+    for (const f of d.facilities || []) {
+      const shown = [];
+      for (const q of f.questions) {
+        const r = IDENTITY_INPUTS.has(q.input) && q.dong ? rep.get(q.dong) : q;
+        if (!shown.some((x) => x.key === r.key)) shown.push(r);
+      }
+      f.moreQuestions = Math.max(0, f.questions.length - Math.min(shown.length, QUESTION_LIMIT));
+      f.questions = shown.slice(0, QUESTION_LIMIT);
+    }
+    const questions = [];
+    for (const q of (d.facilities || []).flatMap((f) => f.questions)) if (!questions.some((x) => x.key === q.key)) questions.push(q);
+    d.questions = questions;
+  }
+  return dongResults;
+}
+
+// 답변한 면적이 답변끼리·확정 사실과 맞지 않으면 경고 — 한 층이 연면적보다 크거나, 층 면적 합이 연면적과 모순
+// (이때 엔진은 모순된 쪽으로 추론하지 않으며, 그런 답은 단조성 보장 밖이다). env·strippedEnv 는 가정값을 푼 평가다(evaluateDong)
+// 모순이 면적 답변 때문인가: 이 동의 면적 답변(층·부분 면적, 연면적)만 뺀 평가(stripped)에서는 모순이 없어야 한다 — 대장 자체의
+// 불일치(FLOOR_AREA_MISMATCH)는 답변 탓이 아니므로 경고·비해당 보류 대상이 아니다(그때는 면적 항등식을 아예 쓰지 않는다)
+function areaAnswerWarnings(dong, env, strippedEnv, answers) {
   const mine = Object.keys(answers).some((k) => {
     const m = AREA_ANSWER_RE.exec(k);
     return m && (m[2] === dong.id || m[2].startsWith(`${dong.id}/`));
@@ -592,14 +655,29 @@ function areaAnswerWarnings(dong, env, answers) {
   if (!mine) return [];
   const total = metric(env, 'total_area');
   const totalText = total.lo === total.hi ? fmtNum(total.lo) : `${fmtNum(total.lo)}~${fmtNum(total.hi)}`;
-  const over = floorsOf(env).floors.filter((f) => rawFloorArea(env, f).lo > total.hi + 1e-6);
+  const overIn = (e) => {
+    const t = metric(e, 'total_area');
+    return new Set(floorsOf(e).floors.filter((f) => rawFloorArea(e, f).lo > t.hi + 1e-6).map((f) => f.key));
+  };
+  const before = overIn(strippedEnv);
+  const over = floorsOf(env).floors.filter((f) => rawFloorArea(env, f).lo > total.hi + 1e-6 && !before.has(f.key));
   if (over.length) {
     return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: ${over.map((f) => f.label).join('·')} 면적(답변 포함)이 연면적 ${totalText}㎡ 보다 큼 — 면적 답변을 확인해 주세요` }];
   }
   const id = areaIdentity(env);
   if (!id || id.consistent) return [];
+  const base = areaIdentity(strippedEnv);
+  if (base && !base.consistent) return [];
   const sum = id.lo === id.hi + id.roofHi ? fmtNum(id.lo) : `${fmtNum(id.lo)}~${fmtNum(id.hi + id.roofHi)}`;
   return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: 답변을 반영한 층 면적 합계 ${sum}㎡ 가 연면적 ${totalText}㎡ 와 맞지 않음 — 면적 답변을 확인해 주세요` }];
+}
+
+// 이 동의 면적 답변만 뺀 답변
+function withoutAreaAnswers(dong, answers) {
+  return Object.fromEntries(Object.entries(answers).filter(([k]) => {
+    const m = AREA_ANSWER_RE.exec(k);
+    return !(m && (m[2] === dong.id || m[2].startsWith(`${dong.id}/`)));
+  }));
 }
 
 // bctx = { dataFiles, index, inputDefs, names, exemptions, answers, policy, today, dates, dateInfo }
@@ -640,6 +718,12 @@ export function evaluateDong(dong, bctx) {
   dctx.dateInfo = dateInfoFor(dctx, dctx.answers);
   const baseEnv = getPass(dctx, dctx.dateInfo.refDate, false, dctx.answers, '').env;
   dctx.floorOrder = new Map(floorsOf(baseEnv).floors.map((f, i) => [f.key, i]));
+  // 면적 답변의 모순은 가정값을 푼 평가에서 본다 — 답변끼리 또는 확정 사실과 어긋날 때만 답변 탓이다. 가정값(예: 지하층수 0)과만
+  // 어긋나면 가정값을 푼 재평가가 비해당을 지키고, 가정값 층수는 면적보다 먼저 묻는다(chooseQuestions)
+  const checkEnv = getPass(dctx, dctx.dateInfo.refDate, true, dctx.answers, '').env;
+  const strippedEnv = makePass(dctx, dctx.dateInfo.refDate, withoutAreaAnswers(dong, dctx.answers), { release: true }).env;
+  const warnings = areaAnswerWarnings(dong, checkEnv, strippedEnv, dctx.answers);
+  dctx.areaMismatch = warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH');
   const facilities = [...defs.keys()].map((fid) => finalizeFacility(fid, dctx));
   const questions = [];
   for (const q of facilities.flatMap((f) => f.questions)) if (!questions.some((x) => x.key === q.key)) questions.push(q);
@@ -650,6 +734,6 @@ export function evaluateDong(dong, bctx) {
     facilities,
     questions,
     counts: tally(facilities),
-    warnings: areaAnswerWarnings(dong, baseEnv, dctx.answers),
+    warnings,
   };
 }

@@ -306,6 +306,15 @@
       "question": "이 대지의 동들이 지하주차장·연결통로 등으로 연결되어 하나의 소방대상물로 보아야 합니까? (연결통로의 길이·벽 유무, 방화셔터 등 예외는 관할 소방서에 확인)"
     },
     {
+      "id": "area_check",
+      "label": "면적 답변 확인",
+      "type": "boolean",
+      "source": "user",
+      "scope": "building",
+      "engine": true,
+      "question": "{dong}의 면적 답변(층·부분 바닥면적, 연면적)이 서로 맞지 않습니다. 답변을 고쳐 주세요 — 지금 답변이 맞다면 '예'(그 답변대로 판정합니다)"
+    },
+    {
       "id": "site_combined_floors",
       "label": "합친 층으로 보기(연결된 동)",
       "type": "boolean",

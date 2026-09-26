@@ -13,7 +13,7 @@ import { buildUseIndex, useName } from './uses.js';
 import { buildQuestion, inputDefsFrom } from './questions.js';
 import { normalizeYmd, resolveDateInfo, todayYmd } from './dates.js';
 import { F, T, U, UNKNOWN, makeDep } from './logic.js';
-import { VERDICT, evaluateDong } from './evaluate.js';
+import { VERDICT, evaluateDong, limitQuestions } from './evaluate.js';
 import { mergeDongs, siteLinkCandidate } from './facts.js';
 
 export const ENGINE_VERSION = '2.0.0-p0';
@@ -112,6 +112,8 @@ export function evaluateBuilding({ building, dataFiles = {}, vocabulary, useInde
   };
   const dongs = building.dongs.map((d) => evaluateDong(d, bctx));
   const site = applySiteLink(building, dongs, bctx);
+  // 면적 질문 묶음은 동별 목록과 대지 전체 목록을 함께 본다 — 같은 동의 면적 질문이 두 목록에 따로 나오지 않게
+  limitQuestions(site ? [...dongs, { facilities: site.facilities }] : dongs);
   const merged = aggregate(dongs);
   // v2 = 모든 동을 v2 로 평가 · partial = 일부만 · v1 = 평가한 동 없음(기존 판정으로 대체) · unmapped = 용도 미분류뿐
   const evaluated = dongs.some((d) => d.status === 'v2' || d.status === 'partial');

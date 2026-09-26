@@ -339,6 +339,51 @@ for (const seed of SEEDS) {
   });
 }
 
+// 질문 차례 산책(3차 리뷰 fz_rounds 와 같은 방식): 매 차례 보이는 질문(시설마다 최대 5개)에만 범위 안의 값으로 답한다.
+// 면적 항등식으로 묶인 질문(층·부분 면적, 연면적, 층수)은 동마다 하나씩만 나오고 답을 받을 때마다 범위가 다시 좁혀지므로
+// 답변이 서로 모순될 수 없다 — AREA_ANSWER_MISMATCH 가 없어야 한다
+function roundsFuzz(seed) {
+  const rnd = prng(seed * 104729 + 3);
+  const G = generator(rnd);
+  let rounds = 0;
+  for (let c = 0; c < CASES; c++) {
+    const b = G.building();
+    const policy = { windowless: G.pick(['unknown', 'assume_none']), manualBlankBasement: G.pick(['assume_zero', 'unknown']), floorCountConflict: G.pick(['ask', 'title']) };
+    const sc = { input: b.input, data: G.data(b.permit), policy };
+    let r = run(sc, {});
+    if (r.status !== 'v2') continue;
+    const answers = {};
+    for (let round = 0; round < 10; round++) {
+      let n = 0;
+      for (const f of r.dongs[0].facilities.filter((x) => x.value === U)) {
+        for (const q of f.questions) {
+          if (q.key in answers) continue;
+          if (q.type === 'date') {
+            const w = r.dateInfo.window;
+            answers[q.key] = w ? G.pick([w.from, w.to]) : r.dateInfo.refDate;
+          } else {
+            const vs = questionValues(q);
+            if (!vs.length) continue;
+            answers[q.key] = G.pick(vs);
+          }
+          n++;
+        }
+      }
+      if (!n) break;
+      r = run(sc, answers);
+      rounds++;
+      assert.ok(!r.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH'), `면적 모순 — ${JSON.stringify({ seed, case: c, input: sc.input, answers })}`);
+    }
+  }
+  return rounds;
+}
+
+for (const seed of SEEDS) {
+  test(`질문 차례 산책 seed ${seed}: 보이는 질문에만 범위 안에서 답하면 면적 답변 모순(AREA_ANSWER_MISMATCH)이 생기지 않는다`, () => {
+    assert.ok(roundsFuzz(seed) > 0);
+  });
+}
+
 test('퍼즈 도구 자체 점검: 층 목록이 완전해지는 층수 답변까지 층 질문 후보에 들어간다', () => {
   const dong = normalizeRegistry({ title: [{ mainPurpsCdNm: '제2종근린생활시설', totArea: 600, grndFlrCnt: '', ugrndFlrCnt: 0 }], floors: [] }, { useIndex: INDEX }).dongs[0];
   const keys = [...factUniverse(dong, { window: null }, { '02': { fire_facilities: [] } }).keys()];

@@ -10,7 +10,7 @@ import {
 import { addDays } from '../../../js/engine/dates.js';
 import { inputDefsFrom } from '../../../js/engine/questions.js';
 import { FACILITIES, INDEX, INPUTS, TODAY, VOCABULARY, evaluate, loadBuildingFixtures } from './helpers.mjs';
-import { caseById, row, v2 } from './review-cases.mjs';
+import { CASES, caseById, row, v2 } from './review-cases.mjs';
 
 const FIXTURES = loadBuildingFixtures();
 const qkeys = (f) => f.questions.map((q) => q.key);
@@ -258,7 +258,8 @@ test('2차 MEDIUM: 층의 용도별 면적 질문(floor_use_area)에 답하면 �
 test('2차 MEDIUM: 대지 전체(합친 동) 판정은 동 이름 키의 답을 읽는다 — 같은 질문을 되풀이하지 않는다(rv_site_stuck)', () => {
   const c = caseById('site-stuck');
   const sp = (answers) => fac(runCase(c, { answers }), '상가동', 'sprinkler');
-  assert.deepEqual(qkeys(sp({})), ['floor_area@상가동/1F', 'floor_area@상가동/2F']);
+  // 면적 항등식으로 묶인 면적 질문은 동마다 한 번에 하나(3차 리뷰) — 1층을 답하면 2층 범위가 좁혀져 다음에 나온다
+  assert.deepEqual([qkeys(sp({})), sp({}).moreQuestions], [['floor_area@상가동/1F'], 1]);
   const areas = { 'floor_area@상가동/1F': 800, 'floor_area@상가동/2F': 800 };
   // 동별로도, 합친 동에서도 1,000㎡ 이상인 층이 없다 → 연결 여부를 묻지 않고 비해당
   assert.deepEqual([sp(areas).verdict, qkeys(sp(areas))], ['비해당', []]);
@@ -274,7 +275,8 @@ test('2차 MEDIUM: 합친 동에서만 모르는 사실은 그 동 이름 키로
   assert.deepEqual([open.verdict, qkeys(open), open.siteLink.mergedVerdict], ['확인 필요', ['site_connected'], '확인 필요']);
   const merged = wc({ site_connected: true });
   assert.equal(merged.verdict, '확인 필요');
-  assert.deepEqual(qkeys(merged).sort(), ['floor_area@주차장동/B1', 'floor_area@주차장동/B2']);
+  assert.equal(merged.questions.length, 1);
+  assert.match(qkeys(merged)[0], /^floor_area@주차장동\/B[12]$/);
   assert.equal(wc({ site_connected: true, 'floor_area@주차장동/B1': 1200 }).verdict, '해당');
   // 지하1층 800 → 지하2층 = 1,500 − 800 = 700(면적 항등식) → 1,000㎡ 이상인 지하층 없음 → 합친 판정도 비해당
   assert.equal(wc({ site_connected: true, 'floor_area@주차장동/B1': 800 }).verdict, '비해당');
@@ -285,13 +287,12 @@ test('2차 MEDIUM: 합친 동에서만 모르는 사실은 그 동 이름 키로
   assert.deepEqual(runCase({ ...c, dataFiles: { '02': c.dataFiles['02'], '18': c.dataFiles['18'] } }, { answers: { site_connected: false } }).notEvaluated, []);
 });
 
-test('2차 MEDIUM: 긴 질문 목록 — 날짜 → 동 → 층 순으로 시설마다 5개까지, 나머지는 moreQuestions (rv_q33)', () => {
+test('2차 MEDIUM: 긴 질문 목록 — 날짜 → 동 → 층 순, 면적 항등식 묶음은 동마다 하나, 시설마다 5개까지, 나머지는 moreQuestions (rv_q33)', () => {
   const sp = fac(runCase(caseById('q33-long-list')), '직접입력', 'sprinkler');
   assert.equal(sp.verdict, '확인 필요');
-  assert.equal(sp.questions.length, 5);
-  assert.ok(sp.moreQuestions >= 20, String(sp.moreQuestions));
-  assert.deepEqual(sp.questions.slice(0, 2).map((q) => q.input), ['application_date', 'use_area']);
-  assert.deepEqual(sp.questions.slice(2).map((q) => q.key), ['floor_area@직접입력/B3', 'floor_area@직접입력/B2', 'floor_area@직접입력/B1']);
+  assert.deepEqual(sp.questions.map((q) => q.input), ['application_date', 'use_area', 'floor_area']);
+  assert.equal(sp.questions[2].key, 'floor_area@직접입력/B3');
+  assert.equal(sp.moreQuestions, 29);
   // 동의 질문 목록은 시설별로 줄인 질문의 합
   const r = runCase(caseById('q33-long-list'));
   assert.ok(r.dongs[0].questions.length <= 5 * r.dongs[0].facilities.length);
@@ -360,6 +361,106 @@ test('3차: 층 면적 기준은 동별 층과 합친 한 층 읽기가 갈리�
   // 두 읽기가 같으면(1,000㎡ 이상 — 동별 900 < 1,000 이지만 합친 1층 1,800 도, … ) 묻지 않는다: 기준 2,000㎡ 이면 둘 다 없음
   const none = { ...c, dataFiles: { ...c.dataFiles, '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('f', { floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: 2000 } } })] }]) } };
   assert.equal(fac(runCase(none, { answers: { site_connected: true } }), '상가동', 'x').verdict, '비해당');
+});
+
+// ───── 3차 리뷰 MEDIUM: 함께 물은 면적 질문의 모순 ─────
+
+test('3차 MEDIUM: 면적 항등식으로 묶인 면적 질문은 동마다 한 번에 하나 — 범위 안에서 답하면 모순이 생기지 않는다(rv3_misc)', () => {
+  const c = caseById('coupled-areas');
+  const f = fac(runCase(c), '본동', 'x');
+  // 2층·3층 모두 결정적이지만 한 번에 하나만(범위 [0, 600]) — 답을 받으면 나머지가 정해지거나 좁혀진다
+  assert.deepEqual([f.verdict, qkeys(f), f.questions[0].range, f.moreQuestions], ['확인 필요', ['floor_area@본동/2F'], [0, 600], 1]);
+  for (const [v2F, verdict] of [[550, '비해당'], [50, '비해당'], [300, '해당']]) {
+    const r = runCase(c, { answers: { 'floor_area@본동/2F': v2F } });
+    assert.deepEqual([fac(r, '본동', 'x').verdict, qkeys(fac(r, '본동', 'x'))], [verdict, []], String(v2F));
+    assert.ok(!r.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH'));
+  }
+  // 2층만 보는 기준: 2층 50 → 3층 550 이어도 제외 아님 → 해당
+  assert.equal(verdictOf('coupled-areas-2f', '본동', 'x', { answers: { 'floor_area@본동/2F': 50 } }), '해당');
+  assert.equal(verdictOf('coupled-areas-2f', '본동', 'x', { answers: { 'floor_area@본동/2F': 550 } }), '비해당');
+});
+
+test('3차 MEDIUM: 그래도 모순된 면적 답변이 들어오면 면적에 기대는 비해당은 확인 필요 + 면적 답변 확인 질문, "예"면 그 답대로', () => {
+  const c = caseById('coupled-areas-2f');
+  const both = { 'floor_area@본동/2F': 550, 'floor_area@본동/3F': 550 };
+  const r = runCase(c, { answers: both });
+  assert.ok(r.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH'));
+  const f = fac(r, '본동', 'x');
+  assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', ['area_check@본동']]);
+  assert.match(f.reasons.join(' '), /AREA_ANSWER_MISMATCH/);
+  assert.equal(verdictOf('coupled-areas-2f', '본동', 'x', { answers: { ...both, 'area_check@본동': true } }), '비해당');
+  assert.equal(verdictOf('coupled-areas-2f', '본동', 'x', { answers: { ...both, 'area_check@본동': false } }), '확인 필요');
+  // 면적에 기대지 않는 비해당(확정 사실만으로 F)은 그대로
+  const noArea = { ...c, dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('g', { m: 'ground_floors', gte: 5 })] }]) } };
+  assert.equal(fac(runCase(noArea, { answers: both }), '본동', 'x').verdict, '비해당');
+  // 대장 자체의 불일치(층별개요 합 ≠ 연면적)는 답변 탓이 아니다 — 면적을 하나 답해도 AREA_ANSWER_MISMATCH 아님
+  const n1 = runCase(caseById('n1-lt'), { answers: { 'windowless@본동/1F': false } });
+  assert.ok(!n1.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH'));
+});
+
+test('3차 MEDIUM(fz_rounds): 면적 질문 범위는 답을 받을 때마다 다시 좁혀진다 — 연면적은 층 면적으로, 빈 부분은 층 범위 − 다른 부분', () => {
+  // 연면적 빈칸: 알려진 층 면적 합(700) 이상 — 2층을 답하면 연면적이 정해져, 그와 모순되는 연면적 질문이 나오지 않는다
+  const t = fac(runCase(caseById('rounds-total-range')), '본동', 'x');
+  assert.deepEqual([t.verdict, qkeys(t), t.questions[0].range], ['확인 필요', ['total_area@본동'], [700, Infinity]]);
+  assert.equal(verdictOf('rounds-total-range', '본동', 'x', { answers: { 'floor_area@본동/2F': 0 } }), '비해당'); // 연면적 = 700
+  assert.equal(verdictOf('rounds-total-range', '본동', 'x', { answers: { 'floor_area@본동/2F': 500 } }), '해당'); // 연면적 = 1,200
+  // 여러 부분 층의 빈 부분: 지하1층 [100, 600] − 주차장 100 → [0, 500] (층 범위를 그대로 보이면 600 을 답해 연면적을 넘는다)
+  const p = fac(runCase(caseById('rounds-part-range')), '본동', 'x');
+  assert.deepEqual([p.verdict, qkeys(p), p.questions[0].range], ['확인 필요', ['part_area[2]@본동/B1'], [0, 500]]);
+  for (const [v, verdict] of [[500, '해당'], [100, '비해당']]) {
+    const r = runCase(caseById('rounds-part-range'), { answers: { 'part_area[2]@본동/B1': v } });
+    assert.deepEqual([fac(r, '본동', 'x').verdict, r.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH')], [verdict, false], String(v));
+  }
+});
+
+test('3차 MEDIUM(fz_rounds): 층수도 면적 항등식 묶음 — 면적보다 먼저 묻고, 층수 범위는 답한 면적에 맞춘다', () => {
+  // 같은 차례에 지하층수와 1층 면적을 함께 물으면 따로따로 범위 안의 답(지하 0층, 1층 0)이 연면적 900 과 모순 — 지하층수만 먼저
+  const first = fac(runCase(caseById('rounds-count-first')), '직접입력', 'x');
+  assert.deepEqual([first.verdict, qkeys(first), first.moreQuestions], ['확인 필요', ['basement_floors@직접입력'], 1]);
+  assert.equal(verdictOf('rounds-count-first', '직접입력', 'x', { answers: { 'basement_floors@직접입력': 0 } }), '해당'); // 1층 = 900
+  const next = fac(runCase(caseById('rounds-count-first'), { answers: { 'basement_floors@직접입력': 1 } }), '직접입력', 'x');
+  assert.deepEqual([qkeys(next), next.questions[0].range], [['floor_area@직접입력/1F'], [0, 900]]);
+  // 1층 800 을 답한 뒤의 지하층수: 0 층이면 연면적 1,600 을 채울 수 없으므로 [1, 30]
+  const range = (answers) => fac(runCase(caseById('rounds-count-range'), { answers }), '직접입력', 'x').questions[0].range;
+  assert.deepEqual([range({}), range({ 'floor_area@직접입력/1F': 800 }), range({ 'floor_area@직접입력/1F': 1600 })], [[0, 30], [1, 30], [0, 30]]);
+  // 가정값 층수(지하 빈칸 → 0): 가정값을 푼 재평가의 1층 면적 범위 [0, 3,000] 을 묻는 대신 지하층수부터 — 그 뒤 1층 면적은 모순 없이
+  const assumed = fac(runCase(caseById('rounds-assumed-count')), '직접입력', 'x');
+  assert.deepEqual([assumed.verdict, qkeys(assumed).sort()], ['확인 필요', ['basement_floors@직접입력', 'windowless@직접입력/1F']]);
+  assert.equal(verdictOf('rounds-assumed-count', '직접입력', 'x', { answers: { 'basement_floors@직접입력': 0, 'windowless@직접입력/1F': false } }), '비해당');
+  const after = fac(runCase(caseById('rounds-assumed-count'), { answers: { 'basement_floors@직접입력': 1 } }), '직접입력', 'x');
+  assert.deepEqual([qkeys(after), after.questions[0].range], [['floor_area@직접입력/1F'], [0, 3000]]);
+  const answered = runCase(caseById('rounds-assumed-count'), { answers: { 'basement_floors@직접입력': 1, 'floor_area@직접입력/1F': 0 } });
+  assert.deepEqual([fac(answered, '직접입력', 'x').verdict, answered.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH')], ['해당', false]);
+});
+
+test('3차 MEDIUM: 한 동의 면적 항등식 묶음 질문(층·부분 면적, 연면적, 층수)은 건물 전체(동별·대지 전체 목록)에서 한 번에 하나', () => {
+  const IDENT = /^(floor_area|part_area\[[^\]]*\]|total_area|ground_floors|basement_floors)@/;
+  const check = (r, where) => {
+    const byDong = new Map();
+    for (const f of [...r.dongs.flatMap((d) => d.facilities), ...(r.site?.facilities || [])]) {
+      for (const q of f.questions) if (IDENT.test(q.key) && q.dong) byDong.set(q.dong, new Set([...(byDong.get(q.dong) || []), q.key]));
+    }
+    for (const [dong, keys] of byDong) assert.equal(keys.size, 1, `${where} ${dong}: ${[...keys].join(', ')}`);
+    return byDong.size;
+  };
+  let groups = 0;
+  for (const c of CASES) {
+    for (const answers of [{}, { site_connected: true }, { site_connected: false }]) groups += check(runCase(c, { answers }), `${c.id} ${JSON.stringify(answers)}`);
+  }
+  for (const fx of FIXTURES) groups += check(evaluate(fx.input, { answers: fx.answers || {} }), fx.id);
+  assert.ok(groups > 20, String(groups));
+});
+
+test('3차 MEDIUM: 면적 답변 모순은 답변끼리·확정 사실과의 모순만 — 대장 자체의 모순(상한에 가려진 층)이나 가정값과만 어긋난 답은 아니다', () => {
+  // 3층 400 > 연면적 300: 대장 자체가 모순 → 면적 항등식을 쓰지 않아 1·2층을 0 으로 몰지 않고, 다른 층 답변은 답변 탓 모순이 아니다
+  const base = runCase(caseById('data-over-total'));
+  assert.ok(base.warnings.some((w) => w.code === 'FLOOR_AREA_MISMATCH'));
+  assert.deepEqual([fac(base, '본동', 'x').verdict, fac(base, '본동', 'x').questions[0].range], ['확인 필요', [0, 300]]);
+  const both = runCase(caseById('data-over-total'), { answers: { 'floor_area@본동/1F': 100, 'floor_area@본동/2F': 100 } });
+  assert.deepEqual([fac(both, '본동', 'x').verdict, both.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH')], ['비해당', false]);
+  // 지하층수 가정 0 에서 지상층 면적 합 210 < 연면적 400: 지하층이 있으면 맞는 답 — 경고·비해당 보류 없이 비해당(재평가도 비해당)
+  const a = runCase(caseById('assumed-count-answers'), { answers: { 'floor_area@직접입력/1F': 60, 'floor_area@직접입력/2F': 0, 'floor_area@직접입력/3F': 150 } });
+  assert.deepEqual([fac(a, '직접입력', 'x').verdict, a.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH')], ['비해당', false]);
 });
 
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {

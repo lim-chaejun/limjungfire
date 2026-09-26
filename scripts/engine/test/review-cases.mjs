@@ -41,6 +41,8 @@ const SITE_TWO_DONGS = {
   floors: [{ dongNm: '주차장동', flrGbCd: '10', flrNo: 1, mainPurpsCdNm: '자동차관련시설', etcPurps: '지하주차장', area: 900 }],
   permit: [permit('20150101')],
 };
+// 3차 리뷰 MEDIUM: 연면적 1,000, 지상 3층 중 1층(400)만 층별개요 — 2층·3층 면적이 면적 항등식으로 묶임
+const COUPLED = { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1000, grndFlrCnt: 3, ugrndFlrCnt: 0 }], floors: [nc2(1, '소매점', 400)], permit: [permit('20150101')] };
 // 3차 리뷰: 상가동(1층 900 + 2층 100) + 주차 전용 주차타워(1층 900) — 연결되면 대지 전체로 평가
 const RV3_SITE = {
   title: [
@@ -235,6 +237,76 @@ export const CASES = [
       '18': v2('18', []),
       '30': v2('30', []),
     },
+  },
+  {
+    id: 'coupled-areas',
+    title: '3차 MEDIUM: 연면적 1,000, 지상 3층 중 1층(400)만 층별개요 — 2층·3층 면적은 서로 묶임, 제외 조건 "2층 이상 500㎡ 이상인 층"',
+    input: { registry: COUPLED },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('c', { m: 'total_area', gte: 33 })], excluded_if: { floor_exists: { floors: [{ kind: 'ground', level: { gte: 2 } }], area: { gte: 500 } } } }]) },
+  },
+  {
+    id: 'coupled-areas-2f',
+    title: '3차 MEDIUM: 같은 건물, 제외 조건 "2층 바닥면적 500㎡ 이상"',
+    input: { registry: COUPLED },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('c', { m: 'total_area', gte: 33 })], excluded_if: { floor_exists: { floors: [{ kind: 'ground', level: { gte: 2, lte: 2 } }], area: { gte: 500 } } } }]) },
+  },
+  {
+    id: 'rounds-total-range',
+    title: '3차 fz_rounds: 연면적 빈칸, 지상 3층 중 1층 600·3층 100 — 연면적 질문 범위는 [700, ∞), 2층을 답하면 연면적이 정해진다',
+    input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: '', grndFlrCnt: 3, ugrndFlrCnt: 0 }], floors: [nc2(1, '소매점', 600), nc2(3, '소매점', 100)], permit: [permit('20150101')] } },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('t', { m: 'total_area', gte: 1000 })] }]) },
+  },
+  {
+    id: 'rounds-part-range',
+    title: '3차 fz_rounds: 연면적 1,200, 1층 600, 지하1층 = 주차장 100 + 노래연습장(빈칸), 2층 없음 — 빈 부분의 질문 범위는 층 범위 − 다른 부분',
+    input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }], floors: [nc2(1, '소매점', 600), nc2(1, '주차장', 100, '10'), nc2(1, '노래연습장', '', '10')], permit: [permit('20150101')] } },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('s', { floor_exists: { floors: [{ use: ['singing_room'] }], area: { gte: 308 } } })] }]) },
+  },
+  {
+    id: 'rounds-count-range',
+    title: '3차 fz_rounds: 직접 입력 연면적 1,600, 지상 1층, 지하층수 빈칸(모름) — 1층 800 을 답하면 지하층수는 1 이상이어야 한다',
+    input: { manual: { mainPurpsCdNm: '제2종근린생활시설', totArea: 1600, grndFlrCnt: 1, ugrndFlrCnt: '', pmsDay: '20150601' } },
+    policy: { manualBlankBasement: 'unknown' },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('b', { m: 'basement_floors', gte: 2 })] }]) },
+  },
+  {
+    id: 'rounds-count-first',
+    title: '3차 fz_rounds: 직접 입력 연면적 900, 지상 1층, 지하층수 빈칸(모름) — 1층 면적보다 지하층수를 먼저 묻는다',
+    input: { manual: { mainPurpsCdNm: '제2종근린생활시설', totArea: 900, grndFlrCnt: 1, ugrndFlrCnt: '', pmsDay: '20150601' } },
+    policy: { manualBlankBasement: 'unknown' },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('g', { floor_exists: { floors: 'ground', area: { gte: 500 } } })] }]) },
+  },
+  {
+    id: 'rounds-assumed-count',
+    title: '3차 fz_rounds: 직접 입력 연면적 3,000, 지상 1층, 지하층수 빈칸(가정 0) — 가정값을 풀면 1층 면적이 [0, 3,000] 이라도 지하층수부터 묻는다',
+    input: { manual: { mainPurpsCdNm: '제2종근린생활시설', totArea: 3000, grndFlrCnt: 1, ugrndFlrCnt: '', pmsDay: '20150601' } },
+    policy: { windowless: 'assume_none' },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('r', { any: [{ floor_exists: { floors: 'windowless' } }, { not: { floor_exists: { floors: 'ground', area: { gte: 403 } } } }] })] }]) },
+  },
+  {
+    id: 'site-shared-group',
+    title: '3차 MEDIUM: 상가동(2층, 층 면적 미상) + 주차장동 — 동별 목록은 상가동 2층 면적, 대지 전체 목록은 상가동 1층 면적을 물으려 함(같은 묶음)',
+    input: { registry: SITE_TWO_DONGS },
+    dataFiles: {
+      '02': v2('02', [
+        { facility_id: 'a', facility_name: 'A', regulations: [row('a', { all: [{ m: 'total_area', lt: 2000 }, { floor_exists: { floors: [{ kind: 'ground', level: { gte: 2 } }], area: { gte: 1000 } } }] })] },
+        { facility_id: 'b', facility_name: 'B', regulations: [row('b', { all: [{ m: 'total_area', gte: 2000 }, { floor_exists: { floors: [{ kind: 'ground', level: { lte: 1 } }], area: { gte: 1200 } } }] })] },
+      ]),
+      '18': v2('18', []),
+      '30': v2('30', []),
+    },
+  },
+  {
+    id: 'data-over-total',
+    title: '층별개요의 3층(400)이 이미 연면적 300 보다 큼 — 대장 자체의 모순이라 면적 항등식을 쓰지 않고, 다른 층 면적 답변은 답변 탓 모순이 아니다',
+    input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 300, grndFlrCnt: 3, ugrndFlrCnt: 0 }], floors: [nc2(3, '소매점', 400)], permit: [permit('20150101')] } },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('a', { floor_exists: { floors: [{ kind: 'ground', level: { lte: 2 } }], area: { gte: 250 } } })] }]) },
+  },
+  {
+    id: 'assumed-count-answers',
+    title: '직접 입력 연면적 400, 지상 3층, 지하층수 빈칸(가정 0) — 지상층 면적 답의 합(210)이 연면적보다 작음: 가정값과만 어긋남(지하층이 있으면 맞음)',
+    input: { manual: { mainPurpsCdNm: '제2종근린생활시설', totArea: 400, grndFlrCnt: 3, ugrndFlrCnt: '', pmsDay: '20150601' } },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('s', { sum_area: { floors: 'ground' }, gte: 300 })] }]) },
   },
   {
     id: 'area-determined',
