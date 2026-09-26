@@ -22,7 +22,7 @@
 import { SCHEMA_VERSION, normalizeFloors, normalizeScope, numericConstants, referencedFacilities, rowConditionRoots, stableKey } from './schema.js';
 import { ASSUMED, CONFIRMED, F, T, U, UNKNOWN, all, any, depKey, ite, makeDep, not, tv } from './logic.js';
 import { addDays, formatYmd, resolveDateInfo, rowValidAt } from './dates.js';
-import { areaIdentity, evalCondition, floorMember, floorsOf, makeEnv, metric, rawFloorArea } from './conditions.js';
+import { areaIdentity, evalCondition, floorMember, floorsOf, makeEnv, metric, uncappedFloorArea } from './conditions.js';
 import { DATE_INPUTS, buildQuestion, constantsFor, extremeValues, testValues } from './questions.js';
 import { fmtNum } from './format.js';
 
@@ -655,12 +655,14 @@ function areaAnswerWarnings(dong, env, strippedEnv, answers) {
   if (!mine) return [];
   const total = metric(env, 'total_area');
   const totalText = total.lo === total.hi ? fmtNum(total.lo) : `${fmtNum(total.lo)}~${fmtNum(total.hi)}`;
+  // 층 면적은 연면적 상한을 씌우기 전 값으로 본다 — 상한을 씌우면 부분 면적 답이 연면적을 넘어도 가려진다(3차 리뷰 LOW:
+  // 지하1층 600 + 부분 답 600 = 1,200 > 연면적 700 이 700 으로 잘려 경고가 없었다)
   const overIn = (e) => {
     const t = metric(e, 'total_area');
-    return new Set(floorsOf(e).floors.filter((f) => rawFloorArea(e, f).lo > t.hi + 1e-6).map((f) => f.key));
+    return new Set(floorsOf(e).floors.filter((f) => uncappedFloorArea(e, f).lo > t.hi + 1e-6).map((f) => f.key));
   };
   const before = overIn(strippedEnv);
-  const over = floorsOf(env).floors.filter((f) => rawFloorArea(env, f).lo > total.hi + 1e-6 && !before.has(f.key));
+  const over = floorsOf(env).floors.filter((f) => uncappedFloorArea(env, f).lo > total.hi + 1e-6 && !before.has(f.key));
   if (over.length) {
     return [{ code: 'AREA_ANSWER_MISMATCH', dong: dong.id, message: `${dong.id}: ${over.map((f) => f.label).join('·')} 면적(답변 포함)이 연면적 ${totalText}㎡ 보다 큼 — 면적 답변을 확인해 주세요` }];
   }

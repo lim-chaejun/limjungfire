@@ -309,6 +309,18 @@ export const CASES = [
     dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('s', { sum_area: { floors: 'ground' }, gte: 300 })] }]) },
   },
   {
+    id: 'rv3-range',
+    title: '3차 LOW(rv3_range): 연면적 700, 지하1층 = 소매점 600 + 노래연습장(빈칸) — 빈 부분에 600 을 답하면 층 면적 1,200 > 연면적',
+    input: {
+      registry: {
+        title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '일반음식점', totArea: 700, grndFlrCnt: 1, ugrndFlrCnt: 1 }],
+        floors: [nc2(1, '주차장', 600), nc2(1, '일반음식점', ''), nc2(2, '', 600), nc2(2, '소매점', 400), nc2(1, '소매점', 600, '10'), nc2(1, '노래연습장', '', '10')],
+        permit: [permit('20150601')],
+      },
+    },
+    dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('b', { floor_exists: { floors: 'basement', area: { gte: 1500 } } })] }]) },
+  },
+  {
     id: 'area-determined',
     title: '1층 600 + 지하1층 400, 연면적 1,200 → 2층 200(항등식), 2층 이상 바닥면적 합계 150㎡ 미만',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }], floors: [nc2(1, '소매점', 600), nc2(1, '소매점', 400, '10')], permit: [permit('20150101')] } },

@@ -463,6 +463,22 @@ test('3차 MEDIUM: 면적 답변 모순은 답변끼리·확정 사실과의 모
   assert.deepEqual([fac(a, '직접입력', 'x').verdict, a.warnings.some((w) => w.code === 'AREA_ANSWER_MISMATCH')], ['비해당', false]);
 });
 
+test('3차 LOW(rv3_range): 부분 면적 답이 연면적을 넘으면 연면적 상한에 가려지지 않고 경고 — 면적에 기대는 비해당은 보류', () => {
+  const c = caseById('rv3-range');
+  // 대장 자체도 모순(2층 600 + 400 > 700)이라 항등식은 쓰지 않는다 — 그래도 지하1층 답은 답변 탓 모순으로 잡는다
+  const base = runCase(c);
+  assert.ok(base.warnings.some((w) => w.code === 'FLOOR_AREA_MISMATCH'));
+  assert.equal(fac(base, '본동', 'x').verdict, '비해당');
+  const over = runCase(c, { answers: { 'part_area[2]@본동/B1': 600 } });
+  const w = over.warnings.find((x) => x.code === 'AREA_ANSWER_MISMATCH');
+  assert.match(w?.message ?? '', /지하1층 면적\(답변 포함\)이 연면적 700㎡ 보다 큼/);
+  assert.deepEqual([fac(over, '본동', 'x').verdict, qkeys(fac(over, '본동', 'x'))], ['확인 필요', ['area_check@본동']]);
+  assert.equal(verdictOf('rv3-range', '본동', 'x', { answers: { 'part_area[2]@본동/B1': 600, 'area_check@본동': true } }), '비해당');
+  // 연면적 안의 답(지하1층 600 + 50)은 경고 없음 — 2층(대장 자체 모순)은 답변 탓이 아니다
+  const fine = runCase(c, { answers: { 'part_area[2]@본동/B1': 50 } });
+  assert.deepEqual([fac(fine, '본동', 'x').verdict, fine.warnings.some((x) => x.code === 'AREA_ANSWER_MISMATCH')], ['비해당', false]);
+});
+
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
   const r = runCase(caseById('area-determined'));
   const f = fac(r, '본동', 'x');
