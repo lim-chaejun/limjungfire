@@ -59,6 +59,9 @@ export const ROLE_LABELS = {
 // 최초 관리자 이메일
 const ADMIN_EMAIL = 'lcjun37@gmail.com';
 
+// 즐겨찾기 메모 최대 길이 (firestore.rules와 동일)
+const MEMO_MAX_LENGTH = 500;
+
 // 모바일 브라우저 감지
 function isMobileBrowser() {
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
@@ -212,8 +215,20 @@ export function getCurrentUser() {
 // ==================== Firestore 함수 ====================
 
 // 사용자 정보 저장 (로그인/회원가입 시)
-export async function saveUserInfo(user) {
-  if (!user) return null;
+// 로그인 직후 인증 상태 리스너와 로그인 처리 함수가 동시에 호출하므로 사용자별로 한 번만 실행한다.
+// (동시에 실행되면 신규 회원의 두 번째 쓰기가 '수정'으로 평가되어 보안 규칙에 거부됨)
+const saveUserInfoInflight = new Map();
+
+export function saveUserInfo(user) {
+  if (!user) return Promise.resolve(null);
+  if (!saveUserInfoInflight.has(user.uid)) {
+    const task = saveUserInfoOnce(user).finally(() => saveUserInfoInflight.delete(user.uid));
+    saveUserInfoInflight.set(user.uid, task);
+  }
+  return saveUserInfoInflight.get(user.uid);
+}
+
+async function saveUserInfoOnce(user) {
 
   try {
     const userRef = doc(db, 'users', user.uid);
@@ -222,35 +237,29 @@ export async function saveUserInfo(user) {
     const existingDoc = await getDoc(userRef);
     const existingData = existingDoc.exists() ? existingDoc.data() : null;
 
-    // 등급 결정:
-    // 1. 관리자 이메일은 항상 admin 등급 (기존/신규 상관없이)
-    // 2. 기존 사용자는 기존 등급 유지
-    // 3. 신규 사용자는 free 등급
-    let role;
-    if (user.email === ADMIN_EMAIL) {
-      role = USER_ROLES.ADMIN;
-    } else if (existingData?.role) {
-      role = existingData.role;
-    } else {
-      role = USER_ROLES.FREE;
-    }
+    // 등급 결정 (Firestore 규칙과 동일한 기준):
+    // 1. 신규 회원은 free 등급으로 생성 (최고 관리자 이메일만 admin)
+    // 2. 기존 회원의 등급은 로그인 때마다 다시 쓰지 않는다 (등급 변경은 관리자 화면에서만)
+    // 3. 최고 관리자 이메일이 아직 admin이 아니면 admin으로 승격
+    const isSuperAdmin = user.email === ADMIN_EMAIL && user.emailVerified === true;
 
     const userData = {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      role: role,
       lastLoginAt: serverTimestamp()
     };
 
-    // 신규 사용자인 경우에만 createdAt 추가
     if (!existingData) {
+      userData.role = isSuperAdmin ? USER_ROLES.ADMIN : USER_ROLES.FREE;
       userData.createdAt = serverTimestamp();
+    } else if (isSuperAdmin && existingData.role !== USER_ROLES.ADMIN) {
+      userData.role = USER_ROLES.ADMIN;
     }
 
     await setDoc(userRef, userData, { merge: true });
-    console.log('사용자 정보 저장 완료:', user.email, '등급:', role);
+    console.log('사용자 정보 저장 완료:', user.email, '등급:', userData.role || existingData?.role);
     return true;
   } catch (error) {
     console.error('사용자 정보 저장 실패:', error);
@@ -356,7 +365,7 @@ export async function getAllUsers() {
     const querySnapshot = await getDocs(q);
     const users = [];
     querySnapshot.forEach((doc) => {
-      users.push({ id: doc.id, ...doc.data() });
+      users.push({ ...doc.data(), id: doc.id });
     });
     return users;
   } catch (error) {
@@ -410,7 +419,7 @@ export async function getMySearchHistory(limitCount = 20) {
     const querySnapshot = await getDocs(q);
     const history = [];
     querySnapshot.forEach((doc) => {
-      history.push({ id: doc.id, ...doc.data() });
+      history.push({ ...doc.data(), id: doc.id });
     });
     return history;
   } catch (error) {
@@ -502,7 +511,7 @@ export async function getMyFavorites(limitCount = 50) {
     const querySnapshot = await getDocs(q);
     const favorites = [];
     querySnapshot.forEach((doc) => {
-      favorites.push({ id: doc.id, ...doc.data() });
+      favorites.push({ ...doc.data(), id: doc.id });
     });
     return favorites;
   } catch (error) {
@@ -528,7 +537,7 @@ export async function checkFavorite(address) {
 
     let result = null;
     querySnapshot.forEach((doc) => {
-      result = { id: doc.id, ...doc.data() };
+      result = { ...doc.data(), id: doc.id };
     });
     return result;
   } catch (error) {
@@ -548,7 +557,7 @@ export async function updateFavoriteMemo(docId, memo) {
   try {
     const favoriteRef = doc(db, 'favorites', docId);
     await updateDoc(favoriteRef, {
-      memo: memo,
+      memo: String(memo || '').slice(0, MEMO_MAX_LENGTH),
       updatedAt: serverTimestamp()
     });
     console.log('메모 업데이트 완료:', docId);
@@ -561,12 +570,13 @@ export async function updateFavoriteMemo(docId, memo) {
 
 // ==================== 공유 링크 함수 ====================
 
-// 짧은 ID 생성 (6자리)
+// 짧은 ID 생성 (8자리, 암호학적 난수 — 추측·열거 방지)
 function generateShortId() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
   let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (const b of bytes) {
+    result += chars.charAt(b % chars.length);
   }
   return result;
 }
@@ -574,16 +584,22 @@ function generateShortId() {
 // 공유 링크 생성
 export async function createShareLink(data) {
   try {
+    // 규칙과 동일한 형식 검증 (시군구·법정동 5자리, 번·지 0~4자리 숫자)
+    const payload = {
+      sigunguCd: String(data.sigunguCd || ''),
+      bjdongCd: String(data.bjdongCd || ''),
+      bun: String(data.bun || ''),
+      ji: String(data.ji || '')
+    };
+    if (!/^\d{5}$/.test(payload.sigunguCd) || !/^\d{5}$/.test(payload.bjdongCd) ||
+        !/^\d{0,4}$/.test(payload.bun) || !/^\d{0,4}$/.test(payload.ji)) {
+      throw new Error('공유 링크 형식이 올바르지 않습니다.');
+    }
+
     const shortId = generateShortId();
     const shareRef = doc(db, 'shares', shortId);
 
-    await setDoc(shareRef, {
-      sigunguCd: data.sigunguCd,
-      bjdongCd: data.bjdongCd,
-      bun: data.bun || '',
-      ji: data.ji || '',
-      createdAt: serverTimestamp()
-    });
+    await setDoc(shareRef, { ...payload, createdAt: serverTimestamp() });
 
     return shortId;
   } catch (error) {

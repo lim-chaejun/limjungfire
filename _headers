@@ -1,0 +1,9 @@
+# Cloudflare Pages 응답 헤더
+# CSP는 우선 Report-Only(차단 없이 브라우저 콘솔에 위반만 기록)로 배포해 누락된 도메인을 확인한 뒤,
+# 인라인 onclick 핸들러를 정리하고 나서 'unsafe-inline'을 빼고 강제 모드(Content-Security-Policy)로 전환한다.
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), payment=(), usb=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://www.gstatic.com https://apis.google.com https://accounts.google.com https://t1.daumcdn.net https://*.daumcdn.net https://oapi.map.naver.com https://*.pstatic.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://apis.data.go.kr https://*.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.clarity.ms https://c.bing.com https://accounts.google.com https://*.naver.com https://*.naver.net https://*.ntruss.com https://*.pstatic.net https://*.daum.net https://*.kakao.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.daum.net https://*.daumcdn.net https://*.kakao.com https://www.googletagmanager.com https://*.naver.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
