@@ -820,6 +820,15 @@ header h1 {
   font-weight: 700;
 }
 
+/* 허가일 기준 안내 (인허가 이력이 여러 건일 때) */
+.summary-grid-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
 .summary-purpose-badge {
   background: var(--color-primary);
   color: #fff;
@@ -2841,6 +2850,15 @@ footer {
   background: rgba(49, 130, 246, 0.1);
   border-color: #3182f6;
   color: #3182f6;
+}
+.law-ref-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.law-ref-btn:disabled:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 /* 카테고리별 스타일 */
