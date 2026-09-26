@@ -65,6 +65,21 @@ export function mutating(base, edit) {
 
 export const replay = () => createReplayFetch(FIX);
 
+// 가짜 시계: sleep·advance 가 시간을 앞당길 뿐 실제로 기다리지 않는다 (now/sleep 을 check.mjs 에 주입)
+export function fakeClock(start = Date.parse('2026-09-26T00:00:00Z')) {
+  let t = start;
+  return {
+    now: () => t,
+    sleep: async (ms) => {
+      t += ms;
+    },
+    advance: (ms) => {
+      t += ms;
+    },
+    elapsed: () => t - start,
+  };
+}
+
 // check.mjs 를 프로세스 안에서 재생 모드로 실행
 export async function runCheck({ args = [], dataDir = SNAPSHOT, registry = REGISTRY, ...deps } = {}) {
   const out = tmpDir();

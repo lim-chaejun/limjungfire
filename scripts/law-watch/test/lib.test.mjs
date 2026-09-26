@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { BudgetError, FetchError, createHttp } from '../check.mjs';
+import { BudgetError, DeadlineError, FetchError, createHttp } from '../check.mjs';
 import {
   MARKER_LAW,
   expandSources,
@@ -19,7 +19,7 @@ import {
   todayKst,
   validateRegistry,
 } from '../lib.mjs';
-import { REGISTRY, REPO_DATA, SNAPSHOT, readJson, runCheck, writeRegistry } from './helpers.mjs';
+import { REGISTRY, REPO_DATA, SNAPSHOT, fakeClock, readJson, runCheck, writeRegistry } from './helpers.mjs';
 
 // ───────────── 레지스트리 ─────────────
 
@@ -56,6 +56,7 @@ test('레지스트리 형식 오류를 잡는다', () => {
   assert.match(bad((r) => (r.sources[0].baseline = { from: 'inline', asOf: '2026-13-01', known: [] })).join(), /asOf/);
   assert.match(bad((r) => (r.sources[0].baseline = { from: 'inline', asOf: '2026-01-20', known: ['20260701-287375'] })).join(), /키 형식/);
   assert.match(bad((r) => (r.http.maxRequests = -1)).join(), /maxRequests/);
+  assert.match(bad((r) => (r.http.deadlineMs = 1.5)).join(), /deadlineMs/);
   assert.match(bad((r) => (r.sources[3].expand = 'other')).join(), /expand/);
   assert.deepEqual(validateRegistry([]), ['레지스트리가 JSON 객체가 아님']);
   const noCode = expandSources({ sources: [{ id: 'g', kind: 'admrul', expand: 'nfsc', baseline: { from: 'history', file: 'x.json' } }] }, {
@@ -210,6 +211,23 @@ test('HTTP: 예산(maxRequests)은 재시도를 포함해 센다', async () => {
   const http = createHttp({ fetchImpl: fakeFetch([{ status: 503 }]), sleep: async () => {}, config: { maxRequests: 2 } });
   await assert.rejects(http.request(REQ), BudgetError);
   assert.equal(http.count, 2);
+});
+
+test('HTTP: 실행 기한(deadlineMs) — 기다리면 기한을 넘는 재시도는 자지 않고 DeadlineError (BudgetError 의 한 종류)', async () => {
+  const clock = fakeClock();
+  const f = fakeFetch([{ status: 503 }]);
+  const http = createHttp({ fetchImpl: f, sleep: clock.sleep, now: clock.now, random: () => 0.5, config: { deadlineMs: 30000 } });
+  // t=0 시도 → 5초+2초 → t=7초 시도 → 15초+2초 → t=24초 시도 → 45초 기다리면 기한(30초)을 넘으므로 여기서 멈춘다
+  const e = await http.request(REQ).then(() => null, (x) => x);
+  assert.ok(e instanceof DeadlineError && e instanceof BudgetError);
+  assert.equal(e.code, 'DEADLINE_EXCEEDED');
+  assert.equal(new BudgetError('x').code, 'BUDGET_EXCEEDED');
+  assert.equal(f.calls.length, 3);
+  assert.equal(clock.elapsed(), 24000);
+  // 기한을 넘긴 뒤에는 요청 자체를 하지 않는다
+  clock.advance(10000);
+  await assert.rejects(http.request(REQ), DeadlineError);
+  assert.equal(f.calls.length, 3);
 });
 
 test('HTTP: 선언된 charset 이 EUC-KR 이면 그대로 디코드', async () => {

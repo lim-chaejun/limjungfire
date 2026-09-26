@@ -14,6 +14,11 @@
 //   20 하나 이상의 소스 실패 (정상 소스의 개정은 그대로 보고)
 //   30 설정·사용법 오류
 //
+// 장애 대비 — 어떤 경우든 result.json 은 끝까지 온 만큼 남긴다
+//   · 실행 전체 기한 http.deadlineMs(기본 15분): 넘으면 남은 소스는 요청 없이 DEADLINE_EXCEEDED
+//   · 회로 차단: 연속 3개 소스의 목록 요청이 전송 오류·5xx·429 로 실패하면 나머지는 SKIPPED_OUTAGE
+//   · 소스 하나에서 예상 못 한 예외가 나도 INTERNAL_ERROR 로 기록하고 다음 소스로 넘어간다
+//
 // 기준선(baseline)
 //   history : 연혁 파일 자체가 기준선이다. "변경 없음" ⇔ 사이트 데이터가 최신.
 //   inline  : 레지스트리의 baseline.known 키 목록이 기준선이다. --bootstrap 으로 씨앗을 만들고
@@ -66,6 +71,7 @@ const DEFAULT_REGISTRY = path.join(REPO_ROOT, 'data', 'law_watch.json');
 const DEFAULT_DATA_DIR = path.join(REPO_ROOT, 'data');
 
 export const EXIT = Object.freeze({ OK: 0, CHANGES: 10, BROKEN: 20, CONFIG: 30 });
+export const OUTAGE_TRIP = 3; // 연속 N개 소스의 목록 요청이 전송·5xx·429 로 실패하면 law.go.kr 장애로 본다
 
 export const USAGE = `사용법:
   node scripts/law-watch/check.mjs [--out DIR] [--only id,..] [--no-crosscheck]
@@ -76,7 +82,13 @@ export const USAGE = `사용법:
 종료 코드: 0 최신 · 10 개정 있음 · 20 소스 오류 · 30 설정/사용법 오류`;
 
 export class ConfigError extends Error {}
-export class BudgetError extends Error {}
+export class BudgetError extends Error {
+  code = 'BUDGET_EXCEEDED';
+}
+// 시간 예산(http.deadlineMs) 초과 — 요청 예산 초과와 똑같이 다룬다 (이후 소스도 요청하지 않고 실패)
+export class DeadlineError extends BudgetError {
+  code = 'DEADLINE_EXCEEDED';
+}
 export class FetchError extends Error {}
 
 // ───────────────────────── 인자 ─────────────────────────
@@ -199,8 +211,13 @@ function retryAfterMs(v, nowMs) {
 
 // 단일 큐: 요청 간격 delay±jitter, 요청당 timeout, 네트워크 오류·5xx·429 는 백오프 후 재시도,
 // 그 밖의 4xx 는 재시도하지 않는다. 재시도를 포함한 모든 시도가 예산(maxRequests)에 들어간다.
+// 시간 예산: 만든 시점부터 deadlineMs 가 지나면(기다림을 포함해 넘게 되면) 시도하지 않고 DeadlineError.
 export function createHttp({ fetchImpl = globalThis.fetch, sleep = realSleep, random = Math.random, now = Date.now, config = DEFAULT_HTTP, recorder = null } = {}) {
   const cfg = { ...DEFAULT_HTTP, ...config };
+  const deadline = now() + cfg.deadlineMs;
+  const checkDeadline = (waitMs) => {
+    if (now() + waitMs >= deadline) throw new DeadlineError(`실행 기한 ${cfg.deadlineMs / 60000}분 초과`);
+  };
   let count = 0;
   let started = false;
   const headersFor = (req) => {
@@ -214,7 +231,9 @@ export function createHttp({ fetchImpl = globalThis.fetch, sleep = realSleep, ra
   async function request(req) {
     for (let attempt = 0; ; attempt++) {
       if (count >= cfg.maxRequests) throw new BudgetError(`요청 예산 ${cfg.maxRequests}회 초과`);
-      if (started) await sleep(Math.max(0, cfg.delayMs + Math.round((random() * 2 - 1) * cfg.jitterMs)));
+      const gap = started ? Math.max(0, cfg.delayMs + Math.round((random() * 2 - 1) * cfg.jitterMs)) : 0;
+      checkDeadline(gap);
+      if (started) await sleep(gap);
       started = true;
       count++;
       let res = null;
@@ -225,7 +244,8 @@ export function createHttp({ fetchImpl = globalThis.fetch, sleep = realSleep, ra
           headers: headersFor(req),
           body: req.method === 'POST' ? req.body : undefined,
           redirect: 'follow',
-          signal: AbortSignal.timeout(cfg.timeoutMs),
+          // 기한 직전의 요청이 기한을 넘겨 매달리지 않도록 남은 시간으로 줄인다
+          signal: AbortSignal.timeout(Math.max(1, Math.min(cfg.timeoutMs, deadline - now()))),
         });
         const buf = new Uint8Array(await r.arrayBuffer());
         const contentType = r.headers.get('content-type') ?? '';
@@ -246,6 +266,7 @@ export function createHttp({ fetchImpl = globalThis.fetch, sleep = realSleep, ra
         if (recorder) recorder.save(req, res);
         return res;
       }
+      checkDeadline(wait);
       await sleep(wait);
     }
   }
@@ -306,6 +327,7 @@ async function checkSource(src, ctx) {
     out.errors.push({ sourceId: src.id, code, ...extra });
     return out;
   };
+  // 예산·기한 초과(BudgetError, DeadlineError)는 budget 로 구분한다 — 코드는 e.code
   const get = async (req) => {
     try {
       return { res: await http.request(req) };
@@ -325,7 +347,9 @@ async function checkSource(src, ctx) {
   // 1) 연혁 목록
   const req = src.kind === 'law' ? lawListRequest(src.lsId) : admChainRequest(src.anchorSeq);
   const got = await get(req);
-  if (got.budget) return fail('BUDGET_EXCEEDED', { url: req.url, detail: got.error.message });
+  if (got.budget) return fail(got.error.code, { url: req.url, detail: got.error.message });
+  // 전송 오류·5xx·429 로 목록을 못 받으면 장애 신호(outage) — 연속되면 checkMode 가 나머지를 건너뛴다
+  out.outage = !!got.error || got.res.status >= 500 || got.res.status === 429;
   if (got.error) return fail('FETCH_FAILED', { url: req.url, detail: got.error.message });
   const res = got.res;
   const meta = { url: req.url, http: res.status, bytes: res.bytes };
@@ -347,7 +371,7 @@ async function checkSource(src, ctx) {
   if (crosscheck) {
     const wreq = wrapperRequest(src.kind, src.name);
     const w = await get(wreq);
-    if (w.budget) return fail('BUDGET_EXCEEDED', { url: wreq.url, detail: w.error.message });
+    if (w.budget) return fail(w.error.code, { url: wreq.url, detail: w.error.message });
     if (w.error) warn('CROSSCHECK_SKIPPED', `래퍼 요청 실패: ${w.error.message}`);
     else if (w.res.status !== 200) warn('CROSSCHECK_SKIPPED', `래퍼 HTTP ${w.res.status}`);
     else {
@@ -372,7 +396,7 @@ async function checkSource(src, ctx) {
       const d = await get(dreq);
       if (d.budget) {
         budgetHit = true;
-        fail('BUDGET_EXCEEDED', { url: dreq.url, detail: d.error.message });
+        fail(d.error.code, { url: dreq.url, detail: d.error.message });
       } else if (d.error) warn('ENRICH_FAILED', `${row.key}: ${d.error.message}`);
       else if (d.res.status !== 200) warn('ENRICH_FAILED', `${row.key}: HTTP ${d.res.status}`);
       else {
@@ -469,9 +493,22 @@ async function checkMode(opts, deps) {
   const warnings = [];
   const errors = [];
   let healthy = 0;
+  let outageRun = 0; // 목록 요청이 장애로 실패한 연속 소스 수
   const n = config.sources.length;
   for (const [i, src] of config.sources.entries()) {
-    const r = await checkSource(src, ctx);
+    let r;
+    if (outageRun >= OUTAGE_TRIP) {
+      const detail = `연속 ${OUTAGE_TRIP}개 소스의 목록 요청이 실패해 law.go.kr 장애로 보고 요청하지 않음`;
+      r = { changes: [], warnings: [], errors: [{ sourceId: src.id, code: 'SKIPPED_OUTAGE', detail }] };
+    } else {
+      try {
+        r = await checkSource(src, ctx);
+      } catch (e) {
+        // 소스 하나의 예상 못 한 예외로 나머지 결과(result.json)까지 잃지 않는다
+        r = { changes: [], warnings: [], errors: [{ sourceId: src.id, code: 'INTERNAL_ERROR', detail: String(e?.stack ?? e).slice(0, 500) }] };
+      }
+      outageRun = r.outage ? outageRun + 1 : 0;
+    }
     changes.push(...r.changes);
     warnings.push(...r.warnings);
     errors.push(...r.errors);
@@ -527,7 +564,11 @@ async function bootstrapMode(opts, deps) {
   const asOf = opts.asOf ?? (src.affects[0] ? lastCommitDate(src.affects[0]) : null);
   if (!asOf) throw new ConfigError('--as-of 를 정할 수 없음 (affects 첫 파일의 커밋 날짜 없음) — --as-of YYYY-MM-DD 를 지정하세요');
   const replay = opts.replay ? createReplayFetch(path.resolve(opts.replay)) : null;
-  const http = createHttp({ fetchImpl: deps.fetchImpl ?? replay ?? globalThis.fetch, sleep: deps.sleep ?? noSleep, config: config.registry.http ?? {} });
+  const http = createHttp({
+    fetchImpl: deps.fetchImpl ?? replay ?? globalThis.fetch,
+    sleep: deps.sleep ?? (replay ? noSleep : realSleep), // 실제 요청이면 재시도 백오프를 지킨다
+    config: config.registry.http ?? {},
+  });
   const req = src.kind === 'law' ? lawListRequest(src.lsId) : admChainRequest(src.anchorSeq);
   let res;
   try {

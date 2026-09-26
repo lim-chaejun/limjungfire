@@ -18,6 +18,7 @@ export const DEFAULT_HTTP = Object.freeze({
   backoffMs: [5000, 15000, 45000],
   retryAfterMaxMs: 120000,
   maxRequests: 250,
+  deadlineMs: 15 * 60 * 1000, // 실행 전체 기한 — 넘으면 남은 소스는 요청 없이 DEADLINE_EXCEEDED
   userAgent: USER_AGENT,
 });
 
@@ -414,7 +415,7 @@ export function validateRegistry(reg) {
   if (reg.http != null) {
     if (typeof reg.http !== 'object' || Array.isArray(reg.http)) errs.push('http 는 객체여야 함');
     else {
-      for (const k of ['delayMs', 'jitterMs', 'timeoutMs', 'retries', 'maxRequests', 'retryAfterMaxMs']) {
+      for (const k of ['delayMs', 'jitterMs', 'timeoutMs', 'retries', 'maxRequests', 'retryAfterMaxMs', 'deadlineMs']) {
         if (reg.http[k] != null && !(Number.isInteger(reg.http[k]) && reg.http[k] >= 0)) errs.push(`http.${k} 는 0 이상 정수여야 함`);
       }
       if (reg.http.backoffMs != null && !(Array.isArray(reg.http.backoffMs) && reg.http.backoffMs.every((x) => Number.isInteger(x) && x >= 0))) {

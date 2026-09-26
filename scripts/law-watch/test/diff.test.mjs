@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { runChecks, loadDataDir, CHECKS } from '../../validate-data.mjs';
 import { MARKER_LAW, historyRowKey, parseState } from '../lib.mjs';
-import { SNAPSHOT, chainAware, copySnapshot, mutating, readJson, replay, runCheck, writeRegistry } from './helpers.mjs';
+import { SNAPSHOT, chainAware, copySnapshot, fakeClock, mutating, readJson, replay, runCheck, writeRegistry } from './helpers.mjs';
 
 // 2026-09-26 law.go.kr 기준, origin/main 연혁 데이터에 없는 개정 13건
 const GOLDEN = [
@@ -242,6 +242,79 @@ test('고장: 503 이 4번 이어지면 재시도(5/15/45초) 후 FETCH_FAILED, 
   assert.deepEqual(waits.filter((ms) => ms >= 5000), [5000, 15000, 45000]);
   assert.ok(waits.filter((ms) => ms < 5000).every((ms) => ms === 2000), '요청 간격 2초(jitter 0)');
   assert.deepEqual([result.errors[0].code, result.errors[0].http], ['FETCH_FAILED', 503]);
+});
+
+test('장애: 모든 요청이 503·전송 오류·시간 초과면 3개 소스(12회) 뒤 나머지는 SKIPPED_OUTAGE — exit 20, result.json 기록', async () => {
+  const MIN = 60000;
+  const cases = [
+    ['503', () => async () => new Response('Service Unavailable', { status: 503 }), 5 * MIN],
+    ['전송 오류', () => async () => { throw new TypeError('fetch failed'); }, 5 * MIN],
+    ['30초 매달림', (clock) => async () => { clock.advance(30000); throw new DOMException('The operation was aborted due to timeout', 'TimeoutError'); }, 12 * MIN],
+  ];
+  for (const [label, make, bound] of cases) {
+    const clock = fakeClock();
+    const { code, result } = await runCheck({ fetchImpl: make(clock), sleep: clock.sleep, now: clock.now, random: () => 0.5 });
+    assert.equal(code, 20, label);
+    assert.equal(result.stats.requests, 3 * 4, `${label}: 소스 3개 × 시도 4회만 요청`);
+    assert.equal(result.stats.healthy, 0);
+    assert.deepEqual(result.errors.slice(0, 3).map((e) => `${e.sourceId}:${e.code}`), ['act:FETCH_FAILED', 'decree:FETCH_FAILED', 'rules:FETCH_FAILED'], label);
+    assert.equal(result.errors.filter((e) => e.code === 'SKIPPED_OUTAGE').length, 36, label);
+    assert.ok(clock.elapsed() < bound, `${label}: ${clock.elapsed() / MIN}분`);
+  }
+  // 목록 하나가 살아나면 연속 횟수는 다시 센다 (실패 2 · 성공 · 실패 2 → 차단하지 않음)
+  const lists = [];
+  const flaky = mutating(replay(), (r) => {
+    if (!/\/(?:lsHstListR|admRulHstListR)\.do$/.test(r.url)) return null;
+    if (!lists.includes(r.body)) lists.push(r.body);
+    return [0, 1, 3, 4].includes(lists.indexOf(r.body)) ? { status: 503, text: 'busy' } : null;
+  });
+  const f = await runCheck({ fetchImpl: flaky, sleep: async () => {}, random: () => 0.5 });
+  assert.equal(f.code, 20);
+  assert.deepEqual(f.result.errors.map((e) => e.code), ['FETCH_FAILED', 'FETCH_FAILED', 'FETCH_FAILED', 'FETCH_FAILED']);
+  assert.equal(f.result.stats.healthy, 35);
+});
+
+test('장애: 느리지만 응답하는 서버 — 실행 기한(15분)에 멈추고 남은 소스는 DEADLINE_EXCEEDED, 끝난 소스의 개정은 보고', async () => {
+  const clock = fakeClock();
+  const base = replay();
+  const slow = async (url, init) => {
+    clock.advance(25000);
+    return base(url, init);
+  };
+  const { code, result, report } = await runCheck({ fetchImpl: slow, sleep: clock.sleep, now: clock.now, random: () => 0.5 });
+  assert.equal(code, 20);
+  assert.ok(clock.elapsed() <= 15 * 60000 + 25000, `기한 + 요청 한 번 이내: ${clock.elapsed()}ms`);
+  assert.ok(result.stats.requests > 10 && result.stats.requests < 91, String(result.stats.requests));
+  const codes = new Set(result.errors.map((e) => e.code));
+  assert.deepEqual([...codes], ['DEADLINE_EXCEEDED']);
+  assert.equal(result.stats.healthy + new Set(result.errors.map((e) => e.sourceId)).size, 39);
+  assert.ok(result.changes.some((c) => c.sourceId === 'decree'), '기한 전에 끝난 소스의 개정은 그대로 보고');
+  assert.match(report, /DEADLINE_EXCEEDED/);
+
+  // 레지스트리의 http.deadlineMs 로 줄일 수 있다
+  const registry = writeRegistry((reg) => {
+    reg.http.deadlineMs = 60000;
+  });
+  const clock2 = fakeClock();
+  const short = await runCheck({ registry, fetchImpl: async (url, init) => (clock2.advance(25000), base(url, init)), sleep: clock2.sleep, now: clock2.now, random: () => 0.5 });
+  assert.equal(short.code, 20);
+  assert.equal(short.result.stats.requests, 3); // act 목록·래퍼, decree 목록 → decree 래퍼에서 기한
+  assert.equal(short.result.stats.healthy, 1);
+  assert.equal(short.result.errors.length, 38);
+});
+
+test('소스 하나의 예상 못 한 예외는 INTERNAL_ERROR 로 기록하고 나머지를 계속한다 (result.json 유지)', async () => {
+  let calls = 0;
+  const random = () => {
+    if (++calls === 1) throw new Error('boom'); // 두 번째 요청(act 의 래퍼)에서 한 번만 터진다
+    return 0.5;
+  };
+  const { code, result } = await runCheck({ random });
+  assert.equal(code, 20);
+  assert.deepEqual(result.errors.map((e) => `${e.sourceId}:${e.code}`), ['act:INTERNAL_ERROR']);
+  assert.match(result.errors[0].detail, /boom/);
+  assert.equal(result.changes.length, 13);
+  assert.equal(result.stats.healthy, 38);
 });
 
 test('요청 예산을 넘으면 BUDGET_EXCEEDED, 이후 소스도 요청하지 않고 실패', async () => {
