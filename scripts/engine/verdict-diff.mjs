@@ -7,6 +7,7 @@
 //        [--buildings <픽스처 디렉터리 또는 .json 파일> ...] [--today YYYYMMDD] [--json] [--fail-on-diff]
 //   데이터 디렉터리: NN_*.json(카테고리 파일) · exemption_criteria.json · facilities.json · schema/{use_vocabulary,inputs}.json
 //                   (없는 공용 파일은 저장소 data/ 의 것을 쓴다)
+//   --today 가 없으면 한국 시간(KST) 오늘 — UTC 는 오전 9시 전까지 하루 늦다
 //   픽스처 기본값: scripts/engine/test/fixtures/buildings (각 파일의 input·answers 만 쓰고 variants 는 건너뜀)
 // 종료 코드: 0 정상(차이가 있어도) · 1 차이 있음(--fail-on-diff 일 때) · 2 사용법·입력 오류
 
@@ -59,7 +60,7 @@ export function loadDataSet(dir) {
   return {
     dir,
     dataFiles,
-    exemptions: readIf(path.join(dir, 'exemption_criteria.json'), () => undefined),
+    exemptions: readIf(path.join(dir, 'exemption_criteria.json'), () => readIf(path.join(base, 'exemption_criteria.json'), () => undefined)),
     facilities: readIf(path.join(dir, 'facilities.json'), () => readJson(path.join(base, 'facilities.json'))),
     inputs: readIf(path.join(dir, 'schema', 'inputs.json'), () => readJson(path.join(base, 'schema', 'inputs.json'))),
     useIndex: buildUseIndex(vocabulary),
@@ -92,6 +93,21 @@ const scopeText = (f) => {
   return `${s.type === 'all_floors' ? '모든 층' : s.floors.join(',') || '-'}${parts}`;
 };
 const questionText = (f) => (f?.questions || []).map((q) => q.key).sort().join(' | ') || '-';
+const exemptionText = (f) => (f?.exemption?.possible ? `면제 가능(${f.exemption.rules.length})` : '-');
+const retroText = (f) => (f?.retroactive || []).map((r) => `${r.id}:${r.basis}${r.deadline ? `~${r.deadline}` : ''}`).join(' | ') || '-';
+const extText = (f) => (f?.extensions || []).join(' | ') || '-';
+
+// 시설 하나를 비교용 문자열 묶음으로
+const snapshot = (f) => ({
+  verdict: f?.verdict ?? '없음',
+  scope: scopeText(f),
+  questions: questionText(f),
+  exemption: exemptionText(f),
+  retroactive: retroText(f),
+  extensions: extText(f),
+});
+const FIELDS = ['verdict', 'scope', 'questions', 'exemption', 'retroactive', 'extensions'];
+const FIELD_LABEL = { scope: '범위', questions: '질문', exemption: '면제', retroactive: '소급', extensions: '범위 확장' };
 
 // 두 평가 결과의 차이 (순수 함수) → [{ dong, facility, name, before, after }]
 export function diffResults(a, b) {
@@ -105,9 +121,9 @@ export function diffResults(a, b) {
     for (const fid of fids) {
       const fa = da?.facilities.find((f) => f.id === fid);
       const fb = db?.facilities.find((f) => f.id === fid);
-      const before = { verdict: fa?.verdict ?? '없음', scope: scopeText(fa), questions: questionText(fa) };
-      const after = { verdict: fb?.verdict ?? '없음', scope: scopeText(fb), questions: questionText(fb) };
-      if (before.verdict !== after.verdict || before.scope !== after.scope || before.questions !== after.questions) {
+      const before = snapshot(fa);
+      const after = snapshot(fb);
+      if (FIELDS.some((k) => before[k] !== after[k])) {
         diffs.push({ dong: id, facility: fid, name: fb?.name ?? fa?.name ?? fid, before, after });
       }
     }
@@ -123,8 +139,7 @@ export function formatDiff(report) {
       continue;
     }
     const parts = [`${before.verdict} → ${after.verdict}`];
-    if (before.scope !== after.scope) parts.push(`범위 ${before.scope} → ${after.scope}`);
-    if (before.questions !== after.questions) parts.push(`질문 ${before.questions} → ${after.questions}`);
+    for (const k of FIELDS.slice(1)) if (before[k] !== after[k]) parts.push(`${FIELD_LABEL[k]} ${before[k]} → ${after[k]}`);
     lines.push(`[${building}] ${dong} · ${name}: ${parts.join(' | ')}`);
   }
   const buildingsWithDiff = new Set(report.diffs.map((d) => d.building)).size;
@@ -143,6 +158,11 @@ export function runDiff({ a, b, buildings, today }) {
   return { a, b, today, buildings: fixtures.length, diffs };
 }
 
+// 한국 시간(UTC+9) 오늘 — Date 의 UTC 날짜에 9시간을 더해 읽는다
+export function kstToday(now = new Date()) {
+  return new Date(now.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
+}
+
 export function main(argv, out = console) {
   let opts;
   try {
@@ -157,7 +177,7 @@ export function main(argv, out = console) {
   }
   let report;
   try {
-    const today = normalizeYmd(opts.today) || new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const today = normalizeYmd(opts.today) || kstToday();
     report = runDiff({ ...opts, today });
   } catch (e) {
     out.error(`verdict-diff: ${e.message}`);
