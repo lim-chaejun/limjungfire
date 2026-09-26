@@ -21,7 +21,9 @@ gh issue list --label law-update --state open --json number,title,body
 
 - 본문 맨 앞의 `<!-- law-watch:state {"fp":"…","ids":[…]} -->` 에서 **fp(지문)** 와 id 목록을 적어 둔다.
 - 열린 `law-update` 이슈가 없으면 사용자에게 알리고 끝낸다.
-- 작업 트리가 깨끗해야 한다. `git status --porcelain` 이 비어 있지 않으면 **중단**하고 사용자에게 묻는다.
+- 추적 중인 파일에 커밋하지 않은 변경이 없어야 한다. `git status --porcelain --untracked-files=no` 가 비어 있지 않으면
+  **중단**하고 사용자에게 묻는다. 추적하지 않는 파일·폴더(`.omc/`, `.claude/worktrees/` 등)는 막지 않는다 — 브랜치를
+  바꿔도 그대로 남고, `origin/main` 의 파일과 겹치면 git 이 switch 를 거부하므로 덮어쓸 일이 없다.
 - 감시·수정은 모두 **최신 `origin/main` 에서 만든 브랜치**에서 한다 (오래되거나 손댄 체크아웃에서 돌리면
   "이미 반영됨"을 잘못 판단하거나 로컬 `main` 에서 수정을 시작하게 된다):
   ```bash
