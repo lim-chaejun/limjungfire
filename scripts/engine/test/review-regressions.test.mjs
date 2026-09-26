@@ -238,6 +238,21 @@ test("N2′: 보충한 층에 표제부 용도가 여럿이면 그 층 용도는
   assert.equal(verdictOf('n2p-synth-floor', '본동', 'x', { answers: { [key]: true } }), '비해당');
 });
 
+test('2차 MEDIUM: 층의 용도별 면적 질문(floor_use_area)에 답하면 반영된다 — 같은 용도의 합계 조건에도', () => {
+  const key = 'floor_use_area[{"use":["singing_room"]}]@본동/1F';
+  const f = fac(runCase(caseById('floor-use-area')), '본동', 'smoke_control');
+  assert.deepEqual([f.verdict, qkeys(f)], ['확인 필요', [key]]);
+  assert.deepEqual(f.questions[0].range, [0, 600]);
+  for (const [v, verdict] of [[0, '비해당'], [299, '비해당'], [450, '해당'], [600, '해당']]) {
+    assert.equal(verdictOf('floor-use-area', '본동', 'smoke_control', { answers: { [key]: v } }), verdict, String(v));
+  }
+  // 같은 층·용도의 합계 조건(용도별 바닥면적 합계 400㎡ 이상)도 이 답을 쓴다
+  const sumCase = { ...caseById('floor-use-area'), dataFiles: { '02': v2('02', [{ facility_id: 'smoke_control', facility_name: '제연설비', regulations: [row('s', { sum_area: { use: ['singing_room'] }, gte: 400 })] }]) } };
+  assert.equal(fac(runCase(sumCase), '본동', 'smoke_control').verdict, '확인 필요');
+  assert.equal(fac(runCase(sumCase, { answers: { [key]: 450 } }), '본동', 'smoke_control').verdict, '해당');
+  assert.equal(fac(runCase(sumCase, { answers: { [key]: 350 } }), '본동', 'smoke_control').verdict, '비해당');
+});
+
 test('면적 항등식으로 정해지는 층은 묻지 않고, 연면적과 모순되는 면적 답변은 경고(AREA_ANSWER_MISMATCH)', () => {
   const r = runCase(caseById('area-determined'));
   const f = fac(r, '본동', 'x');

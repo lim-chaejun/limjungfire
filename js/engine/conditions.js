@@ -322,8 +322,19 @@ export function floorMember(env, floor, selectors) {
   return memoIn(env.memberMemo, selectorsKey(selectors), floor, () => any(selectors.map((s) => selectorMatch(env, floor, s))));
 }
 
-// 층 하나에서 대상 용도의 면적. 용도가 섞였거나 미상인 부분은 [0, 부분 면적] + openDep
+const USE_SIGS = new WeakMap();
+function useSig(targets) {
+  let sig = USE_SIGS.get(targets);
+  if (sig === undefined) USE_SIGS.set(targets, (sig = stableKey({ use: targets })));
+  return sig;
+}
+
+// 층 하나에서 대상 용도의 면적. 그 층의 용도별 면적 답변(floor_use_area — 'N층 중 그 용도 바닥면적 ○㎡ 이상인 층' 질문)이
+// 있으면 그 값(같은 용도의 합계 조건에도 반영). 없으면 부분별로 — 용도가 섞였거나 미상인 부분은 [0, 부분 면적] + openDep
 function floorUseArea(env, floor, targets, openDep) {
+  const sig = useSig(targets);
+  const ans = numAnswer(env.answers[depKey('floor_use_area', env.dong.id, floor.key, sig)]);
+  if (ans !== null) return exact(ans, D(env, () => [userDep('floor_use_area', env, { floor: floor.key, sig })]));
   let sum = exact(0);
   floor.parts.forEach((part, i) => {
     const a = partArea(env, floor, i);
@@ -445,7 +456,7 @@ function evalFloorExists(node, env) {
     let c = tv(T, EMPTY, why(env, () => [`${f.label}`]));
     if (spec.area) {
       const floorDep = spec.use && env.track
-        ? makeDep('floor_use_area', UNKNOWN, { dong: env.dong.id, floor: f.key, sig: stableKey({ use: spec.use }), info: { floorLabel: f.label, use: spec.use } })
+        ? makeDep('floor_use_area', UNKNOWN, { dong: env.dong.id, floor: f.key, sig: useSig(spec.use), info: { floorLabel: f.label, use: spec.use } })
         : null;
       const a = spec.use ? floorUseArea(env, f, spec.use, floorDep) : floorArea(env, f);
       if (floorDep) floorDep.range = [a.lo, a.hi];

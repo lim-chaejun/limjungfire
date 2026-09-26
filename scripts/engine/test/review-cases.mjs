@@ -136,6 +136,12 @@ export const CASES = [
     dataFiles: { '02': v2('02', [{ facility_id: 'x', facility_name: 'X', regulations: [row('c', { m: 'total_area', gte: 33 })], excluded_if: { use: ['singing_room'], floors: [{ kind: 'ground', level: { gte: 2 } }] } }]) },
   },
   {
+    id: 'floor-use-area',
+    title: '2차 MEDIUM: 1층 600㎡ 용도 미상, 지상층 중 노래연습장 300㎡ 이상인 층 — floor_use_area 질문에 답할 수 있어야',
+    input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '노래연습장', totArea: 600, grndFlrCnt: 1, ugrndFlrCnt: 0 }], floors: [nc2(1, '', 600)], permit: [permit('20150101')] } },
+    dataFiles: { '02': v2('02', [{ facility_id: 'smoke_control', facility_name: '제연설비', regulations: [row('fe', { floor_exists: { floors: 'ground', area: { gte: 300 }, use: ['singing_room'] } })] }]) },
+  },
+  {
     id: 'area-determined',
     title: '1층 600 + 지하1층 400, 연면적 1,200 → 2층 200(항등식), 2층 이상 바닥면적 합계 150㎡ 미만',
     input: { registry: { title: [{ mainPurpsCdNm: '제2종근린생활시설', etcPurps: '소매점', totArea: 1200, grndFlrCnt: 2, ugrndFlrCnt: 1 }], floors: [nc2(1, '소매점', 600), nc2(1, '소매점', 400, '10')], permit: [permit('20150101')] } },

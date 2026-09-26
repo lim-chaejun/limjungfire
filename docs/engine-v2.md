@@ -258,6 +258,7 @@ U 인 시설에서 **무엇을 물을지** 고른다(비해당의 안전성과�
 | `part_area[2]@본동/1F` | 본동 1층의 둘째 행(부분) 바닥면적 — 한 층이 여러 행이고 그 행의 면적이 빈 경우 |
 | `gas_facility@101동` | 101동 가스시설 여부 |
 | `use_area[{"floors":"all","use":["midwifery_clinic","postpartum_care"]}]@본동` | 본동 조산원·산후조리원 바닥면적 합계 |
+| `floor_use_area[{"use":["singing_room"]}]@본동/1F` | 본동 1층 중 노래연습장 바닥면적('그 용도 바닥면적 N㎡ 이상인 층') — 같은 용도의 합계 조건에도 반영 |
 | `use_presence[{"floors":null,"use":["bathhouse"]}]@본동` | 본동 목욕장 용도 여부 |
 | `installed[co2_extinguishing]@본동` | 이산화탄소소화설비 설치 여부 |
 | `mixed_use@본동` | 복합건축물 해당 여부 |
