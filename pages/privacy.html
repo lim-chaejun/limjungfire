@@ -41,7 +41,7 @@
       "@type": "Thing",
       "name": "개인정보보호"
     },
-    "dateModified": "2025-01-19"
+    "dateModified": "2026-09-26"
   }
   </script>
 
@@ -188,7 +188,8 @@
         <p>서비스는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보를 수집 시에 동의 받은 개인정보 보유·이용기간 내에서 개인정보를 처리·보유합니다.</p>
         <ul>
           <li><strong>회원 정보:</strong> 회원 탈퇴 시까지 (탈퇴 후 즉시 파기)</li>
-          <li><strong>검색 기록:</strong> 사용자의 브라우저 LocalStorage에 저장되며, 사용자가 직접 삭제 가능</li>
+          <li><strong>검색 기록·즐겨찾기·메모:</strong> 로그인한 이용자의 경우 계정과 연결되어 Google Firebase(Cloud Firestore)에 저장되며, 이용자가 검색 기록 화면에서 직접 삭제할 수 있습니다. 회원 탈퇴 시 함께 파기합니다.</li>
+          <li><strong>기기 내 설정 정보:</strong> 화면 테마, PDF 다운로드 이용 횟수 등은 이용자의 브라우저 저장소(LocalStorage)에만 저장되며 서버로 전송되지 않습니다.</li>
           <li><strong>접속 로그:</strong> 3개월 (통신비밀보호법)</li>
         </ul>
       </div>
@@ -220,6 +221,10 @@
             <tr>
               <td>Google LLC (Analytics)</td>
               <td>서비스 이용 통계 분석</td>
+            </tr>
+            <tr>
+              <td>Microsoft Corporation (Clarity)</td>
+              <td>웹사이트 이용 행태 분석 (페이지 이동·클릭 기록)</td>
             </tr>
             <tr>
               <td>Cloudflare, Inc.</td>
@@ -272,7 +277,7 @@
         <p>이 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.</p>
       </div>
 
-      <p class="update-date">최종 수정일: 2025년 1월 19일</p>
+      <p class="update-date">최종 수정일: 2026년 9월 26일</p>
     </div>
 
     <footer>
