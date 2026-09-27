@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>소방체크 법령 개정 소식</title>
+    <link>https://sobangcheck.com/news/</link>
+    <description>소방시설 설치기준과 화재안전기준(NFPC·NFSC) 개정 소식</description>
+    <language>ko</language>
+    <atom:link href="https://sobangcheck.com/news/feed.xml" rel="self" type="application/rss+xml"/>
+  </channel>
+</rss>
