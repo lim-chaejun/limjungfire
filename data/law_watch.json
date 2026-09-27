@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "http": {
+    "delayMs": 2000,
+    "jitterMs": 500,
+    "timeoutMs": 30000,
+    "retries": 3,
+    "maxRequests": 250,
+    "userAgent": "limjungfire-law-watch/1.0 (+https://github.com/lim-chaejun/limjungfire)"
+  },
+  "sources": [
+    {
+      "id": "act",
+      "kind": "law",
+      "lsId": "009503",
+      "name": "소방시설 설치 및 관리에 관한 법률",
+      "lawNoStyle": "법률",
+      "baseline": {
+        "from": "history",
+        "file": "data/law_history_act.json"
+      },
+      "affects": [
+        "data/[0-3][0-9]_*.json"
+      ]
+    },
+    {
+      "id": "decree",
+      "kind": "law",
+      "lsId": "009694",
+      "name": "소방시설 설치 및 관리에 관한 법률 시행령",
+      "lawNoStyle": "bare",
+      "baseline": {
+        "from": "history",
+        "file": "data/law_history_decree.json"
+      },
+      "affects": [
+        "data/[0-3][0-9]_*.json",
+        "data/exemption_criteria.json",
+        "data/ref01_fire_target_classification.json"
+      ]
+    },
+    {
+      "id": "rules",
+      "kind": "law",
+      "lsId": "009730",
+      "name": "소방시설 설치 및 관리에 관한 법률 시행규칙",
+      "lawNoStyle": "행정안전부령",
+      "baseline": {
+        "from": "history",
+        "file": "data/law_history_rules.json"
+      },
+      "affects": []
+    },
+    {
+      "id": "nfpc",
+      "kind": "admrul",
+      "expand": "nfsc",
+      "baseline": {
+        "from": "history",
+        "file": "data/nfsc_history.json"
+      },
+      "overrides": {
+        "고층건축물의 화재안전기준 (NFSC 604)": {
+          "affects": [
+            "data/ref06_high_rise_building.json"
+          ]
+        },
+        "소방시설의 내진설계 기준": {
+          "id": "nfpc-seismic"
+        }
+      }
+    }
+  ]
+}

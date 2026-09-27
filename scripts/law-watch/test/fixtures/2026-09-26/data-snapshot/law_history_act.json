@@ -1,0 +1,362 @@
+[
+  {
+    "no": 1,
+    "name": "소방시설 설치 및 관리에 관한 법률",
+    "effective_date": "20241201",
+    "law_no": "법률 제18522호",
+    "promulgation_date": "20211130",
+    "revision_type": "전부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=236977"
+  },
+  {
+    "no": 2,
+    "name": "소방시설 설치 및 관리에 관한 법률",
+    "effective_date": "20230704",
+    "law_no": "법률 제19160호",
+    "promulgation_date": "20230103",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=247269"
+  },
+  {
+    "no": 3,
+    "name": "소방시설 설치 및 관리에 관한 법률",
+    "effective_date": "20221201",
+    "law_no": "법률 제18661호",
+    "promulgation_date": "20211228",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=238323"
+  },
+  {
+    "no": 4,
+    "name": "소방시설 설치 및 관리에 관한 법률",
+    "effective_date": "20221201",
+    "law_no": "법률 제18522호",
+    "promulgation_date": "20211130",
+    "revision_type": "전부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=236977"
+  },
+  {
+    "no": 5,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20210101",
+    "law_no": "법률 제17007호",
+    "promulgation_date": "20200218",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=214409"
+  },
+  {
+    "no": 6,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20201210",
+    "law_no": "법률 제17395호",
+    "promulgation_date": "20200609",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=219045"
+  },
+  {
+    "no": 7,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20200527",
+    "law_no": "법률 제16596호",
+    "promulgation_date": "20191126",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=211515"
+  },
+  {
+    "no": 8,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20200324",
+    "law_no": "법률 제17091호",
+    "promulgation_date": "20200324",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=215885"
+  },
+  {
+    "no": 9,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20191017",
+    "law_no": "법률 제15810호",
+    "promulgation_date": "20181016",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=204789"
+  },
+  {
+    "no": 10,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20190417",
+    "law_no": "법률 제15810호",
+    "promulgation_date": "20181016",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=204789"
+  },
+  {
+    "no": 11,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20180903",
+    "law_no": "법률 제15419호",
+    "promulgation_date": "20180302",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=202494"
+  },
+  {
+    "no": 12,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20180627",
+    "law_no": "법률 제15303호",
+    "promulgation_date": "20171226",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=200199"
+  },
+  {
+    "no": 13,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20180627",
+    "law_no": "법률 제15300호",
+    "promulgation_date": "20171226",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=200191"
+  },
+  {
+    "no": 14,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20180327",
+    "law_no": "법률 제15533호",
+    "promulgation_date": "20180327",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=202933"
+  },
+  {
+    "no": 15,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20180302",
+    "law_no": "법률 제15419호",
+    "promulgation_date": "20180302",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=202494"
+  },
+  {
+    "no": 16,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20170726",
+    "law_no": "법률 제14839호",
+    "promulgation_date": "20170726",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=195299"
+  },
+  {
+    "no": 17,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20170328",
+    "law_no": "법률 제14476호",
+    "promulgation_date": "20161227",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=188615"
+  },
+  {
+    "no": 18,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20170128",
+    "law_no": "법률 제13917호",
+    "promulgation_date": "20160127",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=180487"
+  },
+  {
+    "no": 19,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20160812",
+    "law_no": "법률 제13805호",
+    "promulgation_date": "20160119",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=179668"
+  },
+  {
+    "no": 20,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20160125",
+    "law_no": "법률 제13439호",
+    "promulgation_date": "20150724",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=173298"
+  },
+  {
+    "no": 21,
+    "name": "화재예방, 소방시설 설치ㆍ유지 및 안전관리에...",
+    "effective_date": "20160121",
+    "law_no": "법률 제13062호",
+    "promulgation_date": "20150120",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=167428"
+  },
+  {
+    "no": 22,
+    "name": "소방시설 설치ㆍ유지 및 안전관리에 관한 법률",
+    "effective_date": "20150701",
+    "law_no": "법률 제12939호",
+    "promulgation_date": "20141230",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=166244"
+  },
+  {
+    "no": 23,
+    "name": "소방시설 설치ㆍ유지 및 안전관리에 관한 법률",
+    "effective_date": "20141119",
+    "law_no": "법률 제12844호",
+    "promulgation_date": "20141119",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=162321"
+  },
+  {
+    "no": 24,
+    "name": "소방시설 설치ㆍ유지 및 안전관리에 관한 법률",
+    "effective_date": "20140807",
+    "law_no": "법률 제11998호",
+    "promulgation_date": "20130806",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=142606"
+  },
+  {
+    "no": 25,
+    "name": "소방시설 설치ㆍ유지 및 안전관리에 관한 법률",
+    "effective_date": "20140708",
+    "law_no": "법률 제12207호",
+    "promulgation_date": "20140107",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=149563"
+  },
+  {
+    "no": 26,
+    "name": "소방시설 설치ㆍ유지 및 안전관리에 관한 법률",
+    "effective_date": "20130323",
+    "law_no": "법률 제11690호",
+    "promulgation_date": "20130323",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=137385"
+  },
+  {
+    "no": 27,
+    "name": "소방시설 설치·유지 및 안전관리에 관한 법률",
+    "effective_date": "20120205",
+    "law_no": "법률 제11037호",
+    "promulgation_date": "20110804",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=115828"
+  },
+  {
+    "no": 28,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20110101",
+    "law_no": "법률 제10219호",
+    "promulgation_date": "20100331",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=103993"
+  },
+  {
+    "no": 29,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20101013",
+    "law_no": "법률 제10250호",
+    "promulgation_date": "20100412",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=104337"
+  },
+  {
+    "no": 30,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20081226",
+    "law_no": "법률 제9199호",
+    "promulgation_date": "20081226",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=90379"
+  },
+  {
+    "no": 31,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20081206",
+    "law_no": "법률 제9094호",
+    "promulgation_date": "20080605",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=87347"
+  },
+  {
+    "no": 32,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20080906",
+    "law_no": "법률 제9093호",
+    "promulgation_date": "20080605",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=87326"
+  },
+  {
+    "no": 33,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20080321",
+    "law_no": "법률 제8974호",
+    "promulgation_date": "20080321",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=86023"
+  },
+  {
+    "no": 34,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20080229",
+    "law_no": "법률 제8852호",
+    "promulgation_date": "20080229",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=83456"
+  },
+  {
+    "no": 35,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20070325",
+    "law_no": "법률 제7906호",
+    "promulgation_date": "20060324",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=73374"
+  },
+  {
+    "no": 36,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20070325",
+    "law_no": "법률 제7903호",
+    "promulgation_date": "20060324",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=73373"
+  },
+  {
+    "no": 37,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20060922",
+    "law_no": "법률 제7983호",
+    "promulgation_date": "20060922",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=75512"
+  },
+  {
+    "no": 38,
+    "name": "소방시설설치유지 및 안전관리에 관한 법률",
+    "effective_date": "20060805",
+    "law_no": "법률 제7661호",
+    "promulgation_date": "20050804",
+    "revision_type": "일부개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=71146"
+  },
+  {
+    "no": 39,
+    "name": "소방시설설치유지및안전관리에관한법률",
+    "effective_date": "20060401",
+    "law_no": "법률 제7428호",
+    "promulgation_date": "20050331",
+    "revision_type": "타법개정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=67631"
+  },
+  {
+    "no": 40,
+    "name": "소방시설설치유지및안전관리에관한법률",
+    "effective_date": "20040530",
+    "law_no": "법률 제6895호",
+    "promulgation_date": "20030529",
+    "revision_type": "제정",
+    "link": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=59717"
+  }
+]
