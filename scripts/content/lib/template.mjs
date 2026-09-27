@@ -182,7 +182,7 @@ ${body}
 </section>`;
 }
 
-/** 조회 도구로 보내는 안내 */
+/** 조회 도구로 보내는 안내. hint 는 HTML 로 그대로 들어간다 — 데이터 글자는 호출하는 쪽에서 esc() 할 것 */
 export function ctaBox({ hint } = {}) {
   return `<section class="ce-cta" aria-labelledby="ce-cta-title">
 <h2 id="ce-cta-title" class="ce-cta-title">내 건물에 적용되는 기준 확인하기</h2>
@@ -192,7 +192,10 @@ ${hint ? `<p class="ce-cta-hint">${hint}</p>` : ''}
 </section>`;
 }
 
-/** 출처 목록: [{label, url, note?}] — url 이 안전하지 않으면 글자만 */
+/**
+ * 출처 목록: [{label, url, note?}] — label·note 는 이스케이프, url 이 안전하지 않으면 글자만.
+ * intro 는 HTML 로 그대로 들어간다 — 고정 문구만 넘길 것
+ */
 export function sourcesSection(sources, { intro } = {}) {
   const items = sources.map((s) => `<li>${link(s.url, s.label)}${s.note ? ` <span class="ce-note">${esc(s.note)}</span>` : ''}</li>`).join('\n');
   return `<section class="ce-sources" aria-labelledby="ce-sources-title">
