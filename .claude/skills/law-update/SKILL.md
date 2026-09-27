@@ -138,6 +138,20 @@ echo "exit=$?"
   6. 마지막 줄들: `law-watch-fp: <fp>` 와 `Refs #<이슈 번호>`
 - 이슈에 PR 링크와 세 줄 요약(몇 건, 분류별 건수, 주의 사항)을 댓글로 단다.
 
+## 6-1. 검수 페이지에 올리기
+
+소유자가 원문과 비교해 결정할 항목은 **검수 페이지**(소유자의 claude.ai 비공개 페이지)에 올린다. PR 본문의 JSON diff
+대신 쉬운 설명·원문·추천을 보고 버튼으로 결정하게 하려는 것이다.
+
+- 페이지 URL 은 저장소에 적지 않는다(공개 저장소). Claude 메모리(`sobangcheck-law-program`)에 있고, 없으면 사용자에게 묻는다.
+- 도구는 `ArtifactData` 의 `batch` 한 번. 문서 형식은 [`docs/review-page.md`](../../../docs/review-page.md).
+- 묶음 문서 `batches/law-update-YYYYMMDD` 하나 — `title` "법령 개정 반영 (YYYY-MM-DD 감시)", `subtitle` "PR #N · 병합 전 확인",
+  `pr` PR 링크, `order` 는 기존 묶음보다 큰 수, `note` 에 "연혁만 추가한 none 분류 N건은 PR 요약 표 참고".
+- 항목 문서 `items/law-update-YYYYMMDD-<n>` — `wording`·`criteria`·`needs-review` change 와 적용례·경과조치 해석마다 하나.
+  `none` 은 올리지 않는다. 필드는 형식 문서대로: 쉬운 질문(`title`), 무엇이 바뀌고 사이트에 무엇을 반영하는지(`plain`),
+  `now`/`change`, 원문 그대로의 `quotes`(링크 포함), `recommend`(값·이유), `options`, `impact`, `links`(PR).
+- 이슈 댓글과 PR 본문에 "검수 페이지에 N건을 올렸다"고 적는다(URL 은 적지 않는다).
+
 ## 7. needs-review 항목은 `law-needs-review` 이슈로
 
 `needs-review` 가 하나라도 있으면 **열린 `law-needs-review` 이슈 하나**에 모은다 — 없으면 만들고, 있으면 댓글로 덧붙인다:
@@ -155,6 +169,10 @@ fi
 `needs-review.md` 에는 항목마다: change id, 대상·번호·시행일, **원문 링크**, **원문 인용**(개정문·부칙, 조문 번호 포함),
 판단을 보류한 이유, 확인할 파일(`affects`), PR 링크. 이 이슈는 사람이 판단을 마친 뒤 닫는다 — law-watch 는 라벨만 만들고
 이 이슈를 열거나 닫지 않는다.
+
+## 8. 검수 결과 반영
+
+사용자가 검수 페이지에서 결정을 마치고 "검수 반영해줘"라고 하면 `/review-apply` 절차를 따른다.
 
 ## 참고: 이슈 수명
 
