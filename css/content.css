@@ -1,0 +1,667 @@
+/* 콘텐츠 페이지 (scripts/content/build.mjs 가 만드는 standards/·news/·guide/·qa/)
+   style.css 의 색·간격 변수를 그대로 써서 다크 모드를 따라간다. 클래스는 모두 ce- 로 시작한다. */
+
+/* 글이 긴 페이지라 조회 화면(480px)보다 넓게 */
+.container.ce-page {
+  max-width: 760px;
+}
+
+.ce-main {
+  flex: 1;
+}
+
+/* ── 위치 표시 ── */
+.ce-breadcrumb ol {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 4px 0 12px;
+}
+
+.ce-breadcrumb li + li::before {
+  content: '›';
+  margin-right: 4px;
+  color: var(--text-disabled);
+}
+
+.ce-breadcrumb a {
+  color: var(--text-tertiary);
+  text-decoration: none;
+}
+
+.ce-breadcrumb a:hover {
+  color: var(--color-primary);
+}
+
+/* ── 제목 영역 ── */
+.ce-header {
+  padding: 16px 0 20px;
+}
+
+.ce-kicker {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+
+.ce-title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  word-break: keep-all;
+}
+
+.ce-lede {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  word-break: keep-all;
+}
+
+.ce-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.ce-dot {
+  color: var(--text-disabled);
+}
+
+.ce-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.ce-tags li {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.ce-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  padding: 0 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.ce-badge--ok { background: var(--color-success-bg); color: var(--color-success); }
+.ce-badge--muted { background: var(--bg-tertiary); color: var(--text-tertiary); }
+.ce-badge--info { background: var(--color-primary-bg); color: var(--color-primary); }
+.ce-badge--warn { background: var(--color-warning-bg); color: var(--color-warning); }
+
+/* ── 절 ── */
+.ce-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.ce-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 16px 20px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ce-section-body {
+  padding: 18px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.ce-section-body > p,
+.ce-section-body > ul,
+.ce-section-body > ol,
+.ce-section-body > .ce-table-wrap,
+.ce-section-body > .ce-facility {
+  margin-bottom: 12px;
+}
+
+.ce-section-body > :last-child {
+  margin-bottom: 0;
+}
+
+.ce-section-body a,
+.ce-prose a,
+.ce-sources a,
+.ce-related a,
+.ce-post-list a {
+  color: var(--color-primary);
+}
+
+.ce-cat-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 20px 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.ce-section-body > .ce-cat-title:first-child,
+.ce-section-body > .ce-note + .ce-cat-title {
+  margin-top: 8px;
+}
+
+.ce-facility h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.ce-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.ce-note {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+}
+
+.ce-list {
+  padding-left: 20px;
+}
+
+.ce-list li {
+  margin: 4px 0;
+}
+
+/* ── 표 ── */
+.ce-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.ce-table,
+.ce-md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ce-table th,
+.ce-table td,
+.ce-md-table th,
+.ce-md-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+.ce-table th,
+.ce-md-table th {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ce-table tr:last-child td,
+.ce-md-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ce-table td,
+.ce-md-table td {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.ce-table td:first-child {
+  white-space: nowrap;
+}
+
+.ce-table--compact td:first-child {
+  white-space: normal;
+}
+
+/* 용도 페이지 기간표: 적용 기간 | 기준 | 대상 | 비고·근거 */
+.ce-table--periods,
+.ce-table--by-use {
+  table-layout: fixed;
+}
+
+.ce-table--periods th:nth-child(1) { width: 190px; }
+
+.ce-table--periods td:first-child {
+  white-space: normal;
+}
+.ce-table--periods th:nth-child(3) { width: 16%; }
+.ce-table--periods th:nth-child(4) { width: 30%; }
+
+/* 시설 페이지 용도별 표: 용도 | 적용 기간 | 기준 | 대상 | 비고·근거 */
+.ce-table--by-use th:nth-child(1) { width: 16%; }
+.ce-table--by-use th:nth-child(2) { width: 132px; }
+.ce-table--by-use th:nth-child(4) { width: 14%; }
+.ce-table--by-use th:nth-child(5) { width: 18%; }
+
+.ce-table--by-use td:first-child {
+  white-space: normal;
+}
+
+.ce-page .geo-summary-box a {
+  color: var(--color-primary);
+}
+
+.ce-row--ended td {
+  color: var(--text-tertiary);
+}
+
+.ce-period {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ce-al-c { text-align: center !important; }
+.ce-al-r { text-align: right !important; }
+
+.ce-footnotes {
+  list-style: none;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+}
+
+.ce-footnotes li {
+  margin: 4px 0;
+}
+
+.ce-footnotes li:target {
+  color: var(--text-primary);
+  background: var(--color-warning-bg);
+}
+
+/* 좁은 화면: 기준표를 카드처럼 쌓아서 보여 준다 (칸 이름은 data-label) */
+@media (max-width: 600px) {
+  .ce-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .ce-table,
+  .ce-table tbody,
+  .ce-table tr,
+  .ce-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .ce-table tr {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .ce-table tr:last-child {
+    border-bottom: none;
+  }
+
+  .ce-table td,
+  .ce-table td:first-child {
+    padding: 2px 0;
+    border: none;
+    white-space: normal;
+  }
+
+  .ce-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+  }
+
+  .ce-table td.ce-empty {
+    display: none;
+  }
+
+  .ce-title {
+    font-size: 22px;
+  }
+
+  .ce-section-title {
+    padding: 14px 16px;
+  }
+
+  .ce-section-body {
+    padding: 16px;
+  }
+}
+
+/* ── 변경 이력 ── */
+.ce-events {
+  list-style: none;
+}
+
+.ce-events li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ce-events li:last-child {
+  border-bottom: none;
+}
+
+.ce-event-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 허브 ── */
+.ce-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.ce-card-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  text-decoration: none;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.ce-card-link:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.ce-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: keep-all;
+}
+
+.ce-card-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ce-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ce-chips li {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-primary);
+  font-size: 13px;
+}
+
+.ce-chips a {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* ── 조회 안내 ── */
+.ce-cta {
+  margin: 24px 0 16px;
+  padding: 20px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-bg);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.ce-cta-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.ce-cta p + p {
+  margin-top: 10px;
+}
+
+.ce-cta-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+.ce-cta-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.ce-cta-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ── 출처·관련 ── */
+.ce-sources,
+.ce-related {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.ce-sources h2,
+.ce-related h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.ce-sources ol {
+  padding-left: 20px;
+}
+
+.ce-sources li {
+  margin: 4px 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.ce-related ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.ce-related a {
+  text-decoration: none;
+}
+
+.ce-related a:hover {
+  text-decoration: underline;
+}
+
+.ce-disclaimer {
+  margin: 16px 0 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+}
+
+/* ── 글 본문 (Markdown) ── */
+.ce-prose {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.ce-prose h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 32px 0 12px;
+  line-height: 1.4;
+}
+
+.ce-prose h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 24px 0 10px;
+}
+
+.ce-prose h4,
+.ce-prose h5,
+.ce-prose h6 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 20px 0 8px;
+}
+
+.ce-prose p,
+.ce-prose ul,
+.ce-prose ol,
+.ce-prose blockquote,
+.ce-prose .ce-table-wrap {
+  margin-bottom: 14px;
+}
+
+.ce-prose ul,
+.ce-prose ol {
+  padding-left: 22px;
+}
+
+.ce-prose li {
+  margin: 4px 0;
+}
+
+.ce-prose li > ul,
+.ce-prose li > ol {
+  margin: 4px 0 0;
+}
+
+.ce-prose strong {
+  color: var(--text-primary);
+}
+
+.ce-prose blockquote {
+  padding: 12px 16px;
+  border-left: 4px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.ce-prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.ce-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.ce-prose hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 24px 0;
+}
+
+/* ── FAQ ── */
+.ce-faq dt {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 14px;
+}
+
+.ce-faq dt:first-child {
+  margin-top: 0;
+}
+
+.ce-faq dd {
+  margin: 4px 0 0;
+}
+
+/* ── 글 목록 ── */
+.ce-post-list {
+  list-style: none;
+}
+
+.ce-post-list > li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ce-post-list > li:last-child {
+  border-bottom: none;
+}
+
+.ce-post-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ce-post-desc {
+  margin: 4px 0;
+}
