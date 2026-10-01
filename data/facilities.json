@@ -77,7 +77,7 @@
       "name": "화재알림설비",
       "category": "경보설비",
       "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9\"/><path d=\"M13.73 21a2 2 0 0 1-3.46 0\"/><circle cx=\"12\" cy=\"4\" r=\"1.5\"/></svg>",
-      "nfsc_key": "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)",
+      "nfsc_key": "화재알림설비의 화재안전성능기준(NFPC 207)",
       "aliases": ["화재알림설비"]
     },
     {
@@ -117,8 +117,16 @@
       "name": "가스누설경보기",
       "category": "경보설비",
       "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/><circle cx=\"12\" cy=\"11\" r=\"2\"/><path d=\"M12 15v2\"/><path d=\"M8 4h8\"/><path d=\"M9 20h6\"/></svg>",
+      "nfsc_key": "가스누설경보기의 화재안전기준(NFSC 206)",
+      "aliases": ["가스누설경보기"]
+    },
+    {
+      "id": "earth_leakage_alarm",
+      "name": "누전경보기",
+      "category": "경보설비",
+      "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/><circle cx=\"12\" cy=\"11\" r=\"2\"/><path d=\"M12 15v2\"/><path d=\"M8 4h8\"/><path d=\"M9 20h6\"/></svg>",
       "nfsc_key": "누전경보기의 화재안전기준(NFSC 205)",
-      "aliases": ["가스누설경보기", "누전경보기"]
+      "aliases": ["누전경보기"]
     },
     {
       "id": "integrated_monitor",
@@ -197,7 +205,7 @@
       "name": "특별피난계단",
       "category": "건축",
       "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M4 4h4v4H4z\"/><path d=\"M8 8h4v4H8z\"/><path d=\"M12 12h4v4h-4z\"/><path d=\"M16 16h4v4h-4z\"/><path d=\"M6 4v-1\"/><path d=\"M6 2l-1.5 1.5\"/><path d=\"M6 2l1.5 1.5\"/></svg>",
-      "nfsc_key": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "nfsc_key": null,
       "aliases": ["특별피난계단"]
     },
     {

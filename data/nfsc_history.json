@@ -1336,10 +1336,10 @@
       "no": 10,
       "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
       "effective_date": "20061230",
-      "notice_no": "소방청고시 제2006-19호",
+      "notice_no": "소방방재청고시 제2006-19호",
       "promulgation_date": "20061230",
       "revision_type": "일부개정",
-      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq="
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006640"
     },
     {
       "no": 11,
@@ -1449,7 +1449,7 @@
       "notice_no": "소방방재청고시 제2009-31호",
       "promulgation_date": "20090824",
       "revision_type": "일부개정",
-      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq="
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009689"
     },
     {
       "no": 12,
@@ -2202,6 +2202,37 @@
       "promulgation_date": "20040604",
       "revision_type": "제정",
       "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006546"
+    }
+  ],
+  "가스누설경보기의 화재안전기준(NFSC 206)": [
+    {
+      "no": 1,
+      "name": "가스누설경보기의 화재안전성능기준(NFPC 206)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-50호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216098"
+    },
+    {
+      "no": 2,
+      "name": "가스누설경보기의 화재안전기준(NFSC 206)",
+      "effective_date": "20210204",
+      "notice_no": "소방청고시 제2021-13호",
+      "promulgation_date": "20210204",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197755"
+    }
+  ],
+  "화재알림설비의 화재안전성능기준(NFPC 207)": [
+    {
+      "no": 1,
+      "name": "화재알림설비의 화재안전성능기준(NFPC 207)",
+      "effective_date": "20231207",
+      "notice_no": "소방청고시 제2023-48호",
+      "promulgation_date": "20231207",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000232170"
     }
   ],
   "피난기구의 화재안전기준(NFSC 301)": [
@@ -3757,6 +3788,66 @@
       "promulgation_date": "20150108",
       "revision_type": "제정",
       "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000010766"
+    }
+  ],
+  "전기저장시설의 화재안전기준(NFSC 607)": [
+    {
+      "no": 1,
+      "name": "전기저장시설의 화재안전성능기준(NFPC 607)",
+      "effective_date": "20260504",
+      "notice_no": "소방청고시 제2026-25호",
+      "promulgation_date": "20260504",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000278596"
+    },
+    {
+      "no": 2,
+      "name": "전기저장시설의 화재안전성능기준(NFPC 607)",
+      "effective_date": "20240517",
+      "notice_no": "소방청고시 제2024-21호",
+      "promulgation_date": "20240517",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000241004"
+    },
+    {
+      "no": 3,
+      "name": "전기저장시설의 화재안전성능기준(NFPC 607)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-68호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216131"
+    },
+    {
+      "no": 4,
+      "name": "전기저장시설의 화재안전기준(NFSC 607)",
+      "effective_date": "20220225",
+      "notice_no": "소방청고시 제2022-1호",
+      "promulgation_date": "20220207",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000208900"
+    }
+  ],
+  "공동주택의 화재안전성능기준(NFPC 608)": [
+    {
+      "no": 1,
+      "name": "공동주택의 화재안전성능기준(NFPC 608)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-40호",
+      "promulgation_date": "20231013",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230242"
+    }
+  ],
+  "창고시설의 화재안전성능기준(NFPC 609)": [
+    {
+      "no": 1,
+      "name": "창고시설의 화재안전성능기준(NFPC 609)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-39호",
+      "promulgation_date": "20231006",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000229924"
     }
   ],
   "소방시설의 내진설계 기준": [
