@@ -196,6 +196,8 @@ export function getFooterHTML() {
         <a href="/pages/checklist.html">용도체크</a>
         <span class="footer-divider">·</span>
         <a href="/pages/reference.html">자료실</a>
+        <span class="footer-divider">·</span>
+        <a href="/standards/">기준 찾기</a>
       </div>
       <div class="footer-links" style="margin-top: 8px;">
         <a href="/pages/about.html">서비스 소개</a>

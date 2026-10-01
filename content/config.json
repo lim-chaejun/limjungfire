@@ -1,0 +1,5 @@
+{
+  "$comment": "콘텐츠 생성기 설정 (docs/content-engine.md). dataVerified = data/ 의 법령 연혁·설치기준을 국가법령정보센터 원문과 마지막으로 대조한 날 — 기준 페이지의 '데이터 기준일'·'최종 수정일'·사이트맵 lastmod 이자 '현행' 판단 기준일. 법령 반영(law-update) PR 에서 함께 올린다. standardsPublished = 기준 페이지를 처음 게시한 날(JSON-LD datePublished, 바꾸지 않는다).",
+  "dataVerified": "2026-09-26",
+  "standardsPublished": "2026-09-27"
+}

@@ -1,0 +1,21 @@
+{
+  "$comment": "손으로 쓴 페이지의 사이트맵 설정. 생성기가 index.html·pages/*.html·guide/*.html 에서 canonical 이 있고 noindex 가 아닌 페이지를 찾아 넣는다(목록 순서 먼저, 나머지는 경로순). lastmod 는 여기 값과 페이지 JSON-LD dateModified 중 늦은 날. 이용약관·개인정보처리방침은 noindex 라서 빠진다.",
+  "pages": [
+    { "path": "/", "lastmod": "2026-01-21", "changefreq": "weekly", "priority": "1.0" },
+    { "path": "/pages/timeline", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.8" },
+    { "path": "/pages/checklist", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.8" },
+    { "path": "/guide/", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.8" },
+    { "path": "/guide/sprinkler", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/fire-extinguisher", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/fire-detector", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/indoor-hydrant", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/emergency-alarm", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/auto-extinguisher", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/emergency-broadcast", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/escape-equipment", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/exit-sign", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/guide/emergency-light", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.6" },
+    { "path": "/pages/reference", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.8" },
+    { "path": "/pages/about", "lastmod": "2026-01-21", "changefreq": "monthly", "priority": "0.5" }
+  ]
+}
