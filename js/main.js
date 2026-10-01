@@ -2904,13 +2904,15 @@ async function renderFireFacilitiesCard(buildingInfo) {
   // 모달에서 사용할 수 있도록 저장
   currentFacilitiesResult = result;
 
-  // 링크로 받은 허가 신청일을 쓰지 못했으면(허가일보다 늦음·허가일 없음) 상태와 주소창에서 지우고 알린다
+  // 링크로 받은 허가 신청일을 쓰지 못했으면(허가일보다 늦음·허가일 없음) 상태와 주소창에서 지운다.
+  // 허가일이 없을 때는 카드의 사용승인일 경고와 조회 실패 알림이 이유를 알려 주므로 토스트로 덮지 않는다
+  // (토스트는 하나만 보인다).
   if (buildingInfo.appliedDay && !appliedDate) {
     currentAppliedDay = '';
     removeAppliedFromUrl();
-    showToast(usedApprovalDate || !permitDate
-      ? '허가일이 조회되지 않아 허가 신청일을 적용하지 않았습니다.'
-      : `허가 신청일이 허가일(${formatPermitDate(permitDate)})보다 늦어 허가일 기준으로 표시합니다.`);
+    if (!usedApprovalDate && permitDate) {
+      showToast(`허가 신청일이 허가일(${formatPermitDate(permitDate)})보다 늦어 허가일 기준으로 표시합니다.`);
+    }
   }
 
   const dateLabel = usedApprovalDate ? '기준일(사용승인일)' : (appliedDate ? '허가 신청일' : '건축허가일');
@@ -2928,7 +2930,7 @@ async function renderFireFacilitiesCard(buildingInfo) {
           ${classification?.category && classification.category !== '일반' ?
             `<span class="classification-category">${esc(classification.category)}</span>` : ''}
         </div>
-        <div class="law-period-badge">
+        <div class="law-period-badge" tabindex="-1">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 6v6l4 2"/>
@@ -3184,8 +3186,9 @@ async function rerenderWithApplicationDate() {
     updateUrlWithAddress();
     await renderBuildingView();
   }
-  // 결과 전체를 다시 그려 초점이 사라지므로 안내 문장으로 옮긴다 (화면 읽기 프로그램이 바뀐 기준을 읽도록)
-  document.querySelector('.application-notice-lead')?.focus();
+  // 결과 전체를 다시 그려 초점이 사라지므로 안내 문장으로 옮긴다 (화면 읽기 프로그램이 바뀐 기준을 읽도록).
+  // 경계 안내가 없는 허가일로 돌아왔으면 카드 머리의 기준일 배지로.
+  (document.querySelector('.application-notice-lead') || document.querySelector('.fire-facilities-card .law-period-badge'))?.focus();
 }
 
 // 결과 카드의 '신청일 기준으로 보기' (입력 폼 제출)

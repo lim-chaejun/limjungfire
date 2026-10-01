@@ -112,6 +112,16 @@ test('기준 문구가 그대로인 행 나눔(비고만 바뀜)은 경계로 �
   assert.equal(b.length, 1);
   assert.deepEqual(b[0].facilities.map((f) => f.name), ['스프링클러설비']);
   assert.deepEqual(findCriteriaBoundaries({ fire_facilities: [split] }, '20200101'), []);
+
+  // 문구가 같아도 대상이 바뀌면 경계다
+  const retarget = {
+    facility_name: '방화구획',
+    regulations: [
+      { start_date: '20150101', end_date: '20191106', criteria: '면적별 1,000㎡ 마다', applicable_to: '공동주택' },
+      { start_date: '20191107', end_date: null, criteria: '면적별 1,000㎡ 마다', applicable_to: '공동주택, 기숙사' }
+    ]
+  };
+  assert.equal(findCriteriaBoundaries({ fire_facilities: [retarget] }, '20200101').length, 1);
 });
 
 test('경계 없음·잘못된 입력은 빈 목록', () => {

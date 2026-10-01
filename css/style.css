@@ -2314,6 +2314,11 @@ footer {
   border-radius: 12px;
 }
 
+/* 허가 신청일을 되돌린 뒤 초점을 받는 기준일 배지 (프로그램 초점이라 테두리는 숨긴다) */
+.law-period-badge:focus {
+  outline: none;
+}
+
 .approval-date-warning {
   display: flex;
   align-items: flex-start;

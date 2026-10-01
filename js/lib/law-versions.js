@@ -97,7 +97,7 @@ export function addDays(ymd, n) {
 // 반환: [{ date, facilities: [{ name, facilityId, before: [기준], after: [기준], notes: [비고] }] }] (날짜 오름차순)
 //   before = 경계 전날까지 적용되다 끝난 기준, after = 경계 날부터 새로 적용된 기준.
 //   허가 신청일이 경계보다 앞서면 before 쪽(종전 기준)이 적용될 수 있다.
-//   기준 문구가 그대로인 행 나눔(비고만 바뀜)은 신청일에 따라 달라질 것이 없으므로 넣지 않는다.
+//   기준 문구와 대상(applicable_to)이 그대로인 행 나눔(비고만 바뀜)은 신청일에 따라 달라질 것이 없으므로 넣지 않는다.
 export function findCriteriaBoundaries(fireData, permitDateValue, windowDays = APPLICATION_WINDOW_DAYS) {
   const permitDate = toYmd(permitDateValue);
   const facilities = Array.isArray(fireData && fireData.fire_facilities) ? fireData.fire_facilities : [];
@@ -126,7 +126,11 @@ export function findCriteriaBoundaries(fireData, permitDateValue, windowDays = A
       if (after.length === 0 && before.length === 0) continue;
       const beforeText = before.map((r) => r.criteria || '');
       const afterText = after.map((r) => r.criteria || '');
-      if ([...beforeText].sort().join('\n') === [...afterText].sort().join('\n')) continue;
+      const sameRows = (a, b) => {
+        const key = (rows) => rows.map((r) => `${r.criteria || ''}\u0000${r.applicable_to || ''}`).sort().join('\n');
+        return key(a) === key(b);
+      };
+      if (sameRows(before, after)) continue;
       changed.push({
         name: f.facility_name,
         facilityId: f.facility_id || null,
