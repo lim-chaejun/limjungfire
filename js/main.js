@@ -2,16 +2,16 @@ import { escapeHtml as esc, safeHttpUrl } from './lib/html.js';
 import { mapPurposeToFireType, getFireDataFile, classifyPurpose } from './lib/building-types.js';
 import {
   findApplicableVersion, getActNameAt, findCriteriaBoundaries, selectPrimaryPermit, toYmd, FIRE_ACT_START,
-  APPLICATION_WINDOW_DAYS
+  APPLICATION_WINDOW_DAYS, EARLIEST_YMD, addDays, parseYmdInput
 } from './lib/law-versions.js';
 
 // 사용자가 입력한 허가 신청일 (YYYYMMDD, 없으면 '').
 // 부칙 적용례는 대개 허가 신청일 기준인데 건축물대장에는 허가일만 있으므로, 입력하면 신청일로 기준을 다시 고른다.
-// 판정 엔진 v2 의 질문 키 application_date 와 같은 값이다.
+// 판정 엔진 v2 의 질문 키 application_date 와 같은 값이다. 주소 조회는 URL 파라미터 applied 로 유지한다.
 let currentAppliedDay = '';
 // 직접 입력 결과를 신청일 변경 후 다시 그리기 위한 마지막 입력값
 let lastManualBuildingInfo = null;
-// 구 소방법 안내 모달을 같은 허가일에 한 번만 띄우기 위한 표시
+// 신청일을 바꿔 같은 건물을 다시 그릴 때 구 소방법 안내 모달을 또 띄우지 않기 위한 표시 (새 건물을 열 때 비운다)
 let preLawModalShownFor = '';
 
 // 인앱 브라우저 처리
@@ -387,7 +387,7 @@ async function getCodesFromUrl() {
           ji: shareData.ji || '',
           platGbCd: normalizePlatGbCd(shareData.platGbCd),
           // 신청일은 공유 문서가 아니라 짧은 링크 뒤 파라미터로 붙는다 (?s=xxx&applied=YYYYMMDD)
-          appliedDay: toYmd(params.get('applied'))
+          appliedDay: parseYmdInput(params.get('applied'))
         };
       }
     }
@@ -405,7 +405,7 @@ async function getCodesFromUrl() {
       bun: params.get('bun') || '',
       ji: params.get('ji') || '',
       platGbCd: normalizePlatGbCd(params.get('plat')),
-      appliedDay: toYmd(params.get('applied'))
+      appliedDay: parseYmdInput(params.get('applied'))
     };
   }
   return null;
@@ -421,8 +421,10 @@ async function searchFromUrl() {
   try {
     // jibunInfo 형식으로 변환 (bun, ji는 이미 패딩된 상태로 URL에 저장됨)
     const jibunInfo = { bun: codes.bun, ji: codes.ji, platGbCd: codes.platGbCd };
-    // 공유 링크·새로고침: URL의 허가 신청일을 이어 받는다
+    // 공유 링크·새로고침: URL의 허가 신청일을 이어 받는다 (실제 날짜가 아닌 값은 주소창에서도 지운다)
     currentAppliedDay = codes.appliedDay || '';
+    if (!currentAppliedDay) removeAppliedFromUrl();
+    preLawModalShownFor = '';
 
     // 4가지 API 동시 호출 (표제부 외에는 실패해도 부분 결과 표시)
     const { titleResult, floorResult, generalResult, permitResult, failed } =
@@ -949,12 +951,17 @@ window.loadHistoryItem = async function(docId, type = 'history') {
   if (item && item.buildingData) {
     closeHistoryModal();
     currentAppliedDay = ''; // 기록에는 신청일을 저장하지 않으므로 허가일 기준으로 연다
+    preLawModalShownFor = '';
     displayAllResults(
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.title } } } },
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.floor } } } },
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.general } } } },
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.permit || [] } } } }
     );
+    // 주소창을 연 건물로 맞춘다 (이전 조회의 주소·신청일이 남아 새로고침 때 엉뚱한 건물이 열리지 않도록).
+    // 기록에 지역 코드가 없어 주소를 못 맞추더라도 신청일 파라미터는 지운다.
+    removeAppliedFromUrl();
+    updateUrlWithAddress();
 
     // 주소 정보 표시
     document.getElementById('addressInput').value = item.address;
@@ -1085,6 +1092,7 @@ window.searchBuilding = async function() {
   showLoading(true);
   clearResult();
   currentAppliedDay = ''; // 새 건물 조회 — 이전 건물의 허가 신청일은 버린다
+  preLawModalShownFor = '';
 
   try {
     const bcode = selectedAddressData.bcode;
@@ -2678,6 +2686,7 @@ window._executePdfDownload = async function() {
     <tr><th>주소</th><td colspan="3">${esc(address)}</td></tr>
     <tr><th>주용도</th><td>${esc(mainPurpose)}</td><th>기타용도</th><td>${esc(etcPurpose)}</td></tr>
     <tr><th>건축허가일</th><td>${fmtDate(permitDate)}</td><th>사용승인일</th><td>${fmtDate(approvalDate)}</td></tr>
+    ${facResult?.appliedDate ? `<tr><th>허가 신청일</th><td colspan="3">${fmtDate(facResult.appliedDate)} (입력한 날짜 — 이 날짜 기준으로 판단)</td></tr>` : ''}
     <tr><th>연면적</th><td>${fmtArea(totalArea)} ㎡</td><th>건축면적</th><td>${fmtArea(buildingArea)} ㎡</td></tr>
     <tr><th>층수</th><td>지상 ${esc(groundFloors || '-')}층 / 지하 ${esc(undergroundFloors || '-')}층</td><th>높이</th><td>${fmtHeight(height)}</td></tr>
     <tr><th>구조</th><td colspan="3">${esc(structure)}</td></tr>
@@ -2753,8 +2762,8 @@ async function getRequiredFireFacilities(buildingInfo) {
   const usedApprovalDate = !hasPermitDate && !!effectiveDate; // 사용승인일 사용 여부
 
   // 허가 신청일을 입력했으면 그 날짜로 기준 행을 고른다 (부칙 적용례는 대개 신청일 기준).
-  // 허가일보다 늦은 신청일, 허가일 없이 넣은 신청일은 쓰지 않는다.
-  const candidateApplied = toYmd(buildingInfo.appliedDay);
+  // 실제 날짜가 아니거나 허가일보다 늦은 신청일, 허가일 없이 넣은 신청일은 쓰지 않는다.
+  const candidateApplied = parseYmdInput(buildingInfo.appliedDay);
   const appliedDate = hasPermitDate && candidateApplied && candidateApplied <= effectiveDate ? candidateApplied : '';
   const referenceDate = appliedDate || effectiveDate;
 
@@ -2895,12 +2904,22 @@ async function renderFireFacilitiesCard(buildingInfo) {
   // 모달에서 사용할 수 있도록 저장
   currentFacilitiesResult = result;
 
+  // 링크로 받은 허가 신청일을 쓰지 못했으면(허가일보다 늦음·허가일 없음) 상태와 주소창에서 지우고 알린다
+  if (buildingInfo.appliedDay && !appliedDate) {
+    currentAppliedDay = '';
+    removeAppliedFromUrl();
+    showToast(usedApprovalDate || !permitDate
+      ? '허가일이 조회되지 않아 허가 신청일을 적용하지 않았습니다.'
+      : `허가 신청일이 허가일(${formatPermitDate(permitDate)})보다 늦어 허가일 기준으로 표시합니다.`);
+  }
+
   const dateLabel = usedApprovalDate ? '기준일(사용승인일)' : (appliedDate ? '허가 신청일' : '건축허가일');
   const preFireAct = !!referenceDate && referenceDate < FIRE_ACT_START;
   const actName = getActNameAt(referenceDate).name;
-  const badgeText = appliedDate
+  // 기준 데이터가 없는 용도는 신청일로 다시 고를 것이 없으므로 허가일 배지를 그대로 쓴다
+  const badgeText = appliedDate && !unmapped && !loadFailed
     ? `허가 신청일: ${formatPermitDate(appliedDate)} (허가일 ${formatPermitDate(permitDate)})`
-    : `${dateLabel}: ${formatPermitDate(permitDate)}`;
+    : `${usedApprovalDate ? '기준일(사용승인일)' : '건축허가일'}: ${formatPermitDate(permitDate)}`;
 
   const headerHtml = `
       <div class="fire-facilities-header">
@@ -2931,41 +2950,44 @@ async function renderFireFacilitiesCard(buildingInfo) {
   }
 
   // 허가 신청일 안내
-  // - 신청일을 입력했으면: 신청일 기준으로 다시 고른 결과임을 알리고 되돌리기 버튼
+  // - 신청일을 입력했으면: 신청일 기준으로 다시 고른 결과임을 알리고, 날짜 고치기·되돌리기
   // - 아니면: 허가일 직전 기간 안에 이 용도의 기준이 바뀐 시설을 보여 주고 신청일 입력을 받는다
   //   (부칙 적용례는 대개 허가 신청일 기준인데 건축물대장에는 허가일만 있다)
+  // 직접 입력에서 허가일을 비워 오늘로 둔 경우는 경계를 따질 허가일이 없으므로 띄우지 않는다.
   let applicationNotice = '';
   if (appliedDate) {
+    // 기간(180일)보다 더 앞선 신청일은 입력 실수일 수 있어 한 번 더 확인을 권한다 (실제로 그럴 수도 있어 막지는 않음)
+    const farBefore = appliedDate < addDays(permitDate, -APPLICATION_WINDOW_DAYS);
     applicationNotice = `
       <div class="approval-date-warning application-notice">
-        <span>
-          <span>허가 신청일 <strong>${formatPermitDate(appliedDate)}</strong> 기준으로 다시 고른 결과입니다 (허가일 ${formatPermitDate(permitDate)}). 개정마다 적용 기준이 다를 수 있으니(신청일·설치일·입찰공고일 등) 각 시설의 비고와 부칙을 확인하세요.</span>
+        <div class="application-notice-body">
+          <span class="application-notice-lead" tabindex="-1">허가 신청일 <strong>${formatPermitDate(appliedDate)}</strong> 기준으로 다시 고른 결과입니다 (허가일 ${formatPermitDate(permitDate)}). 개정마다 적용 기준이 다를 수 있으니(신청일·설치일·입찰공고일 등) 각 시설의 비고와 부칙을 확인하세요.</span>
+          ${farBefore ? `<span class="boundary-caution">신청일이 허가일보다 ${APPLICATION_WINDOW_DAYS}일 넘게 앞섭니다. 날짜가 맞는지 확인하세요.</span>` : ''}
+          ${applicationDateFormHtml(permitDate, appliedDate)}
           <button type="button" class="law-ref-btn" onclick="clearApplicationDate()">허가일 기준으로 돌아가기</button>
-        </span>
+        </div>
       </div>`;
-  } else if (!usedApprovalDate && permitDate) {
+  } else if (!usedApprovalDate && permitDate && !buildingInfo.permitDateAssumed) {
     const boundaries = findCriteriaBoundaries(fireData, permitDate, APPLICATION_WINDOW_DAYS);
     if (boundaries.length > 0) {
-      const describe = (list, empty) => list.length
-        ? list.map((c) => `“${esc(c)}”`).join(', ')
-        : empty;
+      const quote = (list) => list.map((c) => `“${esc(c)}”`).join(', ');
+      const describe = (f) => {
+        if (f.before.length && f.after.length) return `이전: ${quote(f.before)} → 이후: ${quote(f.after)}`;
+        return f.after.length ? `신설: ${quote(f.after)}` : `삭제: ${quote(f.before)}`;
+      };
       const items = boundaries.flatMap((b) => b.facilities.map((f) => `
             <li><strong>${esc(f.name)}</strong> <span class="boundary-date">${formatPermitDate(b.date)} 변경</span><br>
-              이전: ${describe(f.before, '해당 기준 없음')} → 이후: ${describe(f.after, '기준 없어짐')}</li>`));
+              ${describe(f)}${f.notes.length ? `<small class="boundary-note">비고: ${esc(f.notes.join(' / '))}</small>` : ''}</li>`));
       const shown = items.slice(0, 8).join('');
       const more = items.length > 8 ? `<li>외 ${items.length - 8}건 — 각 시설을 눌러 적용 기간별 기준을 확인하세요.</li>` : '';
       applicationNotice = `
       <div class="approval-date-warning application-notice">
-        <span>
-          <span>허가일(${formatPermitDate(permitDate)}) 전 ${APPLICATION_WINDOW_DAYS}일 안에 아래 기준이 바뀌었습니다. 개정 부칙은 대개 <strong>허가 신청일</strong>을 기준으로 적용하므로, 신청일이 바뀐 날짜보다 앞서면 이전 기준이 적용될 수 있습니다.</span>
+        <div class="application-notice-body">
+          <span class="application-notice-lead" tabindex="-1">허가일(${formatPermitDate(permitDate)}) 전 ${APPLICATION_WINDOW_DAYS}일 안에 아래 기준이 바뀌었습니다. 개정 부칙은 대개 <strong>허가 신청일</strong>을 기준으로 적용하므로, 신청일이 바뀐 날짜보다 앞서면 이전 기준이 적용될 수 있습니다.</span>
           <ul class="boundary-list">${shown}${more}</ul>
-          <span class="boundary-form">
-            <label for="appliedDayInput">허가 신청일</label>
-            <input type="date" id="appliedDayInput" max="${formatIsoDate(permitDate)}">
-            <button type="button" class="law-ref-btn" onclick="applyApplicationDate()">신청일 기준으로 보기</button>
-          </span>
-          <small class="boundary-help">신청일은 허가 서류나 세움터(건축행정시스템)의 민원 처리 이력에서 확인할 수 있습니다. 일부 개정은 건축허가 동의 요구일을 기준으로 합니다.</small>
-        </span>
+          ${applicationDateFormHtml(permitDate, '', 'appliedDayHelp')}
+          <small class="boundary-help" id="appliedDayHelp">신청일은 허가 서류나 세움터(건축행정시스템)의 민원 처리 이력에서 확인할 수 있습니다. 설치일·입찰공고일 등 다른 날을 기준으로 하는 개정도 있으니 각 시설의 비고와 부칙을 확인하세요.</small>
+        </div>
       </div>`;
     }
   }
@@ -2975,7 +2997,7 @@ async function renderFireFacilitiesCard(buildingInfo) {
   const mixedUseNotice = mixedTypes ? `
       <div class="approval-date-warning">
         <span>층별 용도가 둘 이상입니다(${esc(mixedTypes.join(', '))}). 「소방시설법 시행령」 별표 2의 <strong>복합건축물</strong>에 해당하면 더 강화된 기준이 적용될 수 있습니다.
-          <button class="law-ref-btn" data-date="${esc(referenceDate)}" onclick="showFireStandardsModal('복합건축물', this.dataset.date)">복합건축물 기준 보기</button>
+          <button class="law-ref-btn" data-date="${esc(referenceDate)}" data-label="${esc(referenceDateLabel(result))}" onclick="showFireStandardsModal('복합건축물', this.dataset.date, null, this.dataset.label)">복합건축물 기준 보기</button>
         </span>
       </div>` : '';
 
@@ -3047,8 +3069,8 @@ async function renderFireFacilitiesCard(buildingInfo) {
 
       <div class="law-reference-section" id="lawRefSection">
         <div class="law-reference-label">${preFireAct
-          ? `${formatPermitDate(permitDate)} 기준: 소방시설법 시행(2004.05.30) 전 — 구 소방법 적용`
-          : `${formatPermitDate(permitDate)} 기준 ${esc(actName)}`}</div>
+          ? `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준: 소방시설법 시행(2004.05.30) 전 — 구 소방법 적용`
+          : `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준 ${esc(actName)}`}</div>
         ${preFireAct ? '' : `
         <div class="law-reference-buttons">
           <button class="law-ref-btn" data-type="act" onclick="openLawLink('act')" disabled>법률</button>
@@ -3081,10 +3103,11 @@ async function renderFireFacilitiesCard(buildingInfo) {
           getLawHistoryData('decree'),
           getLawHistoryData('rules')
         ]);
+        // 결과 카드와 같은 기준일 (허가 신청일을 입력했으면 신청일)
         const lawLinks = {
-          act: findApplicableVersion(actData, permitDate),
-          decree: findApplicableVersion(decreeData, permitDate),
-          rules: findApplicableVersion(rulesData, permitDate)
+          act: findApplicableVersion(actData, referenceDate),
+          decree: findApplicableVersion(decreeData, referenceDate),
+          rules: findApplicableVersion(rulesData, referenceDate)
         };
         document.querySelectorAll('#lawRefSection .law-ref-btn').forEach(btn => {
           const version = lawLinks[btn.dataset.type];
@@ -3127,6 +3150,32 @@ function formatIsoDate(dateStr) {
 
 // ==================== 허가 신청일 ====================
 
+// 결과의 기준일이 무슨 날인지 (모달·법령 표시용)
+function referenceDateLabel(result) {
+  if (result?.appliedDate) return '허가 신청일';
+  if (result?.usedApprovalDate) return '사용승인일';
+  return '건축허가일';
+}
+
+// 허가 신청일 입력 폼 — Enter 로도 제출. 날짜 검증은 applyApplicationDate 가 같은 안내 문구로 한다(novalidate)
+function applicationDateFormHtml(permitDate, value, helpId = '') {
+  return `
+          <form class="boundary-form" novalidate onsubmit="applyApplicationDate(event)">
+            <label for="appliedDayInput">허가 신청일</label>
+            <input type="date" id="appliedDayInput" min="${formatIsoDate(EARLIEST_YMD)}" max="${formatIsoDate(permitDate)}" value="${formatIsoDate(value)}"${helpId ? ` aria-describedby="${helpId}"` : ''}>
+            <button type="submit" class="law-ref-btn">신청일 기준으로 보기</button>
+          </form>`;
+}
+
+// 주소창에서 신청일 파라미터만 지운다 (직접 입력·적용하지 못한 신청일·기록 열기)
+function removeAppliedFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('applied')) return;
+  params.delete('applied');
+  const query = params.toString();
+  history.replaceState(null, '', query ? `${window.location.pathname}?${query}` : window.location.pathname);
+}
+
 // 지금 보고 있는 결과(주소 조회 또는 직접 입력)를 현재 신청일로 다시 그린다
 async function rerenderWithApplicationDate() {
   if (currentBuildingData?.isManualInput && lastManualBuildingInfo) {
@@ -3135,15 +3184,19 @@ async function rerenderWithApplicationDate() {
     updateUrlWithAddress();
     await renderBuildingView();
   }
+  // 결과 전체를 다시 그려 초점이 사라지므로 안내 문장으로 옮긴다 (화면 읽기 프로그램이 바뀐 기준을 읽도록)
+  document.querySelector('.application-notice-lead')?.focus();
 }
 
-// 결과 카드의 '신청일 기준으로 보기'
-window.applyApplicationDate = async function() {
+// 결과 카드의 '신청일 기준으로 보기' (입력 폼 제출)
+window.applyApplicationDate = async function(event) {
+  event?.preventDefault();
   const input = document.getElementById('appliedDayInput');
-  const value = toYmd(String(input?.value || '').replace(/-/g, ''));
+  const raw = String(input?.value || '').trim();
+  const value = parseYmdInput(raw);
   const permitDate = toYmd(currentFacilitiesResult?.permitDate);
   if (!value) {
-    showToast('허가 신청일을 입력해 주세요.');
+    showToast(raw ? '허가 신청일을 다시 확인해 주세요 (1900년 이후 날짜).' : '허가 신청일을 입력해 주세요.');
     return;
   }
   if (permitDate && value > permitDate) {
@@ -3202,8 +3255,8 @@ let currentFireStandardsData = {
   buildingInfo: null
 };
 
-// 소방기준 모달 표시
-window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo) {
+// 소방기준 모달 표시 (dateLabel: 기준일이 무슨 날인지 — 건축허가일·허가 신청일·사용승인일)
+window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo, dateLabel) {
   // 용도를 JSON building_type으로 매핑
   const buildingType = mapPurposeToFireDataType(purpose);
   if (!buildingType) {
@@ -3225,7 +3278,7 @@ window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo
     buildingInfo
   };
 
-  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo);
+  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo, dateLabel);
 
   document.getElementById('fireStandardsBody').innerHTML = html;
   document.getElementById('fireStandardsModal').style.display = 'flex';
@@ -3358,7 +3411,7 @@ window.showFacilityDetailModal = async function(facilityIndex) {
 
   html += `
     <div class="facility-detail-footer">
-      <p>건축허가일: ${formatPermitDate(permitDate) || '-'}</p>
+      <p>${referenceDateLabel(currentFacilitiesResult)}: ${formatPermitDate(permitDate) || '-'}</p>
     </div>
   `;
 
@@ -3442,12 +3495,13 @@ window.showFireStandardsModalFromCard = function() {
   const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
   // 소방시설 카드와 같은 기준일(허가 신청일을 입력했으면 신청일, 아니면 허가일, 없으면 사용승인일)
   const permitDate = currentFacilitiesResult?.referenceDate || currentFacilitiesResult?.permitDate || getPrimaryPermitInfo().permitDate;
+  const dateLabel = currentFacilitiesResult ? referenceDateLabel(currentFacilitiesResult) : '건축허가일';
 
-  showFireStandardsModal(mainPurpose, permitDate, null);
+  showFireStandardsModal(mainPurpose, permitDate, null, dateLabel);
 };
 
 // 소방기준 모달 콘텐츠 렌더링
-function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
+function renderFireStandardsModalContent(data, permitDate, buildingInfo, dateLabel = '허가일') {
   const permitNum = parseInt(permitDate) || 0;
 
   // 카테고리별 시설 그룹핑
@@ -3489,7 +3543,7 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
   let html = `
     <div class="fire-standards-header-info">
       <span class="purpose-badge">${esc(data.building_type)}</span>
-      ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
+      ${permitDate ? `<span class="permit-date-badge">${esc(dateLabel)}: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
 
@@ -3538,7 +3592,7 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
   // 참고사항
   html += `
     <div class="fire-standards-note">
-      <p>※ 위 기준은 허가일(${formatPermitDate(permitDate) || '-'}) 당시 적용되는 법령을 기준으로 합니다.</p>
+      <p>※ 위 기준은 ${esc(dateLabel)}(${formatPermitDate(permitDate) || '-'}) 당시 적용되는 법령을 기준으로 합니다.</p>
       <p>※ 실제 소방시설 설치 여부는 건축물의 세부 조건에 따라 달라질 수 있습니다.</p>
     </div>
   `;
@@ -3773,8 +3827,12 @@ window.submitManualInput = function() {
       today.getDate().toString().padStart(2, '0');
   }
 
-  // 허가 신청일 (선택) — 허가일 없이, 또는 허가일보다 늦게 넣으면 받지 않는다
-  const appliedDate = toYmd(appliedDateInput.replace(/-/g, ''));
+  // 허가 신청일 (선택) — 실제 날짜가 아니거나, 허가일 없이 또는 허가일보다 늦게 넣으면 받지 않는다
+  const appliedDate = parseYmdInput(appliedDateInput);
+  if (appliedDateInput && !appliedDate) {
+    alert('허가 신청일을 다시 확인해 주세요 (1900년 이후 날짜).');
+    return;
+  }
   if (appliedDate && !permitDateInput) {
     alert('허가 신청일을 쓰려면 허가일도 입력해 주세요.');
     return;
@@ -3796,11 +3854,15 @@ window.submitManualInput = function() {
     ugrndFlrCnt: undergroundFloors,
     pmsDay: permitDate,        // 소방시설 판정용
     archPmsDay: permitDate,
+    permitDateAssumed: !permitDateInput, // 허가일을 비워 오늘로 둠 — 신청일 경계 안내를 띄우지 않는다
     isManualInput: true
   };
   // 신청일 변경 후 다시 그릴 때 쓰는 원래 입력 (신청일은 currentAppliedDay 로 따로 관리)
   lastManualBuildingInfo = buildingInfo;
   currentAppliedDay = appliedDate;
+  preLawModalShownFor = '';
+  // 직접 입력 결과는 주소창으로 되살릴 수 없으므로, 이전 주소 조회의 신청일 파라미터만 지운다
+  removeAppliedFromUrl();
 
   // 결과 영역에 표시
   displayManualResult({ ...buildingInfo, appliedDay: appliedDate }, permitDate);

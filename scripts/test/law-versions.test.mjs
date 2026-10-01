@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  APPLICATION_WINDOW_DAYS, addDays, findCriteriaBoundaries
+  APPLICATION_WINDOW_DAYS, EARLIEST_YMD, addDays, isValidYmd, parseYmdInput, findCriteriaBoundaries
 } from '../../js/lib/law-versions.js';
 
 // 공동주택 스프링클러: 11층(~2018.1.26.) → 6층(2018.1.27.~), 상시 적용 행 하나
@@ -48,6 +48,22 @@ test('addDays 는 월·연 경계를 넘는다', () => {
   assert.equal(APPLICATION_WINDOW_DAYS, 180);
 });
 
+test('isValidYmd·parseYmdInput: 실제 달력 날짜만, 1900년부터', () => {
+  assert.equal(EARLIEST_YMD, '19000101');
+  assert.equal(isValidYmd('20180120'), true);
+  assert.equal(isValidYmd('20240229'), true); // 윤년
+  assert.equal(isValidYmd('20230229'), false); // 평년 2월 29일
+  assert.equal(isValidYmd('00000000'), false); // 예전에는 통과해 '오늘 기준'으로 바뀌던 값
+  assert.equal(isValidYmd('20171399'), false);
+  assert.equal(isValidYmd('18991231'), false); // 하한 전
+  assert.equal(isValidYmd(''), false);
+  assert.equal(parseYmdInput('2018-01-20'), '20180120'); // date 입력 칸 값
+  assert.equal(parseYmdInput(' 20180120 '), '20180120'); // URL 파라미터
+  assert.equal(parseYmdInput('0201-01-20'), ''); // 연도 오타
+  assert.equal(parseYmdInput('abc'), '');
+  assert.equal(parseYmdInput(null), '');
+});
+
 test('6층 스프링클러: 허가일 2018.3.2.이면 2018.1.27. 경계에서 11층 → 6층', () => {
   const b = findCriteriaBoundaries(housing, '20180302');
   assert.equal(b.length, 1);
@@ -81,6 +97,21 @@ test('35151호(2024.12.31.): 행 교체와 새 행만 있는 시설을 함께 �
   assert.deepEqual(byName['간이스프링클러설비'].after, ['의원·치과의원·한의원으로서 입원실 또는 인공신장실이 있는 시설']);
   assert.deepEqual(byName['방염'].before, []);
   assert.equal(byName['방염'].after.length, 1);
+});
+
+test('기준 문구가 그대로인 행 나눔(비고만 바뀜)은 경계로 보지 않는다', () => {
+  const split = {
+    facility_name: '방화구획',
+    regulations: [
+      { start_date: '20150101', end_date: '20191106', criteria: '면적별 1,000㎡ 마다', note: '종전 근거' },
+      { start_date: '20191107', end_date: null, criteria: '면적별 1,000㎡ 마다', note: '새 근거' }
+    ]
+  };
+  const added = { facility_name: '스프링클러설비', regulations: [{ start_date: '20191107', end_date: null, criteria: '새 기준' }] };
+  const b = findCriteriaBoundaries({ fire_facilities: [split, added] }, '20200101');
+  assert.equal(b.length, 1);
+  assert.deepEqual(b[0].facilities.map((f) => f.name), ['스프링클러설비']);
+  assert.deepEqual(findCriteriaBoundaries({ fire_facilities: [split] }, '20200101'), []);
 });
 
 test('경계 없음·잘못된 입력은 빈 목록', () => {

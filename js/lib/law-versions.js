@@ -21,6 +21,24 @@ export function toYmd(value) {
   return /^\d{8}$/.test(v) ? v : '';
 }
 
+// 사용자가 넣는 날짜의 하한 (판정 엔진 v2 dates.js 의 EARLIEST 와 같은 값)
+export const EARLIEST_YMD = '19000101';
+
+// 실제 달력에 있는 날짜인 'YYYYMMDD' 인가 (00000000·20171399 같은 값과 1900년 전은 거른다)
+export function isValidYmd(value) {
+  const v = toYmd(value);
+  if (!v || v < EARLIEST_YMD) return false;
+  const [y, m, d] = [Number(v.slice(0, 4)), Number(v.slice(4, 6)), Number(v.slice(6, 8))];
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+// 사용자 입력('2018-01-20'·'20180120') → 'YYYYMMDD', 실제 날짜가 아니면 ''
+export function parseYmdInput(value) {
+  const v = String(value ?? '').trim().replace(/-/g, '');
+  return isValidYmd(v) ? v : '';
+}
+
 // 한국시간 기준 오늘 'YYYYMMDD'
 export function todayYmdKst(now = new Date()) {
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
@@ -79,6 +97,7 @@ export function addDays(ymd, n) {
 // 반환: [{ date, facilities: [{ name, facilityId, before: [기준], after: [기준], notes: [비고] }] }] (날짜 오름차순)
 //   before = 경계 전날까지 적용되다 끝난 기준, after = 경계 날부터 새로 적용된 기준.
 //   허가 신청일이 경계보다 앞서면 before 쪽(종전 기준)이 적용될 수 있다.
+//   기준 문구가 그대로인 행 나눔(비고만 바뀜)은 신청일에 따라 달라질 것이 없으므로 넣지 않는다.
 export function findCriteriaBoundaries(fireData, permitDateValue, windowDays = APPLICATION_WINDOW_DAYS) {
   const permitDate = toYmd(permitDateValue);
   const facilities = Array.isArray(fireData && fireData.fire_facilities) ? fireData.fire_facilities : [];
@@ -105,11 +124,14 @@ export function findCriteriaBoundaries(fireData, permitDateValue, windowDays = A
       const after = regs.filter((r) => toYmd(r.start_date) === date);
       const before = regs.filter((r) => toYmd(r.end_date) === dayBefore);
       if (after.length === 0 && before.length === 0) continue;
+      const beforeText = before.map((r) => r.criteria || '');
+      const afterText = after.map((r) => r.criteria || '');
+      if ([...beforeText].sort().join('\n') === [...afterText].sort().join('\n')) continue;
       changed.push({
         name: f.facility_name,
         facilityId: f.facility_id || null,
-        before: before.map((r) => r.criteria || ''),
-        after: after.map((r) => r.criteria || ''),
+        before: beforeText,
+        after: afterText,
         notes: after.map((r) => r.note).filter(Boolean)
       });
     }
