@@ -31,11 +31,6 @@ function ymdToUtc(ymd) {
   return Date.UTC(Number(ymd.slice(0, 4)), Number(ymd.slice(4, 6)) - 1, Number(ymd.slice(6, 8)));
 }
 
-// b - a (일)
-export function daysBetween(a, b) {
-  return Math.round((ymdToUtc(b) - ymdToUtc(a)) / 86400000);
-}
-
 function numberOf(row) {
   const m = String(row.law_no || row.notice_no || '').match(/(\d+)(?:-(\d+))?\s*호/);
   if (!m) return 0;
@@ -69,20 +64,58 @@ export function getActNameAt(dateValue, today = todayYmdKst()) {
   return era;
 }
 
-// 기준일 직전 windowDays 이내에 시행된 실질 개정(일부·전부개정) 중 가장 최근 것.
-// 부칙 적용례는 대개 '허가 신청일' 기준이므로, 허가일이 개정 시행 직후면 종전 기준이 적용될 수 있다.
-export function findRecentAmendment(history, dateValue, windowDays = 180) {
-  const date = toYmd(dateValue);
-  if (!date || !Array.isArray(history)) return null;
-  let found = null;
-  for (const r of history) {
-    const eff = toYmd(r.effective_date);
-    if (!eff || eff > date) continue;
-    if (!/일부개정|전부개정/.test(String(r.revision_type || ''))) continue;
-    if (daysBetween(eff, date) > windowDays) continue;
-    if (!found || eff > found.effective_date) found = r;
+// 허가 신청일을 따져 볼 기간(일). 부칙 적용례는 대개 '허가 신청일' 기준인데 대장에는 허가일만 있으므로,
+// 허가일 직전 이 기간 안에 기준이 바뀌었으면 신청일에 따라 적용 기준이 달라질 수 있다.
+// 판정 엔진 v2 정책 applicationWindowDays 와 같은 값이다 (CP1 Q7에서 바뀌면 함께 바꾼다).
+export const APPLICATION_WINDOW_DAYS = 180;
+
+// ymd 에 n일을 더한 'YYYYMMDD'
+export function addDays(ymd, n) {
+  return new Date(ymdToUtc(ymd) + n * 86400000).toISOString().slice(0, 10).replace(/-/g, '');
+}
+
+// 허가일 직전 windowDays 안에 이 용도의 기준이 바뀐 날(경계)과, 그날 바뀐 시설별 기준.
+// 경계 = 기준 행의 시작일, 또는 종료일 다음 날. 범위는 (허가일 − windowDays, 허가일].
+// 반환: [{ date, facilities: [{ name, facilityId, before: [기준], after: [기준], notes: [비고] }] }] (날짜 오름차순)
+//   before = 경계 전날까지 적용되다 끝난 기준, after = 경계 날부터 새로 적용된 기준.
+//   허가 신청일이 경계보다 앞서면 before 쪽(종전 기준)이 적용될 수 있다.
+export function findCriteriaBoundaries(fireData, permitDateValue, windowDays = APPLICATION_WINDOW_DAYS) {
+  const permitDate = toYmd(permitDateValue);
+  const facilities = Array.isArray(fireData && fireData.fire_facilities) ? fireData.fire_facilities : [];
+  if (!permitDate || facilities.length === 0) return [];
+  const from = addDays(permitDate, -windowDays);
+
+  const points = new Set();
+  for (const f of facilities) {
+    for (const r of f.regulations || []) {
+      const start = toYmd(r.start_date);
+      const end = toYmd(r.end_date);
+      if (start) points.add(start);
+      if (end) points.add(addDays(end, 1));
+    }
   }
-  return found;
+
+  const result = [];
+  for (const date of [...points].sort()) {
+    if (date <= from || date > permitDate) continue;
+    const dayBefore = addDays(date, -1);
+    const changed = [];
+    for (const f of facilities) {
+      const regs = f.regulations || [];
+      const after = regs.filter((r) => toYmd(r.start_date) === date);
+      const before = regs.filter((r) => toYmd(r.end_date) === dayBefore);
+      if (after.length === 0 && before.length === 0) continue;
+      changed.push({
+        name: f.facility_name,
+        facilityId: f.facility_id || null,
+        before: before.map((r) => r.criteria || ''),
+        after: after.map((r) => r.criteria || ''),
+        notes: after.map((r) => r.note).filter(Boolean)
+      });
+    }
+    if (changed.length) result.push({ date, facilities: changed });
+  }
+  return result;
 }
 
 // 건축인허가 이력에서 소방기준 판단의 기준이 되는 허가를 고른다.
