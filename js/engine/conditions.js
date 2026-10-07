@@ -1,0 +1,970 @@
+// 조건 트리 평가 — 노드 하나를 3값(출처 포함)으로
+//
+// env = { dong, index, answers, policy, inputDefs, facility(id) → tv, release, explain, matched, maybeMatched }
+// 모든 불확실한 잎(leaf)은 질문 키를 가지며, answers[키]가 있으면 그 답을 확정값으로 쓴다.
+// release=true 이면 가정값(정책 기본값·대체값)을 쓰지 않고 모름으로 푼다 — 비해당 확정 전의 재평가용(§5.4).
+// explain=false 이면 근거 문장(why)을 만들지 않는다 — 질문 선별·재평가처럼 결과값만 필요한 반복 평가용.
+// track=false 이면 출처(deps)도 만들지 않는다 — 3값의 값(T/F/U)은 출처와 무관하므로 값만 필요한 평가에서 생략한다.
+
+import { comparisonOps, nodeType, normalizeFloors, selectorKinds, selectorsKey, stableKey } from './schema.js';
+import {
+  ASSUMED, CONFIRMED, F, T, U, UNKNOWN,
+  addInterval, all, any, capInterval, compareInterval, depCollector, depKey, exact, interval, makeDep, maxInterval, mergeDeps, not, tv,
+} from './logic.js';
+import { coverage, describeUses } from './uses.js';
+import { countOf, doubtfulOf, effectiveFloors, inTotalOf, sortFloors } from './facts.js';
+import { describeFloors, fmtCondition, fmtInterval } from './format.js';
+
+const NO_WHY = Object.freeze([]);
+const EMPTY = Object.freeze([]);
+
+export function makeEnv({ dong, index, answers = {}, policy, inputDefs = new Map(), names = new Map(), facility, release = false, explain = true, track = true }) {
+  // 대지 전체(합친 동): 층·지표·플래그 사실은 각 동의 평가(그 동의 답변 키)에 맡긴다 — 합친 동 이름의 키로 묻지 않는다
+  const members = dong.memberDongs ? dong.memberDongs.map((m) => makeEnv({ dong: m, index, answers, policy, inputDefs, names, release, explain, track })) : null;
+  return {
+    dong,
+    members,
+    index,
+    answers,
+    policy,
+    inputDefs,
+    names,
+    facility: facility || (() => tv(U, [], ['타 시설 판정을 알 수 없음'])),
+    release,
+    explain,
+    track,
+    cache: new Map(),
+    // 층 단위 메모 — 층 객체(effectiveFloors 가 층수 조합별로 재사용)를 키로, 문자열을 만들지 않는다
+    rawAreaMemo: new Map(),
+    floorAreaMemo: new Map(),
+    sharesMemo: new Map(),
+    basisMemo: new Map(),
+    condAreaMemo: new Map(),
+    windowlessMemo: new Map(),
+    memberMemo: new Map(),
+    usePresenceMemo: new Map(),
+    matched: null,
+    maybeMatched: null,
+  };
+}
+
+const labelOf = (env, id) => env.inputDefs.get(id)?.label ?? id;
+const unitOf = (env, id) => env.inputDefs.get(id)?.unit ?? '';
+const why = (env, make) => (env.explain ? make() : NO_WHY);
+const D = (env, make) => (env.track ? make() : EMPTY);
+
+function numAnswer(v) {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v);
+  return null;
+}
+const boolAnswer = (v) => (v === true || v === false ? v : null);
+const userDep = (input, env, extra = {}) => makeDep(input, CONFIRMED, { dong: env.dong.id, source: 'user', ...extra });
+const confirmedOnly = (x) => x.deps.every((d) => d.status === CONFIRMED);
+
+function memo(env, key, fn) {
+  if (!env.cache.has(key)) env.cache.set(key, fn());
+  return env.cache.get(key);
+}
+
+function memoOn(map, key, fn) {
+  let v = map.get(key);
+  if (v === undefined) map.set(key, (v = fn()));
+  return v;
+}
+
+function memoIn(outer, groupKey, key, fn) {
+  let inner = outer.get(groupKey);
+  if (!inner) outer.set(groupKey, (inner = new Map()));
+  return memoOn(inner, key, fn);
+}
+
+// 용도 목록의 내용 키 — 다른 시설의 같은 용도 조건끼리 층 계산을 공유하는 메모 키
+const USES_KEY = new WeakMap();
+function usesKey(targets) {
+  let key = USES_KEY.get(targets);
+  if (key === undefined) USES_KEY.set(targets, (key = targets.join(',')));
+  return key;
+}
+
+// ───────────── 지표 ─────────────
+
+const hasAssumedDep = (iv) => iv.loDeps.some((d) => d.status === ASSUMED) || iv.hiDeps.some((d) => d.status === ASSUMED);
+
+// 가정값을 푼 지표: inputs.json 의 range(있을 수 있는 값) 전체
+function releasedMetric(env, id) {
+  const [lo, hi] = env.inputDefs.get(id)?.range ?? [0, Infinity];
+  return interval(lo, hi, { open: D(env, () => [makeDep(id, UNKNOWN, { dong: env.dong.id, range: [lo, hi], released: true })]) });
+}
+
+// 정책을 반영하지 않은 원값 (답변 > 사실 > 모름). 재평가(release)에서는 가정값 사실을 모름으로
+const SITE_MAX_METRICS = new Set(['ground_floors', 'basement_floors', 'height']);
+
+function rawMetric(env, id) {
+  return memo(env, `raw:${id}`, () => {
+    if (env.members) {
+      const values = env.members.map((m) => rawMetric(m, id));
+      return values.reduce(SITE_MAX_METRICS.has(id) ? maxInterval : addInterval);
+    }
+    const v = baseMetric(env, id);
+    if (!v.open.length) return v;
+    if (id === 'total_area') return totalFromFloors(env, v);
+    if (COUNT_METRICS.has(id) && env.track) return countFromAreas(env, id, v);
+    return v;
+  });
+}
+
+function baseMetric(env, id) {
+  const a = numAnswer(env.answers[depKey(id, env.dong.id)]);
+  if (a !== null) return exact(a, D(env, () => [userDep(id, env)]));
+  const m = env.dong.metrics[id];
+  if (m && env.release && hasAssumedDep(m)) return releasedMetric(env, id);
+  return m || interval(0, Infinity, { open: D(env, () => [makeDep(id, UNKNOWN, { dong: env.dong.id })]) });
+}
+
+const COUNT_METRICS = new Set(['ground_floors', 'basement_floors']);
+
+// 층수 질문의 답할 수 있는 범위를 면적 항등식에 맞춘다: 다른 구분의 층수를 정확히 알면 이 층수로 층 목록이 전부가 되므로,
+// 그 목록의 연면적 산입 몫 상한 합(산입 + 모름 — 면적제외 행은 빼고)이 연면적 하한에 못 미치는 층수(층이 모자라 연면적을 채울 수
+// 없음)는 범위에서 뺀다.
+// 층이 늘수록 상한 합도 늘어 가능한 층수는 [가장 작은 가능한 값, 상한]. 층수 값(구간)은 그대로 두고 질문 범위만 좁힌다
+// (3차 리뷰 fz_rounds: 1층 800 을 답한 뒤 나온 지하층수 질문에 0 을 답하면 연면적 1,600 과 모순)
+function countFromAreas(env, id, v) {
+  const other = countOf(baseMetric(env, id === 'ground_floors' ? 'basement_floors' : 'ground_floors'));
+  const totalLo = numAnswer(env.answers[depKey('total_area', env.dong.id)]) ?? env.dong.metrics.total_area?.lo ?? 0;
+  if (!Number.isInteger(other) || !(totalLo > AREA_EPS)) return v;
+  const [defLo, defHi] = env.inputDefs.get(id)?.range ?? [0, Infinity];
+  const lo = Math.max(Math.ceil(v.lo), defLo);
+  const hi = Math.min(v.hi, defHi);
+  if (!Number.isFinite(hi)) return v;
+  for (let n = lo; n <= hi; n++) {
+    const { floors } = id === 'ground_floors' ? effectiveFloors(env.dong, n, other) : effectiveFloors(env.dong, other, n);
+    let sum = 0;
+    for (const f of floors) {
+      const sh = floorShares(env, f);
+      sum += sh.c.hi + sh.m.hi;
+    }
+    if (sum >= totalLo - AREA_EPS) return n === lo ? v : { ...v, open: v.open.map((d) => (d.input === id ? { ...d, range: [n, hi] } : d)) };
+  }
+  return v;
+}
+
+// 모르는 연면적(표제부·답변 없음 — 층별개요 합으로 구한 하한뿐)을 층 면적(답변 포함)으로 좁힌다: 연면적 ≥ 산입하는 면적 하한의 합,
+// 층 목록이 전부면 연면적 ≤ 산입 + 산입 여부를 모르는 면적 상한의 합(옥탑·필로티 등, 면적제외 행은 빼고 — floorShares).
+// 층 면적을 답할 때마다 연면적 질문 범위도 좁혀져, 한 번에 하나씩 범위 안에서 답하면 면적 항등식과 모순이 생기지 않는다
+// (3차 리뷰: 2층 0 을 답한 뒤 범위 없는 연면적 질문에 1,500)
+function totalFromFloors(env, m) {
+  const { floors, allComplete, exactCounts } = floorsOf(env);
+  let lo = 0;
+  let hi = 0;
+  const loC = depCollector();
+  const hiC = depCollector();
+  for (const f of floors) {
+    const sh = floorShares(env, f);
+    lo += sh.c.lo;
+    hi += sh.c.hi + sh.m.hi;
+    if (env.track) {
+      loC.add(sh.c.loDeps);
+      hiC.add(sh.c.hiDeps);
+      hiC.add(sh.m.hiDeps);
+    }
+  }
+  const complete = allComplete && exactCounts;
+  const nlo = Math.max(m.lo, lo);
+  let nhi = complete ? Math.min(m.hi, hi) : m.hi;
+  const counts = !complete && Number.isFinite(hi) ? countOpen(env) : EMPTY; // 층수를 알면 상한이 생긴다
+  if (nhi < nlo - AREA_EPS) return m; // 답변끼리 모순 — 면적 답변 경고(AREA_ANSWER_MISMATCH)가 알린다
+  if (nlo <= m.lo && nhi >= m.hi && !counts.length && !env.track) return m; // 출처를 모을 때는 질문 범위(알려진 층 면적 합 이상)를 붙인다
+  if (nhi - nlo <= AREA_EPS) nhi = nlo;
+  const listDeps = () => {
+    const { kinds } = floorsOf(env);
+    return mergeDeps(kinds.ground.deps, kinds.basement.deps);
+  };
+  return interval(nlo, nhi, {
+    loDeps: nlo > m.lo ? D(env, () => loC.list()) : m.loDeps,
+    hiDeps: nhi < m.hi ? D(env, () => mergeDeps(hiC.list(), listDeps())) : m.hiDeps,
+    open: nhi === nlo ? EMPTY : mergeDeps(env.track ? m.open.map((d) => ({ ...d, range: [nlo, nhi] })) : m.open, counts),
+  });
+}
+
+// 층수를 정확히 몰라 면적 항등식이 일부만 설 때는 층수도 면적의 미확정 근거다 — 층수를 알면 항등식이 온전해져 면적이 더
+// 좁혀질 수 있다. 그래서 층수 입력(모름·충돌, 가정값을 푼 층수)을 층·부분 면적과 연면적의 미확정 근거에 함께 넣어 질문 후보로
+// 올리고, 면적 질문보다 먼저 묻는다(evaluate.js limitQuestions). 면적만 물으면 가정값 층수를 푼 재평가에서 나온 면적 범위 안의
+// 답이 가정값 층수로 온전해진 항등식(본 평가)과 모순될 수 있다(3차 리뷰 fz_rounds: 지하층수 0 가정, 1층 면적 [0, 1,600] 에서
+// 0 을 답하면 연면적 1,600 과 모순)
+function countOpen(env) {
+  const { kinds } = floorsOf(env);
+  return mergeDeps(kinds.ground.open, kinds.basement.open);
+}
+
+export function metric(env, id) {
+  return memo(env, `m:${id}`, () => {
+    if (id === 'floors_incl_basement') {
+      const a = numAnswer(env.answers[depKey(id, env.dong.id)]);
+      if (a !== null) return exact(a, D(env, () => [userDep(id, env)]));
+      return addInterval(rawMetric(env, 'ground_floors'), rawMetric(env, 'basement_floors'));
+    }
+    if (id === 'ground_floors' && env.policy.basementCountsInFloors) {
+      return addInterval(rawMetric(env, 'ground_floors'), rawMetric(env, 'basement_floors'));
+    }
+    return rawMetric(env, id);
+  });
+}
+
+// ───────────── 층 ─────────────
+
+// 평가에 쓰는 층 목록과 구분(지하·지상·옥탑)별 완전성. 불완전한 구분의 층 조건은 F 가 아니라 U(층수 질문)
+export function floorsOf(env) {
+  return memo(env, 'floors', () => {
+    if (env.members) return siteFloors(env);
+    const g = rawMetric(env, 'ground_floors');
+    const b = rawMetric(env, 'basement_floors');
+    const gc = countOf(g);
+    const bc = countOf(b);
+    const { floors, complete } = effectiveFloors(env.dong, gc, bc);
+    const kinds = {
+      ground: { complete: complete.ground, deps: mergeDeps(g.loDeps, g.hiDeps), open: g.open },
+      basement: { complete: complete.basement, deps: mergeDeps(b.loDeps, b.hiDeps), open: b.open },
+      rooftop: { complete: true, deps: EMPTY, open: EMPTY },
+    };
+    // exactCounts: 층수를 정확히 안다(층 목록 = 실제 층) — 면적 항등식의 '합 = 연면적'(하한 추론)은 이때만 쓴다
+    return { floors, kinds, allComplete: complete.ground && complete.basement, exactCounts: Number.isInteger(gc) && Number.isInteger(bc) };
+  });
+}
+
+// 대지 전체의 층 목록: 동별 층을 그대로 둔다(층마다 어느 동의 층인지 members 로 — 무창층·용도·면적은 그 동의 층에서 읽는다).
+// 무창층·용도 선택은 동별 층마다 따지므로 '무창층 바닥면적 합계' = 무창층인 동별 층 면적의 합이다(2차 리뷰 이후 3차 지적:
+// 같은 층 키를 합친 층의 무창층을 '어느 동이든'으로 보면 합친 면적 전체가 무창층으로 잡혀 제외 조건에서 틀린 비해당이 났다).
+// 같은 층 키의 동별 층을 합친 '한 층' 읽기는 층 면적 기준(floor_exists 의 area)에서만 따로 보고 두 읽기를 맞춰 본다.
+// 구분별 완전성은 모든 동이 완전할 때
+function siteFloors(env) {
+  const floors = [];
+  const kinds = {};
+  for (const k of ['ground', 'basement', 'rooftop']) kinds[k] = { complete: true, deps: EMPTY, open: EMPTY };
+  let exactCounts = true;
+  for (const m of env.members) {
+    const fo = floorsOf(m);
+    exactCounts = exactCounts && fo.exactCounts;
+    for (const k of ['ground', 'basement']) {
+      kinds[k] = {
+        complete: kinds[k].complete && fo.kinds[k].complete,
+        deps: mergeDeps(kinds[k].deps, fo.kinds[k].deps),
+        open: mergeDeps(kinds[k].open, fo.kinds[k].open),
+      };
+    }
+    for (const f of fo.floors) {
+      floors.push({ key: f.key, kind: f.kind, level: f.level, label: `${m.dong.id} ${f.label}`, parts: f.parts, members: [{ env: m, floor: f }], synthesized: f.synthesized });
+    }
+  }
+  return { floors: sortFloors(floors), kinds, allComplete: kinds.ground.complete && kinds.basement.complete, exactCounts };
+}
+
+// 선택자가 고르는 구분들의 층 목록 정보: 완전한가, 목록 근거(층수 입력), 모르는 층수 입력
+function listFor(env, selectors) {
+  return memo(env, `list:${selectorsKey(selectors)}`, () => {
+    const { kinds } = floorsOf(env);
+    const ks = selectorKinds(selectors);
+    return {
+      complete: ks.every((k) => kinds[k].complete),
+      deps: mergeDeps(...ks.map((k) => kinds[k].deps)),
+      open: mergeDeps(...ks.filter((k) => !kinds[k].complete).map((k) => kinds[k].open)),
+    };
+  });
+}
+
+const AREA_EPS = 1e-6;
+
+// 좁힌 구간의 미확정 근거: 값이 정해지면 없음, 아니면 질문 범위(range)를 좁힌 구간으로 (출처를 모으지 않는 평가에서는 그대로)
+function narrowedOpen(env, open, lo, hi) {
+  if (hi - lo <= AREA_EPS) return EMPTY;
+  return env.track ? open.map((d) => (d.range ? { ...d, range: [lo, hi] } : d)) : open;
+}
+
+function floorAreaAnswer(env, floor) {
+  const a = numAnswer(env.answers[depKey('floor_area', env.dong.id, floor.key)]);
+  return a !== null ? exact(a, D(env, () => [userDep('floor_area', env, { floor: floor.key })])) : null;
+}
+
+const partsSum = (env, floor) => (floor.parts.length === 1 ? floor.parts[0].area : floor.parts.map((_, i) => partAreaRaw(env, floor, i)).reduce(addInterval));
+const ZERO = exact(0);
+// 층의 행들이 모두 같은 산입 여부면 그 값, 섞였으면 'mixed' — 층 객체(사실)는 답변과 무관하므로 층마다 한 번만 센다
+const FLOOR_KIND = new WeakMap();
+function floorKind(floor) {
+  let k = FLOOR_KIND.get(floor);
+  if (k === undefined) {
+    const kinds = new Set(floor.parts.map((p) => inTotalOf(p, floor)));
+    FLOOR_KIND.set(floor, (k = kinds.size === 1 ? [...kinds][0] : 'mixed'));
+  }
+  return k;
+}
+
+// 층 면적의 연면적 산입 몫(4차 리뷰): 층별개요 행(부분)마다 연면적에 들어가는지가 다르다(facts.js rowInTotal — yes 산입 ·
+// no 제외(면적제외 '1'·다른 건축물 행) · maybe 모름(면적제외여부 빈칸·필로티·다락·옥탑)). c = 산입 행 합, m = 모르는 행 합,
+// x = 제외 행 합 — 층 면적(조건에 쓰는 값)은 c + m + x 이고, 면적 항등식에는 c 전부와 m 의 0 ~ 전부만 들어간다.
+// 층 면적 답변은 그 층 행들이 모두 같은 쪽이면 그 몫, 섞였으면 모름(m)
+export function floorShares(env, floor) {
+  return memoOn(env.sharesMemo, floor, () => {
+    if (floor.members) {
+      const each = floor.members.map(({ env: m, floor: f }) => floorShares(m, f));
+      const add = (k) => each.map((x) => x[k]).reduce(addInterval);
+      return { c: add('c'), m: add('m'), x: add('x') };
+    }
+    const answered = floorAreaAnswer(env, floor);
+    const kind = floorKind(floor);
+    if (answered || kind !== 'mixed') {
+      const k = kind === 'mixed' ? 'maybe' : kind;
+      const a = answered ?? partsSum(env, floor);
+      return { c: k === 'yes' ? a : ZERO, m: k === 'maybe' ? a : ZERO, x: k === 'no' ? a : ZERO, sum: a };
+    }
+    let c = ZERO;
+    let m = ZERO;
+    let x = ZERO;
+    floor.parts.forEach((p, i) => {
+      const a = partAreaRaw(env, floor, i);
+      const k = inTotalOf(p, floor);
+      if (k === 'yes') c = addInterval(c, a);
+      else if (k === 'no') x = addInterval(x, a);
+      else m = addInterval(m, a);
+    });
+    return { c, m, x, sum: null };
+  });
+}
+
+// 행(부분) i 의 구간: 산입 행은 '산입 몫 ≤ cHi' 에서 다른 산입 행 하한을 뺀 값이 상한, 산입·모름 행은 '산입 + 모름 몫 ≥ cmLo'
+// 에서 다른 산입·모름 행 상한을 뺀 값이 하한(그만큼은 산입돼야 연면적이 찬다). 제외 행은 면적 항등식과 무관
+function partBounds(env, floor, i, cHi, cmLo) {
+  const own = partAreaRaw(env, floor, i);
+  const kind = inTotalOf(floor.parts[i], floor);
+  if (kind === 'no') return [own.lo, own.hi];
+  let otherCLo = 0;
+  let otherCmHi = 0;
+  floor.parts.forEach((p, j) => {
+    if (j === i) return;
+    const k = inTotalOf(p, floor);
+    if (k === 'no') return;
+    const a = partAreaRaw(env, floor, j);
+    if (k === 'yes') otherCLo += a.lo;
+    otherCmHi += a.hi;
+  });
+  const lo = Math.max(own.lo, cmLo - otherCmHi);
+  return [lo, Math.max(lo, kind === 'yes' ? Math.min(own.hi, cHi - otherCLo) : own.hi)];
+}
+
+// 층 면적 구간 [lo, hi] 에 맞춘 질문 범위: 층 면적 질문은 그 구간, 여러 부분 층의 빈 부분 질문은 partBounds(산입 몫의 한계 cHi·cmLo
+// 에서 다른 부분을 뺀 값). 부분 질문에 층 구간을 그대로 보이면 그 안의 답이 다른 부분과 합쳐 층 면적·연면적을 넘는다(3차 리뷰
+// fz_rounds: 지하1층 = 100 + 빈 부분, 층 구간 [100, 400] 을 부분 범위로 보여 400 을 답하면 합계가 연면적을 넘음)
+function floorOpen(env, floor, open, lo, hi, cHi, cmLo) {
+  if (hi - lo <= AREA_EPS) return EMPTY;
+  if (!env.track) return open;
+  return open.map((d) => {
+    if (!d.range) return d;
+    if (d.input !== 'part_area') return { ...d, range: [lo, hi] };
+    const i = floor.parts.findIndex((p, j) => depKey('part_area', env.dong.id, floor.key, partSig(p, j)) === d.key);
+    return i < 0 ? d : { ...d, range: partBounds(env, floor, i, cHi, cmLo) };
+  });
+}
+
+// 층 면적(항등식으로 좁히기 전): 층 면적 답변 > 부분 면적 합(부분 답변 반영). 산입 몫(c)은 동 연면적으로 상한 — 산입하지 않거나
+// 모르는 행(m·x)은 연면적과 따로다(필로티 주차가 연면적 밖이면 층 면적이 연면적보다 클 수 있다).
+// { area, cHi, cmLo, answered } — cHi·cmLo 는 산입 몫의 한계(부분 구간용), answered 는 층 전체 면적을 답했는가
+function rawFloorModel(env, floor) {
+  return memoOn(env.rawAreaMemo, floor, () => {
+    const free = (area, answered = false) => ({ area, cHi: Infinity, cmLo: -Infinity, answered });
+    if (floor.members) return free(floor.members.map(({ env: m, floor: f }) => floorArea(m, f)).reduce(addInterval));
+    const answered = floorAreaAnswer(env, floor);
+    if (answered) return free(answered, true);
+    const sh = floorShares(env, floor);
+    const sum = sh.sum ?? partsSum(env, floor);
+    const total = metric(env, 'total_area');
+    if (!(total.hi < sh.c.hi)) return free(sum);
+    const cHi = total.hi;
+    const lo = Math.min(sh.c.lo, cHi) + sh.m.lo + sh.x.lo;
+    const hi = cHi + sh.m.hi + sh.x.hi;
+    const hiDeps = D(env, () => mergeDeps(total.hiDeps, sh.m.hiDeps, sh.x.hiDeps));
+    return { area: interval(lo, hi, { loDeps: sum.loDeps, hiDeps, open: floorOpen(env, floor, sum.open, lo, hi, cHi, -Infinity) }), cHi, cmLo: -Infinity, answered: false };
+  });
+}
+
+// 면적 항등식: 연면적 = 각 층의 산입 몫의 합(floorShares — 산입 행 전부 + 산입 여부를 모르는 행(옥탑·필로티·다락·면적제외여부
+// 빈칸)의 0 ~ 전부, 면적제외 행은 빼고). 연면적이 유한할 때 세운다.
+// 층 면적들과 모순이면(확정 산입 몫 합이 연면적보다 작거나 큼 — 층별개요에 없는 면적 등, 한 층의 산입 몫이 상한 전에 이미
+// 연면적보다 큼) consistent=false 로 두고
+// 이 항등식으로는 아무것도 좁히지 않는다. 어느 층에 있는지 모르는 면적을 특정 층에 몰아 주면 답을 받을수록
+// 판정이 뒤집히기 때문이다(단조성 — 리뷰 N1). 질문 범위는 이 항등식으로 좁혀져 있어 한 번에 하나씩 범위 안에서 답하면 모순이
+// 생기지 않는다. 여러 면적을 한꺼번에 답하면 각자 범위 안이어도 합이 어긋날 수 있어, 질문은 동마다 면적 하나씩만 낸다
+// (evaluate.js limitQuestions). 그래도 모순이면 AREA_ANSWER_MISMATCH — 면적에 기대는 비해당을 확정하지 않는다.
+// complete: 층수를 정확히 알아 층 목록이 실제 층 전부 — 이때만 합이 연면적과 '같다'(하한 추론). 목록이 일부여도
+// '확정 산입 몫의 합 ≤ 연면적'은 성립하므로 상한 추론(산입 몫 ≤ 연면적 − 다른 층 확정 산입 몫 하한)은 늘 쓴다 — 산입 여부를 모르는
+// 행은 이 하한 합에 넣지 않는다(넣으면 필로티 주차처럼 연면적 밖의 면적으로 다른 층을 좁혀 틀린 비해당 — 4차 리뷰 rv4_piloti).
+// lo = Σ 산입 몫 하한, hi = Σ (산입 몫 상한 + 모르는 몫 중 산입될 수 있는 상한). 산입되는 면적은 어느 몫이든 연면적을 넘지 못하므로
+// 모르는 몫도 min(그 면적, 연면적)만 더한다 — 모르는 행의 면적이 미상(∞)이어도 합이 유한하다
+export function areaIdentity(env) {
+  return memo(env, 'areaIdentity', () => {
+    if (env.members) return siteAreaIdentity(env);
+    const { floors, allComplete, exactCounts } = floorsOf(env);
+    const total = metric(env, 'total_area');
+    if (!floors.length || !Number.isFinite(total.hi)) return null;
+    const complete = allComplete && exactCounts;
+    let lo = 0;
+    let hi = 0;
+    let over = false; // 한 층의 산입 몫이 상한을 씌우기 전에 이미 연면적보다 큼(층별개요·답변의 모순 — 상한에 가려지지 않게)
+    const loC = depCollector();
+    const hiC = depCollector();
+    for (const f of floors) {
+      const sh = floorShares(env, f);
+      const c = capInterval(sh.c, total);
+      lo += c.lo;
+      hi += c.hi + Math.min(sh.m.hi, total.hi);
+      over = over || sh.c.lo > total.hi + AREA_EPS;
+      if (env.track) {
+        loC.add(c.loDeps);
+        hiC.add(c.hiDeps);
+        hiC.add(sh.m.hiDeps);
+      }
+    }
+    const consistent = !over && lo <= total.hi + AREA_EPS && (!complete || hi >= total.lo - AREA_EPS);
+    return { total, lo, hi, complete, consistent, loDeps: loC.list(), hiDeps: hiC.list() };
+  });
+}
+
+// 대지 전체의 면적 항등식 = 동별 항등식의 합 — 모든 동이 항등식을 세울 수 있고 모순이 없을 때만(한 동의 빈 면적을 다른 동에 몰지 않는다)
+function siteAreaIdentity(env) {
+  const parts = env.members.map((m) => areaIdentity(m));
+  if (parts.some((p) => !p || !p.consistent || !p.complete)) return null;
+  const sum = (k) => parts.reduce((acc, p) => acc + p[k], 0);
+  return {
+    total: metric(env, 'total_area'),
+    lo: sum('lo'),
+    hi: sum('hi'),
+    complete: true,
+    consistent: true,
+    loDeps: mergeDeps(...parts.map((p) => p.loDeps)),
+    hiDeps: mergeDeps(...parts.map((p) => p.hiDeps)),
+  };
+}
+
+// 층 면적: 항등식으로 좁힌 값 — 나머지 층 면적이 정해지면 이 층도 정해진다(예: 1층 600 + 지하1층 400, 연면적 1,200 → 2층 200).
+// 좁히는 것은 산입 몫뿐이다: 산입 몫 ≤ 연면적 − 다른 층 산입 몫 하한(늘), 층 목록이 전부면 산입 + 모르는 몫 ≥ 연면적 − 다른 층
+// (산입 + 모르는) 상한. 층 면적 = 그 몫 + 제외 행
+function floorModel(env, floor) {
+  return memoOn(env.floorAreaMemo, floor, () => {
+    const model = rawFloorModel(env, floor);
+    const raw = model.area;
+    if (model.answered || raw.lo === raw.hi || floor.kind === 'rooftop' || floor.members) return model; // 대지의 층은 동별로 이미 좁혀짐
+    const id = areaIdentity(env);
+    if (!id || !id.consistent) return model;
+    const sh = floorShares(env, floor);
+    const c = capInterval(sh.c, id.total);
+    const cHi = Math.min(c.hi, id.total.hi - (id.lo - c.lo));
+    const cmLo = id.complete ? id.total.lo - (id.hi - (c.hi + Math.min(sh.m.hi, id.total.hi))) : -Infinity;
+    const lo = Math.max(raw.lo, cmLo + sh.x.lo);
+    let hi = Math.min(raw.hi, cHi + sh.m.hi + sh.x.hi);
+    const counts = id.complete ? EMPTY : countOpen(env);
+    if (lo <= raw.lo && hi >= raw.hi && !counts.length) return model;
+    if (hi - lo <= AREA_EPS) hi = lo;
+    const listDeps = () => {
+      const { kinds } = floorsOf(env);
+      return mergeDeps(kinds.ground.deps, kinds.basement.deps);
+    };
+    const area = interval(lo, hi, {
+      loDeps: lo > raw.lo ? D(env, () => mergeDeps(id.total.loDeps, id.hiDeps, listDeps())) : raw.loDeps,
+      hiDeps: hi < raw.hi ? D(env, () => mergeDeps(id.total.hiDeps, id.loDeps, listDeps())) : raw.hiDeps,
+      open: hi === lo ? EMPTY : mergeDeps(floorOpen(env, floor, raw.open, lo, hi, cHi, cmLo), counts),
+    });
+    return { area, cHi, cmLo, answered: false };
+  });
+}
+
+export function floorArea(env, floor) {
+  return floorModel(env, floor).area;
+}
+
+const partSig = (part, i) => String(part.n ?? i + 1);
+
+// ───────────── 조건의 바닥면적 바탕(CP1 Q19) ─────────────
+
+// 조건에 쓰는 층·부분 면적에 연면적에서 빠지는(빠질 수 있는) 행(facts.js rowDoubtful — 면적제외·다른 건축물 행, 필로티·다락·옥탑)을 넣는가는
+// 법령 검수 전이다(CP1 Q19). 정책 floorAreaBasis: all_rows — 넣음(모든 행), counted_only — 뺌, uncertain(기본) — 두 읽기 사이 구간이라
+// 판정이 이 해석에 걸리면 확인 필요 + 검수 질문 review[floor_area_basis](사용자가 아니라 운영 정책으로 정하는 값 — '예' 넣음, '아니오' 뺌).
+// 답하면 그 읽기로 정해져 막다른 확인 필요가 되지 않는다. 정책이 all_rows·counted_only 로 정해져 있으면 답을 보지 않는다
+export const FLOOR_AREA_BASIS_KEY = depKey('review', undefined, undefined, 'floor_area_basis');
+const BASIS_QUESTION = "[운영 정책 — CP1 Q19 법령 검수 전] 필로티(주차)·다락·옥탑·부속건축물처럼 연면적에서 빠지는(빠질 수 있는) 층별개요 행의 면적을 소방 기준의 '바닥면적'(… ㎡ 이상인 층, 바닥면적 합계)에 넣습니까? '예'면 넣고(all_rows), '아니오'면 뺍니다(counted_only).";
+const BASIS_DEP = Object.freeze(makeDep('review', UNKNOWN, { sig: 'floor_area_basis', info: { question: BASIS_QUESTION, criteria: '바닥면적 산입(CP1 Q19)' } }));
+
+function areaBasis(env) {
+  const policy = env.policy.floorAreaBasis ?? 'uncertain';
+  if (policy !== 'uncertain') return policy;
+  const a = boolAnswer(env.answers[FLOOR_AREA_BASIS_KEY]);
+  return a === null ? 'uncertain' : a ? 'all_rows' : 'counted_only';
+}
+
+const FLOOR_DOUBT = new WeakMap(); // 층 → 해석이 갈리는 행이 있는가(사실 — 답변과 무관)
+function hasDoubtful(floor) {
+  let v = FLOOR_DOUBT.get(floor);
+  if (v === undefined) FLOOR_DOUBT.set(floor, (v = floor.parts.some((p) => doubtfulOf(p, floor))));
+  return v;
+}
+
+// 층의 해석이 갈리는 행(d)과 나머지 행(f) 면적 합(부분 답변 반영, 좁히기 전)
+function basisShares(env, floor) {
+  return memoOn(env.basisMemo, floor, () => {
+    let f = ZERO;
+    let d = ZERO;
+    floor.parts.forEach((p, i) => {
+      const a = partAreaRaw(env, floor, i);
+      if (doubtfulOf(p, floor)) d = addInterval(d, a);
+      else f = addInterval(f, a);
+    });
+    return { f, d };
+  });
+}
+
+// 조건에 쓰는 층 면적(evalFloorExists·sumArea): 층 면적(floorArea — 모든 행, 층 면적 답변도 모든 행의 면적)에서 바탕에 따라
+// 해석이 갈리는 행을 뺀다. counted_only = 층 면적 − 그 행, uncertain = [counted_only 하한, 모든 행 상한]. 층 면적 답변에도 같이
+// 적용한다 — 답이 바탕을 건너뛰면 counted_only 에서 0 이던 필로티 층이 답한 면적으로 바뀌어 답을 받을수록 판정이 뒤집힌다(단조성)
+function conditionFloorArea(env, floor) {
+  return memoOn(env.condAreaMemo, floor, () => {
+    if (floor.members) return floor.members.map(({ env: m, floor: f }) => conditionFloorArea(m, f)).reduce(addInterval);
+    const a = floorArea(env, floor);
+    if (!hasDoubtful(floor)) return a;
+    const basis = areaBasis(env);
+    if (basis === 'all_rows') return a;
+    const { f, d } = basisShares(env, floor);
+    if (!(d.hi > AREA_EPS)) return a;
+    const lo = Math.max(f.lo, a.lo - d.hi);
+    const hi = Math.max(lo, Math.min(f.hi, a.hi - d.lo));
+    const loDeps = D(env, () => mergeDeps(a.loDeps, d.hiDeps, f.loDeps));
+    if (basis === 'counted_only') return interval(lo, hi, { loDeps, hiDeps: D(env, () => mergeDeps(a.hiDeps, d.loDeps)), open: a.open });
+    return interval(lo, a.hi, { loDeps, hiDeps: a.hiDeps, open: env.track ? mergeDeps(a.open, [BASIS_DEP]) : a.open });
+  });
+}
+
+// 조건에 쓰는 부분 면적(floorUseArea): 해석이 갈리는 행이면 바탕에 따라 그 면적(넣음)·0(뺌)·0 ~ 그 면적(모름 + 검수 질문)
+function conditionPartArea(env, floor, i) {
+  const p = partArea(env, floor, i);
+  if (!doubtfulOf(floor.parts[i], floor)) return p;
+  const basis = areaBasis(env);
+  if (basis === 'all_rows' || !(p.hi > AREA_EPS)) return p;
+  if (basis === 'counted_only') return exact(0);
+  return interval(0, p.hi, { hiDeps: p.hiDeps, open: env.track ? mergeDeps(p.open, [BASIS_DEP]) : p.open });
+}
+
+// 동(대지)의 확정 산입 몫 하한 합이 연면적을 넘는가 — 층별개요·답변이 연면적과 맞지 않는 동(합계 상한을 씌우지 않는다)
+function countedOverTotal(env, total) {
+  return memo(env, 'countedOverTotal', () => {
+    let lo = 0;
+    for (const f of floorsOf(env).floors) lo += floorShares(env, f).c.lo;
+    return lo > total.hi + AREA_EPS;
+  });
+}
+
+// 대상 층의 해석이 갈리는 행 면적 상한 — 바닥면적 합계 하한 보강(연면적 − 나머지 층)을 counted_only 읽기에도 맞게 낮출 때
+function doubtfulHi(env, floor) {
+  if (floor.members) return floor.members.reduce((s, { env: m, floor: f }) => s + doubtfulHi(m, f), 0);
+  return hasDoubtful(floor) ? basisShares(env, floor).d.hi : 0;
+}
+
+// 부분 면적(답변만 반영, 층 면적에서 역산하지 않음)
+function partAreaRaw(env, floor, i) {
+  const part = floor.parts[i];
+  const a = numAnswer(env.answers[depKey('part_area', env.dong.id, floor.key, partSig(part, i))]);
+  if (a !== null) return exact(a, D(env, () => [userDep('part_area', env, { floor: floor.key, sig: partSig(part, i) })]));
+  return part.area;
+}
+
+// 한 층의 부분 면적. 빈 부분 = 층 면적(답변·항등식으로 좁힌 값) − 나머지 부분 (다른 빈 부분이 있으면 구간). 층 전체를 답하지
+// 않았으면 산입 몫의 한계로 좁힌다(partBounds — 산입 여부가 다른 부분끼리 섞인 층). 연면적 상한은 산입하는 부분에만
+function partArea(env, floor, i) {
+  if (floor.parts.length === 1) return floorArea(env, floor);
+  const own = partAreaRaw(env, floor, i);
+  if (!own.open.length) return inTotalOf(floor.parts[i], floor) === 'yes' ? capInterval(own, metric(env, 'total_area')) : own;
+  const model = floorModel(env, floor);
+  const fl = model.area;
+  let othersLo = 0;
+  let othersHi = 0;
+  const loC = depCollector();
+  const hiC = depCollector();
+  floor.parts.forEach((_, j) => {
+    if (j === i) return;
+    const o = partAreaRaw(env, floor, j);
+    othersLo += o.lo;
+    othersHi += o.hi;
+    if (env.track) {
+      loC.add(o.hiDeps);
+      hiC.add(o.loDeps);
+    }
+  });
+  const [blo, bhi] = model.answered ? [fl.lo - othersHi, fl.hi - othersLo] : partBounds(env, floor, i, model.cHi, model.cmLo);
+  const lo = Math.max(own.lo, blo);
+  let hi = Math.min(own.hi, bhi);
+  const counts = fl.open.length ? fl.open.filter((d) => COUNT_METRICS.has(d.input)) : EMPTY; // 층 면적의 층수 근거(countOpen)
+  if (lo <= own.lo && hi >= own.hi && !counts.length) return own;
+  if (hi - lo <= AREA_EPS) hi = lo;
+  return interval(lo, hi, {
+    loDeps: lo > own.lo ? D(env, () => mergeDeps(fl.loDeps, loC.list())) : own.loDeps,
+    hiDeps: hi < own.hi ? D(env, () => mergeDeps(fl.hiDeps, hiC.list())) : own.hiDeps,
+    open: hi === lo ? EMPTY : mergeDeps(narrowedOpen(env, own.open, lo, hi), counts),
+  });
+}
+
+// 무창층은 지상층에만 있다(소방시설법 시행령 제2조제1호). 지하층·옥탑은 확정 F
+function windowless(env, floor) {
+  return memoOn(env.windowlessMemo, floor, () => {
+    if (floor.members) return any(floor.members.map(({ env: m, floor: f }) => windowless(m, f)));
+    const a = boolAnswer(env.answers[depKey('windowless', env.dong.id, floor.key)]);
+    if (a !== null) return tv(a ? T : F, D(env, () => [userDep('windowless', env, { floor: floor.key })]), why(env, () => [`${floor.label} 무창층 ${a ? '예' : '아니오'}`]));
+    if (floor.kind !== 'ground') return tv(F);
+    const area = floorArea(env, floor);
+    const info = { floorLabel: floor.label, area: [area.lo, area.hi] };
+    const assumeNone = env.policy.windowless === 'assume_none';
+    if (assumeNone && !env.release) {
+      return tv(F, D(env, () => [makeDep('windowless', ASSUMED, { dong: env.dong.id, floor: floor.key, info, source: 'policy' })]), why(env, () => [`${floor.label} 무창층 아님(가정)`]));
+    }
+    return tv(U, D(env, () => [makeDep('windowless', UNKNOWN, { dong: env.dong.id, floor: floor.key, info, released: assumeNone })]), why(env, () => [`${floor.label} 무창층 여부 미확인`]));
+  });
+}
+
+const usesDep = (env, floor) => makeDep('uses', CONFIRMED, { dong: env.dong.id, floor: floor?.key, source: env.dong.source === 'manual' ? 'user' : 'registry' });
+
+// 부분의 용도가 대상 용도를 덮는가. 표제부 용도를 빌려 온 부분(보충한 층, 용도가 비어 표제부 용도로 채운 행)은
+// 표제부 용도가 여럿이면 그중 무엇이 이 층에 있는지 모르므로 '일부'(some)를 '모름'(maybe)으로 본다 — 확정 T 로 두면
+// 부정 조건(not·excluded_if)에서 확정 비해당이 되고 이 층 답변도 읽지 않는다(리뷰 N2′).
+function partCoverage(env, part, targets) {
+  const c = coverage(part.terms, targets, env.index);
+  return c === 'some' && part.fromTitle ? 'maybe' : c;
+}
+
+// 층에 대상 용도가 있는가 (층 부분의 용도 목록 기준)
+function floorUsePresence(env, floor, targets) {
+  return memoIn(env.usePresenceMemo, usesKey(targets), floor, () => {
+    if (floor.members) return any(floor.members.map(({ env: m, floor: f }) => floorUsePresence(m, f, targets)));
+    const cs = floor.parts.map((p) => partCoverage(env, p, targets));
+    if (cs.some((c) => c === 'all' || c === 'some')) return tv(T, D(env, () => [usesDep(env, floor)]), why(env, () => [`${floor.label} ${describeUses(targets, env.index)} 용도 있음`]));
+    if (cs.every((c) => c === 'none')) return tv(F, D(env, () => [usesDep(env, floor)]));
+    const sig = stableKey({ use: targets });
+    const a = boolAnswer(env.answers[depKey('use_presence', env.dong.id, floor.key, sig)]);
+    if (a !== null) return tv(a ? T : F, D(env, () => [userDep('use_presence', env, { floor: floor.key, sig })]));
+    const info = { floorLabel: floor.label, use: targets };
+    return tv(U, D(env, () => [makeDep('use_presence', UNKNOWN, { dong: env.dong.id, floor: floor.key, sig, info })]), why(env, () => [
+      `${floor.label} ${describeUses(targets, env.index)} 용도 여부 미확인`,
+    ]));
+  });
+}
+
+function cmp(x, op, c) {
+  return op === 'gte' ? x >= c : op === 'gt' ? x > c : op === 'lte' ? x <= c : op === 'lt' ? x < c : x === c;
+}
+
+function selectorMatch(env, floor, s) {
+  const parts = [];
+  if (s.kind !== undefined) parts.push(tv([].concat(s.kind).includes(floor.kind) ? T : F));
+  if (s.level !== undefined) parts.push(tv(comparisonOps(s.level).every((op) => cmp(floor.level, op, s.level[op])) ? T : F));
+  if (s.windowless) parts.push(windowless(env, floor));
+  if (s.use) parts.push(floorUsePresence(env, floor, s.use));
+  return all(parts);
+}
+
+export function floorMember(env, floor, selectors) {
+  return memoIn(env.memberMemo, selectorsKey(selectors), floor, () => any(selectors.map((s) => selectorMatch(env, floor, s))));
+}
+
+const USE_SIGS = new WeakMap();
+function useSig(targets) {
+  let sig = USE_SIGS.get(targets);
+  if (sig === undefined) USE_SIGS.set(targets, (sig = stableKey({ use: targets })));
+  return sig;
+}
+
+// 층 하나에서 대상 용도의 면적. 그 층의 용도별 면적 답변(floor_use_area — 'N층 중 그 용도 바닥면적 ○㎡ 이상인 층' 질문)이
+// 있으면 그 값(같은 용도의 합계 조건에도 반영). 없으면 부분별로 — 용도가 섞였거나 미상인 부분은 [0, 부분 면적] + openDep
+function floorUseArea(env, floor, targets, openDep) {
+  const sig = useSig(targets);
+  const ans = numAnswer(env.answers[depKey('floor_use_area', env.dong.id, floor.key, sig)]);
+  if (ans !== null) return exact(ans, D(env, () => [userDep('floor_use_area', env, { floor: floor.key, sig })]));
+  if (floor.members) return floor.members.map(({ env: m, floor: f }) => floorUseArea(m, f, targets, openDep)).reduce(addInterval);
+  let sum = exact(0);
+  floor.parts.forEach((part, i) => {
+    const a = conditionPartArea(env, floor, i);
+    const c = partCoverage(env, part, targets);
+    const ud = D(env, () => [usesDep(env, floor)]);
+    if (c === 'all') sum = addInterval(sum, { ...a, loDeps: mergeDeps(a.loDeps, ud), hiDeps: mergeDeps(a.hiDeps, ud) });
+    else if (c === 'none') sum = addInterval(sum, exact(0, ud));
+    else sum = addInterval(sum, interval(0, a.hi, { hiDeps: a.hiDeps, open: env.track ? mergeDeps(a.open, [openDep]) : EMPTY }));
+  });
+  return sum;
+}
+
+// ───────────── 노드별 평가 ─────────────
+
+function evalMetric(node, env) {
+  const iv = metric(env, node.m);
+  const r = compareInterval(iv, node, comparisonOps(node));
+  return tv(r.v, r.deps, why(env, () => {
+    const unit = unitOf(env, node.m);
+    return [`${labelOf(env, node.m)} ${fmtInterval(iv, unit)} (기준 ${fmtCondition(node, unit)})`];
+  }));
+}
+
+const SUM_SIGS = new WeakMap();
+function sumSig(spec) {
+  if (!SUM_SIGS.has(spec)) SUM_SIGS.set(spec, stableKey({ floors: spec.floors ?? 'all', use: spec.use || null }));
+  return SUM_SIGS.get(spec);
+}
+
+function sumArea(env, spec) {
+  const selectors = normalizeFloors(spec.floors);
+  const targets = spec.use || null;
+  const sig = sumSig(spec);
+  const desc = () => `${describeFloors(spec.floors, env.index)}${targets ? ` 중 ${describeUses(targets, env.index)}` : ''} 바닥면적 합계`;
+  if (targets) {
+    const a = numAnswer(env.answers[depKey('use_area', env.dong.id, undefined, sig)]);
+    if (a !== null) return { iv: exact(a, D(env, () => [userDep('use_area', env, { sig })])), members: [], maybe: [], desc };
+  }
+  const sumDep = targets && env.track ? makeDep('use_area', UNKNOWN, { dong: env.dong.id, sig, info: { floors: spec.floors ?? 'all', use: targets } }) : null;
+  const { floors, allComplete } = floorsOf(env);
+  const list = listFor(env, selectors);
+  let lo = 0;
+  let hi = 0;
+  const loC = depCollector();
+  const hiC = depCollector();
+  const openC = depCollector();
+  const restC = depCollector();
+  const track = env.track;
+  if (track) hiC.add(list.deps);
+  const members = [];
+  const maybe = [];
+  let restHi = 0; // 대상 층이 아닌(또는 미확정인) 층 면적 상한 — 연면적에서 빼 하한을 좁힐 때 쓴다
+  let outsideHi = 0; // 대상 층의 연면적 밖일 수 있는 면적(산입 여부를 모르는·제외 행) 상한 — 합계 상한을 연면적으로 씌울 때 더한다
+  let doubtHi = 0; // 대상 층의 바닥면적 산입 해석이 갈리는 행 면적 상한(바탕이 all_rows 가 아니면 하한 보강에서 뺀다)
+  const basis = areaBasis(env);
+  for (const f of floors) {
+    const m = floorMember(env, f, selectors);
+    if (m.v !== F) {
+      const sh = floorShares(env, f);
+      outsideHi += sh.m.hi + sh.x.hi;
+    }
+    if (m.v !== T) {
+      const fa = floorArea(env, f);
+      restHi += fa.hi;
+      if (track) {
+        restC.add(m.deps);
+        restC.add(fa.hiDeps);
+      }
+    }
+    if (m.v === F) {
+      if (track) hiC.add(m.deps);
+      continue;
+    }
+    const a = targets ? floorUseArea(env, f, targets, sumDep) : conditionFloorArea(env, f);
+    if (m.v === T) {
+      if (basis !== 'all_rows') doubtHi += doubtfulHi(env, f);
+      lo += a.lo;
+      if (track) {
+        loC.add(m.deps);
+        loC.add(a.loDeps);
+      }
+      if (a.hi > 0) members.push(f.key);
+    } else {
+      if (track) openC.add(m.deps);
+      if (a.hi > 0) maybe.push(f.key);
+    }
+    hi += a.hi;
+    if (track) {
+      hiC.add(m.deps);
+      hiC.add(a.hiDeps);
+      openC.add(a.open);
+    }
+  }
+  const total = metric(env, 'total_area');
+  let loDeps = loC.list();
+  if (!list.complete) {
+    hi = Infinity;
+    if (track) openC.add(list.open);
+  } else if (!targets && allComplete && total.lo - restHi - doubtHi > lo && areaIdentity(env)?.consistent && areaIdentity(env).complete) {
+    // 면적 항등식이 성립하면(층 목록 완전, 층 면적과 연면적이 모순 없음) 대상 층 면적 합계 ≥ 연면적 − 나머지 층 면적 상한.
+    // 모순이면 쓰지 않는다 — 층별개요에 없는 면적을 대상 층에 몰아 주는 셈이라 답에 따라 뒤집힌다(리뷰 N1)
+    lo = Math.min(total.lo - restHi - doubtHi, hi);
+    loDeps = track ? mergeDeps(total.loDeps, restC.list(), list.deps) : EMPTY;
+  }
+  // 합계 상한은 연면적(+ 대상 층의 연면적 밖일 수 있는 면적) — 산입 몫은 모두 합쳐도 연면적을 넘지 못한다. 층별개요·답변의 산입 몫이
+  // 이미 연면적을 넘는 동(불일치)이면 이 상한은 근거가 없어 씌우지 않는다: 대상 층 선택(무창층 가정·가정값을 푼 재평가)에 따라 달라지는
+  // 상한이 알려진 하한을 깎으면 가정 평가(F)와 재평가(T)가 엇갈려 물을 것 없는 확인 필요가 되고, 상한을 씌운 뒤 답으로 하한이 그 위로
+  // 오르면 판정이 뒤집힌다(5차 퍼즈). 모순 없는 동에서는 알려진 하한이 이 상한을 넘을 수 없다
+  const capHi = total.hi + outsideHi;
+  const iv = capHi < hi && !countedOverTotal(env, total)
+    ? interval(lo, Math.max(lo, capHi), { loDeps, hiDeps: total.hiDeps, open: openC.list() })
+    : interval(lo, hi, { loDeps, hiDeps: hiC.list(), open: openC.list() });
+  if (sumDep) sumDep.range = [iv.lo, iv.hi];
+  return { iv, members, maybe, desc };
+}
+
+function evalSumArea(node, env) {
+  const { iv, members, maybe, desc } = sumArea(env, node.sum_area);
+  const r = compareInterval(iv, node, comparisonOps(node));
+  if (r.v === T && env.matched) members.forEach((k) => env.matched.add(k));
+  if (r.v === U && env.maybeMatched) [...members, ...maybe].forEach((k) => env.maybeMatched.add(k));
+  return tv(r.v, r.deps, why(env, () => [`${desc()} ${fmtInterval(iv, '㎡')} (기준 ${fmtCondition(node, '㎡')})`]));
+}
+
+function evalFloorExists(node, env) {
+  const spec = node.floor_exists;
+  const selectors = normalizeFloors(spec.floors);
+  const { floors } = floorsOf(env);
+  const list = listFor(env, selectors);
+  const results = floors.map((f) => {
+    const m = floorMember(env, f, selectors);
+    // 확정 F(층 구분이 다름 등)는 바로, 가정·미확인 F 는 면적도 보고 더 확실한 근거를 남긴다
+    if (m.v === F && confirmedOnly(m)) return { f, m, a: null, r: m };
+    let c = tv(T, EMPTY, why(env, () => [`${f.label}`]));
+    let a = null;
+    if (spec.area) {
+      const floorDep = spec.use && env.track
+        ? makeDep('floor_use_area', UNKNOWN, { dong: env.dong.id, floor: f.key, sig: useSig(spec.use), info: { floorLabel: f.label, use: spec.use } })
+        : null;
+      a = spec.use ? floorUseArea(env, f, spec.use, floorDep) : conditionFloorArea(env, f);
+      if (floorDep) floorDep.range = [a.lo, a.hi];
+      const area = a;
+      const r = compareInterval(area, spec.area, comparisonOps(spec.area));
+      c = tv(r.v, r.deps, why(env, () => [`${f.label} ${spec.use ? `${describeUses(spec.use, env.index)} ` : ''}${fmtInterval(area, '㎡')}`]));
+    } else if (spec.use) c = floorUsePresence(env, f, spec.use);
+    return { f, m, a, r: all([m, c]) };
+  });
+  for (const { f, r } of results) {
+    if (r.v === T && env.matched) env.matched.add(f.key);
+    if (r.v === U && env.maybeMatched) env.maybeMatched.add(f.key);
+  }
+  let res = any(results.map((x) => x.r));
+  if (env.members && spec.area) res = siteCombinedFloors(env, spec, results, res);
+  if (res.v !== F) return res;
+  const none = () => `${describeFloors(spec.floors, env.index)}${spec.area ? ` 바닥면적 ${fmtCondition(spec.area, '㎡')}` : ''}인 층 없음`;
+  if (!list.complete) return tv(U, list.open.length ? list.open : list.deps, why(env, () => [`${none()}(층수 미확인)`]));
+  return tv(F, mergeDeps(res.deps, list.deps), why(env, () => [none()]));
+}
+
+// 대지 전체의 층 면적 기준: '층'을 동별 층으로 볼 때(res — 동별 층마다 선택·면적)와, 같은 층 키의 동별 층을 합친 한 층으로
+// 볼 때(선택된 동별 층의 (용도)면적을 층 키별로 합침)가 갈릴 수 있다. 두 읽기가 같으면 그 값, 다르면 모름 + 대지 단위 질문
+// site_combined_floors(답하면 그 읽기). 모름은 두 읽기의 공통 부분이라 어느 읽기가 맞아도 틀린 비해당·해당이 나오지 않는다
+function siteCombinedFloors(env, spec, results, perMember) {
+  const choice = boolAnswer(env.answers[depKey('site_combined_floors', env.dong.id)]);
+  if (choice === false) return perMember;
+  const byKey = new Map();
+  for (const { f, m, a } of results) {
+    if (!a || m.v === F) continue;
+    let g = byKey.get(f.key);
+    if (!g) byKey.set(f.key, (g = { key: f.key, area: exact(0), members: [] }));
+    const part = m.v === T ? a : interval(0, a.hi, { hiDeps: a.hiDeps, open: D(env, () => mergeDeps(a.open, m.deps)) });
+    g.area = addInterval(g.area, part);
+    g.members.push(m);
+  }
+  const perKey = [...byKey.values()].map((g) => {
+    const r = compareInterval(g.area, spec.area, comparisonOps(spec.area));
+    return all([any(g.members), tv(r.v, r.deps, why(env, () => [`${g.key}(합친 층) ${fmtInterval(g.area, '㎡')}`]))]);
+  });
+  const combined = any(perKey);
+  if (choice === true) return combined;
+  if (combined.v === perMember.v) return tv(perMember.v, D(env, () => mergeDeps(perMember.deps, combined.deps)), why(env, () => perMember.why));
+  const dep = makeDep('site_combined_floors', UNKNOWN, { dong: env.dong.id });
+  return tv(U, D(env, () => mergeDeps([dep], perMember.v === U ? perMember.deps : EMPTY, combined.v === U ? combined.deps : EMPTY)), why(env, () => [
+    `동별 층으로 보면 ${perMember.v === T ? '있음' : perMember.v === F ? '없음' : '미확인'}, 같은 층을 합친 한 층으로 보면 ${combined.v === T ? '있음' : combined.v === F ? '없음' : '미확인'} — 층 면적 기준을 어느 쪽으로 볼지 확인 필요`,
+  ]));
+}
+
+function evalUse(node, env) {
+  const targets = node.use;
+  const sig = stableKey({ use: targets, floors: node.floors ?? null });
+  const a = boolAnswer(env.answers[depKey('use_presence', env.dong.id, undefined, sig)]);
+  const name = () => describeUses(targets, env.index);
+  if (a !== null) return tv(a ? T : F, D(env, () => [userDep('use_presence', env, { sig })]), why(env, () => [`${name()} 용도 ${a ? '있음' : '없음'}`]));
+  const { floors, allComplete, kinds } = floorsOf(env);
+  if (node.floors !== undefined) {
+    // 선택한 층에서만: 층 목록이 불완전하면(층수를 모르면) 빠진 층에 있을 수 있으므로 F 가 아니라 U
+    const selectors = normalizeFloors(node.floors);
+    const list = listFor(env, selectors);
+    const res = any(floors.map((f) => all([floorMember(env, f, selectors), floorUsePresence(env, f, targets)])));
+    if (res.v !== F) return tv(res.v, res.deps, why(env, () => [`${describeFloors(node.floors, env.index)} ${name()} 용도 ${res.v === T ? '있음' : '미확인'}`]));
+    if (!list.complete) return tv(U, list.open.length ? list.open : list.deps, why(env, () => [`${describeFloors(node.floors, env.index)} ${name()} 용도 — 층수 미확인`]));
+    return tv(F, mergeDeps(res.deps, list.deps), why(env, () => [`${describeFloors(node.floors, env.index)} ${name()} 용도 없음`]));
+  }
+  // 동 전체: 층별 용도 + 층 목록이 불완전하면 빠진 층의 몫. 빠진 층은 표제부 용도 가운데 무엇을 가졌는지 모르므로
+  // 표제부에 대상 용도가 없을 때만 F, 있으면(확정 T 가 아니라) U — 층수를 답해 층이 채워지면 그 층들로 판정한다(리뷰 N2)
+  const results = floors.map((f) => floorUsePresence(env, f, targets));
+  if (!allComplete || !floors.length) {
+    const c = coverage(env.dong.synthTerms, targets, env.index);
+    results.push(tv(c === 'none' ? F : U, D(env, () => [usesDep(env)])));
+  }
+  const res = any(results);
+  if (res.v === U) {
+    return tv(U, D(env, () => [makeDep('use_presence', UNKNOWN, { dong: env.dong.id, sig, info: { use: targets } })]), why(env, () => [`${name()} 용도 여부 미확인`]));
+  }
+  const deps = res.v === F && env.track ? mergeDeps(res.deps.length ? res.deps : [usesDep(env)], kinds.ground.deps, kinds.basement.deps) : res.deps;
+  return tv(res.v, deps, why(env, () => [`${name()} 용도 ${res.v === T ? '있음' : '없음'}`]));
+}
+
+// 대지 전체에서 동별 값 모으기 — 입력 정의의 site_aggregation: any(어느 동이든, 예: 가스시설), all(모든 동, 예: 불연재료 구조).
+// 정하지 않은 입력은 모든 동이 같을 때만 그 값, 다르면 대지 단위 질문(key@대지 전체)
+function siteAggregate(env, id, values, siteDep) {
+  const how = env.inputDefs.get(id)?.site_aggregation;
+  if (how === 'any') return any(values);
+  if (how === 'all') return all(values);
+  if (values.every((v) => v.v === T)) return all(values);
+  if (values.every((v) => v.v === F)) return any(values);
+  return tv(U, D(env, () => mergeDeps([siteDep()], ...values.filter((v) => v.v === U).map((v) => v.deps))), why(env, () => [`${labelOf(env, id)}: 동마다 다름 — 대지 전체로 확인 필요`]));
+}
+
+function evalFlag(node, env) {
+  const id = node.flag;
+  if (env.members) {
+    const a = boolAnswer(env.answers[depKey(id, env.dong.id)]);
+    if (a !== null) return tv(a ? T : F, D(env, () => [userDep(id, env)]), why(env, () => [`${labelOf(env, id)}: ${a ? '예' : '아니오'}(대지 전체)`]));
+    return siteAggregate(env, id, env.members.map((m) => evalFlag(node, m)), () => makeDep(id, UNKNOWN, { dong: env.dong.id }));
+  }
+  const a = boolAnswer(env.answers[depKey(id, env.dong.id)]);
+  const label = () => labelOf(env, id);
+  if (a !== null) return tv(a ? T : F, D(env, () => [userDep(id, env)]), why(env, () => [`${label()}: ${a ? '예' : '아니오'}`]));
+  const known = env.dong.flags?.[id];
+  if (known) return tv(known.v, known.deps, why(env, () => (known.why?.length ? known.why : [`${label()}: ${known.v === T ? '예' : '아니오'}`])));
+  return tv(U, D(env, () => [makeDep(id, UNKNOWN, { dong: env.dong.id })]), why(env, () => [`${label()} 미확인`]));
+}
+
+function evalInstalled(node, env) {
+  const id = node.installed;
+  if (env.members) {
+    const a = boolAnswer(env.answers[depKey('installed', env.dong.id, undefined, id)]);
+    if (a !== null) return tv(a ? T : F, D(env, () => [userDep('installed', env, { sig: id })]), why(env, () => [`${env.names.get(id) ?? id} 설치 ${a ? '예' : '아니오'}(대지 전체)`]));
+    return siteAggregate(env, 'installed', env.members.map((m) => evalInstalled(node, m)), () => makeDep('installed', UNKNOWN, { dong: env.dong.id, sig: id, info: { facility: id } }));
+  }
+  const a = boolAnswer(env.answers[depKey('installed', env.dong.id, undefined, id)]);
+  const name = () => env.names.get(id) ?? id;
+  if (a !== null) return tv(a ? T : F, D(env, () => [userDep('installed', env, { sig: id })]), why(env, () => [`${name()} 설치 ${a ? '예' : '아니오'}`]));
+  return tv(U, D(env, () => [makeDep('installed', UNKNOWN, { dong: env.dong.id, sig: id, info: { facility: id } })]), why(env, () => [`${name()} 설치 여부 미확인`]));
+}
+
+export function evalCondition(node, env) {
+  switch (nodeType(node)) {
+    case 'const':
+      return tv(node.const ? T : F, EMPTY, why(env, () => [node.const ? '적용' : '비적용']));
+    case 'all':
+      return all(node.all.map((n) => evalCondition(n, env)));
+    case 'any':
+      return any(node.any.map((n) => evalCondition(n, env)));
+    case 'not':
+      return not(evalCondition(node.not, env));
+    case 'm':
+      return evalMetric(node, env);
+    case 'sum_area':
+      return evalSumArea(node, env);
+    case 'floor_exists':
+      return evalFloorExists(node, env);
+    case 'use':
+      return evalUse(node, env);
+    case 'flag':
+      return evalFlag(node, env);
+    case 'installed':
+      return evalInstalled(node, env);
+    case 'facility':
+      return env.facility(node.facility);
+    default:
+      // 검증기를 통과하지 못한 형식 — 비해당으로 흘리지 않도록 U
+      return tv(U, D(env, () => [makeDep('invalid_condition', UNKNOWN, { dong: env.dong.id })]), why(env, () => ['조건 형식 오류']));
+  }
+}

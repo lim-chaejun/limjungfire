@@ -1,0 +1,58 @@
+{
+  "id": "manual-area-floors",
+  "title": "수동 입력(제2종근린생활시설, 연면적 800㎡, 지상 2층, 지하층 빈칸) — 층별 면적·세부 용도를 몰라 결정적 질문, 지하층 가정값에 기대는 비해당은 확인 필요",
+  "input": {
+    "manual": {
+      "mainPurpsCdNm": "제2종근린생활시설",
+      "mainPurpose": "제2종근린생활시설",
+      "totArea": 800,
+      "grndFlrCnt": 2,
+      "ugrndFlrCnt": 0,
+      "pmsDay": "20240101",
+      "archPmsDay": "20240101",
+      "isManualInput": true
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dateSource": "permit",
+    "dongs": {
+      "직접입력": {
+        "status": "v2",
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "indoor_hydrant": "확인 필요",
+          "sprinkler": "확인 필요",
+          "simple_sprinkler": "확인 필요",
+          "standalone_detector": "비해당",
+          "emergency_alarm": "해당",
+          "auto_fire_detection": "확인 필요",
+          "visual_alarm": "확인 필요",
+          "emergency_broadcast": "확인 필요",
+          "evacuation_equipment": "비해당",
+          "rescue_equipment": "확인 필요",
+          "guide_light": "해당",
+          "standpipe": "확인 필요"
+        },
+        "questions": {
+          "sprinkler": ["use_area[{\"floors\":\"all\",\"use\":[\"midwifery_clinic\",\"postpartum_care\"]}]@직접입력"],
+          "emergency_broadcast": ["basement_floors@직접입력"],
+          "standpipe": ["basement_floors@직접입력"],
+          "auto_fire_detection": ["use_presence[{\"floors\":null,\"use\":[\"bathhouse\"]}]@직접입력"]
+        }
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "지하층수 0을 사용자가 직접 입력(enteredFields) — 지하층 기준은 확정 비해당",
+      "manualPatch": { "enteredFields": ["totArea", "grndFlrCnt", "ugrndFlrCnt", "pmsDay"] },
+      "expect": { "dongs": { "직접입력": { "verdicts": { "emergency_broadcast": "비해당", "standpipe": "비해당" } } } }
+    },
+    {
+      "name": "허가일 빈칸(오늘로 채움) — 기준일은 오늘(가정), 질문은 허가일",
+      "manualPatch": { "permitDateIsDefault": true, "pmsDay": "20260926" },
+      "expect": { "dateSource": "today" }
+    }
+  ]
+}

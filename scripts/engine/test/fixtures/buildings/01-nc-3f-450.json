@@ -1,0 +1,60 @@
+{
+  "id": "nc-3f-450",
+  "title": "근린생활시설 3층 450㎡ — 규모 미달 시설은 묻지 않고 비해당 (3층 용도 미상이어도 조산원 600㎡ 이상은 연면적 상한으로 F)",
+  "input": {
+    "registry": {
+      "title": [
+        {
+          "dongNm": "",
+          "mainPurpsCdNm": "제2종근린생활시설",
+          "etcPurps": "소매점, 일반음식점",
+          "totArea": 450,
+          "archArea": 160,
+          "grndFlrCnt": 3,
+          "ugrndFlrCnt": 0,
+          "heit": 11.5,
+          "hhldCnt": 0,
+          "rideUseElvtCnt": 0,
+          "emgenUseElvtCnt": 0,
+          "pmsDay": "",
+          "useAprDay": "20151120"
+        }
+      ],
+      "floors": [
+        { "dongNm": "", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 1, "flrNoNm": "1층", "mainPurpsCdNm": "제1종근린생활시설", "etcPurps": "소매점", "area": 150 },
+        { "dongNm": "", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 2, "flrNoNm": "2층", "mainPurpsCdNm": "제2종근린생활시설", "etcPurps": "일반음식점", "area": 150 },
+        { "dongNm": "", "flrGbCd": "20", "flrGbCdNm": "지상", "flrNo": 3, "flrNoNm": "3층", "mainPurpsCdNm": "제2종근린생활시설", "etcPurps": "", "area": 150 }
+      ],
+      "recap": [],
+      "permit": [{ "archPmsDay": "20150610", "archGbCdNm": "신축" }]
+    }
+  },
+  "expect": {
+    "status": "v2",
+    "dateSource": "permit",
+    "refDate": "20150610",
+    "dongs": {
+      "본동": {
+        "status": "v2",
+        "mixedUseCandidate": false,
+        "verdicts": {
+          "fire_extinguisher": "해당",
+          "indoor_hydrant": "비해당",
+          "sprinkler": "비해당",
+          "simple_sprinkler": "비해당",
+          "standalone_detector": "비해당",
+          "emergency_alarm": "해당",
+          "auto_fire_detection": "비해당",
+          "visual_alarm": "비해당",
+          "emergency_broadcast": "비해당",
+          "evacuation_equipment": "해당",
+          "rescue_equipment": "확인 필요",
+          "guide_light": "해당",
+          "standpipe": "비해당"
+        },
+        "questions": { "rescue_equipment": ["installed[co2_extinguishing]@본동"], "sprinkler": [] },
+        "scope": { "evacuation_equipment": ["3F"], "fire_extinguisher": ["1F", "2F", "3F"] }
+      }
+    }
+  }
+}

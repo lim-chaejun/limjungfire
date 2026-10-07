@@ -1,0 +1,260 @@
+// 3값 논리(T/F/U)와 출처(provenance), 구간 연산
+//
+// 값(tv): { v: 'T'|'F'|'U', deps: Dep[], why: string[] }
+//   deps — 이 값을 결정한 입력들. 입력마다 상태를 가진다:
+//     confirmed(건축물대장·사용자 답변) · assumed(정책 기본값·대체값) · unknown(값 없음 → 질문 대상)
+//   why  — 사람이 읽는 근거 문장(사실 서술). 참/거짓 여부와 무관하게 관측값을 적는다.
+//
+// 결합 규칙(Kleene): all 은 F 하나로 F, any 는 T 하나로 T. 이때 근거는 "가장 확실한 증인" 하나만 남긴다.
+// 그래서 확정 F 가 하나라도 있으면 all 의 F 는 확정이고, 가정값에 기대는 F 는 가정으로 드러난다.
+//
+// 구간(interval): { lo, hi, loDeps, hiDeps, open }
+//   lo·hi 각각의 근거를 따로 들고 있어, 상한만으로 결론이 나면(예: 연면적 450㎡ 동의 조산원 600㎡ 이상 → F)
+//   미확정 입력(open)을 묻지 않고도 확정 F 를 낼 수 있다.
+
+export const T = 'T';
+export const F = 'F';
+export const U = 'U';
+
+export const CONFIRMED = 'confirmed';
+export const ASSUMED = 'assumed';
+export const UNKNOWN = 'unknown';
+const STATUS_RANK = Object.freeze({ confirmed: 0, assumed: 1, unknown: 2 });
+
+// 질문·답변 키: input[sig]@동/층  (예: windowless@본동/2F, use_area[{...}]@101동, application_date)
+export function depKey(input, dong, floor, sig) {
+  return `${input}${sig ? `[${sig}]` : ''}${dong ? `@${dong}` : ''}${floor ? `/${floor}` : ''}`;
+}
+
+// 입력 의존 하나. info 는 질문 문장을 만들 때 쓰는 부가 정보(층 범위·용도·시설 등).
+// released: 가정값을 풀어(모름으로) 다시 평가할 때 생긴 의존 — 질문에 '가정값 확인' 표시를 붙인다
+export function makeDep(input, status, { dong, floor, sig, info, range, source, released } = {}) {
+  const dep = { key: depKey(input, dong, floor, sig), input, status };
+  if (dong) dep.dong = dong;
+  if (floor) dep.floor = floor;
+  if (info) dep.info = info;
+  if (range) dep.range = range;
+  if (source) dep.source = source;
+  if (released) dep.released = true;
+  return dep;
+}
+
+const EMPTY = Object.freeze([]);
+
+// 같은 키는 하나로 — 상태는 더 불확실한 쪽(unknown > assumed > confirmed).
+// 입력 목록은 이미 키가 겹치지 않는 목록이라서, 비어 있지 않은 목록이 하나뿐이면 그대로 돌려준다(복사 없음 — 돌려받은 배열을 고치지 말 것).
+export function mergeDeps(...lists) {
+  let only = null;
+  let count = 0;
+  for (const list of lists) {
+    if (list && list.length) {
+      count++;
+      only = list;
+    }
+  }
+  if (count === 0) return EMPTY;
+  if (count === 1) return only;
+  const byKey = new Map();
+  for (const list of lists) {
+    for (const d of list || EMPTY) {
+      const prev = byKey.get(d.key);
+      if (!prev || STATUS_RANK[d.status] > STATUS_RANK[prev.status]) byKey.set(d.key, d);
+    }
+  }
+  return [...byKey.values()];
+}
+
+// 반복문에서 근거를 계속 합칠 때 쓰는 누적기 (mergeDeps 를 반복하면 목록이 길어질수록 제곱으로 느려진다)
+export function depCollector() {
+  const byKey = new Map();
+  return {
+    add(list) {
+      for (const d of list || EMPTY) {
+        const prev = byKey.get(d.key);
+        if (!prev || STATUS_RANK[d.status] > STATUS_RANK[prev.status]) byKey.set(d.key, d);
+      }
+    },
+    list: () => (byKey.size ? [...byKey.values()] : EMPTY),
+  };
+}
+
+export function tv(v, deps = EMPTY, why = EMPTY) {
+  return { v, deps, why: Array.isArray(why) ? why : why ? [why] : EMPTY };
+}
+
+export const hasAssumed = (x) => x.deps.some((d) => d.status === ASSUMED);
+export const hasUnknown = (x) => x.deps.some((d) => d.status === UNKNOWN);
+
+const uncertainty = (x) => {
+  let n = 0;
+  for (const d of x.deps) n += STATUS_RANK[d.status];
+  return n;
+};
+
+// 가장 확실한 증인: 값이 v 인 것 가운데 불확실 점수가 낮고 의존이 적은 값 (동점이면 앞의 것)
+function witness(xs, v) {
+  let best = null;
+  let bestU = 0;
+  for (const x of xs) {
+    if (x.v !== v) continue;
+    if (!best) {
+      best = x;
+      bestU = uncertainty(x);
+      continue;
+    }
+    const u = uncertainty(x);
+    if (u < bestU || (u === bestU && x.deps.length < best.deps.length)) {
+      best = x;
+      bestU = u;
+    }
+  }
+  return best;
+}
+
+// 값이 v 인(또는 모든, v = null) 자식들의 근거 합 — 합칠 것이 하나뿐이면 새 배열을 만들지 않는다
+function unionDeps(xs, v) {
+  let only = null;
+  let count = 0;
+  for (const x of xs) {
+    if ((v === null || x.v === v) && x.deps.length) {
+      count++;
+      only = x.deps;
+    }
+  }
+  if (count === 0) return EMPTY;
+  if (count === 1) return only;
+  const byKey = new Map();
+  for (const x of xs) {
+    if (v !== null && x.v !== v) continue;
+    for (const d of x.deps) {
+      const prev = byKey.get(d.key);
+      if (!prev || STATUS_RANK[d.status] > STATUS_RANK[prev.status]) byKey.set(d.key, d);
+    }
+  }
+  return [...byKey.values()];
+}
+
+function unionWhy(xs, v) {
+  let n = 0;
+  for (const x of xs) if (v === null || x.v === v) n += x.why.length;
+  if (!n) return EMPTY;
+  const out = [];
+  for (const x of xs) if (v === null || x.v === v) out.push(...x.why);
+  return out;
+}
+
+const joinWhy = (xs) => {
+  let n = 0;
+  for (const x of xs) n += x.why.length;
+  return n ? xs.flatMap((x) => x.why) : EMPTY;
+};
+
+export function not(x) {
+  return tv(x.v === T ? F : x.v === F ? T : U, x.deps, x.why);
+}
+
+const count = (xs, v) => {
+  let n = 0;
+  for (const x of xs) if (x.v === v) n++;
+  return n;
+};
+
+export function all(xs) {
+  if (!xs.length) return tv(T);
+  if (xs.length === 1) return xs[0];
+  if (count(xs, F)) {
+    const w = witness(xs, F);
+    return tv(F, w.deps, w.why);
+  }
+  if (count(xs, U)) return tv(U, unionDeps(xs, U), unionWhy(xs, U));
+  return tv(T, unionDeps(xs, null), unionWhy(xs, null));
+}
+
+export function any(xs) {
+  if (!xs.length) return tv(F);
+  if (xs.length === 1) return xs[0];
+  if (count(xs, T)) {
+    const w = witness(xs, T);
+    return tv(T, w.deps, w.why);
+  }
+  if (count(xs, U)) return tv(U, unionDeps(xs, U), unionWhy(xs, U));
+  return tv(F, unionDeps(xs, null), unionWhy(xs, null));
+}
+
+// if c then a else b — c 가 U 라도 a·b 가 같은 확정값이면 그 값
+export function ite(c, a, b) {
+  if (c.v === T) return tv(a.v, mergeDeps(c.deps, a.deps), [...c.why, ...a.why]);
+  if (c.v === F) return tv(b.v, mergeDeps(c.deps, b.deps), [...c.why, ...b.why]);
+  if (a.v === b.v && a.v !== U) return tv(a.v, mergeDeps(a.deps, b.deps), [...a.why, ...b.why]);
+  const us = [c, a, b].filter((x) => x.v === U);
+  return tv(U, mergeDeps(...(us.length ? us : [c, a, b]).map((x) => x.deps)), joinWhy([c, a, b]));
+}
+
+// ───────────── 구간 ─────────────
+
+export function interval(lo, hi, { loDeps = [], hiDeps = [], open = [] } = {}) {
+  return { lo, hi, loDeps, hiDeps, open };
+}
+
+export function exact(value, deps = []) {
+  return interval(value, value, { loDeps: deps, hiDeps: deps });
+}
+
+export const isExact = (iv) => iv.lo === iv.hi && !iv.open.length;
+
+export function addInterval(a, b) {
+  return interval(a.lo + b.lo, a.hi + b.hi, {
+    loDeps: mergeDeps(a.loDeps, b.loDeps),
+    hiDeps: mergeDeps(a.hiDeps, b.hiDeps),
+    open: mergeDeps(a.open, b.open),
+  });
+}
+
+// 두 구간 중 큰 쪽(층수·높이의 최댓값): [max(lo), max(hi)]
+export function maxInterval(a, b) {
+  return interval(Math.max(a.lo, b.lo), Math.max(a.hi, b.hi), {
+    loDeps: mergeDeps(a.loDeps, b.loDeps),
+    hiDeps: mergeDeps(a.hiDeps, b.hiDeps),
+    open: mergeDeps(a.open, b.open),
+  });
+}
+
+// 상한을 cap 의 상한으로 제한 (예: 부분 합계 ≤ 동 연면적)
+export function capInterval(iv, cap) {
+  if (!(cap.hi < iv.hi)) return iv;
+  return interval(Math.min(iv.lo, cap.hi), cap.hi, { loDeps: iv.loDeps, hiDeps: cap.hiDeps, open: iv.open });
+}
+
+function compareOne(iv, op, c) {
+  switch (op) {
+    case 'gte':
+      if (iv.lo >= c) return tv(T, iv.loDeps);
+      if (iv.hi < c) return tv(F, iv.hiDeps);
+      break;
+    case 'gt':
+      if (iv.lo > c) return tv(T, iv.loDeps);
+      if (iv.hi <= c) return tv(F, iv.hiDeps);
+      break;
+    case 'lte':
+      if (iv.hi <= c) return tv(T, iv.hiDeps);
+      if (iv.lo > c) return tv(F, iv.loDeps);
+      break;
+    case 'lt':
+      if (iv.hi < c) return tv(T, iv.hiDeps);
+      if (iv.lo >= c) return tv(F, iv.loDeps);
+      break;
+    case 'eq':
+      if (iv.lo === c && iv.hi === c) return tv(T, mergeDeps(iv.loDeps, iv.hiDeps));
+      if (iv.lo > c) return tv(F, iv.loDeps);
+      if (iv.hi < c) return tv(F, iv.hiDeps);
+      break;
+    default:
+      throw new Error(`알 수 없는 비교 연산자: ${op}`);
+  }
+  return tv(U, iv.open.length ? iv.open : mergeDeps(iv.loDeps, iv.hiDeps));
+}
+
+// 구간과 비교 조건 { gte: 300, lt: 600 } — 연산자가 여럿이면 모두 만족(all)
+export function compareInterval(iv, cond, ops) {
+  return all(ops.map((op) => compareOne(iv, op, cond[op])));
+}

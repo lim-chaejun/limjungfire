@@ -1,0 +1,201 @@
+{
+  "schema_version": 2,
+  "type_code": "01",
+  "building_type": "공동주택",
+  "note": "TEST-ONLY 합성 데이터 — data/01_residential_complex.json 의 변환본이 아니다.",
+  "review": { "status": "draft", "by": null, "date": null },
+  "strengthened_retroactive": [],
+  "fire_facilities": [
+    {
+      "category": "소화설비",
+      "facility_name": "소화기구",
+      "facility_id": "fire_extinguisher",
+      "regulations": [
+        {
+          "id": "t01-fe-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 33㎡ 이상",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 33 },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "스프링클러설비",
+      "facility_id": "sprinkler",
+      "regulations": [
+        {
+          "id": "t01-sp-01",
+          "start_date": "20050101",
+          "end_date": "20180126",
+          "criteria": "층수가 11층 이상일 경우 전층",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 11 },
+          "scope": "all_floors",
+          "item_key": "t01-sp-floors"
+        },
+        {
+          "id": "t01-sp-02",
+          "start_date": "20180127",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 6 },
+          "scope": "all_floors",
+          "item_key": "t01-sp-floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "자동화재탐지설비",
+      "facility_id": "auto_fire_detection",
+      "regulations": [
+        {
+          "id": "t01-afd-01",
+          "start_date": "19811106",
+          "end_date": "20221130",
+          "criteria": "4층 이상의 공동주택은 연면적 1,000㎡ 이상인 것",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "all": [{ "m": "ground_floors", "gte": 4 }, { "m": "total_area", "gte": 1000 }] },
+          "scope": "all_floors",
+          "item_key": "t01-afd-main"
+        },
+        {
+          "id": "t01-afd-02",
+          "start_date": "20221201",
+          "end_date": null,
+          "criteria": "아파트 등의 경우에는 모든 층",
+          "applicable_to": "아파트등",
+          "kind": "trigger",
+          "conditions": { "use": ["apartment"] },
+          "scope": "all_floors",
+          "item_key": "t01-afd-main"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상방송설비",
+      "facility_id": "emergency_broadcast",
+      "regulations": [
+        {
+          "id": "t01-eb-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 3,500㎡ 이상",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 3500 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t01-eb-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "층수가 11층 이상",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 11 },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "피난구조설비",
+      "facility_name": "피난기구",
+      "facility_id": "evacuation_equipment",
+      "regulations": [
+        {
+          "id": "t01-ev-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지상3층 ~ 지상10층까지 설치(계단실형 아파트는 각 세대마다) *피난층 제외",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "floor_exists": { "floors": [{ "kind": "ground", "level": { "gte": 3, "lte": 10 } }] } },
+          "scope": { "type": "floors", "floors": [{ "kind": "ground", "level": { "gte": 3, "lte": 10 } }] }
+        },
+        {
+          "id": "t01-ev-02",
+          "start_date": "19931111",
+          "end_date": null,
+          "criteria": "150세대 이상으로서 승강기가 설치된 공동주택은 공기안전매트 설치",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "all": [{ "m": "households", "gte": 150 }, { "flag": "elevator" }] },
+          "scope": { "type": "part", "label": "공기안전매트" },
+          "specs": { "equipment": "공기안전매트" }
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "비상콘센트설비",
+      "facility_id": "emergency_outlet",
+      "regulations": [
+        {
+          "id": "t01-eo-01",
+          "start_date": "19680115",
+          "end_date": null,
+          "criteria": "층수가 11층 이상은 11층 이상의 층",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 11 },
+          "scope": { "type": "floors", "floors": [{ "kind": "ground", "level": { "gte": 11 } }] }
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "무선통신보조설비",
+      "facility_id": "wireless_comm",
+      "regulations": [
+        {
+          "id": "t01-wc-01",
+          "start_date": "19920728",
+          "end_date": null,
+          "criteria": "지하층 바닥면적의 합계가 3,000㎡ 이상",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "sum_area": { "floors": ["basement"] }, "gte": 3000 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t01-wc-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "30층 이상은 16층 이상의 층",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 30 },
+          "scope": { "type": "floors", "floors": [{ "kind": "ground", "level": { "gte": 16 } }] }
+        }
+      ]
+    },
+    {
+      "category": "소화활동설비",
+      "facility_name": "연결송수관설비",
+      "facility_id": "standpipe",
+      "regulations": [
+        {
+          "id": "t01-stp-01",
+          "start_date": "19680115",
+          "end_date": null,
+          "criteria": "5층 이상이고 연면적 6,000㎡ 이상",
+          "applicable_to": "공동주택",
+          "kind": "trigger",
+          "conditions": { "all": [{ "m": "ground_floors", "gte": 5 }, { "m": "total_area", "gte": 6000 }] },
+          "scope": "all_floors"
+        }
+      ]
+    }
+  ]
+}

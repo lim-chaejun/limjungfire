@@ -1,0 +1,84 @@
+{
+  "schema_version": 2,
+  "type_code": "12",
+  "building_type": "업무시설",
+  "note": "TEST-ONLY 합성 데이터 — data/12_office.json 의 변환본이 아니다.",
+  "review": { "status": "draft", "by": null, "date": null },
+  "fire_facilities": [
+    {
+      "category": "소화설비",
+      "facility_name": "소화기구",
+      "facility_id": "fire_extinguisher",
+      "regulations": [
+        {
+          "id": "t12-fe-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 33㎡ 이상인 것",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 33 },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "소화설비",
+      "facility_name": "스프링클러설비",
+      "facility_id": "sprinkler",
+      "regulations": [
+        {
+          "id": "t12-sp-01",
+          "start_date": "20180127",
+          "end_date": null,
+          "criteria": "층수가 6층 이상인 경우 모든 층",
+          "kind": "trigger",
+          "conditions": { "m": "ground_floors", "gte": 6 },
+          "scope": "all_floors"
+        },
+        {
+          "id": "t12-sp-02",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 층이 있는 경우 해당 층",
+          "kind": "trigger",
+          "conditions": {
+            "floor_exists": { "floors": ["basement", "windowless", { "kind": "ground", "level": { "gte": 4 } }], "area": { "gte": 1000 } }
+          },
+          "scope": "matching_floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "비상경보설비",
+      "facility_id": "emergency_alarm",
+      "regulations": [
+        {
+          "id": "t12-ea-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 400㎡ 이상 모든 층",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 400 },
+          "scope": "all_floors"
+        }
+      ]
+    },
+    {
+      "category": "경보설비",
+      "facility_name": "자동화재탐지설비",
+      "facility_id": "auto_fire_detection",
+      "regulations": [
+        {
+          "id": "t12-afd-01",
+          "start_date": null,
+          "end_date": null,
+          "criteria": "연면적 1,000㎡ 이상인 것",
+          "kind": "trigger",
+          "conditions": { "m": "total_area", "gte": 1000 },
+          "scope": "all_floors"
+        }
+      ]
+    }
+  ]
+}
