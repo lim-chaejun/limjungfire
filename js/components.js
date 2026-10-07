@@ -366,14 +366,21 @@ export async function handleLogin() {
     alert('Firebase를 로드할 수 없습니다.');
     return;
   }
+  let user;
   try {
-    const user = await fb.signInWithGoogle();
-    if (user && fb.saveUserInfo) {
-      await fb.saveUserInfo(user);
-    }
+    user = await fb.signInWithGoogle();
   } catch (error) {
     if (error.code === 'auth/popup-closed-by-user') return;
     alert('로그인에 실패했습니다: ' + error.message);
+    return;
+  }
+  // 로그인은 성공했으므로 프로필 저장 실패는 알림 없이 기록만 (인증 리스너도 저장을 재시도함)
+  if (user && fb.saveUserInfo) {
+    try {
+      await fb.saveUserInfo(user);
+    } catch (e) {
+      console.error('사용자 정보 저장 실패:', e);
+    }
   }
 }
 
@@ -385,15 +392,22 @@ export async function handleSignup() {
     alert('Firebase를 로드할 수 없습니다.');
     return;
   }
+  let user;
   try {
     const signUp = fb.signUpWithGoogle || fb.signInWithGoogle;
-    const user = await signUp();
-    if (user && fb.saveUserInfo) {
-      await fb.saveUserInfo(user);
-    }
+    user = await signUp();
   } catch (error) {
     if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') return;
     alert('회원가입에 실패했습니다: ' + error.message);
+    return;
+  }
+  // 가입은 성공했으므로 프로필 저장 실패는 알림 없이 기록만
+  if (user && fb.saveUserInfo) {
+    try {
+      await fb.saveUserInfo(user);
+    } catch (e) {
+      console.error('사용자 정보 저장 실패:', e);
+    }
   }
 }
 

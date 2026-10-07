@@ -820,6 +820,15 @@ header h1 {
   font-weight: 700;
 }
 
+/* 허가일 기준 안내 (인허가 이력이 여러 건일 때) */
+.summary-grid-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
 .summary-purpose-badge {
   background: var(--color-primary);
   color: #fff;
@@ -2305,6 +2314,11 @@ footer {
   border-radius: 12px;
 }
 
+/* 허가 신청일을 되돌린 뒤 초점을 받는 기준일 배지 (프로그램 초점이라 테두리는 숨긴다) */
+.law-period-badge:focus {
+  outline: none;
+}
+
 .approval-date-warning {
   display: flex;
   align-items: flex-start;
@@ -2327,6 +2341,93 @@ footer {
 .approval-date-warning strong {
   color: #e65100;
   font-weight: 600;
+}
+
+/* 허가 신청일 안내: 기준이 바뀐 시설 목록과 신청일 입력 */
+.application-notice .application-notice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 다시 그린 뒤 초점을 받는 안내 문장 (프로그램 초점이라 테두리는 숨긴다) */
+.application-notice .application-notice-lead:focus {
+  outline: none;
+}
+
+.application-notice .boundary-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8a6d1d;
+}
+
+.application-notice .boundary-caution {
+  font-weight: 600;
+  color: #b35900;
+}
+
+.application-notice .boundary-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.application-notice .boundary-date {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 152, 0, 0.15);
+  color: #b35900;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.application-notice .boundary-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.application-notice .boundary-form label {
+  font-weight: 600;
+}
+
+.application-notice .boundary-form input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid #f0c36d;
+  border-radius: 8px;
+  background: #fff;
+  color: #5c4500;
+  font-size: 13px;
+}
+
+.application-notice .law-ref-btn {
+  padding: 6px 10px;
+  align-self: flex-start;
+}
+
+.application-notice .boundary-help {
+  font-size: 11px;
+  color: #8a6d1d;
+}
+
+.manual-input-optional {
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+.manual-input-hint {
+  margin: 0;
+  padding-left: 2px;
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 
 .pre-law-warning {
@@ -2841,6 +2942,15 @@ footer {
   background: rgba(49, 130, 246, 0.1);
   border-color: #3182f6;
   color: #3182f6;
+}
+.law-ref-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.law-ref-btn:disabled:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 /* 카테고리별 스타일 */
