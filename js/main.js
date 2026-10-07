@@ -1,3 +1,5 @@
+import { escapeHtml as esc, safeHttpUrl } from './lib/html.js';
+
 // 인앱 브라우저 처리
 if (window.__inAppBrowser) {
   document.addEventListener('DOMContentLoaded', function() {
@@ -429,15 +431,12 @@ async function searchFromUrl() {
     // jibunInfo 형식으로 변환 (bun, ji는 이미 패딩된 상태로 URL에 저장됨)
     const jibunInfo = { bun: codes.bun, ji: codes.ji };
 
-    // 4가지 API 동시 호출
-    const [titleResult, floorResult, generalResult, permitResult] = await Promise.all([
-      fetchBrTitleInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo),
-      fetchBrFlrOulnInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo),
-      fetchBrRecapTitleInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo),
-      fetchApBasisOulnInfo(API_KEY, codes.sigunguCd, codes.bjdongCd, jibunInfo)
-    ]);
+    // 4가지 API 동시 호출 (표제부 외에는 실패해도 부분 결과 표시)
+    const { titleResult, floorResult, generalResult, permitResult, failed } =
+      await fetchAllBuildingData(codes.sigunguCd, codes.bjdongCd, jibunInfo);
 
     displayAllResults(titleResult, floorResult, generalResult, permitResult);
+    notifyPartialFailure(failed);
 
     // 결과에서 주소 정보 추출하여 UI 업데이트
     const titleItems = extractItems(titleResult);
@@ -628,27 +627,31 @@ function renderAdBanner() {
     `;
   }
 
-  // 광고 이미지가 있는 경우
-  const linkUrl = adSettings.linkUrl || '#';
-  const hasLink = adSettings.linkUrl && adSettings.linkUrl.trim() !== '';
-
-  // URL 검증 (프로토콜 제한)
-  const safeImageUrl = /^https?:\/\//i.test(adSettings.imageUrl) ? adSettings.imageUrl : '';
-  const safeLinkUrl = /^https?:\/\//i.test(linkUrl) ? linkUrl : '#';
-
-  if (hasLink) {
-    return `
-      <a href="${safeLinkUrl}" target="_blank" rel="noopener noreferrer" class="ad-banner ad-banner-link">
-        <img src="${safeImageUrl}" alt="광고" class="ad-banner-image" onerror="this.onerror=null;this.style.display='none';this.parentElement.insertAdjacentText('beforeend','광고주님을 찾습니다');">
-      </a>
-    `;
-  } else {
+  // URL 검증: 프로토콜뿐 아니라 전체 URL을 파싱하고, 속성에 넣을 때 이스케이프한다
+  // (접두어만 검사하면 따옴표로 속성을 탈출해 모든 방문자 화면에 스크립트를 주입할 수 있음)
+  const safeImageUrl = safeHttpUrl(adSettings.imageUrl, { httpsOnly: true });
+  const safeLinkUrl = safeHttpUrl(adSettings.linkUrl || '');
+  if (!safeImageUrl) {
     return `
       <div class="ad-banner">
-        <img src="${safeImageUrl}" alt="광고" class="ad-banner-image" onerror="this.onerror=null;this.style.display='none';this.parentElement.insertAdjacentText('beforeend','광고주님을 찾습니다');">
+        <span>광고주님을 찾습니다</span>
       </div>
     `;
   }
+
+  const imgHtml = `<img src="${esc(safeImageUrl)}" alt="광고" class="ad-banner-image" onerror="this.onerror=null;this.style.display='none';this.parentElement.insertAdjacentText('beforeend','광고주님을 찾습니다');">`;
+  if (safeLinkUrl) {
+    return `
+      <a href="${esc(safeLinkUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="ad-banner ad-banner-link">
+        ${imgHtml}
+      </a>
+    `;
+  }
+  return `
+      <div class="ad-banner">
+        ${imgHtml}
+      </div>
+    `;
 }
 
 // 헤더, 프로필 메뉴, 인증, 모달 관련 함수는 components.js에서 처리
@@ -790,18 +793,19 @@ async function loadHistoryTab(tab) {
 }
 
 // 기록 아이템 렌더링
+// 동적 값(문서 ID·주소·메모)은 data-* 속성에만 넣고, 핸들러는 closest('.history-item').dataset에서 읽는다.
+// (인라인 JS 문자열에 사용자 데이터를 끼워 넣으면 따옴표·역슬래시로 스크립트 주입이 가능했음)
 function renderHistoryItem(item, isFavorite, type) {
   const starClass = isFavorite ? 'active' : '';
-  const escapedAddress = (item.address || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  const escapedMemo = (item.memo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const itemRef = "this.closest('.history-item').dataset";
 
   const deleteBtn = type === 'history'
-    ? `<button class="history-delete" onclick="deleteHistory('${item.id}')">
+    ? `<button class="history-delete" onclick="deleteHistory(${itemRef}.id)" aria-label="기록 삭제">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
       </button>`
-    : `<button class="history-delete" onclick="deleteFavorite('${item.id}')">
+    : `<button class="history-delete" onclick="deleteFavorite(${itemRef}.id)" aria-label="즐겨찾기 삭제">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -810,8 +814,8 @@ function renderHistoryItem(item, isFavorite, type) {
   // 즐겨찾기 탭에서만 메모 표시
   const memoHtml = type === 'favorite' ? `
     <div class="history-memo">
-      ${item.memo ? `<span class="memo-preview">${item.memo}</span>` : '<span class="memo-placeholder">메모 추가</span>'}
-      <button class="memo-btn" onclick="event.stopPropagation(); showMemoEditor('${item.id}', '${escapedMemo}')" title="메모 편집">
+      ${item.memo ? `<span class="memo-preview">${esc(item.memo)}</span>` : '<span class="memo-placeholder">메모 추가</span>'}
+      <button class="memo-btn" onclick="event.stopPropagation(); showMemoEditor(${itemRef}.id, ${itemRef}.memo)" title="메모 편집">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -822,7 +826,7 @@ function renderHistoryItem(item, isFavorite, type) {
 
   // 지도 버튼
   const mapBtn = `
-    <button class="history-map" onclick="event.stopPropagation(); showMapModal('${escapedAddress}')" title="지도">
+    <button class="history-map" onclick="event.stopPropagation(); showMapModal(${itemRef}.address)" title="지도">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
         <circle cx="12" cy="10" r="3"/>
@@ -831,15 +835,15 @@ function renderHistoryItem(item, isFavorite, type) {
   `;
 
   return `
-    <div class="history-item" data-id="${item.id}" data-address="${item.address}">
-      <button class="history-favorite ${starClass}" onclick="toggleFavorite('${escapedAddress}', this)">
+    <div class="history-item" data-id="${esc(item.id)}" data-address="${esc(item.address || '')}" data-memo="${esc(item.memo || '')}" data-type="${type === 'favorite' ? 'favorite' : 'history'}">
+      <button class="history-favorite ${starClass}" onclick="toggleFavorite(${itemRef}.address, this)" aria-label="즐겨찾기">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
       </button>
-      <div class="history-content" onclick="loadHistoryItem('${item.id}', '${type}')">
-        <div class="history-address">${item.address}</div>
-        <div class="history-date">${formatTimestamp(item.createdAt)}</div>
+      <div class="history-content" onclick="loadHistoryItem(${itemRef}.id, ${itemRef}.type)">
+        <div class="history-address">${esc(item.address || '')}</div>
+        <div class="history-date">${esc(formatTimestamp(item.createdAt))}</div>
         ${memoHtml}
       </div>
       ${mapBtn}
@@ -874,11 +878,7 @@ window.toggleFavorite = async function(address, btnElement) {
         }
       }
     } else {
-      // 즐겨찾기 추가 - 해당 주소의 buildingData 찾기
-      const historyItem = document.querySelector(`.history-item[data-address="${address}"]`);
-      const docId = historyItem?.dataset.id;
-
-      // 검색기록에서 buildingData 가져오기
+      // 즐겨찾기 추가 - 검색기록에서 buildingData 가져오기
       const history = await fb.getMySearchHistory(50);
       const historyData = history.find(h => h.address === address);
 
@@ -1096,15 +1096,12 @@ window.searchBuilding = async function() {
     const bjdongCd = bcode.substring(5, 10);
     const jibunInfo = extractJibun(selectedAddressData.jibunAddress);
 
-    // 4가지 API 동시 호출
-    const [titleResult, floorResult, generalResult, permitResult] = await Promise.all([
-      fetchBrTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
-      fetchBrFlrOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
-      fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
-      fetchApBasisOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)
-    ]);
+    // 4가지 API 동시 호출 (표제부 외에는 실패해도 부분 결과 표시)
+    const { titleResult, floorResult, generalResult, permitResult, failed } =
+      await fetchAllBuildingData(sigunguCd, bjdongCd, jibunInfo);
 
     displayAllResults(titleResult, floorResult, generalResult, permitResult);
+    notifyPartialFailure(failed);
 
     // URL 업데이트 (공유 링크용)
     updateUrlWithAddress();
@@ -1148,8 +1145,19 @@ function extractJibun(jibunAddress) {
   return { bun: '', ji: '' };
 }
 
+// 건축물대장 API 오퍼레이션 (functions/api/building/[op].js 와 동일한 목록)
+const BUILDING_OPS = {
+  title: 'BldRgstHubService/getBrTitleInfo',        // 표제부
+  floor: 'BldRgstHubService/getBrFlrOulnInfo',      // 층별개요
+  recap: 'BldRgstHubService/getBrRecapTitleInfo',   // 총괄표제부
+  permit: 'ArchPmsHubService/getApBasisOulnInfo'    // 건축인허가 기본개요 (허가일)
+};
+
+// 자체 프록시 사용 가능 여부 (null: 미확인, false: 미배포·미설정으로 확인됨)
+let buildingProxyAvailable = null;
+
 // 건축물대장 API 공통 fetch 함수 (15초 타임아웃)
-async function fetchBuildingApi(url) {
+async function fetchBuildingApi(url, { isProxy = false } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -1158,7 +1166,14 @@ async function fetchBuildingApi(url) {
     clearTimeout(timeout);
 
     if (!response.ok) {
-      throw new Error(`API 요청 실패 (${response.status})`);
+      const err = new Error(`API 요청 실패 (${response.status})`);
+      if (isProxy) {
+        // 프록시 미배포(404·405)·키 미설정/인증·한도 오류(503) → 이번 세션은 직접 호출
+        if ([404, 405, 503].includes(response.status)) err.proxyUnavailable = true;
+        // 그 밖의 일시 오류(5xx·429) → 이번 요청만 직접 호출로 재시도
+        else if (response.status >= 500 || response.status === 429) err.proxyRetryDirect = true;
+      }
+      throw err;
     }
     const data = await response.json();
     // 공공데이터 API 에러 응답 체크
@@ -1171,72 +1186,83 @@ async function fetchBuildingApi(url) {
     if (e.name === 'AbortError') {
       throw new Error('API 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
     }
+    if (isProxy && e instanceof SyntaxError) {
+      // 프록시 경로가 HTML(정적 404 등)을 돌려준 경우
+      e.proxyUnavailable = true;
+    }
     throw e;
   }
 }
 
-// 표제부 조회 API
-async function fetchBrTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
-  const url = new URL('https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo');
-  url.searchParams.append('serviceKey', apiKey);
-  url.searchParams.append('sigunguCd', sigunguCd);
-  url.searchParams.append('bjdongCd', bjdongCd);
-  url.searchParams.append('platGbCd', '0');
-  if (jibunInfo.bun) url.searchParams.append('bun', jibunInfo.bun.padStart(4, '0'));
-  if (jibunInfo.ji) url.searchParams.append('ji', jibunInfo.ji.padStart(4, '0'));
+// 오퍼레이션 호출: 1순위 자체 프록시(서비스키 비노출), 프록시가 없을 때만 공공데이터포털 직접 호출
+async function fetchBuildingOp(op, sigunguCd, bjdongCd, jibunInfo) {
+  const params = new URLSearchParams({ sigunguCd, bjdongCd, platGbCd: '0' });
+  if (jibunInfo.bun) params.set('bun', jibunInfo.bun.padStart(4, '0'));
+  if (jibunInfo.ji) params.set('ji', jibunInfo.ji.padStart(4, '0'));
+
+  if (buildingProxyAvailable !== false) {
+    try {
+      const data = await fetchBuildingApi(`/api/building/${op}?${params.toString()}`, { isProxy: true });
+      buildingProxyAvailable = true;
+      return data;
+    } catch (e) {
+      if (!e.proxyUnavailable && !e.proxyRetryDirect) throw e;
+      if (e.proxyUnavailable) buildingProxyAvailable = false;
+    }
+  }
+
+  // 폴백: 직접 호출 (프록시 배포·서비스키 재발급 완료 후 이 경로와 API_KEY를 제거한다)
+  const url = new URL(`https://apis.data.go.kr/1613000/${BUILDING_OPS[op]}`);
+  url.searchParams.append('serviceKey', API_KEY);
+  params.forEach((value, key) => url.searchParams.append(key, value));
   url.searchParams.append('numOfRows', '100');
   url.searchParams.append('pageNo', '1');
   url.searchParams.append('_type', 'json');
-
   return await fetchBuildingApi(url);
+}
+
+// 4가지 조회를 동시에 실행한다. 표제부는 필수이고, 층별개요·총괄표제부·건축인허가는
+// 공공데이터 API가 일시적으로 실패(빈 응답·503 등)해도 나머지 결과로 화면을 그린다.
+async function fetchAllBuildingData(sigunguCd, bjdongCd, jibunInfo) {
+  const failed = [];
+  const optional = (label, promise) => promise.catch((e) => {
+    console.warn(`${label} 조회 실패:`, e);
+    failed.push(label);
+    return null;
+  });
+  const [titleResult, floorResult, generalResult, permitResult] = await Promise.all([
+    fetchBrTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo),
+    optional('층별개요', fetchBrFlrOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)),
+    optional('총괄표제부', fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)),
+    optional('건축인허가(허가일)', fetchApBasisOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo))
+  ]);
+  return { titleResult, floorResult, generalResult, permitResult, failed };
+}
+
+// 일부 조회 실패 안내 (허가일을 못 받으면 적용 기준일이 달라질 수 있으므로 명시)
+function notifyPartialFailure(failed) {
+  if (!failed || failed.length === 0) return;
+  showToast(`일부 정보를 불러오지 못했습니다: ${failed.join(', ')} — 잠시 후 다시 조회해 주세요`);
+}
+
+// 표제부 조회 API
+async function fetchBrTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
+  return fetchBuildingOp('title', sigunguCd, bjdongCd, jibunInfo);
 }
 
 // 층별 조회 API
 async function fetchBrFlrOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
-  const url = new URL('https://apis.data.go.kr/1613000/BldRgstHubService/getBrFlrOulnInfo');
-  url.searchParams.append('serviceKey', apiKey);
-  url.searchParams.append('sigunguCd', sigunguCd);
-  url.searchParams.append('bjdongCd', bjdongCd);
-  url.searchParams.append('platGbCd', '0');
-  if (jibunInfo.bun) url.searchParams.append('bun', jibunInfo.bun.padStart(4, '0'));
-  if (jibunInfo.ji) url.searchParams.append('ji', jibunInfo.ji.padStart(4, '0'));
-  url.searchParams.append('numOfRows', '100');
-  url.searchParams.append('pageNo', '1');
-  url.searchParams.append('_type', 'json');
-
-  return await fetchBuildingApi(url);
+  return fetchBuildingOp('floor', sigunguCd, bjdongCd, jibunInfo);
 }
 
 // 총괄표제부 조회 API
 async function fetchBrRecapTitleInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
-  const url = new URL('https://apis.data.go.kr/1613000/BldRgstHubService/getBrRecapTitleInfo');
-  url.searchParams.append('serviceKey', apiKey);
-  url.searchParams.append('sigunguCd', sigunguCd);
-  url.searchParams.append('bjdongCd', bjdongCd);
-  url.searchParams.append('platGbCd', '0');
-  if (jibunInfo.bun) url.searchParams.append('bun', jibunInfo.bun.padStart(4, '0'));
-  if (jibunInfo.ji) url.searchParams.append('ji', jibunInfo.ji.padStart(4, '0'));
-  url.searchParams.append('numOfRows', '100');
-  url.searchParams.append('pageNo', '1');
-  url.searchParams.append('_type', 'json');
-
-  return await fetchBuildingApi(url);
+  return fetchBuildingOp('recap', sigunguCd, bjdongCd, jibunInfo);
 }
 
 // 건축인허가 기본개요 조회 API (허가일 정보)
 async function fetchApBasisOulnInfo(apiKey, sigunguCd, bjdongCd, jibunInfo) {
-  const url = new URL('https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo');
-  url.searchParams.append('serviceKey', apiKey);
-  url.searchParams.append('sigunguCd', sigunguCd);
-  url.searchParams.append('bjdongCd', bjdongCd);
-  url.searchParams.append('platGbCd', '0');
-  if (jibunInfo.bun) url.searchParams.append('bun', jibunInfo.bun.padStart(4, '0'));
-  if (jibunInfo.ji) url.searchParams.append('ji', jibunInfo.ji.padStart(4, '0'));
-  url.searchParams.append('numOfRows', '100');
-  url.searchParams.append('pageNo', '1');
-  url.searchParams.append('_type', 'json');
-
-  return await fetchBuildingApi(url);
+  return fetchBuildingOp('permit', sigunguCd, bjdongCd, jibunInfo);
 }
 
 // 전역 변수로 상세보기용 데이터 저장
@@ -1344,11 +1370,8 @@ async function renderBuildingView() {
       </svg>
       소방시설 설치기준 PDF 다운로드
       ${!currentUser ? '<span class="pdf-login-badge">로그인 필요</span>' : (() => {
-        const _today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
-        const _d = JSON.parse(localStorage.getItem('pdf_download_count') || '{}');
-        const _used = _d.date === _today ? _d.count : 0;
-        const _remain = 5 - _used;
-        return `<span class="pdf-remain-badge">${_remain}/5</span>`;
+        const { count } = readPdfUsage();
+        return `<span class="pdf-remain-badge">${Math.max(0, PDF_DAILY_LIMIT - count)}/${PDF_DAILY_LIMIT}</span>`;
       })()}
     </button>
   `;
@@ -1459,22 +1482,20 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   }
 
   // 포맷팅
-  const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+  const fmtDate = (d) => { const v = String(d || ''); return /^\d{8}$/.test(v) ? `${v.substring(0,4)}.${v.substring(4,6)}.${v.substring(6,8)}` : '-'; };
   const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
-  // 주소 escape (onclick 속성용)
-  const escapedAddress = address.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
+  // 주소는 data-address 속성에만 넣고 핸들러는 this.dataset에서 읽는다 (인라인 JS 문자열 삽입 금지)
   let html = `
     <div class="summary-card">
       <div class="summary-header">
         <div class="summary-header-left">
-          <div class="summary-building-name">${buildingName}</div>
-          <span class="summary-purpose-badge">${mainPurpose}</span>
+          <div class="summary-building-name">${esc(buildingName)}</div>
+          <span class="summary-purpose-badge">${esc(mainPurpose)}</span>
         </div>
         <div class="summary-actions">
-          <button class="action-btn" onclick="showMapModal('${escapedAddress}')" title="지도">
+          <button class="action-btn" data-address="${esc(address)}" onclick="showMapModal(this.dataset.address)" title="지도">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
               <circle cx="12" cy="10" r="3"/>
@@ -1489,7 +1510,7 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
           </button>
-          <button class="action-btn bookmark-btn" id="quickBookmarkBtn" onclick="handleQuickBookmark('${escapedAddress}')" title="즐겨찾기">
+          <button class="action-btn bookmark-btn" id="quickBookmarkBtn" data-address="${esc(address)}" onclick="handleQuickBookmark(this.dataset.address)" title="즐겨찾기">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
@@ -1499,19 +1520,19 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
       <div class="summary-grid">
         <div class="summary-grid-item full-width">
           <span class="summary-grid-label">기타용도</span>
-          <span class="summary-grid-value">${etcPurpose || '-'}</span>
+          <span class="summary-grid-value">${esc(etcPurpose || '-')}</span>
         </div>
         <div class="summary-grid-item full-width">
           <span class="summary-grid-label">주소</span>
-          <span class="summary-grid-value">${address}</span>
+          <span class="summary-grid-value">${esc(address)}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">건축허가일</span>
-          <span class="summary-grid-value">${fmtDate(permitDate)}</span>
+          <span class="summary-grid-value">${esc(fmtDate(permitDate))}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">사용승인일</span>
-          <span class="summary-grid-value">${fmtDate(approvalDate)}</span>
+          <span class="summary-grid-value">${esc(fmtDate(approvalDate))}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">연면적(㎡)</span>
@@ -1523,7 +1544,7 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">세대수</span>
-          <span class="summary-grid-value">${households || '-'}</span>
+          <span class="summary-grid-value">${esc(households || '-')}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">높이</span>
@@ -1531,19 +1552,19 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">지상층수</span>
-          <span class="summary-grid-value">${groundFloors || '-'}</span>
+          <span class="summary-grid-value">${esc(groundFloors || '-')}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">지하층수</span>
-          <span class="summary-grid-value">${undergroundFloors || '-'}</span>
+          <span class="summary-grid-value">${esc(undergroundFloors || '-')}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">건축물구조</span>
-          <span class="summary-grid-value">${structure}</span>
+          <span class="summary-grid-value">${esc(structure)}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">지붕구조</span>
-          <span class="summary-grid-value">${roofStructure}</span>
+          <span class="summary-grid-value">${esc(roofStructure)}</span>
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">승용승강기(대)</span>
@@ -1751,7 +1772,7 @@ window.closeDetailModal = function() {
 
 // 상세 표제부 카드 렌더링
 function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
-  const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+  const fmtDate = (d) => { const v = String(d || ''); return /^\d{8}$/.test(v) ? `${v.substring(0,4)}.${v.substring(4,6)}.${v.substring(6,8)}` : '-'; };
   const fmtArea = (a) => a ? Number(a).toLocaleString() : '-';
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
@@ -1772,7 +1793,7 @@ function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
       html += `
           <button class="building-tab-btn ${index === selectedIndex ? 'active' : ''}"
                   onclick="changeTitleBuilding(${index})">
-            ${name}
+            ${esc(name)}
           </button>`;
     });
     html += `
@@ -1794,9 +1815,9 @@ function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
   // 2. 주요 정보 요약 칩
   html += `
     <div class="info-summary-chips">
-      <span class="info-chip primary">${item.mainPurpsCdNm || '-'}</span>
-      <span class="info-chip">${item.strctCdNm || '-'}</span>
-      <span class="info-chip">지상${item.grndFlrCnt || '-'}층 / 지하${item.ugrndFlrCnt || '-'}층</span>
+      <span class="info-chip primary">${esc(item.mainPurpsCdNm || '-')}</span>
+      <span class="info-chip">${esc(item.strctCdNm || '-')}</span>
+      <span class="info-chip">지상${esc(item.grndFlrCnt || '-')}층 / 지하${esc(item.ugrndFlrCnt || '-')}층</span>
     </div>`;
 
   // 3. 규모 정보
@@ -1810,15 +1831,15 @@ function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">지상층수</span>
-          <span class="detail-info-value">${item.grndFlrCnt || '-'}층</span>
+          <span class="detail-info-value">${esc(item.grndFlrCnt || '-')}층</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">지하층수</span>
-          <span class="detail-info-value">${item.ugrndFlrCnt || '-'}층</span>
+          <span class="detail-info-value">${esc(item.ugrndFlrCnt || '-')}층</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">세대수</span>
-          <span class="detail-info-value">${item.hhldCnt || '-'}세대</span>
+          <span class="detail-info-value">${esc(item.hhldCnt || '-')}세대</span>
         </div>
       </div>
     </div>`;
@@ -1846,27 +1867,27 @@ function renderDetailTitleCard(items, selectedIndex = 0, pmsDay = null) {
       <div class="detail-info-list">
         <div class="detail-info-item">
           <span class="detail-info-label">주용도</span>
-          <span class="detail-info-value">${item.mainPurpsCdNm || '-'}</span>
+          <span class="detail-info-value">${esc(item.mainPurpsCdNm || '-')}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">기타용도</span>
-          <span class="detail-info-value">${item.etcPurps || '-'}</span>
+          <span class="detail-info-value">${esc(item.etcPurps || '-')}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">구조</span>
-          <span class="detail-info-value">${item.strctCdNm || '-'}</span>
+          <span class="detail-info-value">${esc(item.strctCdNm || '-')}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">지붕구조</span>
-          <span class="detail-info-value">${item.roofCdNm || '-'}</span>
+          <span class="detail-info-value">${esc(item.roofCdNm || '-')}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">승용승강기</span>
-          <span class="detail-info-value">${item.rideUseElvtCnt || '0'}대</span>
+          <span class="detail-info-value">${esc(item.rideUseElvtCnt || '0')}대</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">비상승강기</span>
-          <span class="detail-info-value">${item.emgenUseElvtCnt || '0'}대</span>
+          <span class="detail-info-value">${esc(item.emgenUseElvtCnt || '0')}대</span>
         </div>
       </div>
     </div>`;
@@ -1971,7 +1992,7 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
         <div class="dong-accordion-item ${isFirstDong ? 'expanded' : ''}" data-dong-id="${dongId}">
           <div class="dong-accordion-header" onclick="toggleDongAccordion('${dongId}')">
             <div class="dong-header-info">
-              <span class="dong-name">${dongName}</span>
+              <span class="dong-name">${esc(dongName)}</span>
               <span class="dong-floor-summary">(${floorSummary || '-'})</span>
             </div>
             <svg class="dong-accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2001,7 +2022,7 @@ function renderDetailFloorCard(items, pmsDay, sortMode = 'floor-desc') {
 
   html += `<div class="usage-summary">`;
   Object.entries(usageSummary).forEach(([use, area]) => {
-    html += `<span class="usage-chip">${use}: ${area.toLocaleString()}㎡</span>`;
+    html += `<span class="usage-chip">${esc(use)}: ${area.toLocaleString()}㎡</span>`;
   });
   html += `</div>`;
 
@@ -2030,11 +2051,11 @@ function renderFloorListByMode(floors, sortMode) {
       html += `<div class="detail-floor-list">`;
       section.floors.forEach(item => {
         const floorLabel = item.flrGbCdNm === '지하' ? `B${item.flrNo}` : `${item.flrNo}F`;
-        const etcPurps = item.etcPurps ? `<span class="floor-etc">${item.etcPurps}</span>` : '';
+        const etcPurps = item.etcPurps ? `<span class="floor-etc">${esc(item.etcPurps)}</span>` : '';
         html += `
           <div class="detail-floor-item">
-            <span class="floor-num">${floorLabel}</span>
-            <span class="floor-use">${item.mainPurpsCdNm || '-'}</span>
+            <span class="floor-num">${esc(floorLabel)}</span>
+            <span class="floor-use">${esc(item.mainPurpsCdNm || '-')}</span>
             ${etcPurps}
             <span class="floor-area">${item.area ? Number(item.area).toLocaleString() : '-'}㎡</span>
           </div>`;
@@ -2098,9 +2119,9 @@ function renderDetailGeneralCard(items, permitInfo, titleItems = []) {
   // 1. 주요 정보 요약 칩
   html += `
     <div class="info-summary-chips">
-      <span class="info-chip primary">${item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-'}</span>
-      <span class="info-chip">${structure}</span>
-      <span class="info-chip">지상${grndFlrCnt || '-'}층 / 지하${ugrndFlrCnt || '-'}층</span>
+      <span class="info-chip primary">${esc(item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-')}</span>
+      <span class="info-chip">${esc(structure)}</span>
+      <span class="info-chip">지상${esc(grndFlrCnt || '-')}층 / 지하${esc(ugrndFlrCnt || '-')}층</span>
     </div>`;
 
   // 2. 규모 정보
@@ -2114,15 +2135,15 @@ function renderDetailGeneralCard(items, permitInfo, titleItems = []) {
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">지상층수</span>
-          <span class="detail-info-value">${grndFlrCnt || '-'}층</span>
+          <span class="detail-info-value">${esc(grndFlrCnt || '-')}층</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">지하층수</span>
-          <span class="detail-info-value">${ugrndFlrCnt || '-'}층</span>
+          <span class="detail-info-value">${esc(ugrndFlrCnt || '-')}층</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">세대수</span>
-          <span class="detail-info-value">${item.hhldCnt || '-'}세대</span>
+          <span class="detail-info-value">${esc(item.hhldCnt || '-')}세대</span>
         </div>
       </div>
     </div>`;
@@ -2146,11 +2167,11 @@ function renderDetailGeneralCard(items, permitInfo, titleItems = []) {
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">용적률</span>
-          <span class="detail-info-value">${item.vlRat || '-'}%</span>
+          <span class="detail-info-value">${esc(item.vlRat || '-')}%</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">건폐율</span>
-          <span class="detail-info-value">${item.bcRat || '-'}%</span>
+          <span class="detail-info-value">${esc(item.bcRat || '-')}%</span>
         </div>
       </div>
     </div>`;
@@ -2162,19 +2183,19 @@ function renderDetailGeneralCard(items, permitInfo, titleItems = []) {
       <div class="detail-info-list">
         <div class="detail-info-item">
           <span class="detail-info-label">주용도</span>
-          <span class="detail-info-value">${item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-'}</span>
+          <span class="detail-info-value">${esc(item.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-')}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">기타용도</span>
-          <span class="detail-info-value">${item.etcPurps || mainTitle.etcPurps || '-'}</span>
+          <span class="detail-info-value">${esc(item.etcPurps || mainTitle.etcPurps || '-')}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">구조</span>
-          <span class="detail-info-value">${structure}</span>
+          <span class="detail-info-value">${esc(structure)}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">지붕구조</span>
-          <span class="detail-info-value">${roofStructure}</span>
+          <span class="detail-info-value">${esc(roofStructure)}</span>
         </div>
         <div class="detail-info-item">
           <span class="detail-info-label">승용승강기</span>
@@ -2222,8 +2243,9 @@ function extractItems(data) {
 
 // 날짜 포맷팅 (YYYYMMDD -> YYYY.MM.DD)
 function formatDate(dateStr) {
-  if (!dateStr || dateStr.length !== 8) return '-';
-  return `${dateStr.substring(0, 4)}.${dateStr.substring(4, 6)}.${dateStr.substring(6, 8)}`;
+  const v = String(dateStr || '');
+  if (!/^\d{8}$/.test(v)) return '-';
+  return `${v.substring(0, 4)}.${v.substring(4, 6)}.${v.substring(6, 8)}`;
 }
 
 // 허가일 기준 적용 소방법령 판단
@@ -2368,7 +2390,8 @@ function clearResult() {
 
 // 에러 표시
 function showError(message) {
-  document.getElementById('result').innerHTML = `<div class="error-message">${message}</div>`;
+  // API 오류 메시지(resultMsg 등 외부 문자열)가 포함될 수 있으므로 이스케이프
+  document.getElementById('result').innerHTML = `<div class="error-message">${esc(message)}</div>`;
 }
 
 // ==================== 로그인 유도 핸들러 ====================
@@ -2437,6 +2460,31 @@ window.handleQuickBookmark = async function(address) {
   }
 };
 
+// PDF 일일 사용량 (localStorage, 한국시간 기준). 손상된 값·저장 불가 환경은 0회로 간주한다.
+// ※ 브라우저 저장소 기반이라 강제력은 없음 — 정책 편의 기능이며 보안 경계가 아니다.
+const PDF_DAILY_LIMIT = 5;
+const PDF_USAGE_KEY = 'pdf_download_count';
+
+function readPdfUsage() {
+  const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
+  let data = null;
+  try {
+    data = JSON.parse(localStorage.getItem(PDF_USAGE_KEY) || 'null');
+  } catch {
+    data = null;
+  }
+  const count = data && data.date === today ? Math.max(0, Number(data.count) || 0) : 0;
+  return { today, count };
+}
+
+function writePdfUsage(today, count) {
+  try {
+    localStorage.setItem(PDF_USAGE_KEY, JSON.stringify({ date: today, count }));
+  } catch {
+    // 저장 불가(사생활 보호 모드 등) — 무시
+  }
+}
+
 // PDF 다운로드 (window.print 기반)
 window.handlePdfDownload = function() {
   if (!currentUser) {
@@ -2444,22 +2492,15 @@ window.handlePdfDownload = function() {
     return;
   }
 
-  // 무료사용자 일일 5회 제한 확인
-  const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
-  const pdfKey = 'pdf_download_count';
-  const pdfData = JSON.parse(localStorage.getItem(pdfKey) || '{}');
-  if (pdfData.date !== today) {
-    pdfData.date = today;
-    pdfData.count = 0;
-  }
-
-  if (pdfData.count >= 5) {
-    showToast('일일 PDF 다운로드 한도(5회)를 초과했습니다');
+  // 무료사용자 일일 5회 제한 확인 (실제 차감·재확인은 _executePdfDownload에서)
+  const { count: used } = readPdfUsage();
+  if (used >= PDF_DAILY_LIMIT) {
+    showToast(`일일 PDF 다운로드 한도(${PDF_DAILY_LIMIT}회)를 초과했습니다`);
     return;
   }
 
-  const used = pdfData.count;
-  const remaining = 5 - used;
+  // 이번 다운로드 후 남는 횟수
+  const remaining = PDF_DAILY_LIMIT - used - 1;
 
   // 확인 모달 표시
   const overlay = document.createElement('div');
@@ -2476,10 +2517,10 @@ window.handlePdfDownload = function() {
       <div class="modal-body" style="text-align:center;padding:24px 20px;">
         <div style="font-size:36px;margin-bottom:12px;">📄</div>
         <div style="font-size:15px;color:var(--text-primary);font-weight:600;margin-bottom:6px;">
-          오늘 ${used}회 사용 / 5회 중
+          오늘 ${used}회 사용 / ${PDF_DAILY_LIMIT}회 중
         </div>
         <div style="font-size:13px;color:var(--text-tertiary);margin-bottom:20px;">
-          다운로드 시 <strong>${remaining}회</strong> 남습니다
+          다운로드 후 <strong>${remaining}회</strong> 남습니다
         </div>
         <div style="display:flex;gap:8px;">
           <button onclick="document.getElementById('pdfConfirmModal').remove()"
@@ -2500,15 +2541,23 @@ window.handlePdfDownload = function() {
 
 // 실제 PDF 생성 실행
 window._executePdfDownload = async function() {
-  const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
-  const pdfKey = 'pdf_download_count';
-  const pdfData = JSON.parse(localStorage.getItem(pdfKey) || '{}');
-  if (pdfData.date !== today) {
-    pdfData.date = today;
-    pdfData.count = 0;
+  if (!currentUser) {
+    showLoginRequiredToast('PDF 다운로드는 로그인 후 이용할 수 있습니다');
+    return;
   }
-  pdfData.count++;
-  localStorage.setItem(pdfKey, JSON.stringify(pdfData));
+  // 한도 확인은 확인 모달이 아니라 실제 생성 함수에서 한다 (전역 함수 직접 호출로 우회 방지)
+  const { today, count } = readPdfUsage();
+  if (count >= PDF_DAILY_LIMIT) {
+    showToast(`일일 PDF 다운로드 한도(${PDF_DAILY_LIMIT}회)를 초과했습니다`);
+    return;
+  }
+  // 팝업은 첫 await 이전(클릭 처리 중)에 열어야 차단되지 않는다. 차단되면 횟수를 차감하지 않음
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast('팝업이 차단되어 PDF 창을 열 수 없습니다. 팝업을 허용한 뒤 다시 시도해주세요.');
+    return;
+  }
+  writePdfUsage(today, count + 1);
 
   showToast('PDF 생성 중...');
 
@@ -2545,7 +2594,7 @@ window._executePdfDownload = async function() {
     if (!height || maxH > Number(height)) height = maxH;
   }
 
-  const fmtDate = (d) => d ? `${d.substring(0,4)}.${d.substring(4,6)}.${d.substring(6,8)}` : '-';
+  const fmtDate = (d) => { const v = String(d || ''); return /^\d{8}$/.test(v) ? `${v.substring(0,4)}.${v.substring(4,6)}.${v.substring(6,8)}` : '-'; };
   const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
@@ -2557,10 +2606,10 @@ window._executePdfDownload = async function() {
     titleItems.forEach(t => {
       const name = t.dongNm || t.bldNm || '-';
       titleSummaryHtml += `<tr>
-        <td>${name}</td>
-        <td>${t.mainPurpsCdNm || '-'}</td>
+        <td>${esc(name)}</td>
+        <td>${esc(t.mainPurpsCdNm || '-')}</td>
         <td>${fmtArea(t.totArea)}</td>
-        <td>${t.grndFlrCnt || '-'}층 / B${t.ugrndFlrCnt || '-'}</td>
+        <td>${esc(t.grndFlrCnt || '-')}층 / B${esc(t.ugrndFlrCnt || '-')}</td>
         <td>${fmtHeight(t.heit)}</td>
       </tr>`;
     });
@@ -2585,12 +2634,12 @@ window._executePdfDownload = async function() {
       const sorted = [...ground, ...underground];
 
       if (Object.keys(dongGroups).length > 1) {
-        floorSummaryHtml += `<h3 style="font-size:13px;color:#4e5968;margin:16px 0 6px;">${dongName}</h3>`;
+        floorSummaryHtml += `<h3 style="font-size:13px;color:#4e5968;margin:16px 0 6px;">${esc(dongName)}</h3>`;
       }
       floorSummaryHtml += `<table><thead><tr><th>층</th><th>용도</th><th>면적(㎡)</th></tr></thead><tbody>`;
       sorted.forEach(f => {
         const label = f.flrGbCdNm === '지하' ? `B${f.flrNo}` : `${f.flrNo}F`;
-        floorSummaryHtml += `<tr><td>${label}</td><td>${f.mainPurpsCdNm || '-'}${f.etcPurps ? ' / ' + f.etcPurps : ''}</td><td>${f.area ? Number(f.area).toLocaleString() : '-'}</td></tr>`;
+        floorSummaryHtml += `<tr><td>${esc(label)}</td><td>${esc(f.mainPurpsCdNm || '-')}${f.etcPurps ? ' / ' + esc(f.etcPurps) : ''}</td><td>${f.area ? Number(f.area).toLocaleString() : '-'}</td></tr>`;
       });
       floorSummaryHtml += `</tbody></table>`;
     }
@@ -2616,10 +2665,10 @@ window._executePdfDownload = async function() {
               if (r.start_date) {
                 dateInfo = r.end_date ? ` <span class="reg-date">(${formatPermitDate(r.start_date)} ~ ${formatPermitDate(r.end_date)})</span>` : ` <span class="reg-date">(${formatPermitDate(r.start_date)}~)</span>`;
               }
-              return r.criteria + dateInfo;
+              return esc(r.criteria) + dateInfo;
             }).join('<br>')
           : '-';
-        facilitiesHtml += `<tr><td class="fname">${f.name}</td><td>${criteria}</td></tr>`;
+        facilitiesHtml += `<tr><td class="fname">${esc(f.name)}</td><td>${criteria}</td></tr>`;
       }
       facilitiesHtml += `</tbody></table>`;
     }
@@ -2630,14 +2679,14 @@ window._executePdfDownload = async function() {
       const rules = await getExemptionRulesForFacility(f.name, pDate);
       if (rules.length > 0) {
         const fmtRule = (rule) => {
-          let info = rule.criteria;
+          let info = esc(rule.criteria);
           const parts = [];
-          if (rule.source) parts.push(rule.source);
+          if (rule.source) parts.push(esc(rule.source));
           if (rule.start_date) parts.push(rule.end_date ? `${formatPermitDate(rule.start_date)} ~ ${formatPermitDate(rule.end_date)}` : `${formatPermitDate(rule.start_date)}~`);
           if (parts.length > 0) info += ` <span class="reg-date">(${parts.join(', ')})</span>`;
           return info;
         };
-        exemptionHtml += `<tr><td class="fname" rowspan="${rules.length}">${f.name}</td><td>${fmtRule(rules[0])}</td></tr>`;
+        exemptionHtml += `<tr><td class="fname" rowspan="${rules.length}">${esc(f.name)}</td><td>${fmtRule(rules[0])}</td></tr>`;
         for (let i = 1; i < rules.length; i++) {
           exemptionHtml += `<tr><td>${fmtRule(rules[i])}</td></tr>`;
         }
@@ -2650,7 +2699,7 @@ window._executePdfDownload = async function() {
 
     if (optional.length > 0) {
       facilitiesHtml += `<h2>비해당 시설 (${optional.length}개)</h2>
-        <p class="optional-list">${optional.map(f => f.name).join(', ')}</p>`;
+        <p class="optional-list">${optional.map(f => esc(f.name)).join(', ')}</p>`;
     }
   }
 
@@ -2659,18 +2708,17 @@ window._executePdfDownload = async function() {
   let lawHtml = '';
   if (lawInfo) {
     lawHtml = `<h2>적용 소방법령</h2><table>
-      <tr><th>법률명</th><td>${lawInfo.name}</td></tr>
-      <tr><th>적용 기간</th><td>${lawInfo.period}</td></tr>
-      <tr><th>주요 내용</th><td>${lawInfo.keyPoints.join('<br>')}</td></tr>
+      <tr><th>법률명</th><td>${esc(lawInfo.name)}</td></tr>
+      <tr><th>적용 기간</th><td>${esc(lawInfo.period)}</td></tr>
+      <tr><th>주요 내용</th><td>${lawInfo.keyPoints.map(esc).join('<br>')}</td></tr>
     </table>`;
   }
 
-  const printWindow = window.open('', '_blank');
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>${buildingName} - 소방시설 설치기준</title>
+  <title>${esc(buildingName)} - 소방시설 설치기준</title>
   <style>
     body { font-family: -apple-system, 'Noto Sans KR', sans-serif; padding: 60px 40px 40px; color: #191f28; line-height: 1.6; max-width: 800px; margin: 0 auto; }
     h1 { font-size: 22px; margin-bottom: 4px; }
@@ -2692,17 +2740,17 @@ window._executePdfDownload = async function() {
   </style>
 </head>
 <body>
-  <h1>${buildingName}</h1>
+  <h1>${esc(buildingName)}</h1>
   <div class="subtitle">소방시설 설치기준 조회 결과 | ${new Date().toLocaleDateString('ko-KR')} | sobangcheck.com</div>
 
   <h2>건축물 개요</h2>
   <table>
-    <tr><th>주소</th><td colspan="3">${address}</td></tr>
-    <tr><th>주용도</th><td>${mainPurpose}</td><th>기타용도</th><td>${etcPurpose}</td></tr>
+    <tr><th>주소</th><td colspan="3">${esc(address)}</td></tr>
+    <tr><th>주용도</th><td>${esc(mainPurpose)}</td><th>기타용도</th><td>${esc(etcPurpose)}</td></tr>
     <tr><th>건축허가일</th><td>${fmtDate(permitDate)}</td><th>사용승인일</th><td>${fmtDate(approvalDate)}</td></tr>
     <tr><th>연면적</th><td>${fmtArea(totalArea)} ㎡</td><th>건축면적</th><td>${fmtArea(buildingArea)} ㎡</td></tr>
-    <tr><th>층수</th><td>지상 ${groundFloors || '-'}층 / 지하 ${undergroundFloors || '-'}층</td><th>높이</th><td>${fmtHeight(height)}</td></tr>
-    <tr><th>구조</th><td colspan="3">${structure}</td></tr>
+    <tr><th>층수</th><td>지상 ${esc(groundFloors || '-')}층 / 지하 ${esc(undergroundFloors || '-')}층</td><th>높이</th><td>${fmtHeight(height)}</td></tr>
+    <tr><th>구조</th><td colspan="3">${esc(structure)}</td></tr>
   </table>
 
   ${titleSummaryHtml}
@@ -2730,7 +2778,7 @@ function showLoginRequiredToast(message) {
   const toast = document.createElement('div');
   toast.className = 'login-toast';
   toast.innerHTML = `
-    <span>${message}</span>
+    <span>${esc(message)}</span>
     <button onclick="this.parentElement.remove(); handleGoogleLogin();">로그인</button>
   `;
   document.body.appendChild(toast);
@@ -3196,9 +3244,9 @@ async function renderFireFacilitiesCard(buildingInfo) {
     <div class="fire-facilities-card">
       <div class="fire-facilities-header">
         <div class="classification-badge">
-          <span class="classification-class">${classification?.class || '미분류'}</span>
+          <span class="classification-class">${esc(classification?.class || '미분류')}</span>
           ${classification?.category && classification.category !== '일반' ?
-            `<span class="classification-category">${classification.category}</span>` : ''}
+            `<span class="classification-category">${esc(classification.category)}</span>` : ''}
         </div>
         <div class="law-period-badge">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3230,7 +3278,7 @@ async function renderFireFacilitiesCard(buildingInfo) {
             <div class="facility-item required clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
               <span class="facility-icon">${f.icon}</span>
               <div class="facility-info">
-                <span class="facility-name">${f.name}</span>
+                <span class="facility-name">${esc(f.name)}</span>
               </div>
             </div>
           `).join('')}
@@ -3251,7 +3299,7 @@ async function renderFireFacilitiesCard(buildingInfo) {
               <div class="facility-item optional clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
                 <span class="facility-icon">${f.icon}</span>
                 <div class="facility-info">
-                  <span class="facility-name">${f.name}</span>
+                  <span class="facility-name">${esc(f.name)}</span>
                 </div>
               </div>
             `).join('')}
@@ -3363,8 +3411,9 @@ function getLawLinksHtml(permitDate) {
 
 // 허가일 포맷
 function formatPermitDate(dateStr) {
-  if (!dateStr || dateStr.length !== 8) return '-';
-  return `${dateStr.substring(0,4)}.${dateStr.substring(4,6)}.${dateStr.substring(6,8)}`;
+  const v = String(dateStr || '');
+  if (!/^\d{8}$/.test(v)) return '-';
+  return `${v.substring(0,4)}.${v.substring(4,6)}.${v.substring(6,8)}`;
 }
 
 // ==================== 소방기준 모달 ====================
@@ -3480,8 +3529,8 @@ window.showFacilityDetailModal = async function(facilityIndex) {
     <div class="facility-detail-header">
       <span class="facility-detail-icon">${facility.icon}</span>
       <div class="facility-detail-info">
-        <span class="facility-detail-name">${facility.name}</span>
-        <span class="facility-detail-category">${facility.category || ''}</span>
+        <span class="facility-detail-name">${esc(facility.name)}</span>
+        <span class="facility-detail-category">${esc(facility.category || '')}</span>
       </div>
       <span class="facility-detail-status ${facility.required ? 'required' : 'optional'}">
         ${facility.required ? '필수' : '비해당'}
@@ -3501,9 +3550,9 @@ window.showFacilityDetailModal = async function(facilityIndex) {
             </svg>
             <span>${formatPeriod(reg)}</span>
           </div>
-          <div class="regulation-criteria">${reg.criteria}</div>
-          ${reg.applicable_to ? `<div class="regulation-target">대상: ${reg.applicable_to}</div>` : ''}
-          ${reg.note ? `<div class="regulation-note">※ ${reg.note}</div>` : ''}
+          <div class="regulation-criteria">${esc(reg.criteria)}</div>
+          ${reg.applicable_to ? `<div class="regulation-target">대상: ${esc(reg.applicable_to)}</div>` : ''}
+          ${reg.note ? `<div class="regulation-note">※ ${esc(reg.note)}</div>` : ''}
         </div>
       `;
     });
@@ -3530,11 +3579,11 @@ window.showFacilityDetailModal = async function(facilityIndex) {
             </svg>
             <span>${formatPeriod(rule)}</span>
           </div>
-          <div class="regulation-criteria">${rule.criteria}</div>
+          <div class="regulation-criteria">${esc(rule.criteria)}</div>
           ${rule.source ? `<div class="regulation-source">출처: ${{
             '별표5': '[별표5] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련)',
             '별표6': '[별표6] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련)'
-          }[rule.source] || rule.source}</div>` : ''}
+          }[rule.source] || esc(rule.source)}</div>` : ''}
         </div>
       `;
     });
@@ -3551,13 +3600,13 @@ window.showFacilityDetailModal = async function(facilityIndex) {
       if (matched) {
         html += `
           <div class="nfsc-link-section">
-            <a href="${matched.link}" target="_blank" class="nfsc-link-btn">
+            <a href="${esc(safeHttpUrl(matched.link))}" target="_blank" rel="noopener" class="nfsc-link-btn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              ${matched.name}
+              ${esc(matched.name)}
             </a>
           </div>
         `;
@@ -3777,7 +3826,7 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
   // HTML 생성
   let html = `
     <div class="fire-standards-header-info">
-      <span class="purpose-badge">${data.building_type}</span>
+      <span class="purpose-badge">${esc(data.building_type)}</span>
       ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
@@ -3799,15 +3848,15 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
     catData.facilities.forEach(facility => {
       html += `
         <div class="standards-facility-item">
-          <div class="standards-facility-name">${facility.name}</div>
+          <div class="standards-facility-name">${esc(facility.name)}</div>
           <div class="standards-facility-criteria">
       `;
 
       facility.regulations.forEach(reg => {
         html += `
           <div class="criteria-item">
-            <span class="criteria-text">${reg.criteria}</span>
-            ${reg.applicable_to ? `<span class="applicable-badge">${reg.applicable_to}</span>` : ''}
+            <span class="criteria-text">${esc(reg.criteria)}</span>
+            ${reg.applicable_to ? `<span class="applicable-badge">${esc(reg.applicable_to)}</span>` : ''}
           </div>
         `;
       });
@@ -4100,7 +4149,7 @@ async function displayManualResult(buildingInfo, permitDate) {
       <div class="summary-header">
         <div class="summary-header-left">
           <span class="summary-building-name">직접 입력 건물</span>
-          <span class="summary-purpose-badge">${buildingInfo.mainPurpsCdNm}</span>
+          <span class="summary-purpose-badge">${esc(buildingInfo.mainPurpsCdNm)}</span>
         </div>
       </div>
       <div class="summary-grid">
@@ -4235,9 +4284,9 @@ function showToast(message) {
 
 // 메모 편집기 표시
 window.showMemoEditor = function(docId, currentMemo) {
-  const newMemo = prompt('메모 입력', currentMemo || '');
+  const newMemo = prompt('메모 입력 (최대 500자)', currentMemo || '');
   if (newMemo !== null) {
-    saveMemo(docId, newMemo);
+    saveMemo(docId, newMemo.slice(0, 500));
   }
 };
 

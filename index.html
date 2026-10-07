@@ -314,7 +314,8 @@
       window.__inAppBrowser = true;
       // Android: Intent URL로 Chrome 열기
       if (/Android/i.test(ua)) {
-        location.href = 'intent://' + location.href.replace(/^https?:\/\//, '') +
+        // host·path·query만 사용 (#fragment를 넣으면 조작된 링크로 인텐트 파라미터를 주입할 수 있음)
+        location.href = 'intent://' + location.host + location.pathname + location.search +
           '#Intent;scheme=https;package=com.android.chrome;end';
       }
     }

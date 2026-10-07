@@ -289,16 +289,19 @@
       updateUserRole,
       ROLE_LABELS
     } from '/js/firebase.js';
+    import { escapeHtml, safeHttpUrl } from '/js/lib/html.js';
 
     // 헤더 렌더링 및 컴포넌트 초기화
     renderHeader('header-container');
     initComponents();
 
     let allUsers = [];
+    let currentUid = null;
 
     // 페이지 초기화
     onAuthChange(async (user) => {
       await updateAuthUI(user);
+      currentUid = user ? user.uid : null;
 
       if (!user) {
         showAccessDenied();
@@ -354,22 +357,24 @@
 
       countEl.textContent = `${allUsers.length}명`;
 
+      // 표시명·이메일·사진 URL은 각 사용자가 직접 설정할 수 있는 값이므로 반드시 이스케이프한다.
+      // uid는 문서 데이터의 uid 필드(사용자가 쓸 수 있음)가 아니라 Firestore 문서 ID를 사용한다.
       const html = allUsers.map(user => {
-        const roleLabel = ROLE_LABELS[user.role] || '무료이용자';
         const createdAt = user.createdAt?.toDate?.() || new Date();
         const dateStr = createdAt.toLocaleDateString('ko-KR');
+        const photoUrl = safeHttpUrl(user.photoURL, { httpsOnly: true }) || '/assets/favicon.svg';
 
         return `
-          <div class="user-item" data-uid="${user.uid}">
-            <img class="user-avatar" src="${user.photoURL || '/assets/default-avatar.png'}" alt="프로필" onerror="this.src='/assets/favicon.svg'">
+          <div class="user-item" data-uid="${escapeHtml(user.id)}">
+            <img class="user-avatar" src="${escapeHtml(photoUrl)}" alt="프로필" referrerpolicy="no-referrer">
             <div class="user-details">
-              <div class="user-name">${user.displayName || '이름 없음'}</div>
-              <div class="user-email">${user.email || '-'}</div>
-              <div class="user-meta">가입일: ${dateStr}</div>
+              <div class="user-name">${escapeHtml(user.displayName || '이름 없음')}</div>
+              <div class="user-email">${escapeHtml(user.email || '-')}</div>
+              <div class="user-meta">가입일: ${escapeHtml(dateStr)}</div>
             </div>
-            <select class="role-select" onchange="handleRoleChange('${user.uid}', this.value)">
+            <select class="role-select" aria-label="회원 등급" ${user.id === currentUid ? 'disabled title="본인 등급은 변경할 수 없습니다"' : ''}>
               ${Object.entries(ROLE_LABELS).map(([key, label]) => `
-                <option value="${key}" ${user.role === key ? 'selected' : ''}>${label}</option>
+                <option value="${escapeHtml(key)}" ${user.role === key ? 'selected' : ''}>${escapeHtml(label)}</option>
               `).join('')}
             </select>
           </div>
@@ -377,15 +382,25 @@
       }).join('');
 
       container.innerHTML = html;
+
+      // 인라인 핸들러 대신 이벤트 연결 (uid를 JS 문자열에 끼워 넣지 않음)
+      container.querySelectorAll('.user-item').forEach((item) => {
+        const avatar = item.querySelector('.user-avatar');
+        avatar.addEventListener('error', () => { avatar.src = '/assets/favicon.svg'; }, { once: true });
+        item.querySelector('.role-select').addEventListener('change', (e) => {
+          handleRoleChange(item.dataset.uid, e.target.value);
+        });
+      });
     }
 
     // 등급 변경 처리
-    window.handleRoleChange = async function(uid, newRole) {
+    async function handleRoleChange(uid, newRole) {
+      if (!Object.prototype.hasOwnProperty.call(ROLE_LABELS, newRole)) return;
       try {
         const success = await updateUserRole(uid, newRole);
         if (success) {
           // 로컬 데이터 업데이트
-          const user = allUsers.find(u => u.uid === uid);
+          const user = allUsers.find(u => u.id === uid);
           if (user) user.role = newRole;
           renderStats();
           showToast('등급이 변경되었습니다.', 'success');
@@ -399,7 +414,7 @@
         showToast('등급 변경에 실패했습니다.', 'error');
         await loadUsers();
       }
-    };
+    }
 
     // 접근 거부 표시
     function showAccessDenied() {
