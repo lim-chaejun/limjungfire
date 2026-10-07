@@ -226,7 +226,9 @@ test('v1 필드 불변: 추가형 변경은 통과, criteria·날짜·행 수·�
   assert.deepEqual(compareV1Fields(before, additive), []);
 
   const edited = structuredClone(before);
-  edited.fire_facilities[2].regulations[0].start_date = '20180127';
+  // 실제 데이터와 반드시 다른 날짜로 바꾼다 (데이터 정정으로 원래 값이 같아지면 바뀐 것이 없게 된다)
+  const origStart = before.fire_facilities[2].regulations[0].start_date;
+  edited.fire_facilities[2].regulations[0].start_date = origStart === '19000101' ? '19000102' : '19000101';
   edited.fire_facilities[1].regulations[0].criteria += ' ';
   assert.deepEqual(codes(compareV1Fields(before, edited)), ['V1_FIELD_CHANGED', 'V1_FIELD_CHANGED']);
 
