@@ -1466,8 +1466,9 @@ async function renderSummaryCard(generalInfo, permitSelection, titleItems) {
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
   // 층수 표시 (지하가 없으면 '없음')
-  // 지하층 수를 모르면 '-' (값이 0일 때만 '지하 없음')
-  const underKnown = undergroundFloors !== '' && undergroundFloors !== null && undergroundFloors !== undefined;
+  // 지하층 수를 모르면 '-' (대장에 값이 있고 0일 때만 '지하 없음')
+  const hasValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+  const underKnown = hasValue(generalInfo.ugrndFlrCnt) || (titleItems || []).some((t) => hasValue(t.ugrndFlrCnt));
   const underText = Number(undergroundFloors) > 0
     ? `지하 ${esc(undergroundFloors)}층`
     : (underKnown && Number(undergroundFloors) === 0 ? '지하 없음' : '지하 -');
@@ -2977,7 +2978,7 @@ async function renderFireFacilitiesCard(buildingInfo) {
     const summary = f.required && regs.length ? (regs[0].criteria || '') : '';
     // 기준이 여러 건이면 이름 옆에 '+n' (문장 끝에 붙이면 '…외'가 '제외'처럼 읽히고 두 줄 자르기에 가려진다)
     const more = f.required && regs.length > 1
-      ? `<span class="fac-more" aria-label="기준 ${regs.length}건 중 1건 표시">+${regs.length - 1}</span>`
+      ? `<span class="fac-more" aria-hidden="true">+${regs.length - 1}</span><span class="visually-hidden"> (기준 ${regs.length}건 중 1건 표시)</span>`
       : '';
     return `
           <li>
