@@ -1,6 +1,6 @@
 // 소방체크 Service Worker
 // 캐시 이름을 바꾸면 activate 단계에서 이전 캐시(구버전 JS·데이터)가 모두 삭제된다.
-const CACHE_NAME = 'sobangcheck-v4';
+const CACHE_NAME = 'sobangcheck-v5';
 
 // 캐싱할 정적 자원 (리다이렉트되는 /index.html 은 제외)
 const STATIC_ASSETS = [

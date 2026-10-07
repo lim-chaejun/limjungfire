@@ -568,6 +568,9 @@ window.goHome = function() {
   document.getElementById('searchBtn').disabled = true;
 
   setHomeVisible(true);
+  // 주소창의 이전 건물 파라미터도 지운다 (새로고침하면 그 건물이 다시 열리지 않도록)
+  currentAppliedDay = '';
+  if (window.location.search) history.replaceState(null, '', window.location.pathname);
 };
 
 // 홈 소개(제목·직접 입력·바로가기)는 결과가 없을 때만 보인다
