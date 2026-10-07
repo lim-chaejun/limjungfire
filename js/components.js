@@ -25,8 +25,9 @@ const googleIconSvg = `
 export function getHeaderHTML() {
   return `
     <div class="top-bar">
-      <a href="/" class="home-btn" aria-label="홈으로">
+      <a href="/" class="home-btn" aria-label="소방체크 홈으로">
         ${logoSvg}
+        <span class="brand-name" aria-hidden="true">소방체크</span>
       </a>
       <div id="authSection" class="auth-section">
         <div id="loginBtn" class="auth-btn" onclick="handleGoogleLogin()">
@@ -121,7 +122,7 @@ function getModalsHTML() {
         <p class="auth-modal-terms"><a href="/pages/terms.html">이용약관</a> · <a href="/pages/privacy.html">개인정보처리방침</a></p>
       </div>
     </div>
-    <div id="myInfoModal" class="modal" style="display: none;">
+    <div id="myInfoModal" class="modal modal--sheet" style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
           <h2>내 정보</h2>
@@ -150,7 +151,7 @@ function getModalsHTML() {
         </div>
       </div>
     </div>
-    <div id="settingsModal" class="modal" style="display: none;">
+    <div id="settingsModal" class="modal modal--sheet" style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
           <h2>설정</h2>

@@ -452,97 +452,6 @@ async function searchFromUrl() {
   }
 }
 
-// ticker: step-based scroll, long items scroll slowly before advancing
-(function initTicker() {
-  var track = document.querySelector('.tips-ticker-track');
-  var ticker = document.getElementById('tipsTicker');
-  var viewport = document.querySelector('.tips-ticker-viewport');
-  if (!track || !ticker || !viewport) return;
-
-  var itemCount = track.querySelectorAll('.tips-ticker-item').length;
-  if (itemCount === 0) return;
-
-  // duplicate for seamless loop
-  track.innerHTML += track.innerHTML;
-  var allItems = track.querySelectorAll('.tips-ticker-item');
-
-  // each item at least viewport width so short tips fill the view
-  function sizeItems() {
-    var w = viewport.offsetWidth;
-    for (var i = 0; i < allItems.length; i++) {
-      allItems[i].style.minWidth = w + 'px';
-    }
-  }
-  sizeItems();
-
-  var currentIndex = 0;
-  var paused = false;
-  var timer = null;
-
-  function show(index, onDone) {
-    var vpWidth = viewport.offsetWidth;
-    var item = allItems[index];
-    var itemLeft = item.offsetLeft;
-    var itemWidth = item.offsetWidth;
-
-    // slide to item's left edge
-    track.style.transition = 'transform 0.5s ease';
-    track.style.transform = 'translateX(-' + itemLeft + 'px)';
-
-    clearTimeout(timer);
-
-    if (itemWidth > vpWidth) {
-      // long item: after slide-in, slowly scroll to reveal the rest
-      var overflow = itemWidth - vpWidth;
-      var dur = overflow / 40; // 40px per second
-      timer = setTimeout(function doScroll() {
-        if (paused) { timer = setTimeout(doScroll, 300); return; }
-        track.style.transition = 'transform ' + dur + 's linear';
-        track.style.transform = 'translateX(-' + (itemLeft + overflow) + 'px)';
-        timer = setTimeout(function afterScroll() {
-          if (paused) { timer = setTimeout(afterScroll, 300); return; }
-          onDone();
-        }, dur * 1000 + 1500);
-      }, 1500);
-    } else {
-      // short item: wait 4s then advance
-      timer = setTimeout(function afterWait() {
-        if (paused) { timer = setTimeout(afterWait, 300); return; }
-        onDone();
-      }, 4000);
-    }
-  }
-
-  function next() {
-    currentIndex++;
-    if (currentIndex >= itemCount) {
-      // show duplicate of first item (smooth transition from last)
-      show(currentIndex, function() {
-        // jump back to real first item position
-        track.style.transition = 'none';
-        currentIndex = 0;
-        track.style.transform = 'translateX(-' + allItems[0].offsetLeft + 'px)';
-        void track.offsetWidth;
-        next();
-      });
-      return;
-    }
-    show(currentIndex, next);
-  }
-
-  // start with first item
-  show(0, next);
-
-  ticker.addEventListener('mouseenter', function() { paused = true; });
-  ticker.addEventListener('mouseleave', function() { paused = false; });
-
-  window.addEventListener('resize', function() {
-    sizeItems();
-    track.style.transition = 'none';
-    track.style.transform = 'translateX(-' + allItems[currentIndex].offsetLeft + 'px)';
-  });
-})();
-
 // 초기화
 (async function init() {
   // 스플래시 화면 최대 표시 시간 (Firebase 느릴 때 대비)
@@ -658,13 +567,16 @@ window.goHome = function() {
   document.getElementById('addressInput').value = '';
   document.getElementById('searchBtn').disabled = true;
 
-  // 헤더 다시 표시
-  document.getElementById('mainHeader').classList.remove('hidden');
-
-  // 직접 입력 링크 다시 표시
-  const manualLink = document.querySelector('.manual-search-link');
-  if (manualLink) manualLink.style.display = '';
+  setHomeVisible(true);
+  // 주소창의 이전 건물 파라미터도 지운다 (새로고침하면 그 건물이 다시 열리지 않도록)
+  currentAppliedDay = '';
+  if (window.location.search) history.replaceState(null, '', window.location.pathname);
 };
+
+// 홈 소개(제목·직접 입력·바로가기)는 결과가 없을 때만 보인다
+function setHomeVisible(visible) {
+  document.body.classList.toggle('has-result', !visible);
+}
 
 // index.html 전용: 홈 버튼을 goHome()으로 오버라이드
 document.addEventListener('DOMContentLoaded', () => {
@@ -1366,13 +1278,7 @@ function displayAllResults(titleData, floorData, generalData, permitData) {
     return;
   }
 
-  // 헤더 숨기기
-  const header = document.getElementById('mainHeader');
-  if (header) header.classList.add('hidden');
-
-  // 직접 입력 링크 숨기기
-  const manualLink = document.querySelector('.manual-search-link');
-  if (manualLink) manualLink.style.display = 'none';
+  setHomeVisible(false);
 
   renderBuildingView();
 }
@@ -1389,32 +1295,37 @@ function getPrimaryPermitInfo() {
 }
 
 // 건물 뷰 렌더링 (선택된 건물만 표시)
+// PDF 저장 버튼 (로그인 전에는 '로그인 필요', 로그인 후에는 오늘 남은 횟수)
+function pdfButtonHtml() {
+  const badge = !currentUser
+    ? '<span class="chip chip--muted pdf-login-badge">로그인 필요</span>'
+    : `<span class="chip chip--muted">오늘 ${Math.max(0, PDF_DAILY_LIMIT - readPdfUsage().count)}회 남음</span>`;
+  return `
+    <button type="button" class="btn btn--secondary btn--block pdf-download-btn" onclick="handlePdfDownload()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 18 15 15"/>
+      </svg>
+      설치기준 PDF로 저장
+      ${badge}
+    </button>`;
+}
+
 async function renderBuildingView() {
   const resultDiv = document.getElementById('result');
-  const { titleItems, generalItems, permitItems, sortedIndices } = currentBuildingData;
-  const buildingCount = titleItems.length;
+  const { titleItems, generalItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
   const permitSelection = getPrimaryPermitInfo();
 
   let html = '';
 
-  // 건축물 수 표시
-  html += `
-    <div class="building-count-header">
-      <div class="count-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H10M9 11H10M14 7H15M14 11H15M9 21V16C9 15.4477 9.44772 15 10 15H14C14.5523 15 15 15.4477 15 16V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span>해당 주소에 포함된 건축물 수: <strong>${buildingCount || 1}개</strong></span>
-    </div>
-  `;
-
-  // 광고 배너 표시
-  html += renderAdBanner();
-
-  // 총괄 요약 카드 표시 (총괄표제부 기준) - 지연 로드
+  // 건물 카드 + 소방시설 카드 (건축물 수는 건물 카드 머리에 'n동'으로)
   html += await renderSummaryCard(generalInfo, permitSelection, titleItems);
+
+  // PDF 저장
+  html += pdfButtonHtml();
 
   // 비로그인 인라인 배너 (결과 저장 유도)
   if (loginPromptManager.shouldShowResultBanner()) {
@@ -1436,22 +1347,8 @@ async function renderBuildingView() {
     `;
   }
 
-  // PDF 다운로드 버튼
-  html += `
-    <button class="pdf-download-btn" onclick="handlePdfDownload()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="12" y1="18" x2="12" y2="12"/>
-        <polyline points="9 15 12 18 15 15"/>
-      </svg>
-      소방시설 설치기준 PDF 다운로드
-      ${!currentUser ? '<span class="pdf-login-badge">로그인 필요</span>' : (() => {
-        const { count } = readPdfUsage();
-        return `<span class="pdf-remain-badge">${Math.max(0, PDF_DAILY_LIMIT - count)}/${PDF_DAILY_LIMIT}</span>`;
-      })()}
-    </button>
-  `;
+  // 광고는 결과를 다 본 뒤에
+  html += renderAdBanner();
 
   resultDiv.innerHTML = html;
 
@@ -1475,6 +1372,7 @@ async function checkQuickBookmarkState() {
   const isFav = favorites.some(f => f.address === address);
   if (isFav) {
     btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
     btn.querySelector('svg').setAttribute('fill', 'currentColor');
   }
 }
@@ -1567,23 +1465,37 @@ async function renderSummaryCard(generalInfo, permitSelection, titleItems) {
   const fmtArea = (a) => a ? Number(a).toLocaleString('ko-KR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '-';
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
+  // 층수 표시 (지하가 없으면 '없음')
+  // 지하층 수를 모르면 '-' (대장에 값이 있고 0일 때만 '지하 없음')
+  const hasValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+  const underKnown = hasValue(generalInfo.ugrndFlrCnt) || (titleItems || []).some((t) => hasValue(t.ugrndFlrCnt));
+  const underText = Number(undergroundFloors) > 0
+    ? `지하 ${esc(undergroundFloors)}층`
+    : (underKnown && Number(undergroundFloors) === 0 ? '지하 없음' : '지하 -');
+  const floorText = `지상 ${esc(groundFloors || '-')}층 · ${underText}`;
+  const buildingCount = titleItems ? titleItems.length : 0;
+
   // 주소는 data-address 속성에만 넣고 핸들러는 this.dataset에서 읽는다 (인라인 JS 문자열 삽입 금지)
   let html = `
-    <div class="summary-card">
-      <div class="summary-header">
-        <div class="summary-header-left">
-          <div class="summary-building-name">${esc(buildingName)}</div>
-          <span class="summary-purpose-badge">${esc(mainPurpose)}</span>
+    <section class="card bld-card summary-card" aria-labelledby="bldName">
+      <div class="bld-head">
+        <div class="bld-head-main">
+          <div class="bld-chips">
+            <span class="chip chip--primary summary-purpose-badge">${esc(mainPurpose)}</span>
+            ${buildingCount > 1 ? `<span class="chip chip--muted">건축물 ${buildingCount}동</span>` : ''}
+          </div>
+          <h2 class="bld-name summary-building-name" id="bldName">${esc(buildingName)}</h2>
+          <p class="bld-addr">${esc(address)}</p>
         </div>
-        <div class="summary-actions">
-          <button class="action-btn" data-address="${esc(address)}" onclick="showMapModal(this.dataset.address)" title="지도">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="bld-actions">
+          <button type="button" class="icon-btn action-btn" data-address="${esc(address)}" onclick="showMapModal(this.dataset.address)" aria-label="지도에서 보기" title="지도">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
               <circle cx="12" cy="10" r="3"/>
             </svg>
           </button>
-          <button class="action-btn" onclick="shareBuilding()" title="공유">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button type="button" class="icon-btn action-btn" onclick="shareBuilding()" aria-label="공유하기" title="공유">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="18" cy="5" r="3"/>
               <circle cx="6" cy="12" r="3"/>
               <circle cx="18" cy="19" r="3"/>
@@ -1591,78 +1503,74 @@ async function renderSummaryCard(generalInfo, permitSelection, titleItems) {
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
           </button>
-          <button class="action-btn bookmark-btn" id="quickBookmarkBtn" data-address="${esc(address)}" onclick="handleQuickBookmark(this.dataset.address)" title="즐겨찾기">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button type="button" class="icon-btn action-btn bookmark-btn" id="quickBookmarkBtn" aria-pressed="false" data-address="${esc(address)}" onclick="handleQuickBookmark(this.dataset.address)" aria-label="즐겨찾기" title="즐겨찾기">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
           </button>
         </div>
       </div>
-      <div class="summary-grid">
-        <div class="summary-grid-item full-width">
-          <span class="summary-grid-label">기타용도</span>
-          <span class="summary-grid-value">${esc(etcPurpose || '-')}</span>
+      <dl class="kv-grid bld-facts">
+        <div>
+          <dt>건축허가일</dt>
+          <dd>${esc(fmtDate(permitDate))}${permitNote ? `<span class="kv-note">${esc(permitNote)}</span>` : ''}</dd>
         </div>
-        <div class="summary-grid-item full-width">
-          <span class="summary-grid-label">주소</span>
-          <span class="summary-grid-value">${esc(address)}</span>
+        <div>
+          <dt>사용승인일</dt>
+          <dd>${esc(fmtDate(approvalDate))}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">건축허가일</span>
-          <span class="summary-grid-value">${esc(fmtDate(permitDate))}</span>
-          ${permitNote ? `<span class="summary-grid-note">${esc(permitNote)}</span>` : ''}
+        <div>
+          <dt>연면적</dt>
+          <dd>${fmtArea(totalArea)}${totalArea ? '㎡' : ''}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">사용승인일</span>
-          <span class="summary-grid-value">${esc(fmtDate(approvalDate))}</span>
+        <div>
+          <dt>층수</dt>
+          <dd>${floorText}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">연면적(㎡)</span>
-          <span class="summary-grid-value">${fmtArea(totalArea)}</span>
+        <div>
+          <dt>높이</dt>
+          <dd>${fmtHeight(height)}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">건축면적(㎡)</span>
-          <span class="summary-grid-value">${fmtArea(buildingArea)}</span>
+        <div>
+          <dt>세대수</dt>
+          <dd>${esc(households || '-')}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">세대수</span>
-          <span class="summary-grid-value">${esc(households || '-')}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">높이</span>
-          <span class="summary-grid-value">${fmtHeight(height)}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">지상층수</span>
-          <span class="summary-grid-value">${esc(groundFloors || '-')}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">지하층수</span>
-          <span class="summary-grid-value">${esc(undergroundFloors || '-')}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">건축물구조</span>
-          <span class="summary-grid-value">${esc(structure)}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">지붕구조</span>
-          <span class="summary-grid-value">${esc(roofStructure)}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">승용승강기(대)</span>
-          <span class="summary-grid-value">${passengerElevator}</span>
-        </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">비상승강기(대)</span>
-          <span class="summary-grid-value">${emergencyElevator}</span>
-        </div>
+      </dl>
+      <details class="bld-more">
+        <summary>
+          건축물대장 정보 더 보기
+          <svg class="bld-more-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <dl class="kv-grid">
+          <div class="kv-wide">
+            <dt>기타용도</dt>
+            <dd>${esc(etcPurpose || '-')}</dd>
+          </div>
+          <div>
+            <dt>건축면적</dt>
+            <dd>${fmtArea(buildingArea)}${buildingArea ? '㎡' : ''}</dd>
+          </div>
+          <div>
+            <dt>건축물구조</dt>
+            <dd>${esc(structure)}</dd>
+          </div>
+          <div>
+            <dt>지붕구조</dt>
+            <dd>${esc(roofStructure)}</dd>
+          </div>
+          <div>
+            <dt>승강기</dt>
+            <dd>승용 ${passengerElevator}대 · 비상 ${emergencyElevator}대</dd>
+          </div>
+        </dl>
+      </details>
+      <div class="bld-ledger summary-footer">
+        <span class="bld-ledger-label">대장 원문</span>
+        <button type="button" class="btn btn--secondary btn--sm btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
+        <button type="button" class="btn btn--secondary btn--sm btn-detail-sm" onclick="showFloorModal(-1)">층별개요</button>
+        <button type="button" class="btn btn--secondary btn--sm btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
       </div>
-      <div class="summary-footer">
-        <button class="btn-detail-sm" onclick="showGeneralModal()">총괄표제부</button>
-        <button class="btn-detail-sm" onclick="showFloorModal(-1)">층별</button>
-        <button class="btn-detail-sm" onclick="showTitleModal(-1)">표제부</button>
-      </div>
-    </div>
+    </section>
   `;
 
   // 소방시설 카드 지연 로드
@@ -2342,6 +2250,7 @@ window.handleQuickBookmark = async function(address) {
         await fb.removeFavorite(fav.id);
       }
       btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
       btn.querySelector('svg').setAttribute('fill', 'none');
       showToast('즐겨찾기에서 삭제했습니다');
     } else {
@@ -2360,6 +2269,7 @@ window.handleQuickBookmark = async function(address) {
       };
       await fb.addFavorite(addrData, buildingData);
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       btn.querySelector('svg').setAttribute('fill', 'currentColor');
       showToast('즐겨찾기에 추가했습니다');
     }
@@ -2889,6 +2799,44 @@ function getMixedUseTypes(floorItems) {
   return types.size >= 2 ? [...types] : null;
 }
 
+// 결과 카드의 작은 아이콘들
+const NOTICE_ICONS = {
+  warning: '<svg class="notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  info: '<svg class="notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  chevron: '<svg class="notice-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+  chevronRight: '<svg class="fac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
+};
+
+// 확인할 점 한 칸 (kind: 'warning' | 'info'). title·text·actions 는 이미 이스케이프된 HTML
+// text 는 한 문단으로, actions(버튼)는 그 아래에 둔다
+function noticeHtml(kind, title, text = '', actions = '') {
+  const body = (text ? `<p>${text}</p>` : '') + actions;
+  return `
+        <div class="notice notice--${kind}">
+          <div class="notice-head">
+            ${NOTICE_ICONS[kind] || NOTICE_ICONS.info}
+            <span class="notice-title">${title}</span>
+          </div>
+          ${body ? `<div class="notice-body">${body}</div>` : ''}
+        </div>`;
+}
+
+// 시설을 분류별로 묶는다 (화재안전기준의 설비 분류 순서, 데이터에 없는 분류는 뒤에)
+const FACILITY_CATEGORY_ORDER = ['소화설비', '경보설비', '피난구조설비', '소화활동설비', '건축', '기타'];
+function groupFacilitiesByCategory(list) {
+  const groups = new Map();
+  for (const f of list) {
+    const key = f.category || '기타';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(f);
+  }
+  const rank = (k) => {
+    const i = FACILITY_CATEGORY_ORDER.indexOf(k);
+    return i < 0 ? FACILITY_CATEGORY_ORDER.length : i;
+  };
+  return [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]));
+}
+
 async function renderFireFacilitiesCard(buildingInfo) {
   const result = await getRequiredFireFacilities(buildingInfo);
   const {
@@ -2920,55 +2868,67 @@ async function renderFireFacilitiesCard(buildingInfo) {
   const actName = getActNameAt(referenceDate).name;
   // 기준 데이터가 없는 용도는 신청일로 다시 고를 것이 없으므로 허가일 배지를 그대로 쓴다
   const badgeText = appliedDate && !unmapped && !loadFailed
-    ? `허가 신청일: ${formatPermitDate(appliedDate)} (허가일 ${formatPermitDate(permitDate)})`
-    : `${usedApprovalDate ? '기준일(사용승인일)' : '건축허가일'}: ${formatPermitDate(permitDate)}`;
+    ? `신청일 ${formatPermitDate(appliedDate)} 기준`
+    : `${usedApprovalDate ? '사용승인일' : '허가일'} ${formatPermitDate(permitDate)} 기준`;
+  const category = classification?.category && classification.category !== '일반' ? classification.category : '';
 
   const headerHtml = `
-      <div class="fire-facilities-header">
-        <div class="classification-badge">
-          <span class="classification-class">${esc(classification?.class || '미분류')}</span>
-          ${classification?.category && classification.category !== '일반' ?
-            `<span class="classification-category">${esc(classification.category)}</span>` : ''}
+      <div class="fire-head">
+        <div class="fire-head-main">
+          <h2 class="section-heading">소방시설 설치기준</h2>
+          <p class="fire-class">${esc(classification?.class || '미분류')}${category ? ` · ${esc(category)}` : ''}</p>
         </div>
-        <div class="law-period-badge" tabindex="-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 6v6l4 2"/>
-          </svg>
-          ${badgeText}
-        </div>
+        <span class="chip chip--muted law-period-badge" tabindex="-1">${badgeText}</span>
       </div>`;
 
   // 기준 데이터가 없는 용도·로드 실패: 추측 결과 대신 안내
   if (unmapped || loadFailed) {
     const message = unmapped
-      ? `건축물대장 주용도 <strong>'${esc(classification?.category || '-')}'</strong>에 해당하는 소방시설 설치기준 데이터가 없습니다.<br>화면의 <strong>'직접 입력'</strong>에서 가장 가까운 용도를 선택해 확인해 주세요.`
+      ? `건축물대장 주용도 <strong>'${esc(classification?.category || '-')}'</strong>에 해당하는 소방시설 설치기준 데이터가 없습니다. 직접 입력에서 가장 가까운 용도를 골라 확인해 주세요.`
       : '소방시설 설치기준 데이터를 불러오지 못했습니다. 잠시 후 다시 조회해 주세요.';
+    // 결과 화면에서는 홈의 '직접 입력' 버튼이 숨으므로 안내 안에 버튼을 둔다
+    const action = unmapped
+      ? '<button type="button" class="btn btn--secondary btn--sm" onclick="showManualInputModal()">직접 입력하기</button>'
+      : '';
     return `
-    <div class="fire-facilities-card">
+    <section class="card fire-card fire-facilities-card">
       ${headerHtml}
-      <div class="approval-date-warning"><span>${message}</span></div>
-    </div>`;
+      <div class="fire-notices">
+        ${noticeHtml('warning', unmapped ? '이 용도의 기준 데이터가 없습니다' : '기준 데이터를 불러오지 못했습니다', message, action)}
+      </div>
+    </section>`;
+  }
+
+  // 확인할 점 (사용승인일 판단 · 허가 신청일 · 복합건축물)
+  const notices = [];
+
+  if (usedApprovalDate) {
+    notices.push(noticeHtml('warning',
+      `허가일이 조회되지 않아 사용승인일(${formatPermitDate(permitDate)}) 기준으로 판단했습니다`,
+      '허가일이 더 이르면 결과가 달라질 수 있으니 건축물대장의 허가일을 확인하세요.'));
   }
 
   // 허가 신청일 안내
-  // - 신청일을 입력했으면: 신청일 기준으로 다시 고른 결과임을 알리고, 날짜 고치기·되돌리기
-  // - 아니면: 허가일 직전 기간 안에 이 용도의 기준이 바뀐 시설을 보여 주고 신청일 입력을 받는다
+  // - 신청일을 입력했으면: 신청일 기준으로 다시 고른 결과임을 알리고, 날짜 고치기·되돌리기 (펼친 채로)
+  // - 아니면: 허가일 직전 기간 안에 이 용도의 기준이 바뀐 시설을 접힌 안내로 보여 주고 신청일 입력을 받는다
   //   (부칙 적용례는 대개 허가 신청일 기준인데 건축물대장에는 허가일만 있다)
   // 직접 입력에서 허가일을 비워 오늘로 둔 경우는 경계를 따질 허가일이 없으므로 띄우지 않는다.
-  let applicationNotice = '';
   if (appliedDate) {
     // 기간(180일)보다 더 앞선 신청일은 입력 실수일 수 있어 한 번 더 확인을 권한다 (실제로 그럴 수도 있어 막지는 않음)
     const farBefore = appliedDate < addDays(permitDate, -APPLICATION_WINDOW_DAYS);
-    applicationNotice = `
-      <div class="approval-date-warning application-notice">
-        <div class="application-notice-body">
-          <span class="application-notice-lead" tabindex="-1">허가 신청일 <strong>${formatPermitDate(appliedDate)}</strong> 기준으로 다시 고른 결과입니다 (허가일 ${formatPermitDate(permitDate)}). 개정마다 적용 기준이 다를 수 있으니(신청일·설치일·입찰공고일 등) 각 시설의 비고와 부칙을 확인하세요.</span>
-          ${farBefore ? `<span class="boundary-caution">신청일이 허가일보다 ${APPLICATION_WINDOW_DAYS}일 넘게 앞섭니다. 날짜가 맞는지 확인하세요.</span>` : ''}
-          ${applicationDateFormHtml(permitDate, appliedDate)}
-          <button type="button" class="law-ref-btn" onclick="clearApplicationDate()">허가일 기준으로 돌아가기</button>
-        </div>
-      </div>`;
+    notices.push(`
+        <div class="notice notice--info application-notice">
+          <div class="notice-head">
+            ${NOTICE_ICONS.info}
+            <span class="notice-title application-notice-lead" tabindex="-1">허가 신청일 ${formatPermitDate(appliedDate)} 기준으로 다시 고른 결과입니다 (허가일 ${formatPermitDate(permitDate)})</span>
+          </div>
+          <div class="notice-body">
+            <span>개정마다 적용 기준이 다를 수 있으니(신청일·설치일·입찰공고일 등) 각 시설의 비고와 부칙을 확인하세요.</span>
+            ${farBefore ? `<span class="boundary-caution">신청일이 허가일보다 ${APPLICATION_WINDOW_DAYS}일 넘게 앞섭니다. 날짜가 맞는지 확인하세요.</span>` : ''}
+            ${applicationDateFormHtml(permitDate, appliedDate)}
+            <button type="button" class="btn btn--secondary btn--sm boundary-reset" onclick="clearApplicationDate()">허가일 기준으로 돌아가기</button>
+          </div>
+        </div>`);
   } else if (!usedApprovalDate && permitDate && !buildingInfo.permitDateAssumed) {
     const boundaries = findCriteriaBoundaries(fireData, permitDate, APPLICATION_WINDOW_DAYS);
     if (boundaries.length > 0) {
@@ -2977,123 +2937,128 @@ async function renderFireFacilitiesCard(buildingInfo) {
         if (f.before.length && f.after.length) return `이전: ${quote(f.before)} → 이후: ${quote(f.after)}`;
         return f.after.length ? `신설: ${quote(f.after)}` : `삭제: ${quote(f.before)}`;
       };
-      const items = boundaries.flatMap((b) => b.facilities.map((f) => `
+      const changed = boundaries.flatMap((b) => b.facilities.map((f) => ({ b, f })));
+      const items = changed.map(({ b, f }) => `
             <li><strong>${esc(f.name)}</strong> <span class="boundary-date">${formatPermitDate(b.date)} 변경</span><br>
-              ${describe(f)}${f.notes.length ? `<small class="boundary-note">비고: ${esc(f.notes.join(' / '))}</small>` : ''}</li>`));
+              ${describe(f)}${f.notes.length ? `<small class="boundary-note">비고: ${esc(f.notes.join(' / '))}</small>` : ''}</li>`);
       const shown = items.slice(0, 8).join('');
       const more = items.length > 8 ? `<li>외 ${items.length - 8}건 — 각 시설을 눌러 적용 기간별 기준을 확인하세요.</li>` : '';
-      applicationNotice = `
-      <div class="approval-date-warning application-notice">
-        <div class="application-notice-body">
-          <span class="application-notice-lead" tabindex="-1">허가일(${formatPermitDate(permitDate)}) 전 ${APPLICATION_WINDOW_DAYS}일 안에 아래 기준이 바뀌었습니다. 개정 부칙은 대개 <strong>허가 신청일</strong>을 기준으로 적용하므로, 신청일이 바뀐 날짜보다 앞서면 이전 기준이 적용될 수 있습니다.</span>
-          <ul class="boundary-list">${shown}${more}</ul>
-          ${applicationDateFormHtml(permitDate, '', 'appliedDayHelp')}
-          <small class="boundary-help" id="appliedDayHelp">신청일은 허가 서류나 세움터(건축행정시스템)의 민원 처리 이력에서 확인할 수 있습니다. 설치일·입찰공고일 등 다른 날을 기준으로 하는 개정도 있으니 각 시설의 비고와 부칙을 확인하세요.</small>
-        </div>
-      </div>`;
+      notices.push(`
+        <details class="notice notice--warning application-notice">
+          <summary>
+            ${NOTICE_ICONS.warning}
+            <span class="notice-title">허가일 전 ${APPLICATION_WINDOW_DAYS}일 안에 기준이 바뀐 시설 ${changed.length}개 — 허가 신청일을 확인하세요</span>
+            ${NOTICE_ICONS.chevron}
+          </summary>
+          <div class="notice-body">
+            <span>개정 부칙은 대개 <strong>허가 신청일</strong>을 기준으로 적용하므로, 신청일이 바뀐 날짜보다 앞서면 이전 기준이 적용될 수 있습니다 (허가일 ${formatPermitDate(permitDate)}).</span>
+            <ul class="boundary-list">${shown}${more}</ul>
+            ${applicationDateFormHtml(permitDate, '', 'appliedDayHelp')}
+            <small class="boundary-help" id="appliedDayHelp">신청일은 허가 서류나 세움터(건축행정시스템)의 민원 처리 이력에서 확인할 수 있습니다. 설치일·입찰공고일 등 다른 날을 기준으로 하는 개정도 있으니 각 시설의 비고와 부칙을 확인하세요.</small>
+          </div>
+        </details>`);
     }
   }
 
   // 층별 용도가 둘 이상이면 복합건축물 기준 확인 안내
   const mixedTypes = getMixedUseTypes(buildingInfo.floorItems);
-  const mixedUseNotice = mixedTypes ? `
-      <div class="approval-date-warning">
-        <span>층별 용도가 둘 이상입니다(${esc(mixedTypes.join(', '))}). 「소방시설법 시행령」 별표 2의 <strong>복합건축물</strong>에 해당하면 더 강화된 기준이 적용될 수 있습니다.
-          <button class="law-ref-btn" data-date="${esc(referenceDate)}" data-label="${esc(referenceDateLabel(result))}" onclick="showFireStandardsModal('복합건축물', this.dataset.date, null, this.dataset.label)">복합건축물 기준 보기</button>
-        </span>
-      </div>` : '';
+  if (mixedTypes) {
+    notices.push(noticeHtml('info',
+      `층별 용도가 둘 이상입니다 (${esc(mixedTypes.join(', '))})`,
+      '「소방시설법 시행령」 별표 2의 <strong>복합건축물</strong>에 해당하면 더 강화된 기준이 적용될 수 있습니다.',
+      `<button type="button" class="btn btn--secondary btn--sm" data-date="${esc(referenceDate)}" data-label="${esc(referenceDateLabel(result))}" onclick="showFireStandardsModal('복합건축물', this.dataset.date, null, this.dataset.label)">복합건축물 기준 보기</button>`));
+  }
 
   const requiredFacilities = facilities.filter(f => f.required);
   const notRequiredFacilities = facilities.filter(f => !f.required);
 
+  // 시설 한 줄: 이름 + 해당 기간 기준 요약 (누르면 상세)
+  const facilityRow = (f) => {
+    const regs = f.regulations || [];
+    const summary = f.required && regs.length ? (regs[0].criteria || '') : '';
+    // 기준이 여러 건이면 이름 옆에 '+n' (문장 끝에 붙이면 '…외'가 '제외'처럼 읽히고 두 줄 자르기에 가려진다)
+    const more = f.required && regs.length > 1
+      ? `<span class="fac-more" aria-hidden="true">+${regs.length - 1}</span><span class="visually-hidden"> (기준 ${regs.length}건 중 1건 표시)</span>`
+      : '';
+    return `
+          <li>
+            <button type="button" class="fac-row${f.required ? '' : ' fac-row--optional'}" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
+              <span class="facility-icon" aria-hidden="true">${f.icon}</span>
+              <span class="fac-text">
+                <span class="facility-name">${esc(f.name)}${more}</span>
+                ${summary ? `<span class="fac-criteria">${esc(summary)}</span>` : ''}
+              </span>
+              ${NOTICE_ICONS.chevronRight}
+            </button>
+          </li>`;
+  };
+
+  // 분류(소화설비·경보설비 …)별로 묶는다
+  const groupHtml = groupFacilitiesByCategory(requiredFacilities).map(([name, list]) => `
+        <div class="fac-group">
+          <h3 class="fac-group-title">${esc(name)} <span class="fac-group-count">${list.length}</span></h3>
+          <ul class="fac-list">${list.map(facilityRow).join('')}</ul>
+        </div>`).join('');
+
   const html = `
-    <div class="fire-facilities-card">
+    <section class="card fire-card fire-facilities-card" aria-label="소방시설 설치기준">
       ${headerHtml}
 
-      ${usedApprovalDate ? `
-        <div class="approval-date-warning">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <span>허가일이 조회되지 않아 <strong>사용승인일(${formatPermitDate(permitDate)})</strong> 기준으로 판단했습니다. 허가일이 더 이르면 결과가 달라질 수 있으니 재확인이 필요합니다.</span>
+      <div class="fire-stats">
+        <div class="fire-stat fire-stat--req">
+          <strong>${requiredFacilities.length}</strong>
+          <span>설치 검토 대상</span>
         </div>
-      ` : ''}
-      ${applicationNotice}
-      ${mixedUseNotice}
-
-      <div class="facilities-section">
-        <div class="facilities-title required">
-          <span>설치 검토 대상 소방시설</span>
-          <span class="facilities-count">${requiredFacilities.length}개</span>
-        </div>
-        <div class="facilities-note">
-          ※ ${dateLabel} 당시 이 용도에 설치 기준이 있는 시설입니다. 연면적·층수 등 세부 조건의 충족 여부는 아직 자동 판정하지 않으니, 각 시설을 눌러 기준을 확인하세요.
-        </div>
-        <div class="facilities-list">
-          ${requiredFacilities.map((f) => `
-            <div class="facility-item required clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
-              <span class="facility-icon">${f.icon}</span>
-              <div class="facility-info">
-                <span class="facility-name">${esc(f.name)}</span>
-              </div>
-            </div>
-          `).join('')}
+        <div class="fire-stat">
+          <strong>${notRequiredFacilities.length}</strong>
+          <span>해당 시기 기준 없음</span>
         </div>
       </div>
+
+      ${notices.length ? `<div class="fire-notices">${notices.join('')}</div>` : ''}
+
+      <p class="fire-note">${dateLabel} 당시 이 용도에 설치 기준이 있는 시설입니다. 연면적·층수 등 세부 조건의 충족 여부는 아직 자동 판정하지 않으니, 시설을 눌러 기준을 확인하세요.</p>
+
+      <div class="fac-groups">${groupHtml}</div>
 
       ${notRequiredFacilities.length > 0 ? `
-        <div class="facilities-section collapsed" id="optionalFacilities">
-          <div class="facilities-title optional" onclick="toggleOptionalFacilities()">
-            <span>해당 시기 기준 없음</span>
-            <span class="facilities-count">${notRequiredFacilities.length}개</span>
-            <svg class="toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-          <div class="facilities-list optional-list">
-            ${notRequiredFacilities.map((f) => `
-              <div class="facility-item optional clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
-                <span class="facility-icon">${f.icon}</span>
-                <div class="facility-info">
-                  <span class="facility-name">${esc(f.name)}</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
+        <details class="fac-optional" id="optionalFacilities">
+          <summary>
+            해당 시기 기준 없음
+            <span class="fac-group-count">${notRequiredFacilities.length}</span>
+            ${NOTICE_ICONS.chevron}
+          </summary>
+          <ul class="fac-list">${notRequiredFacilities.map(facilityRow).join('')}</ul>
+        </details>
       ` : ''}
 
-      <div class="facilities-note">
-        ※ 시설을 클릭하면 상세 기준을 확인할 수 있습니다.
-      </div>
-
-      <div class="law-reference-section" id="lawRefSection">
-        <div class="law-reference-label">${preFireAct
-          ? `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준: 소방시설법 시행(2004.05.30) 전 — 구 소방법 적용`
-          : `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준 ${esc(actName)}`}</div>
+      <div class="fire-law law-reference-section" id="lawRefSection">
+        <div class="fire-law-text">
+          <span class="fire-law-kicker">적용 법령</span>
+          <span class="law-reference-label">${preFireAct
+            ? `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준: 소방시설법 시행(2004.05.30) 전 — 구 소방법 적용`
+            : `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준 ${esc(actName)}`}</span>
+        </div>
         ${preFireAct ? '' : `
         <div class="law-reference-buttons">
-          <button class="law-ref-btn" data-type="act" onclick="openLawLink('act')" disabled>법률</button>
-          <button class="law-ref-btn" data-type="decree" onclick="openLawLink('decree')" disabled>시행령</button>
-          <button class="law-ref-btn" data-type="rules" onclick="openLawLink('rules')" disabled>시행규칙</button>
+          <button type="button" class="btn btn--secondary btn--sm law-ref-btn" data-type="act" onclick="openLawLink('act')" disabled>법률</button>
+          <button type="button" class="btn btn--secondary btn--sm law-ref-btn" data-type="decree" onclick="openLawLink('decree')" disabled>시행령</button>
+          <button type="button" class="btn btn--secondary btn--sm law-ref-btn" data-type="rules" onclick="openLawLink('rules')" disabled>시행규칙</button>
         </div>`}
       </div>
 
-      <div class="fire-standards-btn-wrapper">
-        <button class="btn-fire-standards" onclick="showFireStandardsModalFromCard()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="fire-actions">
+        <button type="button" class="btn btn--tonal btn--block btn-fire-standards" onclick="showFireStandardsModalFromCard()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
             <line x1="16" y1="13" x2="8" y2="13"/>
             <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
           </svg>
-          전체 소방기준 보기
+          이 용도의 전체 소방기준 보기
         </button>
       </div>
-    </div>
+    </section>
   `;
 
   // 카드 렌더 후 비동기로 법령 링크 바인딩 (기준일에 적용되는 가장 최근 공포 버전)
@@ -3129,14 +3094,6 @@ async function renderFireFacilitiesCard(buildingInfo) {
   return html;
 }
 
-// 비해당 시설 토글
-window.toggleOptionalFacilities = function() {
-  const section = document.getElementById('optionalFacilities');
-  if (section) {
-    section.classList.toggle('collapsed');
-  }
-};
-
 // 허가일 포맷
 function formatPermitDate(dateStr) {
   const v = String(dateStr || '');
@@ -3165,7 +3122,7 @@ function applicationDateFormHtml(permitDate, value, helpId = '') {
           <form class="boundary-form" novalidate onsubmit="applyApplicationDate(event)">
             <label for="appliedDayInput">허가 신청일</label>
             <input type="date" id="appliedDayInput" min="${formatIsoDate(EARLIEST_YMD)}" max="${formatIsoDate(permitDate)}" value="${formatIsoDate(value)}"${helpId ? ` aria-describedby="${helpId}"` : ''}>
-            <button type="submit" class="law-ref-btn">신청일 기준으로 보기</button>
+            <button type="submit" class="btn btn--primary btn--sm">신청일 기준으로 보기</button>
           </form>`;
 }
 
@@ -3186,9 +3143,11 @@ async function rerenderWithApplicationDate() {
     updateUrlWithAddress();
     await renderBuildingView();
   }
-  // 결과 전체를 다시 그려 초점이 사라지므로 안내 문장으로 옮긴다 (화면 읽기 프로그램이 바뀐 기준을 읽도록).
-  // 경계 안내가 없는 허가일로 돌아왔으면 카드 머리의 기준일 배지로.
-  (document.querySelector('.application-notice-lead') || document.querySelector('.fire-facilities-card .law-period-badge'))?.focus();
+  // 결과 전체를 다시 그려 초점이 사라지므로 안내로 옮긴다 (화면 읽기 프로그램이 바뀐 기준을 읽도록).
+  // 신청일 기준이면 안내 문장, 허가일 기준으로 돌아왔으면 접힌 경계 안내의 제목, 그것도 없으면 기준일 배지.
+  (document.querySelector('.application-notice-lead')
+    || document.querySelector('details.application-notice > summary')
+    || document.querySelector('.fire-facilities-card .law-period-badge'))?.focus();
 }
 
 // 결과 카드의 '신청일 기준으로 보기' (입력 폼 제출)
@@ -3885,52 +3844,50 @@ async function displayManualResult(buildingInfo, permitDate) {
     isManualInput: true
   };
 
-  // 요약 카드 HTML
+  // 건물 카드 (직접 입력)
+  const under = Number(buildingInfo.ugrndFlrCnt) || 0;
   let html = `
-    <div class="summary-card">
-      <div class="summary-header">
-        <div class="summary-header-left">
-          <span class="summary-building-name">직접 입력 건물</span>
-          <span class="summary-purpose-badge">${esc(buildingInfo.mainPurpsCdNm)}</span>
+    <section class="card bld-card summary-card" aria-labelledby="bldName">
+      <div class="bld-head">
+        <div class="bld-head-main">
+          <div class="bld-chips">
+            <span class="chip chip--primary summary-purpose-badge">${esc(buildingInfo.mainPurpsCdNm)}</span>
+            <span class="chip chip--muted">직접 입력</span>
+          </div>
+          <h2 class="bld-name summary-building-name" id="bldName">직접 입력한 건물</h2>
+        </div>
+        <div class="bld-actions">
+          <button type="button" class="icon-btn" onclick="showManualInputModal()" aria-label="입력값 고치기" title="입력값 고치기">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
         </div>
       </div>
-      <div class="summary-grid">
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">허가일</span>
-          <span class="summary-grid-value">${formatPermitDate(permitDate)}</span>
+      <dl class="kv-grid bld-facts">
+        <div>
+          <dt>허가일</dt>
+          <dd>${formatPermitDate(permitDate)}${buildingInfo.permitDateAssumed ? '<span class="kv-note">입력하지 않아 오늘 날짜로 봄</span>' : ''}</dd>
         </div>
         ${toYmd(buildingInfo.appliedDay) ? `
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">허가 신청일</span>
-          <span class="summary-grid-value">${formatPermitDate(buildingInfo.appliedDay)}</span>
+        <div>
+          <dt>허가 신청일</dt>
+          <dd>${formatPermitDate(buildingInfo.appliedDay)}</dd>
         </div>` : ''}
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">연면적</span>
-          <span class="summary-grid-value">${buildingInfo.totArea ? Number(buildingInfo.totArea).toLocaleString() + '㎡' : '-'}</span>
+        <div>
+          <dt>연면적</dt>
+          <dd>${buildingInfo.totArea ? Number(buildingInfo.totArea).toLocaleString() + '㎡' : '-'}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">지상층수</span>
-          <span class="summary-grid-value">${buildingInfo.grndFlrCnt || '-'}층</span>
+        <div>
+          <dt>층수</dt>
+          <dd>지상 ${esc(buildingInfo.grndFlrCnt || '-')}층 · ${under > 0 ? `지하 ${under}층` : '지하 없음'}</dd>
         </div>
-        <div class="summary-grid-item">
-          <span class="summary-grid-label">지하층수</span>
-          <span class="summary-grid-value">${buildingInfo.ugrndFlrCnt || '-'}층</span>
-        </div>
-      </div>
-    </div>`;
+      </dl>
+    </section>`;
 
   // 소방시설 카드 렌더링 - 지연 로드
   html += await renderFireFacilitiesCard(buildingInfo);
 
   resultContainer.innerHTML = html;
-
-  // 헤더 숨기기
-  const mainHeader = document.getElementById('mainHeader');
-  if (mainHeader) mainHeader.classList.add('hidden');
-
-  // 직접 입력 링크 숨기기
-  const manualLink = document.querySelector('.manual-search-link');
-  if (manualLink) manualLink.style.display = 'none';
+  setHomeVisible(false);
 }
 
 // ==================== 공유 기능 ====================

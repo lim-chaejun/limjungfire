@@ -321,10 +321,9 @@
     }
   })();
   </script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">
   <link href='/css/style.css' rel='stylesheet'>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- 광고: 카카오 애드핏(AdFit)을 js/ads.js 에서 동적 로드합니다.
        (Google AdSense는 계정 거절 상태이므로 비활성화. 재승인 시 아래 주석을 해제하세요.)
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7564559804434011"
@@ -392,17 +391,10 @@
     <!-- 공통 헤더 -->
     <div id="header-container"></div>
 
-    <!-- 헤더 (검색 후 숨김) -->
-    <header id="mainHeader">
-      <div class="logo">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2Z" fill="currentColor" opacity="0.2"/>
-          <path d="M12 2L2 7V10C2 16.5 6.84 22.74 12 24C17.16 22.74 22 16.5 22 10V7L12 2ZM12 22C7.94 20.84 4 15.36 4 10.5V8.3L12 4.26L20 8.3V10.5C20 15.36 16.06 20.84 12 22Z" fill="currentColor"/>
-          <path d="M12 7C10.34 7 9 8.34 9 10V11H8V17H16V11H15V10C15 8.34 13.66 7 12 7ZM13 11H11V10C11 9.45 11.45 9 12 9C12.55 9 13 9.45 13 10V11Z" fill="currentColor"/>
-        </svg>
-      </div>
-      <h1>소방용 건축물대장 검색</h1>
-      <p class="subtitle">주소를 검색하여 건축물 정보를 조회합니다</p>
+    <!-- 홈 소개 (검색 결과가 있으면 숨김: body.has-result) -->
+    <header id="mainHeader" class="home-hero">
+      <h1>소방시설 설치기준 조회</h1>
+      <p class="subtitle">주소를 검색하면 건축물대장을 불러와,<br>허가일 당시 그 용도에 적용되던 설치기준을 보여 드려요.</p>
     </header>
 
     <!-- 주소 검색 + 조회 버튼 -->
@@ -425,8 +417,31 @@
       </button>
     </div>
     <div class="manual-search-link">
-      <a href="#" onclick="showManualInputModal(); return false;">건축물대장 없이 직접 입력하기</a>
+      <button type="button" class="btn btn--ghost btn--sm" onclick="showManualInputModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        건축물대장 없이 직접 입력하기
+      </button>
     </div>
+
+    <!-- 바로가기 (홈에서만) -->
+    <nav id="homeShortcuts" class="home-shortcuts" aria-label="바로가기">
+      <a class="shortcut" href="/standards/">
+        <span class="shortcut-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="shortcut-text"><strong>용도별 기준</strong><span>용도·시설별 설치기준 표</span></span>
+      </a>
+      <a class="shortcut" href="/guide/">
+        <span class="shortcut-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="shortcut-text"><strong>시설 가이드</strong><span>설비별 설치·점검 요약</span></span>
+      </a>
+      <a class="shortcut" href="/pages/timeline.html">
+        <span class="shortcut-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <span class="shortcut-text"><strong>법령 연혁</strong><span>개정 시기별 바뀐 기준</span></span>
+      </a>
+      <a class="shortcut" href="/pages/checklist.html">
+        <span class="shortcut-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="shortcut-text"><strong>용도 체크</strong><span>건축물 용도 분류 확인</span></span>
+      </a>
+    </nav>
 
     <!-- 로딩 표시 -->
     <div id="loading" class="loading" style="display: none;">
@@ -440,27 +455,6 @@
     <!-- 광고 슬롯: 검색 결과 하단 (애드핏 ID 설정 전까지 노출되지 않음) -->
     <div class="sbc-ad" data-ad-slot="result" aria-hidden="true"></div>
 
-    <!-- 사용법 팁 ticker (footer 바로 위) -->
-    <div class="tips-ticker" id="tipsTicker">
-      <span class="tips-ticker-label">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.22-1.21 4.16-3 5.2V17a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-2.8C7.21 13.16 6 11.22 6 9a6 6 0 0 1 6-6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </span>
-      <div class="tips-ticker-viewport">
-        <div class="tips-ticker-track">
-          <span class="tips-ticker-item">주소를 검색하면 건축물에 필요한 소방시설을 확인할 수 있습니다</span>
-          <span class="tips-ticker-item">로그인하면 검색 기록이 자동으로 저장됩니다</span>
-          <span class="tips-ticker-item">건축물대장 없이 직접 입력도 가능합니다</span>
-          <span class="tips-ticker-item">회원가입 후 즐겨찾기로 자주 조회하는 건물을 저장해 보세요</span>
-          <span class="tips-ticker-item">허가일 기준으로 적용되는 소방법령이 달라집니다</span>
-          <span class="tips-ticker-item">로그인 후 조회 결과를 PDF로 다운로드할 수 있습니다</span>
-          <span class="tips-ticker-item">지도 버튼으로 건물 위치를 확인해 보세요</span>
-          <span class="tips-ticker-item">공유 버튼으로 조회 결과를 동료에게 보낼 수 있습니다</span>
-        </div>
-      </div>
-    </div>
-
     <footer>
       <nav aria-label="사이트 네비게이션">
         <div class="footer-links">
@@ -471,6 +465,8 @@
           <a href="/pages/checklist.html">용도체크</a>
           <span class="footer-divider">·</span>
           <a href="/pages/reference.html">자료실</a>
+          <span class="footer-divider">·</span>
+          <a href="/standards/">기준 찾기</a>
         </div>
         <div class="footer-links" style="margin-top: 8px;">
           <a href="/pages/about.html">서비스 소개</a>
@@ -488,7 +484,7 @@
   <!-- authModal, myInfoModal, settingsModal은 components.js에서 자동 삽입 -->
 
   <!-- 검색 기록 모달 -->
-  <div id="historyModal" class="modal" style="display: none;">
+  <div id="historyModal" class="modal modal--sheet" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
         <h2>검색 기록</h2>
@@ -505,7 +501,7 @@
   </div>
 
   <!-- 상세보기 모달 -->
-  <div id="detailModal" class="modal" style="display: none;">
+  <div id="detailModal" class="modal modal--sheet" style="display: none;">
     <div class="modal-content detail-modal-content">
       <div class="modal-header">
         <h2 id="detailModalTitle">상세 정보</h2>
@@ -543,7 +539,7 @@
   </div>
 
   <!-- 소방기준 모달 -->
-  <div id="fireStandardsModal" class="modal" style="display: none;">
+  <div id="fireStandardsModal" class="modal modal--sheet" style="display: none;">
     <div class="modal-content fire-standards-modal-content">
       <div class="modal-header">
         <h2>소방시설 설치기준</h2>
@@ -558,7 +554,7 @@
   </div>
 
   <!-- 시설 상세 모달 -->
-  <div id="facilityDetailModal" class="modal" style="display: none;">
+  <div id="facilityDetailModal" class="modal modal--sheet" style="display: none;">
     <div class="modal-content facility-detail-modal-content">
       <div class="modal-header">
         <h2 id="facilityDetailTitle">시설 상세 기준</h2>
@@ -573,7 +569,7 @@
   </div>
 
   <!-- 수동 입력 모달 -->
-  <div id="manualInputModal" class="modal" style="display: none;">
+  <div id="manualInputModal" class="modal modal--sheet" style="display: none;">
     <div class="modal-content manual-input-modal-content">
       <div class="modal-header">
         <h2>직접 입력</h2>

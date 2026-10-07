@@ -116,6 +116,8 @@ export function renderPage(page) {
     `  <meta name="twitter:title" content="${esc(title)}">`,
     `  <meta name="twitter:description" content="${esc(description)}">`,
     `  <meta name="twitter:image" content="${OG_IMAGE}">`,
+    '  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>',
+    '  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha384-GIdEBaqGN9mNkDkMkzMHW8EKUqtpPIe/sLj1X7DIrnc9uPtLROJgmuDlh+3rBw0j" crossorigin="anonymous">',
     '  <link rel="stylesheet" href="/css/style.css">',
     '  <link rel="stylesheet" href="/css/content.css">',
     ...[...schema, breadcrumbSchema(breadcrumbs)].map((s) => indent(jsonLdScript(s), 2)),
