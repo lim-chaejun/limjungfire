@@ -119,7 +119,7 @@ test('00_house.json 이 없으면 단독주택 페이지도 없고, 있으면 �
   assert.ok(p, 'house 페이지');
   assert.equal(p.indexable, true, '기준 2건 = 문턱값');
   assert.equal(withHouse.pages.filter((x) => x.kind === 'standards-use')[0].path, '/standards/use/house', '00 이 맨 앞');
-  assert.ok(!p.html.includes('직접 입력하기’에서 용도'), '직접 입력 용도 연결이 없는 용도는 안내하지 않는다');
+  assert.ok(p.html.includes('용도 <strong>단독주택</strong>을 고르고'), '직접 입력에 단독주택 선택지가 있으므로 안내한다');
 });
 
 test('시설 페이지: 현행 기준만 현행 표에, 시행 예정은 따로, 이력·가이드·화재안전기준', () => {
