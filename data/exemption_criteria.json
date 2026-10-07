@@ -73,7 +73,7 @@
           "source": "별표5"
         }
       ],
-      "facility_id": "gas_leak_detector"
+      "facility_id": "earth_leakage_alarm"
     },
     {
       "facility_name": "무선통신보조설비",
