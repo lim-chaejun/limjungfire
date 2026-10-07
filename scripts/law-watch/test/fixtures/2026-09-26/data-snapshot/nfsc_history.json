@@ -1,0 +1,3809 @@
+{
+  "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)": [
+    {
+      "no": 1,
+      "name": "소화기구 및 자동소화장치의 화재안전성능기준(NFPC 101)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-31호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216118"
+    },
+    {
+      "no": 2,
+      "name": "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)",
+      "effective_date": "20220908",
+      "notice_no": "소방청고시 제2022-21호",
+      "promulgation_date": "20220908",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000214402"
+    },
+    {
+      "no": 3,
+      "name": "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)",
+      "effective_date": "20210115",
+      "notice_no": "소방청고시 제2021-11호",
+      "promulgation_date": "20210115",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197452"
+    },
+    {
+      "no": 4,
+      "name": "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)",
+      "effective_date": "20181119",
+      "notice_no": "소방청고시 제2018-14호",
+      "promulgation_date": "20181119",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000167269"
+    },
+    {
+      "no": 5,
+      "name": "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097314"
+    },
+    {
+      "no": 6,
+      "name": "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)",
+      "effective_date": "20170612",
+      "notice_no": "국민안전처고시 제2017-14호",
+      "promulgation_date": "20170411",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000082969"
+    },
+    {
+      "no": 7,
+      "name": "소화기구 및 자동소화장치의 화재안전기준(NFSC 101)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-21호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011918"
+    },
+    {
+      "no": 8,
+      "name": "소화기구의 화재안전기준(NFSC 101)",
+      "effective_date": "20120611",
+      "notice_no": "소방방재청고시 제2012-103호",
+      "promulgation_date": "20120611",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000019324"
+    },
+    {
+      "no": 9,
+      "name": "소화기구의 화재안전기준(NFSC 101)",
+      "effective_date": "20101227",
+      "notice_no": "소방방재청고시 제2010-38호",
+      "promulgation_date": "20101227",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000015377"
+    },
+    {
+      "no": 10,
+      "name": "소화기구의 화재안전기준(NFSC 101)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-31호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000002929"
+    },
+    {
+      "no": 11,
+      "name": "소화기구의 화재안전기준(NFSC 101)",
+      "effective_date": "20071228",
+      "notice_no": "소방방재청고시 제2007-66호",
+      "promulgation_date": "20071228",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006637"
+    },
+    {
+      "no": 12,
+      "name": "소화기구의화재안전기준(NFSC 101)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-6호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006403"
+    }
+  ],
+  "옥내소화전설비의 화재안전기준(NFSC 102)": [
+    {
+      "no": 1,
+      "name": "옥내소화전설비의 화재안전성능기준(NFPC 102)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000273564"
+    },
+    {
+      "no": 2,
+      "name": "옥내소화전설비의 화재안전성능기준(NFPC 102)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-32호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253092"
+    },
+    {
+      "no": 3,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20221013",
+      "notice_no": "소방청고시 제2022-26호",
+      "promulgation_date": "20221013",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000214975"
+    },
+    {
+      "no": 4,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20220304",
+      "notice_no": "소방청고시 제2022-3호",
+      "promulgation_date": "20220304",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209656"
+    },
+    {
+      "no": 5,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-43호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207059"
+    },
+    {
+      "no": 6,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20210401",
+      "notice_no": "소방청고시 제2021-18호",
+      "promulgation_date": "20210401",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199517"
+    },
+    {
+      "no": 7,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199294"
+    },
+    {
+      "no": 8,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097315"
+    },
+    {
+      "no": 9,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20160725",
+      "notice_no": "국민안전처고시 제2016-118호",
+      "promulgation_date": "20160725",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000054469"
+    },
+    {
+      "no": 10,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20160717",
+      "notice_no": "국민안전처고시 제2016-44호",
+      "promulgation_date": "20160516",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000046690"
+    },
+    {
+      "no": 11,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-86호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053509"
+    },
+    {
+      "no": 12,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-22호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011920"
+    },
+    {
+      "no": 13,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20130811",
+      "notice_no": "소방방재청고시 제2013-17호",
+      "promulgation_date": "20130610",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000024133"
+    },
+    {
+      "no": 14,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20130712",
+      "notice_no": "소방방재청고시 제2013-21호",
+      "promulgation_date": "20130611",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000025075"
+    },
+    {
+      "no": 15,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20120215",
+      "notice_no": "소방방재청고시 제2012-88호",
+      "promulgation_date": "20120215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018518"
+    },
+    {
+      "no": 16,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20101227",
+      "notice_no": "소방방재청고시 제2010-39호",
+      "promulgation_date": "20101227",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000015378"
+    },
+    {
+      "no": 17,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-38호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000010639"
+    },
+    {
+      "no": 18,
+      "name": "옥내소화전설비의 화재안전기준(NFSC 102)",
+      "effective_date": "20071228",
+      "notice_no": "소방방재청고시 제2007-67호",
+      "promulgation_date": "20071228",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006647"
+    },
+    {
+      "no": 19,
+      "name": "옥내소화전설비의화재안전기준(NFSC 102)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-7호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006404"
+    }
+  ],
+  "스프링클러설비의 화재안전기준(NFSC 103)": [
+    {
+      "no": 1,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000270474"
+    },
+    {
+      "no": 2,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253094"
+    },
+    {
+      "no": 3,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20240401",
+      "notice_no": "소방청고시 제2024-2호",
+      "promulgation_date": "20240208",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000235840"
+    },
+    {
+      "no": 4,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-40호",
+      "promulgation_date": "20231013",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230276"
+    },
+    {
+      "no": 5,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-39호",
+      "promulgation_date": "20231006",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230198"
+    },
+    {
+      "no": 6,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-7호",
+      "promulgation_date": "20230210",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000220318"
+    },
+    {
+      "no": 7,
+      "name": "스프링클러설비의 화재안전성능기준(NFPC 103)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-33호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216120"
+    },
+    {
+      "no": 8,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-44호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207060"
+    },
+    {
+      "no": 9,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199295"
+    },
+    {
+      "no": 10,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20210129",
+      "notice_no": "소방청고시 제2021-12호",
+      "promulgation_date": "20210129",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197524"
+    },
+    {
+      "no": 11,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097316"
+    },
+    {
+      "no": 12,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-87호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053510"
+    },
+    {
+      "no": 13,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-23호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011921"
+    },
+    {
+      "no": 14,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20130811",
+      "notice_no": "소방방재청고시 제2013-18호",
+      "promulgation_date": "20130610",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000024137"
+    },
+    {
+      "no": 15,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20130712",
+      "notice_no": "소방방재청고시 제2013-21호",
+      "promulgation_date": "20130611",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000025076"
+    },
+    {
+      "no": 16,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20120306",
+      "notice_no": "소방방재청고시 제2012-89호",
+      "promulgation_date": "20120215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018519"
+    },
+    {
+      "no": 17,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20111124",
+      "notice_no": "소방방재청고시 제2011-27호",
+      "promulgation_date": "20111124",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000017570"
+    },
+    {
+      "no": 18,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-39호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000011397"
+    },
+    {
+      "no": 19,
+      "name": "스프링클러설비의 화재안전기준(NFSC 103)",
+      "effective_date": "20071228",
+      "notice_no": "소방방재청고시 제2007-68호",
+      "promulgation_date": "20071228",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006646"
+    },
+    {
+      "no": 20,
+      "name": "스프링클러설비의화재안전기준(NFSC 103)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-13호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000005825"
+    },
+    {
+      "no": 21,
+      "name": "스프링클러설비의화재안전기준(NFSC 103)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-8호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006405"
+    }
+  ],
+  "간이스프링클러설비의 화재안전기준(NFSC 103A)": [
+    {
+      "no": 1,
+      "name": "간이스프링클러설비의 화재안전성능기준(NFPC 103A)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000273566"
+    },
+    {
+      "no": 2,
+      "name": "간이스프링클러설비의 화재안전성능기준(NFPC 103A)",
+      "effective_date": "20241201",
+      "notice_no": "소방청고시 제2024-3호",
+      "promulgation_date": "20240304",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000247922"
+    },
+    {
+      "no": 3,
+      "name": "간이스프링클러설비의 화재안전성능기준(NFPC 103A)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000240172"
+    },
+    {
+      "no": 4,
+      "name": "간이스프링클러설비의 화재안전성능기준(NFPC 103A)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-7호",
+      "promulgation_date": "20230210",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000220302"
+    },
+    {
+      "no": 5,
+      "name": "간이스프링클러설비의 화재안전성능기준(NFPC 103A)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-34호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216099"
+    },
+    {
+      "no": 6,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-45호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207061"
+    },
+    {
+      "no": 7,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20210722",
+      "notice_no": "소방청고시 제2021-24호",
+      "promulgation_date": "20210722",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203040"
+    },
+    {
+      "no": 8,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20210112",
+      "notice_no": "소방청고시 제2021-6호",
+      "promulgation_date": "20210112",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197048"
+    },
+    {
+      "no": 9,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097318"
+    },
+    {
+      "no": 10,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-88호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053511"
+    },
+    {
+      "no": 11,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-24호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011922"
+    },
+    {
+      "no": 12,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20130811",
+      "notice_no": "소방방재청고시 제2013-19호",
+      "promulgation_date": "20130610",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000024138"
+    },
+    {
+      "no": 13,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20111124",
+      "notice_no": "소방방재청고시 제2011-28호",
+      "promulgation_date": "20111124",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000017571"
+    },
+    {
+      "no": 14,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009681"
+    },
+    {
+      "no": 15,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-34호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006875"
+    },
+    {
+      "no": 16,
+      "name": "간이스프링클러설비의 화재안전기준(NFSC 103A)",
+      "effective_date": "20071228",
+      "notice_no": "소방방재청고시 제2007-69호",
+      "promulgation_date": "20071228",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006645"
+    },
+    {
+      "no": 17,
+      "name": "간이스프링클러설비의화재안전기준(NFSC 103A)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-9호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006406"
+    }
+  ],
+  "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)": [
+    {
+      "no": 1,
+      "name": "화재조기진압용 스프링클러설비의 화재안전성능기준(NFPC 103B)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000269748"
+    },
+    {
+      "no": 2,
+      "name": "화재조기진압용 스프링클러설비의 화재안전성능기준(NFPC 103B)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253148"
+    },
+    {
+      "no": 3,
+      "name": "화재조기진압용 스프링클러설비의 화재안전성능기준(NFPC 103B)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-7호",
+      "promulgation_date": "20230210",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000220320"
+    },
+    {
+      "no": 4,
+      "name": "화재조기진압용 스프링클러설비의 화재안전성능기준(NFPC 103B)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-35호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216142"
+    },
+    {
+      "no": 5,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-46호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207062"
+    },
+    {
+      "no": 6,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20210722",
+      "notice_no": "소방청고시 제2021-25호",
+      "promulgation_date": "20210722",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203041"
+    },
+    {
+      "no": 7,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199296"
+    },
+    {
+      "no": 8,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097320"
+    },
+    {
+      "no": 9,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-89호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053512"
+    },
+    {
+      "no": 10,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-25호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011923"
+    },
+    {
+      "no": 11,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-119호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079336"
+    },
+    {
+      "no": 12,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-40호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009683"
+    },
+    {
+      "no": 13,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-35호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006876"
+    },
+    {
+      "no": 14,
+      "name": "화재조기진압용 스프링클러설비의 화재안전기준(NFSC 103B)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-7호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006644"
+    },
+    {
+      "no": 15,
+      "name": "화재조기진압용스프링클러설비의화재안전기준(NFSC 103B)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-10호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006535"
+    }
+  ],
+  "물분무소화설비의 화재안전기준(NFSC 104)": [
+    {
+      "no": 1,
+      "name": "물분무소화설비의 화재안전성능기준(NFPC 104)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000273568"
+    },
+    {
+      "no": 2,
+      "name": "물분무소화설비의 화재안전성능기준(NFPC 104)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253102"
+    },
+    {
+      "no": 3,
+      "name": "물분무소화설비의 화재안전성능기준(NFPC 104)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-36호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216107"
+    },
+    {
+      "no": 4,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-47호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207063"
+    },
+    {
+      "no": 5,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20210722",
+      "notice_no": "소방청고시 제2021-26호",
+      "promulgation_date": "20210722",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203042"
+    },
+    {
+      "no": 6,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199297"
+    },
+    {
+      "no": 7,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097321"
+    },
+    {
+      "no": 8,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-90호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053513"
+    },
+    {
+      "no": 9,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-26호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011924"
+    },
+    {
+      "no": 10,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-120호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079320"
+    },
+    {
+      "no": 11,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009685"
+    },
+    {
+      "no": 12,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-36호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006877"
+    },
+    {
+      "no": 13,
+      "name": "물분무소화설비의 화재안전기준(NFSC 104)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-8호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006643"
+    },
+    {
+      "no": 14,
+      "name": "물분무소화설비의화재안전기준(NFSC 104)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-11호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006536"
+    }
+  ],
+  "미분무소화설비의 화재안전기준(NFSC 104A)": [
+    {
+      "no": 1,
+      "name": "미분무소화설비의 화재안전성능기준(NFPC 104A)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000269752"
+    },
+    {
+      "no": 2,
+      "name": "미분무소화설비의 화재안전성능기준(NFPC 104A)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-7호",
+      "promulgation_date": "20230210",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253100"
+    },
+    {
+      "no": 3,
+      "name": "미분무소화설비의 화재안전성능기준(NFPC 104A)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-37호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216108"
+    },
+    {
+      "no": 4,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20220706",
+      "notice_no": "소방청고시 제2022-15호",
+      "promulgation_date": "20220706",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000212549"
+    },
+    {
+      "no": 5,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199299"
+    },
+    {
+      "no": 6,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20210115",
+      "notice_no": "소방청고시 제2021-11호",
+      "promulgation_date": "20210115",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197453"
+    },
+    {
+      "no": 7,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-37호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178591"
+    },
+    {
+      "no": 8,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097322"
+    },
+    {
+      "no": 9,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-27호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011927"
+    },
+    {
+      "no": 10,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104-A)",
+      "effective_date": "20141008",
+      "notice_no": "소방방재청고시 제2014-10호",
+      "promulgation_date": "20140818",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000004867"
+    },
+    {
+      "no": 11,
+      "name": "미분무소화설비의 화재안전기준(NFSC 104A)",
+      "effective_date": "20111124",
+      "notice_no": "소방방재청고시 제2011-29호",
+      "promulgation_date": "20111124",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000066135"
+    }
+  ],
+  "포소화설비의 화재안전기준(NFSC 105)": [
+    {
+      "no": 1,
+      "name": "포소화설비의 화재안전성능기준(NFPC 105)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000273596"
+    },
+    {
+      "no": 2,
+      "name": "포소화설비의 화재안전성능기준(NFPC 105)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253090"
+    },
+    {
+      "no": 3,
+      "name": "포소화설비의 화재안전성능기준(NFPC 105)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-38호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216135"
+    },
+    {
+      "no": 4,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-48호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207064"
+    },
+    {
+      "no": 5,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20210805",
+      "notice_no": "소방청고시 제2021-29호",
+      "promulgation_date": "20210805",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203479"
+    },
+    {
+      "no": 6,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199300"
+    },
+    {
+      "no": 7,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20190813",
+      "notice_no": "소방청고시 제2019-47호",
+      "promulgation_date": "20190813",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000181049"
+    },
+    {
+      "no": 8,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097323"
+    },
+    {
+      "no": 9,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-91호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053514"
+    },
+    {
+      "no": 10,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20151229",
+      "notice_no": "국민안전처고시 제2015-131호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030926"
+    },
+    {
+      "no": 11,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-28호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011928"
+    },
+    {
+      "no": 12,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-121호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079339"
+    },
+    {
+      "no": 13,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009686"
+    },
+    {
+      "no": 14,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-37호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006879"
+    },
+    {
+      "no": 15,
+      "name": "포소화설비의 화재안전기준(NFSC 105)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-9호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006642"
+    }
+  ],
+  "이산화탄소소화설비의 화재안전기준(NFSC 106)": [
+    {
+      "no": 1,
+      "name": "이산화탄소소화설비의 화재안전성능기준(NFPC 106)",
+      "effective_date": "20240801",
+      "notice_no": "소방청고시 제2024-33호",
+      "promulgation_date": "20240710",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000243626"
+    },
+    {
+      "no": 2,
+      "name": "이산화탄소소화설비의 화재안전성능기준(NFPC 106)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-39호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216126"
+    },
+    {
+      "no": 3,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20190813",
+      "notice_no": "소방청고시 제2019-46호",
+      "promulgation_date": "20190813",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000181047"
+    },
+    {
+      "no": 4,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097325"
+    },
+    {
+      "no": 5,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-92호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053515"
+    },
+    {
+      "no": 6,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-127호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030922"
+    },
+    {
+      "no": 7,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-29호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011930"
+    },
+    {
+      "no": 8,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20130903",
+      "notice_no": "소방방재청고시 제2013-56호",
+      "promulgation_date": "20130903",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000101062"
+    },
+    {
+      "no": 9,
+      "name": "이산화탄소소화설비의 화재안전기준(NFSC 106)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-122호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079355"
+    },
+    {
+      "no": 10,
+      "name": "이산화탄소소화설비의 화재안전기준",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009687"
+    },
+    {
+      "no": 11,
+      "name": "이산화탄소소화설비의 화재안전기준안(NFSC 106)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-38호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006880"
+    },
+    {
+      "no": 12,
+      "name": "이산화탄소소화설비의 화재안전기준안(NFSC 106)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-10호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006641"
+    },
+    {
+      "no": 13,
+      "name": "이산화탄소소화설비의 화재안전기준안(NFSC 106)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-13호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209841"
+    }
+  ],
+  "할론소화설비의 화재안전기준(NFSC 107)": [
+    {
+      "no": 1,
+      "name": "할론소화설비의 화재안전성능기준(NFPC 107)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-3호",
+      "promulgation_date": "20230210",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000218508"
+    },
+    {
+      "no": 2,
+      "name": "할론소화설비의 화재안전성능기준(NFPC 107)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-40호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216141"
+    },
+    {
+      "no": 3,
+      "name": "할론소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20181119",
+      "notice_no": "소방청고시 제2018-16호",
+      "promulgation_date": "20181119",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000167271"
+    },
+    {
+      "no": 4,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097326"
+    },
+    {
+      "no": 5,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-93호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053516"
+    },
+    {
+      "no": 6,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-132호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030927"
+    },
+    {
+      "no": 7,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20130903",
+      "notice_no": "소방방재청고시 제2013-57호",
+      "promulgation_date": "20130903",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000101082"
+    },
+    {
+      "no": 8,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-123호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079599"
+    },
+    {
+      "no": 9,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009688"
+    },
+    {
+      "no": 10,
+      "name": "할로겐화합물소화설비의 화재안전기준(NFSC 107)",
+      "effective_date": "20061230",
+      "notice_no": "소방청고시 제2006-19호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq="
+    },
+    {
+      "no": 11,
+      "name": "할로겐화합물소화설비의화재안전기준(NFSC 107)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-14호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006539"
+    }
+  ],
+  "할로겐화합물 및 불활성기체소화설비의 화재안전기준(NFSC 107A)": [
+    {
+      "no": 1,
+      "name": "할로겐화합물 및 불활성기체소화설비의 화재안전성능기준(NFPC 107A)",
+      "effective_date": "20240801",
+      "notice_no": "소방청고시 제2024-34호",
+      "promulgation_date": "20240710",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000243628"
+    },
+    {
+      "no": 2,
+      "name": "할로겐화합물 및 불활성기체소화설비의 화재안전성능기준(NFPC 107A)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-41호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216138"
+    },
+    {
+      "no": 3,
+      "name": "할로겐화합물 및 불활성기체소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20181119",
+      "notice_no": "소방청고시 제2018-17호",
+      "promulgation_date": "20181119",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000167272"
+    },
+    {
+      "no": 4,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097327"
+    },
+    {
+      "no": 5,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20170411",
+      "notice_no": "국민안전처고시 제2017-15호",
+      "promulgation_date": "20170411",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000082990"
+    },
+    {
+      "no": 6,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-94호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053517"
+    },
+    {
+      "no": 7,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-129호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030929"
+    },
+    {
+      "no": 8,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20130903",
+      "notice_no": "소방방재청고시 제2013-58호",
+      "promulgation_date": "20130903",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000101103"
+    },
+    {
+      "no": 9,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-124호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079343"
+    },
+    {
+      "no": 10,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-41호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000011400"
+    },
+    {
+      "no": 11,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq="
+    },
+    {
+      "no": 12,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-39호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006881"
+    },
+    {
+      "no": 13,
+      "name": "청정소화약제소화설비의 화재안전기준(NFSC 107A)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-11호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006639"
+    },
+    {
+      "no": 14,
+      "name": "청정소화약제소화설비의화재안전기준(NFSC 107A)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-15호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006540"
+    }
+  ],
+  "분말소화설비의 화재안전기준(NFSC 108)": [
+    {
+      "no": 1,
+      "name": "분말소화설비의 화재안전성능기준(NFPC 108)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-4호",
+      "promulgation_date": "20230210",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253098"
+    },
+    {
+      "no": 2,
+      "name": "분말소화설비의 화재안전성능기준(NFPC 108)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-42호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216110"
+    },
+    {
+      "no": 3,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-49호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207065"
+    },
+    {
+      "no": 4,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097328"
+    },
+    {
+      "no": 5,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-95호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053518"
+    },
+    {
+      "no": 6,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-30호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011932"
+    },
+    {
+      "no": 7,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-125호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079600"
+    },
+    {
+      "no": 8,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009690"
+    },
+    {
+      "no": 9,
+      "name": "분말소화설비의 화재안전기준(NFSC 108)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-12호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006668"
+    },
+    {
+      "no": 10,
+      "name": "분말소화설비의화재안전기준(NFSC 108)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-16호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006541"
+    }
+  ],
+  "옥외소화전설비의 화재안전기준(NFSC 109)": [
+    {
+      "no": 1,
+      "name": "옥외소화전설비의 화재안전성능기준(NFPC 109)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-28호",
+      "promulgation_date": "20251231",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000273562"
+    },
+    {
+      "no": 2,
+      "name": "옥외소화전설비의 화재안전성능기준(NFPC 109)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000269712"
+    },
+    {
+      "no": 3,
+      "name": "옥외소화전설비의 화재안전성능기준(NFPC 109)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-43호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216124"
+    },
+    {
+      "no": 4,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-50호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207066"
+    },
+    {
+      "no": 5,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20210722",
+      "notice_no": "소방청고시 제2021-27호",
+      "promulgation_date": "20210722",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203043"
+    },
+    {
+      "no": 6,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199301"
+    },
+    {
+      "no": 7,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-41호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178595"
+    },
+    {
+      "no": 8,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097329"
+    },
+    {
+      "no": 9,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-31호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011933"
+    },
+    {
+      "no": 10,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-126호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079601"
+    },
+    {
+      "no": 11,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-42호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000011401"
+    },
+    {
+      "no": 12,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009691"
+    },
+    {
+      "no": 13,
+      "name": "옥외소화전설비의 화재안전기준(NFSC 109)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-40호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006882"
+    },
+    {
+      "no": 14,
+      "name": "옥외소화전설비의화재안전기준(NFSC 109)",
+      "effective_date": "20071228",
+      "notice_no": "소방방재청고시 제2006-23호",
+      "promulgation_date": "20071228",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000005826"
+    },
+    {
+      "no": 15,
+      "name": "옥외소화전설비의화재안전기준(NFSC 109)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-17호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209890"
+    }
+  ],
+  "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)": [
+    {
+      "no": 1,
+      "name": "비상경보설비 및 단독경보형감지기의 화재안전성능기준(NFPC 201)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-45호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216112"
+    },
+    {
+      "no": 2,
+      "name": "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)",
+      "effective_date": "20210115",
+      "notice_no": "소방청고시 제2021-11호",
+      "promulgation_date": "20210115",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197454"
+    },
+    {
+      "no": 3,
+      "name": "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-34호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178588"
+    },
+    {
+      "no": 4,
+      "name": "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097331"
+    },
+    {
+      "no": 5,
+      "name": "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-96호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053519"
+    },
+    {
+      "no": 6,
+      "name": "비상경보설비 및 단독경보형감지기의 화재안전기준(NFSC 201)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-32호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011935"
+    },
+    {
+      "no": 7,
+      "name": "비상경보설비의 화재안전기준(NFSC 201)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-127호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079327"
+    },
+    {
+      "no": 8,
+      "name": "비상경보설비의 화재안전기준(NFSC 201)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009692"
+    },
+    {
+      "no": 9,
+      "name": "비상경보설비의 화재안전기준(NFSC 201)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-41호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006883"
+    },
+    {
+      "no": 10,
+      "name": "비상경보설비의 화재안전기준(NFSC 201)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-24호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006666"
+    },
+    {
+      "no": 11,
+      "name": "비상경보설비의화재안전기준(NFSC 201)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-18호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006542"
+    }
+  ],
+  "비상방송설비의 화재안전기준(NFSC 202)": [
+    {
+      "no": 1,
+      "name": "비상방송설비의 화재안전성능기준(NFPC202)",
+      "effective_date": "20230210",
+      "notice_no": "소방청고시 제2023-7호",
+      "promulgation_date": "20230210",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000219011"
+    },
+    {
+      "no": 2,
+      "name": "비상방송설비의 화재안전성능기준(NFPC 202)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-46호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216113"
+    },
+    {
+      "no": 3,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097389"
+    },
+    {
+      "no": 4,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-97호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053520"
+    },
+    {
+      "no": 5,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20150325",
+      "notice_no": "국민안전처고시 제2015-70호",
+      "promulgation_date": "20150325",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000016261"
+    },
+    {
+      "no": 6,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20130712",
+      "notice_no": "소방방재청고시 제2013-21호",
+      "promulgation_date": "20130611",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000025077"
+    },
+    {
+      "no": 7,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20120306",
+      "notice_no": "소방방재청고시 제2012-90호",
+      "promulgation_date": "20120215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018521"
+    },
+    {
+      "no": 8,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009693"
+    },
+    {
+      "no": 9,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-42호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006884"
+    },
+    {
+      "no": 10,
+      "name": "비상방송설비의 화재안전기준(NFSC 202)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-25호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006665"
+    },
+    {
+      "no": 11,
+      "name": "비상방송설비의화재안전기준(NFSC 202)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-19호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006543"
+    }
+  ],
+  "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC 203)": [
+    {
+      "no": 1,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전성능기준(NFPC 203)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-26호",
+      "promulgation_date": "20251224",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000269850"
+    },
+    {
+      "no": 2,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전성능기준(NFPC 203)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-47호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216130"
+    },
+    {
+      "no": 3,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC203)",
+      "effective_date": "20220509",
+      "notice_no": "소방청고시 제2022-10호",
+      "promulgation_date": "20220509",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000211190"
+    },
+    {
+      "no": 4,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC 203)",
+      "effective_date": "20210115",
+      "notice_no": "소방청고시 제2021-11호",
+      "promulgation_date": "20210115",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197456"
+    },
+    {
+      "no": 5,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC 203)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-35호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178589"
+    },
+    {
+      "no": 6,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC 203)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097332"
+    },
+    {
+      "no": 7,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC 203)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-98호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053521"
+    },
+    {
+      "no": 8,
+      "name": "자동화재탐지설비 및 시각경보장치의 화재안전기준(NFSC 203)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-33호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011937"
+    },
+    {
+      "no": 9,
+      "name": "자동화재탐지설비의 화재안전기준(NFSC 203)",
+      "effective_date": "20130811",
+      "notice_no": "소방방재청고시 제2013-20호",
+      "promulgation_date": "20130610",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000024139"
+    },
+    {
+      "no": 10,
+      "name": "자동화재탐지설비의 화재안전기준(NFSC 203)",
+      "effective_date": "20130712",
+      "notice_no": "소방방재청고시 제2013-21호",
+      "promulgation_date": "20130611",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000025078"
+    },
+    {
+      "no": 11,
+      "name": "자동화재탐지설비의 화재안전기준(NFSC 203)",
+      "effective_date": "20120306",
+      "notice_no": "소방방재청고시 제2012-91호",
+      "promulgation_date": "20120215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018522"
+    },
+    {
+      "no": 12,
+      "name": "자동화재탐지설비의 화재안전기준(NFSC 203)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009694"
+    },
+    {
+      "no": 13,
+      "name": "자동화재탐지설비의 화재안전기준(NFSC 203)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-43호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006885"
+    },
+    {
+      "no": 14,
+      "name": "자동화재탐지설비의 화재안전기준(NFSC 203)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-14호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006664"
+    },
+    {
+      "no": 15,
+      "name": "자동화재탐지설비의화재안전기준(NFSC 203)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-20호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006544"
+    }
+  ],
+  "자동화재속보설비의 화재안전기준(NFSC 204)": [
+    {
+      "no": 1,
+      "name": "자동화재속보설비의 화재안전성능기준(NFPC 204)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-48호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216129"
+    },
+    {
+      "no": 2,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-42호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178596"
+    },
+    {
+      "no": 3,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097333"
+    },
+    {
+      "no": 4,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-34호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011938"
+    },
+    {
+      "no": 5,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20120203",
+      "notice_no": "소방방재청고시 제2012-5호",
+      "promulgation_date": "20120203",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018344"
+    },
+    {
+      "no": 6,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-43호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000011403"
+    },
+    {
+      "no": 7,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009695"
+    },
+    {
+      "no": 8,
+      "name": "자동화재속보설비의 화재안전기준(NFSC 204)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-27호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006663"
+    },
+    {
+      "no": 9,
+      "name": "자동화재속보설비의화재안전기준(NFSC 204)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-21호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006545"
+    }
+  ],
+  "누전경보기의 화재안전기준(NFSC 205)": [
+    {
+      "no": 1,
+      "name": "누전경보기의 화재안전성능기준(NFPC 205)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-49호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216102"
+    },
+    {
+      "no": 2,
+      "name": "누전경보기의 화재안전기준(NFSC 205)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-36호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178590"
+    },
+    {
+      "no": 3,
+      "name": "누전경보기의 화재안전기준(NFSC 205)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097334"
+    },
+    {
+      "no": 4,
+      "name": "누전경보기의 화재안전기준(NFSC 205)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-35호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011939"
+    },
+    {
+      "no": 5,
+      "name": "누전경보기의 화재안전기준(NFSC 205)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-128호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079326"
+    },
+    {
+      "no": 6,
+      "name": "누전경보기의 화재안전기준(NFSC 205)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000010658"
+    },
+    {
+      "no": 7,
+      "name": "누전경보기의 화재안전기준(NFSC 205)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-28호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006662"
+    },
+    {
+      "no": 8,
+      "name": "누전경보기의화재안전기준(NFSC 205)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-22호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006546"
+    }
+  ],
+  "피난기구의 화재안전기준(NFSC 301)": [
+    {
+      "no": 1,
+      "name": "피난기구의 화재안전성능기준(NFPC 301)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-27호",
+      "promulgation_date": "20251224",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000269698"
+    },
+    {
+      "no": 2,
+      "name": "피난기구의 화재안전성능기준(NFPC 301)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-40호",
+      "promulgation_date": "20231013",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230246"
+    },
+    {
+      "no": 3,
+      "name": "피난기구의 화재안전성능기준(NFPC 301)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-51호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216136"
+    },
+    {
+      "no": 4,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20220908",
+      "notice_no": "소방청고시 제2022-22호",
+      "promulgation_date": "20220908",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000214403"
+    },
+    {
+      "no": 5,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097336"
+    },
+    {
+      "no": 6,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20170607",
+      "notice_no": "국민안전처고시 제2017-24호",
+      "promulgation_date": "20170607",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000089590"
+    },
+    {
+      "no": 7,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-36호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011941"
+    },
+    {
+      "no": 8,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20111124",
+      "notice_no": "소방방재청고시 제2011-30호",
+      "promulgation_date": "20111124",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000017572"
+    },
+    {
+      "no": 9,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20101227",
+      "notice_no": "소방방재청고시 제2010-40호",
+      "promulgation_date": "20101227",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000015380"
+    },
+    {
+      "no": 10,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009731"
+    },
+    {
+      "no": 11,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-44호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006886"
+    },
+    {
+      "no": 12,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-15호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006661"
+    },
+    {
+      "no": 13,
+      "name": "피난기구의 화재안전기준(NFSC 301)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-23호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209886"
+    }
+  ],
+  "인명구조기구의 화재안전기준(NFSC 302)": [
+    {
+      "no": 1,
+      "name": "인명구조기구의 화재안전성능기준(NFPC 302)",
+      "effective_date": "20251201",
+      "notice_no": "소방청고시 제2025-16호",
+      "promulgation_date": "20251031",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000264984"
+    },
+    {
+      "no": 2,
+      "name": "인명구조기구의 화재안전성능기준(NFPC 302)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-52호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216127"
+    },
+    {
+      "no": 3,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097337"
+    },
+    {
+      "no": 4,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20170607",
+      "notice_no": "국민안전처고시 제2017-25호",
+      "promulgation_date": "20170607",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000089591"
+    },
+    {
+      "no": 5,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20150106",
+      "notice_no": "국민안전처고시 제2015-1호",
+      "promulgation_date": "20150106",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000013258"
+    },
+    {
+      "no": 6,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20141008",
+      "notice_no": "소방방재청고시 제2014-11호",
+      "promulgation_date": "20140818",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000004866"
+    },
+    {
+      "no": 7,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-129호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079324"
+    },
+    {
+      "no": 8,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009733"
+    },
+    {
+      "no": 9,
+      "name": "인명구조기구의 화재안전기준(NFSC 302)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-30호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006660"
+    },
+    {
+      "no": 10,
+      "name": "인명구조기구의화재안전기준(NFSC 302)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-24호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006547"
+    }
+  ],
+  "유도등 및 유도표지의 화재안전기준(NFSC 303)": [
+    {
+      "no": 1,
+      "name": "유도등 및 유도표지의 화재안전성능기준(NFPC 303)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-40호",
+      "promulgation_date": "20231013",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230278"
+    },
+    {
+      "no": 2,
+      "name": "유도등 및 유도표지의 화재안전성능기준(NFPC303)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-39호",
+      "promulgation_date": "20231006",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230200"
+    },
+    {
+      "no": 3,
+      "name": "유도등 및 유도표지의 화재안전성능기준(NFPC 303)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-53호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216125"
+    },
+    {
+      "no": 4,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC303)",
+      "effective_date": "20210708",
+      "notice_no": "소방청고시 제2021-23호",
+      "promulgation_date": "20210708",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000202741"
+    },
+    {
+      "no": 5,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097350"
+    },
+    {
+      "no": 6,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-99호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053522"
+    },
+    {
+      "no": 7,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20150106",
+      "notice_no": "국민안전처고시 제2015-1호",
+      "promulgation_date": "20150106",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000013259"
+    },
+    {
+      "no": 8,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20141008",
+      "notice_no": "소방방재청고시 제2014-12호",
+      "promulgation_date": "20140818",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000004879"
+    },
+    {
+      "no": 9,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-130호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079584"
+    },
+    {
+      "no": 10,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-44호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000011404"
+    },
+    {
+      "no": 11,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009734"
+    },
+    {
+      "no": 12,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-45호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006887"
+    },
+    {
+      "no": 13,
+      "name": "유도등 및 유도표지의 화재안전기준(NFSC 303)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-31호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006659"
+    },
+    {
+      "no": 14,
+      "name": "유도등및유도표지의화재안전기준(NFSC 303)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-25호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006548"
+    }
+  ],
+  "비상조명등의 화재안전기준(NFSC 304)": [
+    {
+      "no": 1,
+      "name": "비상조명등의 화재안전성능기준(NFPC 304)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-54호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253096"
+    },
+    {
+      "no": 2,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097351"
+    },
+    {
+      "no": 3,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-100호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053523"
+    },
+    {
+      "no": 4,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-37호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011942"
+    },
+    {
+      "no": 5,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-131호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079325"
+    },
+    {
+      "no": 6,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009735"
+    },
+    {
+      "no": 7,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-32호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006658"
+    },
+    {
+      "no": 8,
+      "name": "비상조명등의 화재안전기준(NFSC 304)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-26호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209885"
+    }
+  ],
+  "상수도소화용수설비의 화재안전기준(NFSC 401)": [
+    {
+      "no": 1,
+      "name": "상수도소화용수설비의 화재안전성능기준(NFPC 401)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-55호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216116"
+    },
+    {
+      "no": 2,
+      "name": "상수도소화용수설비의 화재안전기준(NFSC 401)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-38호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178592"
+    },
+    {
+      "no": 3,
+      "name": "상수도소화용수설비의 화재안전기준(NFSC 401)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097352"
+    },
+    {
+      "no": 4,
+      "name": "상수도소화용수설비의 화재안전기준(NFSC 401)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-38호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011943"
+    },
+    {
+      "no": 5,
+      "name": "상수도소화용수설비의 화재안전기준(NFSC 401)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-132호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079323"
+    },
+    {
+      "no": 6,
+      "name": "상수도소화용수설비의 화재안전기준(NFSC 401)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009736"
+    },
+    {
+      "no": 7,
+      "name": "상수도소화용수설비의 화재안전기준(NFSC 401)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-33호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006657"
+    },
+    {
+      "no": 8,
+      "name": "상수도소화용수설비의화재안전기준(NFSC 401)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-27호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006549"
+    }
+  ],
+  "소화수조 및 저수조의 화재안전기준(NFSC 402)": [
+    {
+      "no": 1,
+      "name": "소화수조 및 저수조의 화재안전성능기준(NFPC 402)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-56호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000270482"
+    },
+    {
+      "no": 2,
+      "name": "소화수조 및 저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20210805",
+      "notice_no": "소방청고시 제2021-30호",
+      "promulgation_date": "20210805",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203480"
+    },
+    {
+      "no": 3,
+      "name": "소화수조 및 저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-40호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178594"
+    },
+    {
+      "no": 4,
+      "name": "소화수조 및 저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097353"
+    },
+    {
+      "no": 5,
+      "name": "소화수조 및 저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-39호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011945"
+    },
+    {
+      "no": 6,
+      "name": "소화수조및저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-133호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079342"
+    },
+    {
+      "no": 7,
+      "name": "소화수조및저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009737"
+    },
+    {
+      "no": 8,
+      "name": "소화수조및저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-34호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006656"
+    },
+    {
+      "no": 9,
+      "name": "소화수조 및 저수조의 화재안전기준(NFSC 402)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-28호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209884"
+    }
+  ],
+  "제연설비의 화재안전기준(NFSC 501)": [
+    {
+      "no": 1,
+      "name": "제연설비의 화재안전성능기준(NFPC 501)",
+      "effective_date": "20241001",
+      "notice_no": "소방청고시 제2024-48호",
+      "promulgation_date": "20240913",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000246734"
+    },
+    {
+      "no": 2,
+      "name": "제연설비의 화재안전성능기준(NFPC 501)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-57호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216132"
+    },
+    {
+      "no": 3,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20220915",
+      "notice_no": "소방청고시 제2022-23호",
+      "promulgation_date": "20220915",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000214404"
+    },
+    {
+      "no": 4,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097369"
+    },
+    {
+      "no": 5,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-101호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053524"
+    },
+    {
+      "no": 6,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-128호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030923"
+    },
+    {
+      "no": 7,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-134호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079337"
+    },
+    {
+      "no": 8,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009738"
+    },
+    {
+      "no": 9,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-46호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006888"
+    },
+    {
+      "no": 10,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-16호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006655"
+    },
+    {
+      "no": 11,
+      "name": "제연설비의 화재안전기준(NFSC 501)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-29호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209887"
+    }
+  ],
+  "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)": [
+    {
+      "no": 1,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전성능기준(NFPC 501A)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-5호",
+      "promulgation_date": "20240318",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253152"
+    },
+    {
+      "no": 2,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전성능기준(NFPC 501A)",
+      "effective_date": "20240401",
+      "notice_no": "소방청고시 제2024-1호",
+      "promulgation_date": "20240126",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000235084"
+    },
+    {
+      "no": 3,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전성능기준(NFPC 501A)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-58호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216134"
+    },
+    {
+      "no": 4,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097370"
+    },
+    {
+      "no": 5,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-102호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053525"
+    },
+    {
+      "no": 6,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-130호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030925"
+    },
+    {
+      "no": 7,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20150106",
+      "notice_no": "국민안전처고시 제2015-1호",
+      "promulgation_date": "20150106",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000013260"
+    },
+    {
+      "no": 8,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20131204",
+      "notice_no": "소방방재청고시 제2013-53호",
+      "promulgation_date": "20130903",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000101002"
+    },
+    {
+      "no": 9,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20101227",
+      "notice_no": "소방방재청고시 제2010-41호",
+      "promulgation_date": "20101227",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000015382"
+    },
+    {
+      "no": 10,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009739"
+    },
+    {
+      "no": 11,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-47호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006889"
+    },
+    {
+      "no": 12,
+      "name": "특별피난계단의 계단실 및 부속실 제연설비의 화재안전기준(NFSC 501A)",
+      "effective_date": "20071228",
+      "notice_no": "소방방재청고시 제2007-71호",
+      "promulgation_date": "20071228",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006654"
+    },
+    {
+      "no": 13,
+      "name": "특별피난계단의계단실및부속실제연설비의화재안전기준(NFSC 501A)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-30호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006550"
+    }
+  ],
+  "연결송수관설비의 화재안전기준(NFSC 502)": [
+    {
+      "no": 1,
+      "name": "연결송수관설비의 화재안전성능기준(NFPC 502)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000240188"
+    },
+    {
+      "no": 2,
+      "name": "연결송수관설비의 화재안전성능기준(NFPC 502)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-59호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216122"
+    },
+    {
+      "no": 3,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-51호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207067"
+    },
+    {
+      "no": 4,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20210722",
+      "notice_no": "소방청고시 제2021-28호",
+      "promulgation_date": "20210722",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000203044"
+    },
+    {
+      "no": 5,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097371"
+    },
+    {
+      "no": 6,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-103호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053526"
+    },
+    {
+      "no": 7,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20150106",
+      "notice_no": "국민안전처고시 제2015-1호",
+      "promulgation_date": "20150106",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000013261"
+    },
+    {
+      "no": 8,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20141008",
+      "notice_no": "소방방재청고시 제2014-13호",
+      "promulgation_date": "20140818",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000004874"
+    },
+    {
+      "no": 9,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20130712",
+      "notice_no": "소방방재청고시 제2013-21호",
+      "promulgation_date": "20130611",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000025079"
+    },
+    {
+      "no": 10,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20120306",
+      "notice_no": "소방방재청고시 제2012-92호",
+      "promulgation_date": "20120215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018523"
+    },
+    {
+      "no": 11,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009741"
+    },
+    {
+      "no": 12,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-48호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006890"
+    },
+    {
+      "no": 13,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-18호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006653"
+    },
+    {
+      "no": 14,
+      "name": "연결송수관설비의 화재안전기준(NFSC 502)",
+      "effective_date": "20040604",
+      "notice_no": "행정자치부고시 제2004-31호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000209889"
+    }
+  ],
+  "연결살수설비의 화재안전기준(NFSC 503)": [
+    {
+      "no": 1,
+      "name": "연결살수설비의 화재안전성능기준(NFPC 503)",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2025-25호",
+      "promulgation_date": "20251224",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000269714"
+    },
+    {
+      "no": 2,
+      "name": "연결살수설비의 화재안전성능기준(NFPC 503)",
+      "effective_date": "20240701",
+      "notice_no": "소방청고시 제2024-19호",
+      "promulgation_date": "20240510",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000240180"
+    },
+    {
+      "no": 3,
+      "name": "연결살수설비의 화재안전성능기준(NFPC 503)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-60호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216121"
+    },
+    {
+      "no": 4,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-52호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207068"
+    },
+    {
+      "no": 5,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20200826",
+      "notice_no": "소방청고시 제2020-15호",
+      "promulgation_date": "20200826",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000192277"
+    },
+    {
+      "no": 6,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097372"
+    },
+    {
+      "no": 7,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20161014",
+      "notice_no": "국민안전처고시 제2016-104호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053527"
+    },
+    {
+      "no": 8,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20150324",
+      "notice_no": "국민안전처고시 제2015-40호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011955"
+    },
+    {
+      "no": 9,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-135호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079338"
+    },
+    {
+      "no": 10,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009743"
+    },
+    {
+      "no": 11,
+      "name": "연결살수설비의 화재안전기준(NFSC 503)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-19호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006652"
+    },
+    {
+      "no": 12,
+      "name": "연결살수설비의화재안전기준(NFSC 503)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-32호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006551"
+    }
+  ],
+  "비상콘센트설비의 화재안전기준(NFSC 504)": [
+    {
+      "no": 1,
+      "name": "비상콘센트설비의 화재안전성능기준(NFPC 504)",
+      "effective_date": "20240101",
+      "notice_no": "소방청고시 제2023-40호",
+      "promulgation_date": "20231013",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000230248"
+    },
+    {
+      "no": 2,
+      "name": "비상콘센트설비의 화재안전성능기준(NFPC 504)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-61호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216115"
+    },
+    {
+      "no": 3,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097373"
+    },
+    {
+      "no": 4,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-105호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053528"
+    },
+    {
+      "no": 5,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-41호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011956"
+    },
+    {
+      "no": 6,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20131004",
+      "notice_no": "소방방재청고시 제2013-54호",
+      "promulgation_date": "20130903",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000101022"
+    },
+    {
+      "no": 7,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-136호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079321"
+    },
+    {
+      "no": 8,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009744"
+    },
+    {
+      "no": 9,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-50호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006892"
+    },
+    {
+      "no": 10,
+      "name": "비상콘센트설비의 화재안전기준(NFSC 504)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-39호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006651"
+    },
+    {
+      "no": 11,
+      "name": "비상콘센트설비의화재안전기준(NFSC 504)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-33호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006552"
+    }
+  ],
+  "무선통신보조설비의 화재안전기준(NFSC 505)": [
+    {
+      "no": 1,
+      "name": "무선통신보조설비의 화재안전성능기준(NFPC 505)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-62호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216105"
+    },
+    {
+      "no": 2,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20210325",
+      "notice_no": "소방청고시 제2021-16호",
+      "promulgation_date": "20210325",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000199293"
+    },
+    {
+      "no": 3,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097374"
+    },
+    {
+      "no": 4,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20170607",
+      "notice_no": "국민안전처고시 제2017-26호",
+      "promulgation_date": "20170607",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000089592"
+    },
+    {
+      "no": 5,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-106호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053529"
+    },
+    {
+      "no": 6,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-42호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011957"
+    },
+    {
+      "no": 7,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20120203",
+      "notice_no": "소방방재청고시 제2012-6호",
+      "promulgation_date": "20120203",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000018345"
+    },
+    {
+      "no": 8,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009747"
+    },
+    {
+      "no": 9,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20071230",
+      "notice_no": "소방방재청고시 제2006-40호",
+      "promulgation_date": "20071230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006650"
+    },
+    {
+      "no": 10,
+      "name": "무선통신보조설비의 화재안전기준(NFSC 505)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-34호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006553"
+    }
+  ],
+  "연소방지설비의 화재안전기준(NFSC 506)": [
+    {
+      "no": 1,
+      "name": "지하구의 화재안전성능기준(NFPC 605)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-66호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253154"
+    },
+    {
+      "no": 2,
+      "name": "지하구의 화재안전기준(NFSC 605)",
+      "effective_date": "20211216",
+      "notice_no": "소방청고시 제2021-53호",
+      "promulgation_date": "20211216",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000207069"
+    },
+    {
+      "no": 3,
+      "name": "지하구의 화재안전기준(NFSC 605)",
+      "effective_date": "20210115",
+      "notice_no": "소방청고시 제2021-11호",
+      "promulgation_date": "20210115",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000197077"
+    },
+    {
+      "no": 4,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20181119",
+      "notice_no": "소방청고시 제2018-15호",
+      "promulgation_date": "20181119",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000167270"
+    },
+    {
+      "no": 5,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097375"
+    },
+    {
+      "no": 6,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-126호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030921"
+    },
+    {
+      "no": 7,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-137호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079322"
+    },
+    {
+      "no": 8,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009748"
+    },
+    {
+      "no": 9,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20081215",
+      "notice_no": "소방방재청고시 제2008-51호",
+      "promulgation_date": "20081215",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006893"
+    },
+    {
+      "no": 10,
+      "name": "연소방지설비의 화재안전기준(NFSC 506)",
+      "effective_date": "20070412",
+      "notice_no": "소방방재청고시 제2007-20호",
+      "promulgation_date": "20070412",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006649"
+    },
+    {
+      "no": 11,
+      "name": "연소방지설비의화재안전기준(NFSC 506)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-35호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006554"
+    }
+  ],
+  "소방시설용 비상전원수전설비의 화재안전기준(NFSC 602)": [
+    {
+      "no": 1,
+      "name": "소방시설용 비상전원수전설비의 화재안전성능기준(NFPC 602)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-63호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216117"
+    },
+    {
+      "no": 2,
+      "name": "소방시설용 비상전원수전설비의 화재안전기준(NFSC 602)",
+      "effective_date": "20190524",
+      "notice_no": "소방청고시 제2019-39호",
+      "promulgation_date": "20190524",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000178593"
+    },
+    {
+      "no": 3,
+      "name": "소방시설용 비상전원수전설비의 화재안전기준(NFSC 602)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097376"
+    },
+    {
+      "no": 4,
+      "name": "소방시설용 비상전원수전설비의 화재안전기준(NFSC 602)",
+      "effective_date": "20150123",
+      "notice_no": "국민안전처고시 제2015-43호",
+      "promulgation_date": "20150123",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000011958"
+    },
+    {
+      "no": 5,
+      "name": "소방시설용비상전원수전설비의 화재안전기준(NFSC 602)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-138호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079340"
+    },
+    {
+      "no": 6,
+      "name": "소방시설용비상전원수전설비의 화재안전기준(NFSC 602)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009749"
+    },
+    {
+      "no": 7,
+      "name": "소방시설용비상전원수전설비의 화재안전기준(NFSC 602)",
+      "effective_date": "20061230",
+      "notice_no": "소방방재청고시 제2006-43호",
+      "promulgation_date": "20061230",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006648"
+    },
+    {
+      "no": 8,
+      "name": "소방시설용비상전원수전설비의화재안전기준(NFSC 602)",
+      "effective_date": "20040604",
+      "notice_no": "소방방재청고시 제2004-37호",
+      "promulgation_date": "20040604",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000006556"
+    }
+  ],
+  "도로터널의 화재안전기준(NFSC 603)": [
+    {
+      "no": 1,
+      "name": "도로터널의 화재안전성능기준(NFPC 603)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-64호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000253184"
+    },
+    {
+      "no": 2,
+      "name": "도로터널의 화재안전기준(NFSC 603)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097377"
+    },
+    {
+      "no": 3,
+      "name": "도로터널의 화재안전기준(NFSC 603)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-125호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030920"
+    },
+    {
+      "no": 4,
+      "name": "도로터널의 화재안전기준(NFSC 603)",
+      "effective_date": "20130903",
+      "notice_no": "소방방재청고시 제2013-55호",
+      "promulgation_date": "20130903",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000101042"
+    },
+    {
+      "no": 5,
+      "name": "도로터널의 화재안전기준(NFSC 603)",
+      "effective_date": "20120820",
+      "notice_no": "소방방재청고시 제2012-139호",
+      "promulgation_date": "20120820",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000079341"
+    },
+    {
+      "no": 6,
+      "name": "도로터널의 화재안전기준(NFSC 603)",
+      "effective_date": "20091022",
+      "notice_no": "소방방재청고시 제2009-45호",
+      "promulgation_date": "20091022",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000011405"
+    },
+    {
+      "no": 7,
+      "name": "도로터널의 화재안전기준(NFSC 603)",
+      "effective_date": "20090824",
+      "notice_no": "소방방재청고시 제2009-31호",
+      "promulgation_date": "20090824",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000009750"
+    }
+  ],
+  "고층건축물의 화재안전기준 (NFSC 604)": [
+    {
+      "no": 1,
+      "name": "고층건축물의 화재안전성능기준 (NFPC 604)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-65호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216101"
+    },
+    {
+      "no": 2,
+      "name": "고층건축물의 화재안전기준 (NFSC 604)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097378"
+    },
+    {
+      "no": 3,
+      "name": "고층건축물의 화재안전기준 (NFSC 604)",
+      "effective_date": "20160713",
+      "notice_no": "국민안전처고시 제2016-107호",
+      "promulgation_date": "20160713",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053530"
+    },
+    {
+      "no": 4,
+      "name": "고층건축물의 화재안전기준 (NFSC 604)",
+      "effective_date": "20151028",
+      "notice_no": "국민안전처고시 제2015-124호",
+      "promulgation_date": "20151028",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000030907"
+    },
+    {
+      "no": 5,
+      "name": "고층건축물의 화재안전기준 (NFSC 604)",
+      "effective_date": "20130712",
+      "notice_no": "소방방재청고시 제2013-21호",
+      "promulgation_date": "20130611",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2000000093883"
+    }
+  ],
+  "임시소방시설의 화재안전기준(NFSC 606)": [
+    {
+      "no": 1,
+      "name": "건설현장의 화재안전성능기준(NFPC 606)",
+      "effective_date": "20230701",
+      "notice_no": "소방청고시 제2023-23호",
+      "promulgation_date": "20230628",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000225266"
+    },
+    {
+      "no": 2,
+      "name": "임시소방시설의 화재안전성능기준(NFPC 606)",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-67호",
+      "promulgation_date": "20221125",
+      "revision_type": "전부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216128"
+    },
+    {
+      "no": 3,
+      "name": "임시소방시설의 화재안전기준(NFSC 606)",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097379"
+    },
+    {
+      "no": 4,
+      "name": "임시소방시설의 화재안전기준(NFSC 606)",
+      "effective_date": "20160718",
+      "notice_no": "국민안전처고시 제2016-116호",
+      "promulgation_date": "20160718",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000053992"
+    },
+    {
+      "no": 5,
+      "name": "임시소방시설의 화재안전기준(NFSC 606)",
+      "effective_date": "20150108",
+      "notice_no": "국민안전처고시 제2015-3호",
+      "promulgation_date": "20150108",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000010766"
+    }
+  ],
+  "소방시설의 내진설계 기준": [
+    {
+      "no": 1,
+      "name": "소방시설의 내진설계 기준",
+      "effective_date": "20260301",
+      "notice_no": "소방청고시 제2026-1호",
+      "promulgation_date": "20260130",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000273292"
+    },
+    {
+      "no": 2,
+      "name": "소방시설의 내진설계 기준",
+      "effective_date": "20221201",
+      "notice_no": "소방청고시 제2022-76호",
+      "promulgation_date": "20221201",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216346"
+    },
+    {
+      "no": 3,
+      "name": "소방시설의 내진설계 기준",
+      "effective_date": "20210219",
+      "notice_no": "소방청고시 제2021-15호",
+      "promulgation_date": "20210219",
+      "revision_type": "일부개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000198115"
+    },
+    {
+      "no": 4,
+      "name": "소방시설의 내진설계 기준",
+      "effective_date": "20170726",
+      "notice_no": "소방청고시 제2017-1호",
+      "promulgation_date": "20170726",
+      "revision_type": "타법개정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000097380"
+    },
+    {
+      "no": 5,
+      "name": "소방시설의 내진설계 기준",
+      "effective_date": "20160125",
+      "notice_no": "국민안전처고시 제2015-138호",
+      "promulgation_date": "20151130",
+      "revision_type": "제정",
+      "link": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000033722"
+    }
+  ]
+}

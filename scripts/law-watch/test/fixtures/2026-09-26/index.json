@@ -1,0 +1,826 @@
+{
+  "version": 1,
+  "entries": {
+    "cf9bac6675ed8a28d1226222c4e51fb5a3e19bbd": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/lsHstListR.do",
+      "body": "lsId=009503&chrClsCd=010202&ancYnChk=0",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 25911,
+      "file": "cf9bac6675ed8a28d1226222c4e51fb5a3e19bbd.html"
+    },
+    "bcbac157280c2a150013bc95148c3833a7d10a86": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%86%8C%EB%B0%A9%EC%8B%9C%EC%84%A4%EC%84%A4%EC%B9%98%EB%B0%8F%EA%B4%80%EB%A6%AC%EC%97%90%EA%B4%80%ED%95%9C%EB%B2%95%EB%A5%A0",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1300,
+      "file": "bcbac157280c2a150013bc95148c3833a7d10a86.html"
+    },
+    "aac5396c240cbc4c7a0a2e345c21e59f659bba9a": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/lsHstListR.do",
+      "body": "lsId=009694&chrClsCd=010202&ancYnChk=0",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 41623,
+      "file": "aac5396c240cbc4c7a0a2e345c21e59f659bba9a.html"
+    },
+    "311b625b4b2283aa5b00544f23efb9d85ed34301": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%86%8C%EB%B0%A9%EC%8B%9C%EC%84%A4%EC%84%A4%EC%B9%98%EB%B0%8F%EA%B4%80%EB%A6%AC%EC%97%90%EA%B4%80%ED%95%9C%EB%B2%95%EB%A5%A0%EC%8B%9C%ED%96%89%EB%A0%B9",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1309,
+      "file": "311b625b4b2283aa5b00544f23efb9d85ed34301.html"
+    },
+    "989429d0ca03a7bca3dbd36004da4935cf1ab9dd": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/lsRvsDocInfoR.do",
+      "body": "lsiSeq=287375&chrClsCd=010202&efYd=20260701&ancYnChk=0",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5041,
+      "file": "989429d0ca03a7bca3dbd36004da4935cf1ab9dd.html"
+    },
+    "f8f6aaee93e64d26e683a103774b579ea434e342": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/lsRvsDocInfoR.do",
+      "body": "lsiSeq=284781&chrClsCd=010202&efYd=20260324&ancYnChk=0",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 6386,
+      "file": "f8f6aaee93e64d26e683a103774b579ea434e342.html"
+    },
+    "c362fba737853166281fd38d5b0da75d10bb2c1d": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/lsHstListR.do",
+      "body": "lsId=009730&chrClsCd=010202&ancYnChk=0",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 21863,
+      "file": "c362fba737853166281fd38d5b0da75d10bb2c1d.html"
+    },
+    "a259498e893f3e23b98ba18c884936af9d07ebe2": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%86%8C%EB%B0%A9%EC%8B%9C%EC%84%A4%EC%84%A4%EC%B9%98%EB%B0%8F%EA%B4%80%EB%A6%AC%EC%97%90%EA%B4%80%ED%95%9C%EB%B2%95%EB%A5%A0%EC%8B%9C%ED%96%89%EA%B7%9C%EC%B9%99",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1312,
+      "file": "a259498e893f3e23b98ba18c884936af9d07ebe2.html"
+    },
+    "217faf569dc8f6661878cf2d4b6b686b44b09b32": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/lsRvsDocInfoR.do",
+      "body": "lsiSeq=287831&chrClsCd=010202&efYd=20260701&ancYnChk=0",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5298,
+      "file": "217faf569dc8f6661878cf2d4b6b686b44b09b32.html"
+    },
+    "8c21b120159fc230ebceed14b2098bc431b957db": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216118",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4752,
+      "file": "8c21b120159fc230ebceed14b2098bc431b957db.html"
+    },
+    "7cf6b362e2320ca28465f8f136a79c06c3c1a3bc": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%86%8C%ED%99%94%EA%B8%B0%EA%B5%AC%EB%B0%8F%EC%9E%90%EB%8F%99%EC%86%8C%ED%99%94%EC%9E%A5%EC%B9%98%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC101)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1288,
+      "file": "7cf6b362e2320ca28465f8f136a79c06c3c1a3bc.html"
+    },
+    "e3393e90b7dade10db263ddef4fb788154821c3a": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000273564",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 6919,
+      "file": "e3393e90b7dade10db263ddef4fb788154821c3a.html"
+    },
+    "f06c2b525acc9a39bf01be7d6c94a1a0203b6046": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%98%A5%EB%82%B4%EC%86%8C%ED%99%94%EC%A0%84%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC102)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1276,
+      "file": "f06c2b525acc9a39bf01be7d6c94a1a0203b6046.html"
+    },
+    "444fabcea9f2b40b69728ba02cca1a2fa04c4602": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000270474",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 7565,
+      "file": "444fabcea9f2b40b69728ba02cca1a2fa04c4602.html"
+    },
+    "2da08d3d8e2e3602bf84aef3ff2e114cde43b347": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%8A%A4%ED%94%84%EB%A7%81%ED%81%B4%EB%9F%AC%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC103)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1276,
+      "file": "2da08d3d8e2e3602bf84aef3ff2e114cde43b347.html"
+    },
+    "def8985ae040c5c10cdd6029a6ef7550d8a7798b": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000273566",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 6409,
+      "file": "def8985ae040c5c10cdd6029a6ef7550d8a7798b.html"
+    },
+    "6ac9dbceb235e9ec973751070a2c9ecb1ebd2649": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EA%B0%84%EC%9D%B4%EC%8A%A4%ED%94%84%EB%A7%81%ED%81%B4%EB%9F%AC%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC103A)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1283,
+      "file": "6ac9dbceb235e9ec973751070a2c9ecb1ebd2649.html"
+    },
+    "0dddd4ee44126d9f35c7aaba8fba0cddc088a259": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000269748",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5998,
+      "file": "0dddd4ee44126d9f35c7aaba8fba0cddc088a259.html"
+    },
+    "5249c7cc2bd916b0dd5df9720180f1e7ceddf66a": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%ED%99%94%EC%9E%AC%EC%A1%B0%EA%B8%B0%EC%A7%84%EC%95%95%EC%9A%A9%EC%8A%A4%ED%94%84%EB%A7%81%ED%81%B4%EB%9F%AC%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC103B)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1298,
+      "file": "5249c7cc2bd916b0dd5df9720180f1e7ceddf66a.html"
+    },
+    "ed6b9461385269a882bfc86066ecd102d9e46f2d": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000273568",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5334,
+      "file": "ed6b9461385269a882bfc86066ecd102d9e46f2d.html"
+    },
+    "c95f256a192f82ee0f23a2150d47172b8f3767da": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%AC%BC%EB%B6%84%EB%AC%B4%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC104)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1276,
+      "file": "c95f256a192f82ee0f23a2150d47172b8f3767da.html"
+    },
+    "9be820348c0d25c4f6b6905c4eeebc7411abc47e": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000269752",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4382,
+      "file": "9be820348c0d25c4f6b6905c4eeebc7411abc47e.html"
+    },
+    "cf0a3bad03a8ccf872678687abe7f40ee781acee": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%AF%B8%EB%B6%84%EB%AC%B4%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC104A)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1277,
+      "file": "cf0a3bad03a8ccf872678687abe7f40ee781acee.html"
+    },
+    "36592532fb54b1b46824b748c0510ac35f64cb31": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000273596",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5567,
+      "file": "36592532fb54b1b46824b748c0510ac35f64cb31.html"
+    },
+    "cd0aa5ba99bb4347cf064ed95f1f4d7d2798cf7a": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%ED%8F%AC%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC105)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1270,
+      "file": "cd0aa5ba99bb4347cf064ed95f1f4d7d2798cf7a.html"
+    },
+    "c4e9ffe0a07ad271c278222648ed9b016184ddfa": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000243626",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5106,
+      "file": "c4e9ffe0a07ad271c278222648ed9b016184ddfa.html"
+    },
+    "d14c860c6b2f48be016127d6a6622a8f04c66ec9": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%9D%B4%EC%82%B0%ED%99%94%ED%83%84%EC%86%8C%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC106)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1282,
+      "file": "d14c860c6b2f48be016127d6a6622a8f04c66ec9.html"
+    },
+    "3523798ade11afd8ffc47182893b86c0cf4117a7": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000218508",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4448,
+      "file": "3523798ade11afd8ffc47182893b86c0cf4117a7.html"
+    },
+    "9f1deed9895f54bc5a7f5b66159de90bb5a3efe0": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%ED%95%A0%EB%A1%A0%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC107)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1273,
+      "file": "9f1deed9895f54bc5a7f5b66159de90bb5a3efe0.html"
+    },
+    "0d88d2603af422426731c0e9f33e1d653a9d1dbd": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000243628",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5550,
+      "file": "0d88d2603af422426731c0e9f33e1d653a9d1dbd.html"
+    },
+    "9e24587deb2bd17dc12f816531f22b6ed82fa98c": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%ED%95%A0%EB%A1%9C%EA%B2%90%ED%99%94%ED%95%A9%EB%AC%BC%EB%B0%8F%EB%B6%88%ED%99%9C%EC%84%B1%EA%B8%B0%EC%B2%B4%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC107A)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1304,
+      "file": "9e24587deb2bd17dc12f816531f22b6ed82fa98c.html"
+    },
+    "4478b413c028281db918f26772bc583937ccd59c": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000253098",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4353,
+      "file": "4478b413c028281db918f26772bc583937ccd59c.html"
+    },
+    "313a165eb4d5802654a07d1cb5c1d472933a0403": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%B6%84%EB%A7%90%EC%86%8C%ED%99%94%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC108)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1273,
+      "file": "313a165eb4d5802654a07d1cb5c1d472933a0403.html"
+    },
+    "48e2067fb6b659decc38c250ed64d1b69ec1c2c8": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278572&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3040,
+      "file": "48e2067fb6b659decc38c250ed64d1b69ec1c2c8.html"
+    },
+    "f5e3951833f5a85ef7e415af42ecff12f6df0187": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000273562",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5652,
+      "file": "f5e3951833f5a85ef7e415af42ecff12f6df0187.html"
+    },
+    "03146f29ead7eccc0ed9ea99e88e274c4e4fbab7": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%98%A5%EC%99%B8%EC%86%8C%ED%99%94%EC%A0%84%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC109)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1276,
+      "file": "03146f29ead7eccc0ed9ea99e88e274c4e4fbab7.html"
+    },
+    "e336cb59080249b4c5acf358063bd6792e031561": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216112",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4870,
+      "file": "e336cb59080249b4c5acf358063bd6792e031561.html"
+    },
+    "dbd8171918d5e3047cba25e615a0aca199bff1a2": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%B9%84%EC%83%81%EA%B2%BD%EB%B3%B4%EC%84%A4%EB%B9%84%EB%B0%8F%EB%8B%A8%EB%8F%85%EA%B2%BD%EB%B3%B4%ED%98%95%EA%B0%90%EC%A7%80%EA%B8%B0%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC201)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1300,
+      "file": "dbd8171918d5e3047cba25e615a0aca199bff1a2.html"
+    },
+    "e84a61a6e722aa47deba9390bcb1f1782ab2ab4e": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278574&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3183,
+      "file": "e84a61a6e722aa47deba9390bcb1f1782ab2ab4e.html"
+    },
+    "c68b58782e950c554b792fb22470ff216f942818": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000219011",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4360,
+      "file": "c68b58782e950c554b792fb22470ff216f942818.html"
+    },
+    "ba557e07d317fd29e7acba37d63fdca70cc977ff": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%B9%84%EC%83%81%EB%B0%A9%EC%86%A1%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC202)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1273,
+      "file": "ba557e07d317fd29e7acba37d63fdca70cc977ff.html"
+    },
+    "52dfc67103e5a54f093b0d4ca2a28146b54b968c": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000269850",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5877,
+      "file": "52dfc67103e5a54f093b0d4ca2a28146b54b968c.html"
+    },
+    "bfa539ba034d6c05f3aa98d13bcd201f70a19664": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%9E%90%EB%8F%99%ED%99%94%EC%9E%AC%ED%83%90%EC%A7%80%EC%84%A4%EB%B9%84%EB%B0%8F%EC%8B%9C%EA%B0%81%EA%B2%BD%EB%B3%B4%EC%9E%A5%EC%B9%98%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC203)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1300,
+      "file": "bfa539ba034d6c05f3aa98d13bcd201f70a19664.html"
+    },
+    "c24f022bb50efef296c65cbb90b3fd0eaa67dfdf": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216129",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3776,
+      "file": "c24f022bb50efef296c65cbb90b3fd0eaa67dfdf.html"
+    },
+    "e11432da6710c033f81473e7b21c508b1c048dc7": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%9E%90%EB%8F%99%ED%99%94%EC%9E%AC%EC%86%8D%EB%B3%B4%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC204)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1279,
+      "file": "e11432da6710c033f81473e7b21c508b1c048dc7.html"
+    },
+    "24bb340e659c6c35c27a716079726d2ad65e5667": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216102",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3695,
+      "file": "24bb340e659c6c35c27a716079726d2ad65e5667.html"
+    },
+    "5fdde89641b914315256ab0d2aef720bb1ec1d07": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%88%84%EC%A0%84%EA%B2%BD%EB%B3%B4%EA%B8%B0%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC205)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1270,
+      "file": "5fdde89641b914315256ab0d2aef720bb1ec1d07.html"
+    },
+    "815f893898e3fb8df89223359f83cb5661be4104": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278570&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3023,
+      "file": "815f893898e3fb8df89223359f83cb5661be4104.html"
+    },
+    "db41ffe48e168ab541c27de5b33466fb8c7d8b58": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000269698",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4910,
+      "file": "db41ffe48e168ab541c27de5b33466fb8c7d8b58.html"
+    },
+    "c1b9b49b4ebb68134d2710594a360a554f27028f": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%ED%94%BC%EB%82%9C%EA%B8%B0%EA%B5%AC%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC301)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1267,
+      "file": "c1b9b49b4ebb68134d2710594a360a554f27028f.html"
+    },
+    "548592c3cb001e77e513d5b8d97a61d0a8251c21": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000264984",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4042,
+      "file": "548592c3cb001e77e513d5b8d97a61d0a8251c21.html"
+    },
+    "054c756b851a9505397078383fbb1159582163e2": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%9D%B8%EB%AA%85%EA%B5%AC%EC%A1%B0%EA%B8%B0%EA%B5%AC%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC302)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1273,
+      "file": "054c756b851a9505397078383fbb1159582163e2.html"
+    },
+    "0bcdd414ea92639e8d7f0fb870c9ceaea0885322": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000230278",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5410,
+      "file": "0bcdd414ea92639e8d7f0fb870c9ceaea0885322.html"
+    },
+    "2c6b7c07f5837d3715a6464a94e95afff1a088d7": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%9C%A0%EB%8F%84%EB%93%B1%EB%B0%8F%EC%9C%A0%EB%8F%84%ED%91%9C%EC%A7%80%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC303)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1279,
+      "file": "2c6b7c07f5837d3715a6464a94e95afff1a088d7.html"
+    },
+    "9715c3f59b249b02c5b6737e7acf8b3a27a256a8": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000253096",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3703,
+      "file": "9715c3f59b249b02c5b6737e7acf8b3a27a256a8.html"
+    },
+    "4c19c0c5a9dee60c8cff112f01b026102a40bc5d": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%B9%84%EC%83%81%EC%A1%B0%EB%AA%85%EB%93%B1%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC304)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1270,
+      "file": "4c19c0c5a9dee60c8cff112f01b026102a40bc5d.html"
+    },
+    "c9a0a73c245becbbfd708257a7e5c4a7e3f61798": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278586&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3036,
+      "file": "c9a0a73c245becbbfd708257a7e5c4a7e3f61798.html"
+    },
+    "dd1921b19ba63463b020e3e88395b7e10ee09cb3": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216116",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3804,
+      "file": "dd1921b19ba63463b020e3e88395b7e10ee09cb3.html"
+    },
+    "8be26fc0861fb040367862ea62e1a803a2472cbd": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%83%81%EC%88%98%EB%8F%84%EC%86%8C%ED%99%94%EC%9A%A9%EC%88%98%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC401)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1282,
+      "file": "8be26fc0861fb040367862ea62e1a803a2472cbd.html"
+    },
+    "25c51114bc82b9aa4f6d578a477547b0eef7267f": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278590&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3081,
+      "file": "25c51114bc82b9aa4f6d578a477547b0eef7267f.html"
+    },
+    "64fd171c7b3fa3c8e04427095ecd6001171a38e2": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000270482",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4105,
+      "file": "64fd171c7b3fa3c8e04427095ecd6001171a38e2.html"
+    },
+    "be82683700f125bfb899c20716b78d207e901647": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%86%8C%ED%99%94%EC%88%98%EC%A1%B0%EB%B0%8F%EC%A0%80%EC%88%98%EC%A1%B0%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC402)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1279,
+      "file": "be82683700f125bfb899c20716b78d207e901647.html"
+    },
+    "7d7de7d0c0b71424fe176cfda786e9f0373a66eb": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278592&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3077,
+      "file": "7d7de7d0c0b71424fe176cfda786e9f0373a66eb.html"
+    },
+    "d936c3e687e27e06cf7519110baf8c04c47c9275": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000246734",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4295,
+      "file": "d936c3e687e27e06cf7519110baf8c04c47c9275.html"
+    },
+    "9f789d9afd0f3e010104be5080b5141d087f3739": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%A0%9C%EC%97%B0%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC501)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1267,
+      "file": "9f789d9afd0f3e010104be5080b5141d087f3739.html"
+    },
+    "89f30f2b4b1eae4dbc10bfdd7680e566bddbd49f": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000253152",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5522,
+      "file": "89f30f2b4b1eae4dbc10bfdd7680e566bddbd49f.html"
+    },
+    "7c1124efa1d26a869faf848ff5ed5f3990ea9cd7": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%ED%8A%B9%EB%B3%84%ED%94%BC%EB%82%9C%EA%B3%84%EB%8B%A8%EC%9D%98%EA%B3%84%EB%8B%A8%EC%8B%A4%EB%B0%8F%EB%B6%80%EC%86%8D%EC%8B%A4%EC%A0%9C%EC%97%B0%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC501A)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1310,
+      "file": "7c1124efa1d26a869faf848ff5ed5f3990ea9cd7.html"
+    },
+    "edb9a87d91861d203fdf3dec4aa10e979f3605e7": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000240188",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 5338,
+      "file": "edb9a87d91861d203fdf3dec4aa10e979f3605e7.html"
+    },
+    "cf937976095a1fa12a89c59ccf523e1e7f4f07d6": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%97%B0%EA%B2%B0%EC%86%A1%EC%88%98%EA%B4%80%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC502)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1276,
+      "file": "cf937976095a1fa12a89c59ccf523e1e7f4f07d6.html"
+    },
+    "d0ac1343786b336c9c39d45be0a20c1e5204080c": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000269714",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4981,
+      "file": "d0ac1343786b336c9c39d45be0a20c1e5204080c.html"
+    },
+    "078882f286d0f96abb2b90d8b16755f4436d3ba5": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%97%B0%EA%B2%B0%EC%82%B4%EC%88%98%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC503)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1273,
+      "file": "078882f286d0f96abb2b90d8b16755f4436d3ba5.html"
+    },
+    "d92708e54d5f0b746576e108e4be01ca254430c4": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278594&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3039,
+      "file": "d92708e54d5f0b746576e108e4be01ca254430c4.html"
+    },
+    "5aa311c150272023661f166d7c0827ff9ba3f32f": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000230248",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4714,
+      "file": "5aa311c150272023661f166d7c0827ff9ba3f32f.html"
+    },
+    "e7476dbda38dcb915804928f5e24d0498da52b31": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%B9%84%EC%83%81%EC%BD%98%EC%84%BC%ED%8A%B8%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC504)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1276,
+      "file": "e7476dbda38dcb915804928f5e24d0498da52b31.html"
+    },
+    "c7eb0046c7da8407e2e84c2148067cbc3467c959": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278588&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3051,
+      "file": "c7eb0046c7da8407e2e84c2148067cbc3467c959.html"
+    },
+    "dce6fafe4b5ce0a0fc9b2c5e029e8b6f26d59855": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216105",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4416,
+      "file": "dce6fafe4b5ce0a0fc9b2c5e029e8b6f26d59855.html"
+    },
+    "cc2938e273afb1c2deb558ef060597cf97a51c1f": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%AC%B4%EC%84%A0%ED%86%B5%EC%8B%A0%EB%B3%B4%EC%A1%B0%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC505)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1279,
+      "file": "cc2938e273afb1c2deb558ef060597cf97a51c1f.html"
+    },
+    "fea08b2bb26ad43a7550c4dd44f7e8573560d5d4": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278542&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3070,
+      "file": "fea08b2bb26ad43a7550c4dd44f7e8573560d5d4.html"
+    },
+    "922119f8f47a59f504a10137712703f1c824eb60": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000253154",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 4324,
+      "file": "922119f8f47a59f504a10137712703f1c824eb60.html"
+    },
+    "c04f7eb69ba4c648fc492f6cec14c1f5061b61c6": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%A7%80%ED%95%98%EA%B5%AC%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC605)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1264,
+      "file": "c04f7eb69ba4c648fc492f6cec14c1f5061b61c6.html"
+    },
+    "5834dd7a1e7985127eff32651e980faa50a294cf": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216117",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3916,
+      "file": "5834dd7a1e7985127eff32651e980faa50a294cf.html"
+    },
+    "96555e5797c13735406e2233131db59517db51c0": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%86%8C%EB%B0%A9%EC%8B%9C%EC%84%A4%EC%9A%A9%EB%B9%84%EC%83%81%EC%A0%84%EC%9B%90%EC%88%98%EC%A0%84%EC%84%A4%EB%B9%84%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC602)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1294,
+      "file": "96555e5797c13735406e2233131db59517db51c0.html"
+    },
+    "0a22c4ded5495f0a429d1de97bcd7f968387a8ba": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulRvsInfoR.do",
+      "body": "admRulSeq=2100000278578&joTpYn=Y&languageType=Ko&chrClsCd=010201",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3146,
+      "file": "0a22c4ded5495f0a429d1de97bcd7f968387a8ba.html"
+    },
+    "72267eb68d602d4c1182fc3ce735022459e0a448": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000253184",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 3062,
+      "file": "72267eb68d602d4c1182fc3ce735022459e0a448.html"
+    },
+    "30a99357482d8d5be4f111e44dcc0c93e3a7c254": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EB%8F%84%EB%A1%9C%ED%84%B0%EB%84%90%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC603)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1267,
+      "file": "30a99357482d8d5be4f111e44dcc0c93e3a7c254.html"
+    },
+    "c27060c86150191d6c9852f5fd266e8e43790095": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000216101",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 2464,
+      "file": "c27060c86150191d6c9852f5fd266e8e43790095.html"
+    },
+    "64c70964112b3ccbe9b32fba814faf6a7ee32a3a": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EA%B3%A0%EC%B8%B5%EA%B1%B4%EC%B6%95%EB%AC%BC%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC604)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1270,
+      "file": "64c70964112b3ccbe9b32fba814faf6a7ee32a3a.html"
+    },
+    "3209e18d3c6e986acdd00cd265d707fb64939ab2": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000225266",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 2461,
+      "file": "3209e18d3c6e986acdd00cd265d707fb64939ab2.html"
+    },
+    "9817f0002c5fca12e99aed7cbed05e6debd19883": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EA%B1%B4%EC%84%A4%ED%98%84%EC%9E%A5%EC%9D%98%ED%99%94%EC%9E%AC%EC%95%88%EC%A0%84%EC%84%B1%EB%8A%A5%EA%B8%B0%EC%A4%80(NFPC606)",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1267,
+      "file": "9817f0002c5fca12e99aed7cbed05e6debd19883.html"
+    },
+    "e68f7ce0d8ef4fe9f7d75d754411959d56ed12bc": {
+      "method": "POST",
+      "url": "https://www.law.go.kr/LSW/admRulHstListR.do",
+      "body": "admRulSeq=2100000273292",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 2376,
+      "file": "e68f7ce0d8ef4fe9f7d75d754411959d56ed12bc.html"
+    },
+    "a0dda3eccc3e6b0dd8540930519f67aba96fc1aa": {
+      "method": "GET",
+      "url": "https://www.law.go.kr/%ED%96%89%EC%A0%95%EA%B7%9C%EC%B9%99/%EC%86%8C%EB%B0%A9%EC%8B%9C%EC%84%A4%EC%9D%98%EB%82%B4%EC%A7%84%EC%84%A4%EA%B3%84%EA%B8%B0%EC%A4%80",
+      "body": "",
+      "status": 200,
+      "contentType": "text/html;charset=UTF-8",
+      "bytes": 1252,
+      "file": "a0dda3eccc3e6b0dd8540930519f67aba96fc1aa.html"
+    }
+  },
+  "recordedAt": "2026-09-26T12:51:59.643Z",
+  "todayKst": "20260926"
+}
