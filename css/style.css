@@ -30,7 +30,7 @@
   /* 글자 */
   --text-primary: #191f28;
   --text-secondary: #4e5968;
-  --text-tertiary: #8b95a1;
+  --text-tertiary: #646e7a;
   --text-disabled: #b0b8c1;
 
   /* 선 */
@@ -93,7 +93,7 @@
 
   --text-primary: #eceef1;
   --text-secondary: #b0b8c1;
-  --text-tertiary: #7d8692;
+  --text-tertiary: #8d96a2;
   --text-disabled: #4e5968;
 
   --border-color: #31333a;
@@ -133,7 +133,6 @@ body {
   font-size: var(--fs-base);
   line-height: 1.55;
   letter-spacing: -0.01em;
-  word-break: keep-all;
   overflow-wrap: break-word;
   background: var(--bg-primary);
   min-height: 100vh;
@@ -172,6 +171,17 @@ a {
 }
 
 /* ==================== 공통 컴포넌트 ==================== */
+
+/* 한국어 문장은 어절 단위로 줄바꿈 (새 컴포넌트에만 — 다른 페이지의 좁은 격자가 넘치지 않도록) */
+.home-hero,
+.shortcut,
+.bld-card,
+.fire-card,
+.notice,
+.modal--sheet .modal-body {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 
 /* 카드 */
 .card {
@@ -789,6 +799,7 @@ header h1 {
   padding: 4px;
   transition: all var(--transition-normal);
   flex: 1;
+  min-width: 0;
   box-shadow: var(--shadow-sm);
 }
 
@@ -1295,13 +1306,16 @@ body.has-result #homeShortcuts {
   }
 }
 
+/* 휴대폰에서는 표준 팝업(.modal--sheet)만 아래에서 올라오는 시트로 (로그인·지도·주소·확인 창은 가운데) */
 @media (max-width: 560px) {
-  .modal {
+  .modal.modal--sheet {
     align-items: flex-end;
     padding: 0;
   }
 
-  .modal-content:not(.map-modal-content) {
+  .modal--sheet > .modal-content {
+    display: flex;
+    flex-direction: column;
     max-width: none;
     max-height: 88vh;
     max-height: 88dvh;
@@ -1311,8 +1325,14 @@ body.has-result #homeShortcuts {
     animation: sheetSlideUp 0.25s ease;
   }
 
-  .modal-content:not(.map-modal-content) .modal-body {
-    max-height: calc(88dvh - 64px);
+  .modal--sheet > .modal-content > .modal-header {
+    flex-shrink: 0;
+  }
+
+  .modal--sheet > .modal-content > .modal-body {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
   }
 }
 
@@ -2751,6 +2771,21 @@ footer {
   background: var(--bg-hover);
 }
 
+.fac-row:focus-visible {
+  outline-offset: -2px;
+}
+
+.fac-more {
+  flex-shrink: 0;
+  margin-left: var(--sp-1);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
 .fac-row .facility-icon {
   display: inline-flex;
   align-items: center;
@@ -3691,36 +3726,6 @@ footer {
 }
 
 /* ==================== 수동 입력 기능 ==================== */
-
-/* 수동 검색 링크 */
-.manual-search-link {
-  text-align: center;
-  margin-top: 6px;
-}
-
-.manual-search-link a {
-  display: inline-block;
-  color: var(--text-tertiary);
-  font-size: 13px;
-  text-decoration: none !important;
-  border-bottom: none !important;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  background: transparent;
-  transition: all var(--transition-fast);
-}
-
-.manual-search-link a:link,
-.manual-search-link a:visited {
-  text-decoration: none !important;
-  color: var(--text-tertiary);
-}
-
-.manual-search-link a:hover {
-  color: var(--color-primary);
-  background: var(--color-primary-bg);
-  text-decoration: none !important;
-}
 
 /* 수동 입력 모달 */
 .manual-input-modal-content {

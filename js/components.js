@@ -122,7 +122,7 @@ function getModalsHTML() {
         <p class="auth-modal-terms"><a href="/pages/terms.html">이용약관</a> · <a href="/pages/privacy.html">개인정보처리방침</a></p>
       </div>
     </div>
-    <div id="myInfoModal" class="modal" style="display: none;">
+    <div id="myInfoModal" class="modal modal--sheet" style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
           <h2>내 정보</h2>
@@ -151,7 +151,7 @@ function getModalsHTML() {
         </div>
       </div>
     </div>
-    <div id="settingsModal" class="modal" style="display: none;">
+    <div id="settingsModal" class="modal modal--sheet" style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
           <h2>설정</h2>

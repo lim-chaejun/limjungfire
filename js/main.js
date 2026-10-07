@@ -1299,7 +1299,7 @@ function getPrimaryPermitInfo() {
 function pdfButtonHtml() {
   const badge = !currentUser
     ? '<span class="chip chip--muted pdf-login-badge">로그인 필요</span>'
-    : `<span class="chip chip--muted">오늘 ${Math.max(0, PDF_DAILY_LIMIT - readPdfUsage().count)}/${PDF_DAILY_LIMIT}회</span>`;
+    : `<span class="chip chip--muted">오늘 ${Math.max(0, PDF_DAILY_LIMIT - readPdfUsage().count)}회 남음</span>`;
   return `
     <button type="button" class="btn btn--secondary btn--block pdf-download-btn" onclick="handlePdfDownload()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1372,6 +1372,7 @@ async function checkQuickBookmarkState() {
   const isFav = favorites.some(f => f.address === address);
   if (isFav) {
     btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
     btn.querySelector('svg').setAttribute('fill', 'currentColor');
   }
 }
@@ -1465,7 +1466,12 @@ async function renderSummaryCard(generalInfo, permitSelection, titleItems) {
   const fmtHeight = (h) => h ? Number(h).toFixed(2) + 'm' : '-';
 
   // 층수 표시 (지하가 없으면 '없음')
-  const floorText = `지상 ${esc(groundFloors || '-')}층 · ${Number(undergroundFloors) > 0 ? `지하 ${esc(undergroundFloors)}층` : '지하 없음'}`;
+  // 지하층 수를 모르면 '-' (값이 0일 때만 '지하 없음')
+  const underKnown = undergroundFloors !== '' && undergroundFloors !== null && undergroundFloors !== undefined;
+  const underText = Number(undergroundFloors) > 0
+    ? `지하 ${esc(undergroundFloors)}층`
+    : (underKnown && Number(undergroundFloors) === 0 ? '지하 없음' : '지하 -');
+  const floorText = `지상 ${esc(groundFloors || '-')}층 · ${underText}`;
   const buildingCount = titleItems ? titleItems.length : 0;
 
   // 주소는 data-address 속성에만 넣고 핸들러는 this.dataset에서 읽는다 (인라인 JS 문자열 삽입 금지)
@@ -1496,7 +1502,7 @@ async function renderSummaryCard(generalInfo, permitSelection, titleItems) {
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
           </button>
-          <button type="button" class="icon-btn action-btn bookmark-btn" id="quickBookmarkBtn" data-address="${esc(address)}" onclick="handleQuickBookmark(this.dataset.address)" aria-label="즐겨찾기" title="즐겨찾기">
+          <button type="button" class="icon-btn action-btn bookmark-btn" id="quickBookmarkBtn" aria-pressed="false" data-address="${esc(address)}" onclick="handleQuickBookmark(this.dataset.address)" aria-label="즐겨찾기" title="즐겨찾기">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
@@ -2243,6 +2249,7 @@ window.handleQuickBookmark = async function(address) {
         await fb.removeFavorite(fav.id);
       }
       btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
       btn.querySelector('svg').setAttribute('fill', 'none');
       showToast('즐겨찾기에서 삭제했습니다');
     } else {
@@ -2261,6 +2268,7 @@ window.handleQuickBookmark = async function(address) {
       };
       await fb.addFavorite(addrData, buildingData);
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       btn.querySelector('svg').setAttribute('fill', 'currentColor');
       showToast('즐겨찾기에 추가했습니다');
     }
@@ -2875,13 +2883,17 @@ async function renderFireFacilitiesCard(buildingInfo) {
   // 기준 데이터가 없는 용도·로드 실패: 추측 결과 대신 안내
   if (unmapped || loadFailed) {
     const message = unmapped
-      ? `건축물대장 주용도 <strong>'${esc(classification?.category || '-')}'</strong>에 해당하는 소방시설 설치기준 데이터가 없습니다. 화면 위의 <strong>'직접 입력'</strong>에서 가장 가까운 용도를 골라 확인해 주세요.`
+      ? `건축물대장 주용도 <strong>'${esc(classification?.category || '-')}'</strong>에 해당하는 소방시설 설치기준 데이터가 없습니다. 직접 입력에서 가장 가까운 용도를 골라 확인해 주세요.`
       : '소방시설 설치기준 데이터를 불러오지 못했습니다. 잠시 후 다시 조회해 주세요.';
+    // 결과 화면에서는 홈의 '직접 입력' 버튼이 숨으므로 안내 안에 버튼을 둔다
+    const action = unmapped
+      ? '<button type="button" class="btn btn--secondary btn--sm" onclick="showManualInputModal()">직접 입력하기</button>'
+      : '';
     return `
     <section class="card fire-card fire-facilities-card">
       ${headerHtml}
       <div class="fire-notices">
-        ${noticeHtml('warning', unmapped ? '이 용도의 기준 데이터가 없습니다' : '기준 데이터를 불러오지 못했습니다', message)}
+        ${noticeHtml('warning', unmapped ? '이 용도의 기준 데이터가 없습니다' : '기준 데이터를 불러오지 못했습니다', message, action)}
       </div>
     </section>`;
   }
@@ -2962,15 +2974,17 @@ async function renderFireFacilitiesCard(buildingInfo) {
   // 시설 한 줄: 이름 + 해당 기간 기준 요약 (누르면 상세)
   const facilityRow = (f) => {
     const regs = f.regulations || [];
-    const summary = f.required && regs.length
-      ? `${regs[0].criteria || ''}${regs.length > 1 ? ` 외 ${regs.length - 1}건` : ''}`
+    const summary = f.required && regs.length ? (regs[0].criteria || '') : '';
+    // 기준이 여러 건이면 이름 옆에 '+n' (문장 끝에 붙이면 '…외'가 '제외'처럼 읽히고 두 줄 자르기에 가려진다)
+    const more = f.required && regs.length > 1
+      ? `<span class="fac-more" aria-label="기준 ${regs.length}건 중 1건 표시">+${regs.length - 1}</span>`
       : '';
     return `
           <li>
             <button type="button" class="fac-row${f.required ? '' : ' fac-row--optional'}" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
               <span class="facility-icon" aria-hidden="true">${f.icon}</span>
               <span class="fac-text">
-                <span class="facility-name">${esc(f.name)}</span>
+                <span class="facility-name">${esc(f.name)}${more}</span>
                 ${summary ? `<span class="fac-criteria">${esc(summary)}</span>` : ''}
               </span>
               ${NOTICE_ICONS.chevronRight}
@@ -3078,14 +3092,6 @@ async function renderFireFacilitiesCard(buildingInfo) {
 
   return html;
 }
-
-// 비해당 시설 토글
-window.toggleOptionalFacilities = function() {
-  const section = document.getElementById('optionalFacilities');
-  if (section) {
-    section.open = !section.open;
-  }
-};
 
 // 허가일 포맷
 function formatPermitDate(dateStr) {
