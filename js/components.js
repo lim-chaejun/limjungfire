@@ -25,8 +25,9 @@ const googleIconSvg = `
 export function getHeaderHTML() {
   return `
     <div class="top-bar">
-      <a href="/" class="home-btn" aria-label="홈으로">
+      <a href="/" class="home-btn" aria-label="소방체크 홈으로">
         ${logoSvg}
+        <span class="brand-name" aria-hidden="true">소방체크</span>
       </a>
       <div id="authSection" class="auth-section">
         <div id="loginBtn" class="auth-btn" onclick="handleGoogleLogin()">
