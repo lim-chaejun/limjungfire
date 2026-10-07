@@ -554,11 +554,13 @@ async function searchFromUrl() {
   // 스플래시 화면 최대 표시 시간 (Firebase 느릴 때 대비)
   const splashTimeout = setTimeout(hideSplashScreen, 2000);
 
-  // 광고 차단 감지 (차단해도 계속 진행, 안내만 표시)
-  const adBlockDetected = await detectAdBlock();
-  if (adBlockDetected) {
-    showAdBlockModal();
-  }
+  // 광고 차단 모달은 실제 광고 단위가 게재된 이후에만 의미가 있습니다.
+  // 현재는 애드핏 ID 설정 전이므로 비활성화 (광고가 없는데 차단 안내를 띄우는 것은 UX 저해).
+  // 애드핏 광고를 실제로 게재한 뒤 아래 주석을 해제하세요.
+  // const adBlockDetected = await detectAdBlock();
+  // if (adBlockDetected) {
+  //   showAdBlockModal();
+  // }
 
   // Firebase만 초기화 (소방시설/면제기준 데이터는 필요할 때 지연 로드)
   const fb = await loadFirebase();
