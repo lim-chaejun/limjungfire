@@ -1,4 +1,18 @@
 import { escapeHtml as esc, safeHttpUrl } from './lib/html.js';
+import { mapPurposeToFireType, getFireDataFile, classifyPurpose } from './lib/building-types.js';
+import {
+  findApplicableVersion, getActNameAt, findCriteriaBoundaries, selectPrimaryPermit, toYmd, FIRE_ACT_START,
+  APPLICATION_WINDOW_DAYS, EARLIEST_YMD, addDays, parseYmdInput
+} from './lib/law-versions.js';
+
+// 사용자가 입력한 허가 신청일 (YYYYMMDD, 없으면 '').
+// 부칙 적용례는 대개 허가 신청일 기준인데 건축물대장에는 허가일만 있으므로, 입력하면 신청일로 기준을 다시 고른다.
+// 판정 엔진 v2 의 질문 키 application_date 와 같은 값이다. 주소 조회는 URL 파라미터 applied 로 유지한다.
+let currentAppliedDay = '';
+// 직접 입력 결과를 신청일 변경 후 다시 그리기 위한 마지막 입력값
+let lastManualBuildingInfo = null;
+// 신청일을 바꿔 같은 건물을 다시 그릴 때 구 소방법 안내 모달을 또 띄우지 않기 위한 표시 (새 건물을 열 때 비운다)
+let preLawModalShownFor = '';
 
 // 인앱 브라우저 처리
 if (window.__inAppBrowser) {
@@ -140,38 +154,7 @@ const loginPromptManager = {
   }
 };
 
-// 건물 유형 → 파일명 매핑
-const BUILDING_TYPE_TO_FILE = {
-  '공동주택': '01_residential_complex',
-  '근린생활시설': '02_neighborhood_facilities',
-  '문화및집회시설': '03_cultural_assembly',
-  '종교시설': '04_religious',
-  '판매시설': '05_retail',
-  '운수시설': '06_transportation',
-  '의료시설': '07_medical',
-  '교육연구시설': '08_education_research',
-  '노유자시설': '09_elderly_childcare',
-  '수련시설': '10_training',
-  '운동시설': '11_sports',
-  '업무시설': '12_office',
-  '숙박시설': '13_accommodation',
-  '위락시설': '14_entertainment',
-  '공장': '15_factory',
-  '창고시설': '16_warehouse',
-  '위험물저장및처리시설': '17_hazardous_materials',
-  '항공기및자동차관련시설': '18_aviation_automotive',
-  '동물및식물관련시설': '19_animal_plant',
-  '자원순환관련시설': '20_resource_recycling',
-  '교정및군사시설': '21_correctional_military',
-  '방송통신시설': '22_broadcasting',
-  '발전시설': '23_power_generation',
-  '묘지관련시설': '24_cemetery',
-  '관광휴게시설': '25_tourism_leisure',
-  '장례시설': '26_funeral',
-  '지하상가': '27_underground_mall',
-  '지하연결통로': '28_underground_passage',
-  '문화재': '29_national_heritage'
-};
+// 용도 → 데이터 파일 매핑은 js/lib/building-types.js (data/NN_*.json 의 building_type 과 동일)
 
 // 테마 관리
 function initTheme() {
@@ -258,7 +241,7 @@ async function getFireFacilityData(buildingType) {
   }
 
   // 파일명 매핑
-  const fileName = BUILDING_TYPE_TO_FILE[buildingType];
+  const fileName = getFireDataFile(buildingType);
   if (!fileName) {
     console.warn(`알 수 없는 건물 유형: ${buildingType}`);
     return null;
@@ -370,6 +353,7 @@ function updateUrlWithAddress() {
   const bjdongCd = general.bjdongCd || title.bjdongCd;
   const bun = general.bun || title.bun;
   const ji = general.ji || title.ji;
+  const platGbCd = normalizePlatGbCd(general.platGbCd || title.platGbCd);
 
   if (!sigunguCd || !bjdongCd) return;
 
@@ -378,6 +362,8 @@ function updateUrlWithAddress() {
   params.set('bjdong', bjdongCd);
   if (bun) params.set('bun', bun);
   if (ji) params.set('ji', ji);
+  if (platGbCd !== '0') params.set('plat', platGbCd);
+  if (toYmd(currentAppliedDay)) params.set('applied', currentAppliedDay);
 
   const newUrl = `${window.location.pathname}?${params.toString()}`;
   history.replaceState(null, '', newUrl);
@@ -398,7 +384,10 @@ async function getCodesFromUrl() {
           sigunguCd: shareData.sigunguCd,
           bjdongCd: shareData.bjdongCd,
           bun: shareData.bun || '',
-          ji: shareData.ji || ''
+          ji: shareData.ji || '',
+          platGbCd: normalizePlatGbCd(shareData.platGbCd),
+          // 신청일은 공유 문서가 아니라 짧은 링크 뒤 파라미터로 붙는다 (?s=xxx&applied=YYYYMMDD)
+          appliedDay: parseYmdInput(params.get('applied'))
         };
       }
     }
@@ -414,7 +403,9 @@ async function getCodesFromUrl() {
       sigunguCd,
       bjdongCd,
       bun: params.get('bun') || '',
-      ji: params.get('ji') || ''
+      ji: params.get('ji') || '',
+      platGbCd: normalizePlatGbCd(params.get('plat')),
+      appliedDay: parseYmdInput(params.get('applied'))
     };
   }
   return null;
@@ -429,7 +420,11 @@ async function searchFromUrl() {
 
   try {
     // jibunInfo 형식으로 변환 (bun, ji는 이미 패딩된 상태로 URL에 저장됨)
-    const jibunInfo = { bun: codes.bun, ji: codes.ji };
+    const jibunInfo = { bun: codes.bun, ji: codes.ji, platGbCd: codes.platGbCd };
+    // 공유 링크·새로고침: URL의 허가 신청일을 이어 받는다 (실제 날짜가 아닌 값은 주소창에서도 지운다)
+    currentAppliedDay = codes.appliedDay || '';
+    if (!currentAppliedDay) removeAppliedFromUrl();
+    preLawModalShownFor = '';
 
     // 4가지 API 동시 호출 (표제부 외에는 실패해도 부분 결과 표시)
     const { titleResult, floorResult, generalResult, permitResult, failed } =
@@ -955,11 +950,18 @@ window.loadHistoryItem = async function(docId, type = 'history') {
 
   if (item && item.buildingData) {
     closeHistoryModal();
+    currentAppliedDay = ''; // 기록에는 신청일을 저장하지 않으므로 허가일 기준으로 연다
+    preLawModalShownFor = '';
     displayAllResults(
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.title } } } },
       { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.floor } } } },
-      { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.general } } } }
+      { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.general } } } },
+      { response: { header: { resultCode: '00' }, body: { items: { item: item.buildingData.permit || [] } } } }
     );
+    // 주소창을 연 건물로 맞춘다 (이전 조회의 주소·신청일이 남아 새로고침 때 엉뚱한 건물이 열리지 않도록).
+    // 기록에 지역 코드가 없어 주소를 못 맞추더라도 신청일 파라미터는 지운다.
+    removeAppliedFromUrl();
+    updateUrlWithAddress();
 
     // 주소 정보 표시
     document.getElementById('addressInput').value = item.address;
@@ -1089,6 +1091,8 @@ window.searchBuilding = async function() {
 
   showLoading(true);
   clearResult();
+  currentAppliedDay = ''; // 새 건물 조회 — 이전 건물의 허가 신청일은 버린다
+  preLawModalShownFor = '';
 
   try {
     const bcode = selectedAddressData.bcode;
@@ -1132,17 +1136,24 @@ window.searchBuilding = async function() {
   }
 }
 
-// 지번 주소에서 번지 추출
+// 지번 주소에서 번지·대지구분 추출
+// 지번은 주소 끝에 온다: "… 역삼동 737", "… 부암동 산 2-1"(산번지 → platGbCd 1)
 function extractJibun(jibunAddress) {
-  if (!jibunAddress) return { bun: '', ji: '' };
-  const match = jibunAddress.match(/(\d+)(?:-(\d+))?(?:\s|$)/);
+  const empty = { bun: '', ji: '', platGbCd: '0' };
+  if (!jibunAddress) return empty;
+  const text = String(jibunAddress).trim();
+  const match = text.match(/(?:^|\s)(산\s*)?(\d+)(?:-(\d+))?$/);
   if (match) {
-    return {
-      bun: match[1] || '',
-      ji: match[2] || ''
-    };
+    return { bun: match[2] || '', ji: match[3] || '', platGbCd: match[1] ? '1' : '0' };
   }
-  return { bun: '', ji: '' };
+  // 예외 형식: 첫 번째 '숫자[-숫자]'
+  const legacy = text.match(/(\d+)(?:-(\d+))?(?:\s|$)/);
+  return legacy ? { bun: legacy[1] || '', ji: legacy[2] || '', platGbCd: '0' } : empty;
+}
+
+// 대지구분 코드 정규화 (0: 대지, 1: 산, 2: 블록)
+function normalizePlatGbCd(value) {
+  return /^[0-2]$/.test(String(value ?? '').trim()) ? String(value).trim() : '0';
 }
 
 // 건축물대장 API 오퍼레이션 (functions/api/building/[op].js 와 동일한 목록)
@@ -1194,11 +1205,61 @@ async function fetchBuildingApi(url, { isProxy = false } = {}) {
   }
 }
 
-// 오퍼레이션 호출: 1순위 자체 프록시(서비스키 비노출), 프록시가 없을 때만 공공데이터포털 직접 호출
+// 한 번에 받는 행 수와 최대 페이지 (대단지 층별개요는 수천 행이 될 수 있다)
+const BUILDING_PAGE_SIZE = 100;
+const BUILDING_MAX_PAGES = 30;
+const BUILDING_PAGE_CONCURRENCY = 4;
+
+// 응답의 items.item 을 배열로 (1건이면 객체, 0건이면 빈 문자열로 온다)
+function responseItemList(data) {
+  const item = data?.response?.body?.items?.item;
+  if (!item) return [];
+  return Array.isArray(item) ? item : [item];
+}
+
+// 오퍼레이션 호출: totalCount 가 한 페이지를 넘으면 나머지 페이지까지 받아 한 응답으로 합친다.
+// 뒤 페이지가 실패하면 받은 행만 돌려주고 body._incomplete 에 {fetched, total} 을 남긴다(화면에서 '일부' 안내).
 async function fetchBuildingOp(op, sigunguCd, bjdongCd, jibunInfo) {
-  const params = new URLSearchParams({ sigunguCd, bjdongCd, platGbCd: '0' });
+  const first = await fetchBuildingOpPage(op, sigunguCd, bjdongCd, jibunInfo, 1);
+  const body = first?.response?.body;
+  const total = Number(body?.totalCount) || 0;
+  const items = responseItemList(first);
+  if (!body || total <= items.length) return first;
+
+  const lastPage = Math.min(Math.ceil(total / BUILDING_PAGE_SIZE), BUILDING_MAX_PAGES);
+  const pages = [];
+  for (let pageNo = 2; pageNo <= lastPage; pageNo++) pages.push(pageNo);
+  const results = new Map();
+  let failedPage = null;
+  const worker = async () => {
+    while (pages.length && failedPage === null) {
+      const pageNo = pages.shift();
+      try {
+        results.set(pageNo, responseItemList(await fetchBuildingOpPage(op, sigunguCd, bjdongCd, jibunInfo, pageNo)));
+      } catch (e) {
+        console.warn(`${op} ${pageNo}페이지 조회 실패:`, e);
+        failedPage = failedPage === null ? pageNo : Math.min(failedPage, pageNo);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(BUILDING_PAGE_CONCURRENCY, pages.length) }, worker));
+
+  // 실패한 페이지 앞까지만 순서대로 이어 붙인다 (중간이 빈 목록을 만들지 않도록)
+  for (let pageNo = 2; pageNo <= lastPage; pageNo++) {
+    if (!results.has(pageNo) || (failedPage !== null && pageNo >= failedPage)) break;
+    items.push(...results.get(pageNo));
+  }
+  body.items = { item: items };
+  if (items.length < total) body._incomplete = { fetched: items.length, total };
+  return first;
+}
+
+// 오퍼레이션 한 페이지 호출: 1순위 자체 프록시(서비스키 비노출), 프록시가 없을 때만 공공데이터포털 직접 호출
+async function fetchBuildingOpPage(op, sigunguCd, bjdongCd, jibunInfo, pageNo) {
+  const params = new URLSearchParams({ sigunguCd, bjdongCd, platGbCd: normalizePlatGbCd(jibunInfo.platGbCd) });
   if (jibunInfo.bun) params.set('bun', jibunInfo.bun.padStart(4, '0'));
   if (jibunInfo.ji) params.set('ji', jibunInfo.ji.padStart(4, '0'));
+  params.set('pageNo', String(pageNo));
 
   if (buildingProxyAvailable !== false) {
     try {
@@ -1215,8 +1276,7 @@ async function fetchBuildingOp(op, sigunguCd, bjdongCd, jibunInfo) {
   const url = new URL(`https://apis.data.go.kr/1613000/${BUILDING_OPS[op]}`);
   url.searchParams.append('serviceKey', API_KEY);
   params.forEach((value, key) => url.searchParams.append(key, value));
-  url.searchParams.append('numOfRows', '100');
-  url.searchParams.append('pageNo', '1');
+  url.searchParams.append('numOfRows', String(BUILDING_PAGE_SIZE));
   url.searchParams.append('_type', 'json');
   return await fetchBuildingApi(url);
 }
@@ -1236,6 +1296,12 @@ async function fetchAllBuildingData(sigunguCd, bjdongCd, jibunInfo) {
     optional('총괄표제부', fetchBrRecapTitleInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo)),
     optional('건축인허가(허가일)', fetchApBasisOulnInfo(API_KEY, sigunguCd, bjdongCd, jibunInfo))
   ]);
+  // 여러 페이지 중 일부만 받은 결과도 안내한다 (예: 층별개요 200/250행)
+  [['표제부', titleResult], ['층별개요', floorResult], ['총괄표제부', generalResult], ['건축인허가(허가일)', permitResult]]
+    .forEach(([label, result]) => {
+      const partial = result?.response?.body?._incomplete;
+      if (partial) failed.push(`${label} 일부(${partial.fetched}/${partial.total}행)`);
+    });
   return { titleResult, floorResult, generalResult, permitResult, failed };
 }
 
@@ -1311,13 +1377,24 @@ function displayAllResults(titleData, floorData, generalData, permitData) {
   renderBuildingView();
 }
 
+// 대표 인허가와 판단 기준 허가일
+// 건축인허가 API는 신축·증축·대수선·용도변경 이력을 순서 없이 여러 건 돌려주므로 '신축' 중 가장 이른 허가를 쓴다.
+// (첫 번째 항목을 쓰면 2001년 준공 건물에 2023년 대수선 허가일이 적용되는 등 기준 법령이 수십 년 어긋남)
+function getPrimaryPermitInfo() {
+  const { permitItems = [], generalItems = [] } = currentBuildingData || {};
+  const selection = selectPrimaryPermit(permitItems);
+  const generalInfo = generalItems[0] || {};
+  const permitDate = toYmd(selection.item?.archPmsDay) || toYmd(generalInfo.pmsDay) || '';
+  return { ...selection, permitInfo: selection.item || {}, permitDate };
+}
+
 // 건물 뷰 렌더링 (선택된 건물만 표시)
 async function renderBuildingView() {
   const resultDiv = document.getElementById('result');
   const { titleItems, generalItems, permitItems, sortedIndices } = currentBuildingData;
   const buildingCount = titleItems.length;
   const generalInfo = generalItems[0] || {};
-  const permitInfo = permitItems[0] || {};
+  const permitSelection = getPrimaryPermitInfo();
 
   let html = '';
 
@@ -1337,7 +1414,7 @@ async function renderBuildingView() {
   html += renderAdBanner();
 
   // 총괄 요약 카드 표시 (총괄표제부 기준) - 지연 로드
-  html += await renderSummaryCard(generalInfo, permitInfo, titleItems);
+  html += await renderSummaryCard(generalInfo, permitSelection, titleItems);
 
   // 비로그인 인라인 배너 (결과 저장 유도)
   if (loginPromptManager.shouldShowResultBanner()) {
@@ -1415,7 +1492,7 @@ window.scrollBuildingSelector = function(direction) {
 }
 
 // 요약 카드 렌더링 (총괄표제부 + 표제부 통합)
-async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
+async function renderSummaryCard(generalInfo, permitSelection, titleItems) {
   // 건물명: 첫 번째 표제부 또는 총괄표제부에서 가져오기
   const mainTitle = titleItems && titleItems.length > 0 ? titleItems[0] : {};
   const buildingName = mainTitle.bldNm || generalInfo.bldNm || selectedAddressData?.buildingName || '건축물 정보';
@@ -1431,7 +1508,11 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   const address = generalInfo.platPlc || mainTitle.platPlc || selectedAddressData?.jibunAddress || selectedAddressData?.address || '-';
 
   // 허가일, 승인일
-  const permitDate = permitInfo?.archPmsDay || generalInfo.pmsDay || '';
+  const permitDate = permitSelection.permitDate;
+  // 인허가 이력이 여러 건이면 어떤 허가를 기준으로 했는지 표시
+  const permitNote = permitSelection.total > 1
+    ? `인허가 ${permitSelection.total}건 중 ${permitSelection.reason === 'new' ? '신축' : '가장 이른'} 허가 기준`
+    : '';
   const approvalDate = generalInfo.useAprDay || mainTitle.useAprDay || '';
 
   // 면적 - 총괄표제부 우선, 없으면 표제부 합계
@@ -1529,6 +1610,7 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
         <div class="summary-grid-item">
           <span class="summary-grid-label">건축허가일</span>
           <span class="summary-grid-value">${esc(fmtDate(permitDate))}</span>
+          ${permitNote ? `<span class="summary-grid-note">${esc(permitNote)}</span>` : ''}
         </div>
         <div class="summary-grid-item">
           <span class="summary-grid-label">사용승인일</span>
@@ -1586,12 +1668,14 @@ async function renderSummaryCard(generalInfo, permitInfo, titleItems) {
   // 소방시설 카드 지연 로드
   const fireCard = await renderFireFacilitiesCard({
     pmsDay: permitDate,
+    appliedDay: currentAppliedDay,
     useAprDay: approvalDate,
     totArea: totalArea,
     grndFlrCnt: groundFloors,
     ugrndFlrCnt: undergroundFloors,
     mainPurpose: mainPurpose,
-    heit: height
+    heit: height,
+    floorItems: currentBuildingData.floorItems
   });
 
   return html + fireCard;
@@ -1607,12 +1691,10 @@ let currentTitleData = {
 
 // 표제부 모달 표시
 window.showTitleModal = function(buildingIndex) {
-  const { titleItems, generalItems, permitItems } = currentBuildingData;
+  const { titleItems } = currentBuildingData;
 
-  // 허가일 가져오기
-  const permitInfo = permitItems[0] || {};
-  const generalInfo = generalItems[0] || {};
-  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
+  // 허가일 (신축 허가 우선)
+  const pmsDay = getPrimaryPermitInfo().permitDate;
 
   // 상태 저장
   currentTitleData = {
@@ -1663,14 +1745,12 @@ let currentFloorData = {
 
 // 층별 모달 표시
 window.showFloorModal = function(buildingIndex) {
-  const { titleItems, floorItems, generalItems, permitItems } = currentBuildingData;
+  const { titleItems, floorItems } = currentBuildingData;
   const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
   const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
 
-  // 허가일 가져오기
-  const permitInfo = permitItems[0] || {};
-  const generalInfo = generalItems[0] || {};
-  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
+  // 허가일 (신축 허가 우선)
+  const pmsDay = getPrimaryPermitInfo().permitDate;
 
   // 해당 건물의 층별 정보 필터링
   const buildingFloors = buildingIndex >= 0
@@ -1706,8 +1786,8 @@ window.changeFloorSortMode = function(mode) {
 
 // 총괄표제부 모달 표시
 window.showGeneralModal = function() {
-  const { generalItems, permitItems, titleItems } = currentBuildingData;
-  const permitInfo = permitItems[0] || {};
+  const { generalItems, titleItems } = currentBuildingData;
+  const permitInfo = getPrimaryPermitInfo().permitInfo;
 
   let html = '';
 
@@ -1718,49 +1798,6 @@ window.showGeneralModal = function() {
   }
 
   document.getElementById('detailModalTitle').textContent = '총괄표제부';
-  document.getElementById('detailModalBody').innerHTML = html;
-  document.getElementById('detailModal').style.display = 'flex';
-};
-
-// 상세보기 모달 표시 (기존 - 호환성 유지)
-window.showDetailModal = function(buildingIndex) {
-  const { titleItems, floorItems, generalItems, permitItems } = currentBuildingData;
-  const generalInfo = generalItems[0] || {};
-  const permitInfo = permitItems[0] || {};
-  const titleItem = buildingIndex >= 0 ? titleItems[buildingIndex] : null;
-  const buildingName = titleItem ? (titleItem.dongNm || titleItem.bldNm || '건물') : '전체';
-
-  // 해당 건물의 층별 정보 필터링
-  const buildingFloors = buildingIndex >= 0
-    ? floorItems.filter(f => f.dongNm === titleItem.dongNm || (!f.dongNm && !titleItem.dongNm))
-    : floorItems;
-
-  let html = '';
-
-  // 1. 허가일 기준 적용 소방법령 (건축인허가정보 API의 archPmsDay 우선)
-  const pmsDay = permitInfo.archPmsDay || generalInfo.pmsDay;
-  if (pmsDay) {
-    html += renderLawInfoCard(pmsDay);
-  }
-
-  // 2. 표제부 (동별) 상세 테이블
-  if (titleItem) {
-    html += renderDetailTitleCard([titleItem]);
-  } else if (titleItems.length > 0) {
-    html += renderDetailTitleCard(titleItems);
-  }
-
-  // 3. 층별 개요 상세 테이블
-  if (buildingFloors.length > 0) {
-    html += renderDetailFloorCard(buildingFloors);
-  }
-
-  // 4. 총괄표제부 상세 테이블
-  if (generalItems.length > 0) {
-    html += renderDetailGeneralCard(generalItems, permitInfo, titleItems);
-  }
-
-  document.getElementById('detailModalTitle').textContent = `${buildingName} 상세 정보`;
   document.getElementById('detailModalBody').innerHTML = html;
   document.getElementById('detailModal').style.display = 'flex';
 };
@@ -2248,134 +2285,6 @@ function formatDate(dateStr) {
   return `${v.substring(0, 4)}.${v.substring(4, 6)}.${v.substring(6, 8)}`;
 }
 
-// 허가일 기준 적용 소방법령 판단
-function getFireLawInfo(pmsDay) {
-  if (!pmsDay || pmsDay.length !== 8) {
-    return null;
-  }
-
-  const date = parseInt(pmsDay);
-
-  // 소방법령 주요 변경 시점
-  const lawPeriods = [
-    {
-      start: 0,
-      end: 19750831,
-      name: '소방법',
-      period: '~ 1975.08.31',
-      description: '소방법 시행 초기',
-      keyPoints: ['소방시설 기준 초기 단계']
-    },
-    {
-      start: 19750901,
-      end: 19920730,
-      name: '소방법',
-      period: '1975.09.01 ~ 1992.07.30',
-      description: '소방법 시행령 적용',
-      keyPoints: ['스프링클러: 11층 이상 또는 연면적 3만㎡ 이상', '자동화재탐지설비 기준 적용']
-    },
-    {
-      start: 19920731,
-      end: 20030528,
-      name: '소방법',
-      period: '1992.07.31 ~ 2003.05.28',
-      description: '소방법 시행령 개정',
-      keyPoints: ['스프링클러 설치대상 확대', '6층 이상 건축물 스프링클러 적용', '특정소방대상물 분류 체계 정비']
-    },
-    {
-      start: 20030529,
-      end: 20111124,
-      name: '소방시설설치유지및안전관리에관한법률',
-      period: '2003.05.29 ~ 2011.11.24',
-      description: '소방법 분법 (소방기본법, 소방시설법 분리)',
-      keyPoints: ['소방시설 설치·유지 기준 강화', '소방안전관리자 제도 정비', '소방시설 자체점검 제도 도입']
-    },
-    {
-      start: 20111125,
-      end: 20151127,
-      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
-      period: '2011.11.25 ~ 2015.11.27',
-      description: '법률 명칭 변경',
-      keyPoints: ['성능위주설계 제도 도입', '소방시설관리사 제도 시행', '특정소방대상물 분류 개편']
-    },
-    {
-      start: 20151128,
-      end: 20170127,
-      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
-      period: '2015.11.28 ~ 2017.01.27',
-      description: '화재안전기준 개정',
-      keyPoints: ['피난기구 설치기준 변경', '노유자시설 스프링클러 설치 확대']
-    },
-    {
-      start: 20170128,
-      end: 20191007,
-      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
-      period: '2017.01.28 ~ 2019.10.07',
-      description: '스프링클러 설치 대상 확대',
-      keyPoints: ['모든 층 스프링클러 설치 기준 강화', '지하층·무창층 기준 강화', '간이스프링클러 설치대상 확대']
-    },
-    {
-      start: 20191008,
-      end: 20211130,
-      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
-      period: '2019.10.08 ~ 2021.11.30',
-      description: '화재안전기준 전면 개정',
-      keyPoints: ['소방시설 설치 기준 강화', '특정소방대상물 분류 체계 정비', '소방안전관리 대상 확대']
-    },
-    {
-      start: 20211201,
-      end: 20221130,
-      name: '화재예방, 소방시설 설치·유지 및 안전관리에 관한 법률',
-      period: '2021.12.01 ~ 2022.11.30',
-      description: '전면 개정 법률 시행',
-      keyPoints: ['다중이용업소 안전관리 강화', '소방시설 성능유지 의무 강화']
-    },
-    {
-      start: 20221201,
-      end: 99999999,
-      name: '소방시설 설치 및 관리에 관한 법률',
-      period: '2022.12.01 ~ 현재',
-      description: '소방시설법, 화재예방법 분리 시행',
-      keyPoints: ['소방시설 설치 및 관리에 관한 법률', '화재의 예방 및 안전관리에 관한 법률', '성능위주설계 기준 강화', '소방시설 하자보수 책임 강화']
-    }
-  ];
-
-  for (const period of lawPeriods) {
-    if (date >= period.start && date <= period.end) {
-      return period;
-    }
-  }
-
-  return null;
-}
-
-// 소방법령 안내 카드 렌더링
-function renderLawInfoCard(pmsDay) {
-  const lawInfo = getFireLawInfo(pmsDay);
-
-  if (!lawInfo) {
-    return '';
-  }
-
-  let keyPointsHtml = lawInfo.keyPoints.map(point =>
-    `<li>${point}</li>`
-  ).join('');
-
-  return `
-    <div class="detail-section law-section">
-      <div class="detail-section-header law-header">
-        <h4>적용 소방법령</h4>
-      </div>
-      <div class="law-content">
-        <div class="law-name-compact">${lawInfo.name}</div>
-        <div class="law-period-compact">${lawInfo.period}</div>
-        <ul class="law-points-compact">
-          ${keyPointsHtml}
-        </ul>
-      </div>
-    </div>`;
-}
-
 // 로딩 표시
 function showLoading(show) {
   document.getElementById('loading').style.display = show ? 'block' : 'none';
@@ -2561,16 +2470,15 @@ window._executePdfDownload = async function() {
 
   showToast('PDF 생성 중...');
 
-  const { titleItems, floorItems, generalItems, permitItems } = currentBuildingData;
+  const { titleItems, floorItems, generalItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
-  const permitInfo = permitItems[0] || {};
   const mainTitle = titleItems[0] || {};
 
   const buildingName = mainTitle.bldNm || generalInfo.bldNm || selectedAddressData?.buildingName || '건축물';
   const address = generalInfo.platPlc || mainTitle.platPlc || selectedAddressData?.jibunAddress || '';
   const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
   const etcPurpose = generalInfo.etcPurps || mainTitle.etcPurps || '-';
-  const permitDate = permitInfo.archPmsDay || generalInfo.pmsDay || '';
+  const permitDate = getPrimaryPermitInfo().permitDate;
   const approvalDate = generalInfo.useAprDay || mainTitle.useAprDay || '';
   const structure = generalInfo.strctCdNm || mainTitle.strctCdNm || '-';
 
@@ -2651,10 +2559,10 @@ window._executePdfDownload = async function() {
   if (facResult && facResult.facilities) {
     const required = facResult.facilities.filter(f => f.required);
     const optional = facResult.facilities.filter(f => !f.required);
-    const pDate = facResult.permitDate;
+    const pDate = facResult.referenceDate || facResult.permitDate;
 
     if (required.length > 0) {
-      facilitiesHtml += `<h2>필수 소방시설 (${required.length}개)</h2><table>
+      facilitiesHtml += `<h2>설치 검토 대상 소방시설 (${required.length}개)</h2><p class="optional-list">※ 기준일 당시 이 용도에 설치 기준이 있는 시설입니다. 연면적·층수 등 세부 조건 충족 여부는 설치 기준을 확인하세요.</p><table>
         <thead><tr><th>시설명</th><th>설치 기준</th></tr></thead><tbody>`;
       for (const f of required) {
         const allRegs = f.allRegulations || f.regulations || [];
@@ -2698,19 +2606,49 @@ window._executePdfDownload = async function() {
     }
 
     if (optional.length > 0) {
-      facilitiesHtml += `<h2>비해당 시설 (${optional.length}개)</h2>
+      facilitiesHtml += `<h2>해당 시기 기준 없음 (${optional.length}개)</h2>
         <p class="optional-list">${optional.map(f => esc(f.name)).join(', ')}</p>`;
     }
   }
 
-  // --- 적용 법령 ---
-  const lawInfo = getFireLawInfo(permitDate);
+  // --- 적용 법령 (국가법령정보센터 연혁 데이터 기준) ---
+  const lawBaseDate = facResult?.referenceDate || facResult?.permitDate || permitDate;
+  // 비고: 판단 기준일과 허가 신청일 경계 (결과 카드와 같은 내용)
+  let lawNote = '건축허가일 기준으로 판단했습니다. 개정 부칙의 적용례는 대개 허가 신청일 기준이므로, 개정 시행일 전후 건축물은 신청일을 확인하세요.';
+  if (facResult?.usedApprovalDate) {
+    lawNote = '허가일이 조회되지 않아 사용승인일 기준으로 판단했습니다. 허가일이 더 이르면 결과가 달라질 수 있습니다.';
+  } else if (facResult?.appliedDate) {
+    lawNote = `허가 신청일 ${formatPermitDate(facResult.appliedDate)} 기준으로 판단했습니다(허가일 ${formatPermitDate(facResult.permitDate)}). 개정마다 적용 기준이 다를 수 있으니 부칙을 확인하세요.`;
+  } else if (facResult?.fireData && toYmd(facResult.permitDate)) {
+    const boundaries = findCriteriaBoundaries(facResult.fireData, facResult.permitDate, APPLICATION_WINDOW_DAYS);
+    if (boundaries.length > 0) {
+      const list = boundaries.flatMap((b) => b.facilities.map((f) => `${f.name}(${formatPermitDate(b.date)} 변경)`));
+      lawNote = `건축허가일 기준으로 판단했습니다. 허가일 전 ${APPLICATION_WINDOW_DAYS}일 안에 ${list.join(', ')} 기준이 바뀌었으므로, 허가 신청일이 바뀐 날짜보다 앞서면 종전 기준이 적용될 수 있습니다.`;
+    }
+  }
   let lawHtml = '';
-  if (lawInfo) {
-    lawHtml = `<h2>적용 소방법령</h2><table>
-      <tr><th>법률명</th><td>${esc(lawInfo.name)}</td></tr>
-      <tr><th>적용 기간</th><td>${esc(lawInfo.period)}</td></tr>
-      <tr><th>주요 내용</th><td>${lawInfo.keyPoints.map(esc).join('<br>')}</td></tr>
+  if (toYmd(lawBaseDate)) {
+    const actEra = getActNameAt(lawBaseDate);
+    let versionRows = '';
+    if (lawBaseDate >= FIRE_ACT_START) {
+      try {
+        const [actData, decreeData, rulesData] = await Promise.all([
+          getLawHistoryData('act'), getLawHistoryData('decree'), getLawHistoryData('rules')
+        ]);
+        const fmtVersion = (label, v) => v
+          ? `<tr><th>${label}</th><td>${esc(String(v.law_no).replace(/^.*?(제\s*[\d-]+호)$/, '$1'))} (${formatPermitDate(v.promulgation_date)} 공포, ${formatPermitDate(v.effective_date)} 시행)</td></tr>`
+          : '';
+        versionRows = fmtVersion('법률', findApplicableVersion(actData, lawBaseDate))
+          + fmtVersion('시행령', findApplicableVersion(decreeData, lawBaseDate))
+          + fmtVersion('시행규칙', findApplicableVersion(rulesData, lawBaseDate));
+      } catch (e) {
+        console.warn('법령 연혁 로드 실패:', e);
+      }
+    }
+    lawHtml = `<h2>적용 소방법령 (기준일 ${formatPermitDate(lawBaseDate)})</h2><table>
+      <tr><th>법률명</th><td>${esc(actEra.name)}</td></tr>
+      ${versionRows}
+      <tr><th>비고</th><td>${esc(lawNote)}</td></tr>
     </table>`;
   }
 
@@ -2748,6 +2686,7 @@ window._executePdfDownload = async function() {
     <tr><th>주소</th><td colspan="3">${esc(address)}</td></tr>
     <tr><th>주용도</th><td>${esc(mainPurpose)}</td><th>기타용도</th><td>${esc(etcPurpose)}</td></tr>
     <tr><th>건축허가일</th><td>${fmtDate(permitDate)}</td><th>사용승인일</th><td>${fmtDate(approvalDate)}</td></tr>
+    ${facResult?.appliedDate ? `<tr><th>허가 신청일</th><td colspan="3">${fmtDate(facResult.appliedDate)} (입력한 날짜 — 이 날짜 기준으로 판단)</td></tr>` : ''}
     <tr><th>연면적</th><td>${fmtArea(totalArea)} ㎡</td><th>건축면적</th><td>${fmtArea(buildingArea)} ㎡</td></tr>
     <tr><th>층수</th><td>지상 ${esc(groundFloors || '-')}층 / 지하 ${esc(undergroundFloors || '-')}층</td><th>높이</th><td>${fmtHeight(height)}</td></tr>
     <tr><th>구조</th><td colspan="3">${esc(structure)}</td></tr>
@@ -2793,297 +2732,14 @@ function showLoginRequiredToast(message) {
 
 // ==================== 특정소방대상물 분류 ====================
 
-// 주용도 → 특정소방대상물 분류 매핑
+// 주용도 → 화면 표시용 분류 { class, category } (js/lib/building-types.js)
 function getFireTargetClassification(mainPurpose) {
-  const classificationMap = {
-    // 공동주택
-    '공동주택': { class: '공동주택', category: '일반' },
-    '아파트': { class: '공동주택', category: '아파트' },
-    '연립주택': { class: '공동주택', category: '연립주택' },
-    '다세대주택': { class: '공동주택', category: '다세대주택' },
-    '기숙사': { class: '공동주택', category: '기숙사' },
-
-    // 근린생활시설
-    '제1종근린생활시설': { class: '근린생활시설', category: '제1종' },
-    '제2종근린생활시설': { class: '근린생활시설', category: '제2종' },
-    '근린생활시설': { class: '근린생활시설', category: '일반' },
-
-    // 문화 및 집회시설
-    '문화및집회시설': { class: '문화 및 집회시설', category: '일반' },
-    '공연장': { class: '문화 및 집회시설', category: '공연장' },
-    '집회장': { class: '문화 및 집회시설', category: '집회장' },
-    '관람장': { class: '문화 및 집회시설', category: '관람장' },
-    '전시장': { class: '문화 및 집회시설', category: '전시장' },
-
-    // 종교시설
-    '종교시설': { class: '종교시설', category: '일반' },
-
-    // 판매시설
-    '판매시설': { class: '판매시설', category: '일반' },
-    '도매시장': { class: '판매시설', category: '도매시장' },
-    '소매시장': { class: '판매시설', category: '소매시장' },
-    '상점': { class: '판매시설', category: '상점' },
-
-    // 운수시설
-    '운수시설': { class: '운수시설', category: '일반' },
-
-    // 의료시설
-    '의료시설': { class: '의료시설', category: '일반' },
-    '병원': { class: '의료시설', category: '병원' },
-    '격리병원': { class: '의료시설', category: '격리병원' },
-
-    // 교육연구시설
-    '교육연구시설': { class: '교육연구시설', category: '일반' },
-    '학교': { class: '교육연구시설', category: '학교' },
-    '학원': { class: '교육연구시설', category: '학원' },
-    '도서관': { class: '교육연구시설', category: '도서관' },
-
-    // 노유자시설
-    '노유자시설': { class: '노유자시설', category: '일반' },
-    '아동관련시설': { class: '노유자시설', category: '아동관련시설' },
-    '노인복지시설': { class: '노유자시설', category: '노인복지시설' },
-
-    // 수련시설
-    '수련시설': { class: '수련시설', category: '일반' },
-    '유스호스텔': { class: '수련시설', category: '유스호스텔' },
-
-    // 운동시설
-    '운동시설': { class: '운동시설', category: '일반' },
-    '체육관': { class: '운동시설', category: '체육관' },
-
-    // 업무시설
-    '업무시설': { class: '업무시설', category: '일반' },
-    '오피스텔': { class: '업무시설', category: '오피스텔' },
-    '사무소': { class: '업무시설', category: '사무소' },
-
-    // 숙박시설
-    '숙박시설': { class: '숙박시설', category: '일반' },
-    '일반숙박시설': { class: '숙박시설', category: '일반숙박시설' },
-    '관광숙박시설': { class: '숙박시설', category: '관광숙박시설' },
-    '호텔': { class: '숙박시설', category: '호텔' },
-    '모텔': { class: '숙박시설', category: '모텔' },
-
-    // 위락시설
-    '위락시설': { class: '위락시설', category: '일반' },
-
-    // 공장
-    '공장': { class: '공장', category: '일반' },
-
-    // 창고시설
-    '창고시설': { class: '창고시설', category: '일반' },
-    '창고': { class: '창고시설', category: '창고' },
-
-    // 위험물 저장 및 처리 시설
-    '위험물저장및처리시설': { class: '위험물 저장 및 처리 시설', category: '일반' },
-
-    // 자동차 관련 시설
-    '자동차관련시설': { class: '자동차 관련 시설', category: '일반' },
-    '주차장': { class: '자동차 관련 시설', category: '주차장' },
-
-    // 방송통신시설
-    '방송통신시설': { class: '방송통신시설', category: '일반' },
-
-    // 발전시설
-    '발전시설': { class: '발전시설', category: '일반' },
-
-    // 관광휴게시설
-    '관광휴게시설': { class: '관광휴게시설', category: '일반' },
-
-    // 단독주택
-    '단독주택': { class: '단독주택', category: '단독주택' },
-    '다중주택': { class: '단독주택', category: '다중주택' },
-    '다가구주택': { class: '단독주택', category: '다가구주택' },
-  };
-
-  if (!mainPurpose) return null;
-
-  // 정확한 매칭 먼저 시도
-  if (classificationMap[mainPurpose]) {
-    return classificationMap[mainPurpose];
-  }
-
-  // 부분 매칭 시도
-  for (const [key, value] of Object.entries(classificationMap)) {
-    if (mainPurpose.includes(key) || key.includes(mainPurpose)) {
-      return value;
-    }
-  }
-
-  return { class: '기타시설', category: mainPurpose };
+  return classifyPurpose(mainPurpose);
 }
 
-// 주용도 → JSON building_type 매핑
+// 주용도 → 소방 데이터 용도 (목록에 없으면 null — 추측 매핑하지 않음)
 function mapPurposeToFireDataType(mainPurpose) {
-  if (!mainPurpose) return null;
-
-  // 정확한 매핑 테이블
-  const mappingTable = {
-    // 공동주택
-    '아파트': '공동주택',
-    '연립주택': '공동주택',
-    '다세대주택': '공동주택',
-    '기숙사': '공동주택',
-    '공동주택': '공동주택',
-    '공동주택(아파트)': '공동주택',
-
-    // 단독주택 (소방시설 기준 데이터 없음 - 근린생활시설 기준 참고)
-    '단독주택': '근린생활시설',
-
-    // 근린생활시설
-    '제1종근린생활시설': '근린생활시설',
-    '제2종근린생활시설': '근린생활시설',
-    '근린생활시설': '근린생활시설',
-
-    // 문화 및 집회시설
-    '문화및집회시설': '문화및집회시설',
-    '공연장': '문화및집회시설',
-    '집회장': '문화및집회시설',
-    '관람장': '문화및집회시설',
-    '전시장': '문화및집회시설',
-
-    // 종교시설
-    '종교시설': '종교시설',
-
-    // 판매시설
-    '판매시설': '판매시설',
-    '도매시장': '판매시설',
-    '소매시장': '판매시설',
-    '상점': '판매시설',
-
-    // 운수시설
-    '운수시설': '운수시설',
-    '여객자동차터미널': '운수시설',
-    '철도역사': '운수시설',
-    '공항시설': '운수시설',
-
-    // 의료시설
-    '의료시설': '의료시설',
-    '병원': '의료시설',
-    '격리병원': '의료시설',
-    '장례식장': '장례시설',
-
-    // 교육연구시설
-    '교육연구시설': '교육연구시설',
-    '학교': '교육연구시설',
-    '학원': '교육연구시설',
-    '도서관': '교육연구시설',
-    '연구소': '교육연구시설',
-
-    // 노유자시설
-    '노유자시설': '노유자시설',
-    '아동관련시설': '노유자시설',
-    '노인복지시설': '노유자시설',
-    '어린이집': '노유자시설',
-    '유치원': '노유자시설',
-
-    // 수련시설
-    '수련시설': '수련시설',
-    '유스호스텔': '수련시설',
-    '청소년수련관': '수련시설',
-
-    // 운동시설
-    '운동시설': '운동시설',
-    '체육관': '운동시설',
-    '수영장': '운동시설',
-    '볼링장': '운동시설',
-
-    // 업무시설
-    '업무시설': '업무시설',
-    '오피스텔': '업무시설',
-    '사무소': '업무시설',
-
-    // 숙박시설
-    '숙박시설': '숙박시설',
-    '일반숙박시설': '숙박시설',
-    '관광숙박시설': '숙박시설',
-    '호텔': '숙박시설',
-    '모텔': '숙박시설',
-    '여관': '숙박시설',
-
-    // 위락시설
-    '위락시설': '위락시설',
-    '유흥주점': '위락시설',
-    '단란주점': '위락시설',
-
-    // 공장
-    '공장': '공장',
-
-    // 창고시설
-    '창고시설': '창고시설',
-    '창고': '창고시설',
-    '물류창고': '창고시설',
-
-    // 위험물 저장 및 처리 시설
-    '위험물저장및처리시설': '위험물저장및처리시설',
-    '주유소': '위험물저장및처리시설',
-    '석유판매소': '위험물저장및처리시설',
-    '가스충전소': '위험물저장및처리시설',
-
-    // 항공기및자동차관련시설
-    '자동차관련시설': '항공기및자동차관련시설',
-    '주차장': '항공기및자동차관련시설',
-    '세차장': '항공기및자동차관련시설',
-    '정비공장': '항공기및자동차관련시설',
-
-    // 동물및식물관련시설
-    '동물및식물관련시설': '동물및식물관련시설',
-    '축사': '동물및식물관련시설',
-    '온실': '동물및식물관련시설',
-
-    // 자원순환관련시설
-    '자원순환관련시설': '자원순환관련시설',
-    '분뇨처리시설': '자원순환관련시설',
-    '폐기물처리시설': '자원순환관련시설',
-
-    // 교정및군사시설
-    '교정및군사시설': '교정및군사시설',
-
-    // 방송통신시설
-    '방송통신시설': '방송통신시설',
-    '방송국': '방송통신시설',
-    '통신시설': '방송통신시설',
-
-    // 발전시설
-    '발전시설': '발전시설',
-
-    // 묘지관련시설
-    '묘지관련시설': '묘지관련시설',
-    '납골당': '묘지관련시설',
-    '화장시설': '묘지관련시설',
-
-    // 관광휴게시설
-    '관광휴게시설': '관광휴게시설',
-    '야외음악당': '관광휴게시설',
-    '야외극장': '관광휴게시설',
-    '휴게소': '관광휴게시설',
-
-    // 장례시설
-    '장례시설': '장례시설',
-
-    // 지하상가/터널
-    '지하상가': '지하상가터널',
-
-    // 지하구
-    '지하구': '지하구',
-
-    // 국가유산
-    '국가유산': '국가유산',
-    '문화재': '국가유산'
-  };
-
-  // 정확한 매칭
-  if (mappingTable[mainPurpose]) {
-    return mappingTable[mainPurpose];
-  }
-
-  // 부분 매칭
-  for (const [key, value] of Object.entries(mappingTable)) {
-    if (mainPurpose.includes(key) || key.includes(mainPurpose)) {
-      return value;
-    }
-  }
-
-  return null;
+  return mapPurposeToFireType(mainPurpose);
 }
 
 // ==================== 필수 소방시설 판단 ====================
@@ -3101,11 +2757,17 @@ async function getRequiredFireFacilities(buildingInfo) {
   } = buildingInfo;
 
   // 허가일이 없으면 사용승인일 사용
-  const hasPermitDate = pmsDay && pmsDay.length === 8;
-  const effectiveDate = hasPermitDate ? pmsDay : (useAprDay || '');
-  const usedApprovalDate = !hasPermitDate && useAprDay; // 사용승인일 사용 여부
+  const hasPermitDate = !!toYmd(pmsDay);
+  const effectiveDate = hasPermitDate ? toYmd(pmsDay) : toYmd(useAprDay);
+  const usedApprovalDate = !hasPermitDate && !!effectiveDate; // 사용승인일 사용 여부
 
-  const permitDate = parseInt(effectiveDate) || 0;
+  // 허가 신청일을 입력했으면 그 날짜로 기준 행을 고른다 (부칙 적용례는 대개 신청일 기준).
+  // 실제 날짜가 아니거나 허가일보다 늦은 신청일, 허가일 없이 넣은 신청일은 쓰지 않는다.
+  const candidateApplied = parseYmdInput(buildingInfo.appliedDay);
+  const appliedDate = hasPermitDate && candidateApplied && candidateApplied <= effectiveDate ? candidateApplied : '';
+  const referenceDate = appliedDate || effectiveDate;
+
+  const permitDate = parseInt(referenceDate) || 0;
   const totalArea = parseFloat(totArea) || 0;
   const groundFloors = parseInt(grndFlrCnt) || 0;
   const undergroundFloors = parseInt(ugrndFlrCnt) || 0;
@@ -3154,24 +2816,19 @@ async function getRequiredFireFacilities(buildingInfo) {
 
       facilities.push(facilityInfo);
     });
-  } else {
-    // JSON 데이터가 없으면 기본 시설만 표시
-    facilities.push({
-      name: '소화기구',
-      category: '소화설비',
-      required: totalArea >= 33,
-      regulations: [],
-      allRegulations: [],
-      reason: totalArea >= 33 ? '연면적 33㎡ 이상' : '해당없음',
-      icon: getFacilityIcon('소화기구')
-    });
   }
+  // 기준 데이터가 없는 용도(매핑 불가)·로드 실패는 추측 결과를 만들지 않고 화면에서 안내한다
 
   return {
     classification,
     buildingType,
+    unmapped: !buildingType,          // 주용도에 해당하는 기준 데이터 없음
+    loadFailed: !!buildingType && !fireData,
+    fireData,                   // 허가 신청일 경계 계산용 (용도별 기준 데이터)
     facilities,
-    permitDate: effectiveDate,  // 실제 사용된 날짜 (허가일 우선, 없으면 사용승인일)
+    permitDate: effectiveDate,  // 대장의 날짜 (허가일 우선, 없으면 사용승인일)
+    appliedDate,                // 입력한 허가 신청일 (쓰지 않았으면 '')
+    referenceDate,              // 기준 행을 고른 날짜 = 신청일 || permitDate
     usedApprovalDate,           // 사용승인일 사용 여부
     summary: {
       totalArea,
@@ -3222,40 +2879,136 @@ function showPreLawModal() {
   });
 }
 
+// 층별 용도가 둘 이상이면 복합건축물 해당 여부 안내 (부속 주차장은 제외)
+function getMixedUseTypes(floorItems) {
+  const types = new Set();
+  for (const f of floorItems || []) {
+    const t = mapPurposeToFireType(f.mainPurpsCdNm);
+    if (t && t !== '항공기및자동차관련시설' && t !== '복합건축물') types.add(t);
+  }
+  return types.size >= 2 ? [...types] : null;
+}
+
 async function renderFireFacilitiesCard(buildingInfo) {
   const result = await getRequiredFireFacilities(buildingInfo);
-  const { classification, facilities, permitDate, usedApprovalDate, effectiveDate } = result;
+  const {
+    classification, facilities, permitDate, appliedDate, referenceDate, usedApprovalDate, unmapped, loadFailed, fireData
+  } = result;
 
-  // 소방법 이전 건축물이면 안내 모달 표시
-  if (permitDate && parseInt(permitDate) <= 19750831) {
+  // 소방법 이전 건축물이면 안내 모달 표시 (같은 건물을 다시 그릴 때는 한 번만)
+  if (permitDate && parseInt(permitDate) <= 19750831 && preLawModalShownFor !== permitDate) {
+    preLawModalShownFor = permitDate;
     await showPreLawModal();
   }
 
   // 모달에서 사용할 수 있도록 저장
   currentFacilitiesResult = result;
 
-  const requiredFacilities = facilities.filter(f => f.required);
-  const notRequiredFacilities = facilities.filter(f => !f.required);
+  // 링크로 받은 허가 신청일을 쓰지 못했으면(허가일보다 늦음·허가일 없음) 상태와 주소창에서 지운다.
+  // 허가일이 없을 때는 카드의 사용승인일 경고와 조회 실패 알림이 이유를 알려 주므로 토스트로 덮지 않는다
+  // (토스트는 하나만 보인다).
+  if (buildingInfo.appliedDay && !appliedDate) {
+    currentAppliedDay = '';
+    removeAppliedFromUrl();
+    if (!usedApprovalDate && permitDate) {
+      showToast(`허가 신청일이 허가일(${formatPermitDate(permitDate)})보다 늦어 허가일 기준으로 표시합니다.`);
+    }
+  }
 
-  const lawInfo = getFireLawInfo(permitDate);
-  const lawPeriod = lawInfo ? lawInfo.period : '-';
+  const dateLabel = usedApprovalDate ? '기준일(사용승인일)' : (appliedDate ? '허가 신청일' : '건축허가일');
+  const preFireAct = !!referenceDate && referenceDate < FIRE_ACT_START;
+  const actName = getActNameAt(referenceDate).name;
+  // 기준 데이터가 없는 용도는 신청일로 다시 고를 것이 없으므로 허가일 배지를 그대로 쓴다
+  const badgeText = appliedDate && !unmapped && !loadFailed
+    ? `허가 신청일: ${formatPermitDate(appliedDate)} (허가일 ${formatPermitDate(permitDate)})`
+    : `${usedApprovalDate ? '기준일(사용승인일)' : '건축허가일'}: ${formatPermitDate(permitDate)}`;
 
-  let html = `
-    <div class="fire-facilities-card">
+  const headerHtml = `
       <div class="fire-facilities-header">
         <div class="classification-badge">
           <span class="classification-class">${esc(classification?.class || '미분류')}</span>
           ${classification?.category && classification.category !== '일반' ?
             `<span class="classification-category">${esc(classification.category)}</span>` : ''}
         </div>
-        <div class="law-period-badge">
+        <div class="law-period-badge" tabindex="-1">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 6v6l4 2"/>
           </svg>
-          건축허가일: ${formatPermitDate(permitDate)}
+          ${badgeText}
         </div>
-      </div>
+      </div>`;
+
+  // 기준 데이터가 없는 용도·로드 실패: 추측 결과 대신 안내
+  if (unmapped || loadFailed) {
+    const message = unmapped
+      ? `건축물대장 주용도 <strong>'${esc(classification?.category || '-')}'</strong>에 해당하는 소방시설 설치기준 데이터가 없습니다.<br>화면의 <strong>'직접 입력'</strong>에서 가장 가까운 용도를 선택해 확인해 주세요.`
+      : '소방시설 설치기준 데이터를 불러오지 못했습니다. 잠시 후 다시 조회해 주세요.';
+    return `
+    <div class="fire-facilities-card">
+      ${headerHtml}
+      <div class="approval-date-warning"><span>${message}</span></div>
+    </div>`;
+  }
+
+  // 허가 신청일 안내
+  // - 신청일을 입력했으면: 신청일 기준으로 다시 고른 결과임을 알리고, 날짜 고치기·되돌리기
+  // - 아니면: 허가일 직전 기간 안에 이 용도의 기준이 바뀐 시설을 보여 주고 신청일 입력을 받는다
+  //   (부칙 적용례는 대개 허가 신청일 기준인데 건축물대장에는 허가일만 있다)
+  // 직접 입력에서 허가일을 비워 오늘로 둔 경우는 경계를 따질 허가일이 없으므로 띄우지 않는다.
+  let applicationNotice = '';
+  if (appliedDate) {
+    // 기간(180일)보다 더 앞선 신청일은 입력 실수일 수 있어 한 번 더 확인을 권한다 (실제로 그럴 수도 있어 막지는 않음)
+    const farBefore = appliedDate < addDays(permitDate, -APPLICATION_WINDOW_DAYS);
+    applicationNotice = `
+      <div class="approval-date-warning application-notice">
+        <div class="application-notice-body">
+          <span class="application-notice-lead" tabindex="-1">허가 신청일 <strong>${formatPermitDate(appliedDate)}</strong> 기준으로 다시 고른 결과입니다 (허가일 ${formatPermitDate(permitDate)}). 개정마다 적용 기준이 다를 수 있으니(신청일·설치일·입찰공고일 등) 각 시설의 비고와 부칙을 확인하세요.</span>
+          ${farBefore ? `<span class="boundary-caution">신청일이 허가일보다 ${APPLICATION_WINDOW_DAYS}일 넘게 앞섭니다. 날짜가 맞는지 확인하세요.</span>` : ''}
+          ${applicationDateFormHtml(permitDate, appliedDate)}
+          <button type="button" class="law-ref-btn" onclick="clearApplicationDate()">허가일 기준으로 돌아가기</button>
+        </div>
+      </div>`;
+  } else if (!usedApprovalDate && permitDate && !buildingInfo.permitDateAssumed) {
+    const boundaries = findCriteriaBoundaries(fireData, permitDate, APPLICATION_WINDOW_DAYS);
+    if (boundaries.length > 0) {
+      const quote = (list) => list.map((c) => `“${esc(c)}”`).join(', ');
+      const describe = (f) => {
+        if (f.before.length && f.after.length) return `이전: ${quote(f.before)} → 이후: ${quote(f.after)}`;
+        return f.after.length ? `신설: ${quote(f.after)}` : `삭제: ${quote(f.before)}`;
+      };
+      const items = boundaries.flatMap((b) => b.facilities.map((f) => `
+            <li><strong>${esc(f.name)}</strong> <span class="boundary-date">${formatPermitDate(b.date)} 변경</span><br>
+              ${describe(f)}${f.notes.length ? `<small class="boundary-note">비고: ${esc(f.notes.join(' / '))}</small>` : ''}</li>`));
+      const shown = items.slice(0, 8).join('');
+      const more = items.length > 8 ? `<li>외 ${items.length - 8}건 — 각 시설을 눌러 적용 기간별 기준을 확인하세요.</li>` : '';
+      applicationNotice = `
+      <div class="approval-date-warning application-notice">
+        <div class="application-notice-body">
+          <span class="application-notice-lead" tabindex="-1">허가일(${formatPermitDate(permitDate)}) 전 ${APPLICATION_WINDOW_DAYS}일 안에 아래 기준이 바뀌었습니다. 개정 부칙은 대개 <strong>허가 신청일</strong>을 기준으로 적용하므로, 신청일이 바뀐 날짜보다 앞서면 이전 기준이 적용될 수 있습니다.</span>
+          <ul class="boundary-list">${shown}${more}</ul>
+          ${applicationDateFormHtml(permitDate, '', 'appliedDayHelp')}
+          <small class="boundary-help" id="appliedDayHelp">신청일은 허가 서류나 세움터(건축행정시스템)의 민원 처리 이력에서 확인할 수 있습니다. 설치일·입찰공고일 등 다른 날을 기준으로 하는 개정도 있으니 각 시설의 비고와 부칙을 확인하세요.</small>
+        </div>
+      </div>`;
+    }
+  }
+
+  // 층별 용도가 둘 이상이면 복합건축물 기준 확인 안내
+  const mixedTypes = getMixedUseTypes(buildingInfo.floorItems);
+  const mixedUseNotice = mixedTypes ? `
+      <div class="approval-date-warning">
+        <span>층별 용도가 둘 이상입니다(${esc(mixedTypes.join(', '))}). 「소방시설법 시행령」 별표 2의 <strong>복합건축물</strong>에 해당하면 더 강화된 기준이 적용될 수 있습니다.
+          <button class="law-ref-btn" data-date="${esc(referenceDate)}" data-label="${esc(referenceDateLabel(result))}" onclick="showFireStandardsModal('복합건축물', this.dataset.date, null, this.dataset.label)">복합건축물 기준 보기</button>
+        </span>
+      </div>` : '';
+
+  const requiredFacilities = facilities.filter(f => f.required);
+  const notRequiredFacilities = facilities.filter(f => !f.required);
+
+  const html = `
+    <div class="fire-facilities-card">
+      ${headerHtml}
 
       ${usedApprovalDate ? `
         <div class="approval-date-warning">
@@ -3264,17 +3017,22 @@ async function renderFireFacilitiesCard(buildingInfo) {
             <line x1="12" y1="9" x2="12" y2="13"/>
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
-          <span>허가일이 조회되지 않아 <strong>사용승인일(${effectiveDate ? effectiveDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3') : '-'})</strong> 기준으로 판단했습니다. 재확인이 필요합니다.</span>
+          <span>허가일이 조회되지 않아 <strong>사용승인일(${formatPermitDate(permitDate)})</strong> 기준으로 판단했습니다. 허가일이 더 이르면 결과가 달라질 수 있으니 재확인이 필요합니다.</span>
         </div>
       ` : ''}
+      ${applicationNotice}
+      ${mixedUseNotice}
 
       <div class="facilities-section">
         <div class="facilities-title required">
-          <span>필수 소방시설</span>
+          <span>설치 검토 대상 소방시설</span>
           <span class="facilities-count">${requiredFacilities.length}개</span>
         </div>
+        <div class="facilities-note">
+          ※ ${dateLabel} 당시 이 용도에 설치 기준이 있는 시설입니다. 연면적·층수 등 세부 조건의 충족 여부는 아직 자동 판정하지 않으니, 각 시설을 눌러 기준을 확인하세요.
+        </div>
         <div class="facilities-list">
-          ${requiredFacilities.map((f, idx) => `
+          ${requiredFacilities.map((f) => `
             <div class="facility-item required clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
               <span class="facility-icon">${f.icon}</span>
               <div class="facility-info">
@@ -3288,14 +3046,14 @@ async function renderFireFacilitiesCard(buildingInfo) {
       ${notRequiredFacilities.length > 0 ? `
         <div class="facilities-section collapsed" id="optionalFacilities">
           <div class="facilities-title optional" onclick="toggleOptionalFacilities()">
-            <span>비해당 시설</span>
+            <span>해당 시기 기준 없음</span>
             <span class="facilities-count">${notRequiredFacilities.length}개</span>
             <svg class="toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </div>
           <div class="facilities-list optional-list">
-            ${notRequiredFacilities.map((f, idx) => `
+            ${notRequiredFacilities.map((f) => `
               <div class="facility-item optional clickable" onclick="showFacilityDetailModal(${facilities.indexOf(f)})">
                 <span class="facility-icon">${f.icon}</span>
                 <div class="facility-info">
@@ -3312,12 +3070,15 @@ async function renderFireFacilitiesCard(buildingInfo) {
       </div>
 
       <div class="law-reference-section" id="lawRefSection">
-        <div class="law-reference-label">${formatPermitDate(permitDate)} 기준 소방시설법</div>
+        <div class="law-reference-label">${preFireAct
+          ? `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준: 소방시설법 시행(2004.05.30) 전 — 구 소방법 적용`
+          : `${formatPermitDate(referenceDate)}${appliedDate ? '(허가 신청일)' : ''} 기준 ${esc(actName)}`}</div>
+        ${preFireAct ? '' : `
         <div class="law-reference-buttons">
-          <button class="law-ref-btn" data-type="act" onclick="openLawLink('act')">법령</button>
-          <button class="law-ref-btn" data-type="decree" onclick="openLawLink('decree')">시행령</button>
-          <button class="law-ref-btn" data-type="rules" onclick="openLawLink('rules')">시행규칙</button>
-        </div>
+          <button class="law-ref-btn" data-type="act" onclick="openLawLink('act')" disabled>법률</button>
+          <button class="law-ref-btn" data-type="decree" onclick="openLawLink('decree')" disabled>시행령</button>
+          <button class="law-ref-btn" data-type="rules" onclick="openLawLink('rules')" disabled>시행규칙</button>
+        </div>`}
       </div>
 
       <div class="fire-standards-btn-wrapper">
@@ -3335,27 +3096,35 @@ async function renderFireFacilitiesCard(buildingInfo) {
     </div>
   `;
 
-  // 카드 렌더 후 비동기로 법령 링크 바인딩
-  setTimeout(async () => {
-    try {
-      const [actData, decreeData, rulesData] = await Promise.all([
-        getLawHistoryData('act'),
-        getLawHistoryData('decree'),
-        getLawHistoryData('rules')
-      ]);
-      const lawLinks = {
-        act: findApplicableLaw(actData, permitDate),
-        decree: findApplicableLaw(decreeData, permitDate),
-        rules: findApplicableLaw(rulesData, permitDate)
-      };
-      document.querySelectorAll('#lawRefSection .law-ref-btn').forEach(btn => {
-        const type = btn.dataset.type;
-        if (lawLinks[type] && lawLinks[type].link) {
-          btn.dataset.link = lawLinks[type].link;
-        }
-      });
-    } catch (e) { /* 법령 데이터 로드 실패 시 무시 */ }
-  }, 0);
+  // 카드 렌더 후 비동기로 법령 링크 바인딩 (기준일에 적용되는 가장 최근 공포 버전)
+  if (!preFireAct) {
+    setTimeout(async () => {
+      try {
+        const [actData, decreeData, rulesData] = await Promise.all([
+          getLawHistoryData('act'),
+          getLawHistoryData('decree'),
+          getLawHistoryData('rules')
+        ]);
+        // 결과 카드와 같은 기준일 (허가 신청일을 입력했으면 신청일)
+        const lawLinks = {
+          act: findApplicableVersion(actData, referenceDate),
+          decree: findApplicableVersion(decreeData, referenceDate),
+          rules: findApplicableVersion(rulesData, referenceDate)
+        };
+        document.querySelectorAll('#lawRefSection .law-ref-btn').forEach(btn => {
+          const version = lawLinks[btn.dataset.type];
+          const link = version ? safeHttpUrl(version.link) : '';
+          if (link) {
+            btn.dataset.link = link;
+            btn.disabled = false;
+            btn.title = `${version.law_no} (${formatPermitDate(version.effective_date)} 시행)`;
+          }
+        });
+      } catch (e) {
+        console.warn('법령 연혁 데이터 로드 실패:', e);
+      }
+    }, 0);
+  }
 
   return html;
 }
@@ -3368,53 +3137,84 @@ window.toggleOptionalFacilities = function() {
   }
 };
 
-// 허가일 기준 법령 링크 생성
-function getLawLinksHtml(permitDate) {
-  const date = parseInt(permitDate) || 0;
-
-  // 법령명 (2022.12.01 기준 변경)
-  let lawName, lawNameShort;
-  if (date >= 20221201) {
-    lawName = '소방시설설치및관리에관한법률';
-    lawNameShort = '소방시설법';
-  } else {
-    lawName = '소방시설설치유지및안전관리에관한법률';
-    lawNameShort = '소방시설법';
-  }
-
-  // 날짜 포맷 (YYYYMMDD)
-  const dateStr = permitDate || '';
-  const dateParam = dateStr ? `/(${dateStr})` : '';
-
-  const linkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-    <polyline points="15 3 21 3 21 9"/>
-    <line x1="10" y1="14" x2="21" y2="3"/>
-  </svg>`;
-
-  return `
-    <a href="https://www.law.go.kr/법령/${lawName}${dateParam}" target="_blank" class="law-link">
-      ${linkIcon}
-      ${lawNameShort}
-    </a>
-    <a href="https://www.law.go.kr/법령/${lawName}시행령${dateParam}" target="_blank" class="law-link">
-      ${linkIcon}
-      시행령
-    </a>
-    <a href="https://www.law.go.kr/법령/${lawName}시행규칙${dateParam}" target="_blank" class="law-link">
-      ${linkIcon}
-      시행규칙
-    </a>
-    <div class="law-date-info">허가일(${formatPermitDate(permitDate)}) 기준</div>
-  `;
-}
-
 // 허가일 포맷
 function formatPermitDate(dateStr) {
   const v = String(dateStr || '');
   if (!/^\d{8}$/.test(v)) return '-';
   return `${v.substring(0,4)}.${v.substring(4,6)}.${v.substring(6,8)}`;
 }
+
+// YYYYMMDD → YYYY-MM-DD (date 입력 칸 값·한계용, 형식이 아니면 '')
+function formatIsoDate(dateStr) {
+  const v = String(dateStr || '');
+  return /^\d{8}$/.test(v) ? `${v.substring(0,4)}-${v.substring(4,6)}-${v.substring(6,8)}` : '';
+}
+
+// ==================== 허가 신청일 ====================
+
+// 결과의 기준일이 무슨 날인지 (모달·법령 표시용)
+function referenceDateLabel(result) {
+  if (result?.appliedDate) return '허가 신청일';
+  if (result?.usedApprovalDate) return '사용승인일';
+  return '건축허가일';
+}
+
+// 허가 신청일 입력 폼 — Enter 로도 제출. 날짜 검증은 applyApplicationDate 가 같은 안내 문구로 한다(novalidate)
+function applicationDateFormHtml(permitDate, value, helpId = '') {
+  return `
+          <form class="boundary-form" novalidate onsubmit="applyApplicationDate(event)">
+            <label for="appliedDayInput">허가 신청일</label>
+            <input type="date" id="appliedDayInput" min="${formatIsoDate(EARLIEST_YMD)}" max="${formatIsoDate(permitDate)}" value="${formatIsoDate(value)}"${helpId ? ` aria-describedby="${helpId}"` : ''}>
+            <button type="submit" class="law-ref-btn">신청일 기준으로 보기</button>
+          </form>`;
+}
+
+// 주소창에서 신청일 파라미터만 지운다 (직접 입력·적용하지 못한 신청일·기록 열기)
+function removeAppliedFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('applied')) return;
+  params.delete('applied');
+  const query = params.toString();
+  history.replaceState(null, '', query ? `${window.location.pathname}?${query}` : window.location.pathname);
+}
+
+// 지금 보고 있는 결과(주소 조회 또는 직접 입력)를 현재 신청일로 다시 그린다
+async function rerenderWithApplicationDate() {
+  if (currentBuildingData?.isManualInput && lastManualBuildingInfo) {
+    await displayManualResult({ ...lastManualBuildingInfo, appliedDay: currentAppliedDay }, lastManualBuildingInfo.pmsDay);
+  } else if (currentBuildingData && (currentBuildingData.titleItems?.length || currentBuildingData.generalItems?.length)) {
+    updateUrlWithAddress();
+    await renderBuildingView();
+  }
+  // 결과 전체를 다시 그려 초점이 사라지므로 안내 문장으로 옮긴다 (화면 읽기 프로그램이 바뀐 기준을 읽도록).
+  // 경계 안내가 없는 허가일로 돌아왔으면 카드 머리의 기준일 배지로.
+  (document.querySelector('.application-notice-lead') || document.querySelector('.fire-facilities-card .law-period-badge'))?.focus();
+}
+
+// 결과 카드의 '신청일 기준으로 보기' (입력 폼 제출)
+window.applyApplicationDate = async function(event) {
+  event?.preventDefault();
+  const input = document.getElementById('appliedDayInput');
+  const raw = String(input?.value || '').trim();
+  const value = parseYmdInput(raw);
+  const permitDate = toYmd(currentFacilitiesResult?.permitDate);
+  if (!value) {
+    showToast(raw ? '허가 신청일을 다시 확인해 주세요 (1900년 이후 날짜).' : '허가 신청일을 입력해 주세요.');
+    return;
+  }
+  if (permitDate && value > permitDate) {
+    showToast(`허가 신청일은 허가일(${formatPermitDate(permitDate)})보다 늦을 수 없습니다.`);
+    return;
+  }
+  currentAppliedDay = value;
+  await rerenderWithApplicationDate();
+};
+
+// '허가일 기준으로 돌아가기'
+window.clearApplicationDate = async function() {
+  currentAppliedDay = '';
+  await rerenderWithApplicationDate();
+};
 
 // ==================== 소방기준 모달 ====================
 
@@ -3424,34 +3224,24 @@ let lawHistoryCache = { act: null, decree: null, rules: null };
 async function getLawHistoryData(type) {
   if (lawHistoryCache[type]) return lawHistoryCache[type];
   const fileMap = { act: 'law_history_act', decree: 'law_history_decree', rules: 'law_history_rules' };
-  const res = await fetch(`data/${fileMap[type]}.json`);
+  const res = await fetch(`/data/${fileMap[type]}.json`);
+  if (!res.ok) throw new Error(`법령 연혁 로드 실패 (${res.status})`);
   lawHistoryCache[type] = await res.json();
   return lawHistoryCache[type];
 }
 
-// 허가일 기준 해당 법령 버전 찾기
-function findApplicableLaw(history, permitDate) {
-  const permit = parseInt(permitDate) || 0;
-  const sorted = [...history].sort((a, b) => parseInt(b.effective_date) - parseInt(a.effective_date));
-  return sorted.find(item => parseInt(item.effective_date) <= permit) || sorted[sorted.length - 1];
-}
-
-// NFSC 연혁 데이터 로드
+// NFSC(화재안전기준) 연혁 데이터 로드
 let nfscHistoryCache = null;
 
 async function getNfscHistoryData() {
   if (nfscHistoryCache) return nfscHistoryCache;
-  const res = await fetch('data/nfsc_history.json');
+  const res = await fetch('/data/nfsc_history.json');
+  if (!res.ok) throw new Error(`화재안전기준 연혁 로드 실패 (${res.status})`);
   nfscHistoryCache = await res.json();
   return nfscHistoryCache;
 }
 
-// 허가일 기준 해당 NFSC 버전 찾기
-function findApplicableNfsc(nfscList, permitDate) {
-  const permit = parseInt(permitDate) || 0;
-  const sorted = [...nfscList].sort((a, b) => parseInt(b.effective_date) - parseInt(a.effective_date));
-  return sorted.find(item => parseInt(item.effective_date) <= permit) || sorted[sorted.length - 1];
-}
+// 기준일에 적용되는 법령·기준 버전 선택은 js/lib/law-versions.js 의 findApplicableVersion
 
 // 법령 링크 열기
 window.openLawLink = function(type) {
@@ -3468,8 +3258,8 @@ let currentFireStandardsData = {
   buildingInfo: null
 };
 
-// 소방기준 모달 표시
-window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo) {
+// 소방기준 모달 표시 (dateLabel: 기준일이 무슨 날인지 — 건축허가일·허가 신청일·사용승인일)
+window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo, dateLabel) {
   // 용도를 JSON building_type으로 매핑
   const buildingType = mapPurposeToFireDataType(purpose);
   if (!buildingType) {
@@ -3491,7 +3281,7 @@ window.showFireStandardsModal = async function(purpose, permitDate, buildingInfo
     buildingInfo
   };
 
-  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo);
+  const html = renderFireStandardsModalContent(data, permitDate, buildingInfo, dateLabel);
 
   document.getElementById('fireStandardsBody').innerHTML = html;
   document.getElementById('fireStandardsModal').style.display = 'flex';
@@ -3510,7 +3300,8 @@ window.showFacilityDetailModal = async function(facilityIndex) {
   }
 
   const facility = currentFacilitiesResult.facilities[facilityIndex];
-  const permitDate = currentFacilitiesResult.permitDate;
+  // 결과 카드와 같은 기준일 (허가 신청일을 입력했으면 신청일)
+  const permitDate = currentFacilitiesResult.referenceDate || currentFacilitiesResult.permitDate;
 
   // 적용되는 규정만 필터링
   const allRegs = facility.allRegulations || facility.regulations || [];
@@ -3533,7 +3324,7 @@ window.showFacilityDetailModal = async function(facilityIndex) {
         <span class="facility-detail-category">${esc(facility.category || '')}</span>
       </div>
       <span class="facility-detail-status ${facility.required ? 'required' : 'optional'}">
-        ${facility.required ? '필수' : '비해당'}
+        ${facility.required ? '검토 대상' : '기준 없음'}
       </span>
     </div>
   `;
@@ -3581,8 +3372,8 @@ window.showFacilityDetailModal = async function(facilityIndex) {
           </div>
           <div class="regulation-criteria">${esc(rule.criteria)}</div>
           ${rule.source ? `<div class="regulation-source">출처: ${{
-            '별표5': '[별표5] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련)',
-            '별표6': '[별표6] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련)'
+            '별표5': '[별표5] 특정소방대상물의 소방시설 설치의 면제 기준(제14조 관련)',
+            '별표6': '[별표6] 특정소방대상물의 소방시설 설치의 면제기준(제16조 관련, 2022.11.30. 이전 시행령)'
           }[rule.source] || esc(rule.source)}</div>` : ''}
         </div>
       `;
@@ -3592,12 +3383,19 @@ window.showFacilityDetailModal = async function(facilityIndex) {
 
   // NFSC 링크 추가
   const nfscKey = getFacilityNfscKey(facility.name);
+  let nfscData = null;
   if (nfscKey) {
-    const nfscData = await getNfscHistoryData();
+    try {
+      nfscData = await getNfscHistoryData();
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+  if (nfscData) {
     const nfscList = nfscData[nfscKey];
     if (nfscList) {
-      const matched = findApplicableNfsc(nfscList, permitDate);
-      if (matched) {
+      const matched = findApplicableVersion(nfscList, permitDate);
+      if (matched && safeHttpUrl(matched.link)) {
         html += `
           <div class="nfsc-link-section">
             <a href="${esc(safeHttpUrl(matched.link))}" target="_blank" rel="noopener" class="nfsc-link-btn">
@@ -3616,7 +3414,7 @@ window.showFacilityDetailModal = async function(facilityIndex) {
 
   html += `
     <div class="facility-detail-footer">
-      <p>건축허가일: ${formatPermitDate(permitDate) || '-'}</p>
+      <p>${referenceDateLabel(currentFacilitiesResult)}: ${formatPermitDate(permitDate) || '-'}</p>
     </div>
   `;
 
@@ -3686,86 +3484,6 @@ window.toggleAccordion = function(header) {
   item.classList.toggle('expanded');
 };
 
-// 시설 상세 콘텐츠 렌더링 (아코디언 방식)
-function renderFacilityDetailContent(facility, permitDate) {
-  // 적용되는 규정만 필터링
-  const allRegs = facility.allRegulations || facility.regulations || [];
-  const applicableRegs = getApplicableRegulations(allRegs, permitDate);
-
-  // 적용 기간 포맷 (간결하게)
-  const formatPeriod = (reg) => {
-    const start = reg.start_date ? formatPermitDate(reg.start_date) : '';
-    const end = reg.end_date ? formatPermitDate(reg.end_date) : '';
-    if (!reg.start_date && !reg.end_date) return '상시 적용';
-    if (!reg.end_date) return `${start} ~ 현재`;
-    return `${start} ~ ${end}`;
-  };
-
-  // 아코디언 아이템 렌더링
-  let html = `
-    <div class="accordion-item${facility.required ? ' required' : ''}">
-      <div class="accordion-header" onclick="toggleAccordion(this)">
-        <div class="accordion-title">
-          <span class="accordion-icon">${facility.icon}</span>
-          <span class="accordion-name">${facility.name}</span>
-        </div>
-        <span class="accordion-badge ${facility.required ? 'required' : 'optional'}">
-          ${facility.required ? '필수' : '비해당'}
-        </span>
-        <svg class="accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      </div>
-      <div class="accordion-content">
-  `;
-
-  if (applicableRegs.length > 0) {
-    applicableRegs.forEach(reg => {
-      html += `
-        <div class="reg-summary">
-          <span class="reg-period">${formatPeriod(reg)}</span>
-          <p class="reg-criteria">${reg.criteria}</p>
-          ${reg.applicable_to ? `<span class="reg-target">${reg.applicable_to}</span>` : ''}
-        </div>
-      `;
-    });
-  } else {
-    html += `
-      <div class="reg-summary empty">
-        <p class="reg-criteria">적용되는 설치 기준이 없습니다.</p>
-      </div>
-    `;
-  }
-
-  html += `
-      </div>
-    </div>
-  `;
-
-  return html;
-}
-
-// 규정 적용 기간 포맷
-function formatRegulationPeriod(startDate, endDate) {
-  const formatDate = (dateStr) => {
-    if (!dateStr) return null;
-    return dateStr; // YYYYMMDD 형식 그대로 사용
-  };
-
-  const start = formatDate(startDate);
-  const end = formatDate(endDate);
-
-  if (!start && !end) {
-    return '상시 적용';
-  } else if (!start) {
-    return `~ ${end}`;
-  } else if (!end) {
-    return `${start} ~`;
-  } else {
-    return `${start} ~ ${end}`;
-  }
-}
-
 // 소방시설 카드에서 호출 (currentBuildingData 사용)
 window.showFireStandardsModalFromCard = function() {
   if (!currentBuildingData) {
@@ -3773,19 +3491,20 @@ window.showFireStandardsModalFromCard = function() {
     return;
   }
 
-  const { generalItems, permitItems, titleItems } = currentBuildingData;
+  const { generalItems, titleItems } = currentBuildingData;
   const generalInfo = generalItems[0] || {};
-  const permitInfo = permitItems[0] || {};
   const mainTitle = titleItems && titleItems.length > 0 ? titleItems[0] : {};
 
   const mainPurpose = generalInfo.mainPurpsCdNm || mainTitle.mainPurpsCdNm || '-';
-  const permitDate = permitInfo.archPmsDay || generalInfo.pmsDay || '';
+  // 소방시설 카드와 같은 기준일(허가 신청일을 입력했으면 신청일, 아니면 허가일, 없으면 사용승인일)
+  const permitDate = currentFacilitiesResult?.referenceDate || currentFacilitiesResult?.permitDate || getPrimaryPermitInfo().permitDate;
+  const dateLabel = currentFacilitiesResult ? referenceDateLabel(currentFacilitiesResult) : '건축허가일';
 
-  showFireStandardsModal(mainPurpose, permitDate, null);
+  showFireStandardsModal(mainPurpose, permitDate, null, dateLabel);
 };
 
 // 소방기준 모달 콘텐츠 렌더링
-function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
+function renderFireStandardsModalContent(data, permitDate, buildingInfo, dateLabel = '허가일') {
   const permitNum = parseInt(permitDate) || 0;
 
   // 카테고리별 시설 그룹핑
@@ -3827,7 +3546,7 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
   let html = `
     <div class="fire-standards-header-info">
       <span class="purpose-badge">${esc(data.building_type)}</span>
-      ${permitDate ? `<span class="permit-date-badge">허가일: ${formatPermitDate(permitDate)}</span>` : ''}
+      ${permitDate ? `<span class="permit-date-badge">${esc(dateLabel)}: ${formatPermitDate(permitDate)}</span>` : ''}
     </div>
   `;
 
@@ -3876,7 +3595,7 @@ function renderFireStandardsModalContent(data, permitDate, buildingInfo) {
   // 참고사항
   html += `
     <div class="fire-standards-note">
-      <p>※ 위 기준은 허가일(${formatPermitDate(permitDate) || '-'}) 당시 적용되는 법령을 기준으로 합니다.</p>
+      <p>※ 위 기준은 ${esc(dateLabel)}(${formatPermitDate(permitDate) || '-'}) 당시 적용되는 법령을 기준으로 합니다.</p>
       <p>※ 실제 소방시설 설치 여부는 건축물의 세부 조건에 따라 달라질 수 있습니다.</p>
     </div>
   `;
@@ -4088,6 +3807,7 @@ window.closeManualInputModal = function() {
 // 수동 입력 제출
 window.submitManualInput = function() {
   const permitDateInput = document.getElementById('manualPermitDate').value;
+  const appliedDateInput = document.getElementById('manualAppliedDate')?.value || '';
   const purpose = document.getElementById('manualPurpose').value;
   const area = parseFloat(document.getElementById('manualArea').value) || 0;
   const groundFloors = parseInt(document.getElementById('manualGroundFloors').value) || 0;
@@ -4110,6 +3830,21 @@ window.submitManualInput = function() {
       today.getDate().toString().padStart(2, '0');
   }
 
+  // 허가 신청일 (선택) — 실제 날짜가 아니거나, 허가일 없이 또는 허가일보다 늦게 넣으면 받지 않는다
+  const appliedDate = parseYmdInput(appliedDateInput);
+  if (appliedDateInput && !appliedDate) {
+    alert('허가 신청일을 다시 확인해 주세요 (1900년 이후 날짜).');
+    return;
+  }
+  if (appliedDate && !permitDateInput) {
+    alert('허가 신청일을 쓰려면 허가일도 입력해 주세요.');
+    return;
+  }
+  if (appliedDate && appliedDate > permitDate) {
+    alert('허가 신청일은 허가일보다 늦을 수 없습니다.');
+    return;
+  }
+
   // 모달 닫기
   closeManualInputModal();
 
@@ -4122,11 +3857,18 @@ window.submitManualInput = function() {
     ugrndFlrCnt: undergroundFloors,
     pmsDay: permitDate,        // 소방시설 판정용
     archPmsDay: permitDate,
+    permitDateAssumed: !permitDateInput, // 허가일을 비워 오늘로 둠 — 신청일 경계 안내를 띄우지 않는다
     isManualInput: true
   };
+  // 신청일 변경 후 다시 그릴 때 쓰는 원래 입력 (신청일은 currentAppliedDay 로 따로 관리)
+  lastManualBuildingInfo = buildingInfo;
+  currentAppliedDay = appliedDate;
+  preLawModalShownFor = '';
+  // 직접 입력 결과는 주소창으로 되살릴 수 없으므로, 이전 주소 조회의 신청일 파라미터만 지운다
+  removeAppliedFromUrl();
 
   // 결과 영역에 표시
-  displayManualResult(buildingInfo, permitDate);
+  displayManualResult({ ...buildingInfo, appliedDay: appliedDate }, permitDate);
 };
 
 // 수동 입력 결과 표시
@@ -4157,6 +3899,11 @@ async function displayManualResult(buildingInfo, permitDate) {
           <span class="summary-grid-label">허가일</span>
           <span class="summary-grid-value">${formatPermitDate(permitDate)}</span>
         </div>
+        ${toYmd(buildingInfo.appliedDay) ? `
+        <div class="summary-grid-item">
+          <span class="summary-grid-label">허가 신청일</span>
+          <span class="summary-grid-value">${formatPermitDate(buildingInfo.appliedDay)}</span>
+        </div>` : ''}
         <div class="summary-grid-item">
           <span class="summary-grid-label">연면적</span>
           <span class="summary-grid-value">${buildingInfo.totArea ? Number(buildingInfo.totArea).toLocaleString() + '㎡' : '-'}</span>
@@ -4178,7 +3925,8 @@ async function displayManualResult(buildingInfo, permitDate) {
   resultContainer.innerHTML = html;
 
   // 헤더 숨기기
-  document.querySelector('header').classList.add('hidden');
+  const mainHeader = document.getElementById('mainHeader');
+  if (mainHeader) mainHeader.classList.add('hidden');
 
   // 직접 입력 링크 숨기기
   const manualLink = document.querySelector('.manual-search-link');
@@ -4203,6 +3951,21 @@ window.shareBuilding = async function() {
   const bjdongCd = general.bjdongCd || title.bjdongCd;
   const bun = general.bun || title.bun;
   const ji = general.ji || title.ji;
+  const platGbCd = normalizePlatGbCd(general.platGbCd || title.platGbCd);
+  // 신청일 기준으로 보고 있으면 받는 사람도 같은 기준으로 열리게 링크에 붙인다
+  const appliedDay = toYmd(currentAppliedDay);
+
+  // 공유 링크 폴백용 파라미터 URL
+  const buildParamUrl = () => {
+    const params = new URLSearchParams();
+    if (sigunguCd) params.set('sigungu', sigunguCd);
+    if (bjdongCd) params.set('bjdong', bjdongCd);
+    if (bun) params.set('bun', bun);
+    if (ji) params.set('ji', ji);
+    if (platGbCd !== '0') params.set('plat', platGbCd);
+    if (appliedDay) params.set('applied', appliedDay);
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
 
   let shareUrl;
 
@@ -4210,26 +3973,15 @@ window.shareBuilding = async function() {
     // Firebase에 공유 링크 생성 (짧은 URL)
     const fb = await loadFirebase();
     if (fb && sigunguCd && bjdongCd) {
-      const shortId = await fb.createShareLink({ sigunguCd, bjdongCd, bun, ji });
-      shareUrl = `${window.location.origin}${window.location.pathname}?s=${shortId}`;
+      const shortId = await fb.createShareLink({ sigunguCd, bjdongCd, bun, ji, platGbCd });
+      shareUrl = `${window.location.origin}${window.location.pathname}?s=${shortId}${appliedDay ? `&applied=${appliedDay}` : ''}`;
     } else {
-      // 폴백: 기존 파라미터 방식
-      const params = new URLSearchParams();
-      if (sigunguCd) params.set('sigungu', sigunguCd);
-      if (bjdongCd) params.set('bjdong', bjdongCd);
-      if (bun) params.set('bun', bun);
-      if (ji) params.set('ji', ji);
-      shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      // 폴백: 파라미터 방식
+      shareUrl = buildParamUrl();
     }
   } catch (error) {
-    console.error('짧은 링크 생성 실패, 기존 방식 사용:', error);
-    // 폴백: 기존 파라미터 방식
-    const params = new URLSearchParams();
-    if (sigunguCd) params.set('sigungu', sigunguCd);
-    if (bjdongCd) params.set('bjdong', bjdongCd);
-    if (bun) params.set('bun', bun);
-    if (ji) params.set('ji', ji);
-    shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    console.error('짧은 링크 생성 실패, 파라미터 방식 사용:', error);
+    shareUrl = buildParamUrl();
   }
 
   const shareText = `[소방용 건축물대장]

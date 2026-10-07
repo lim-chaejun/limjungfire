@@ -589,10 +589,12 @@ export async function createShareLink(data) {
       sigunguCd: String(data.sigunguCd || ''),
       bjdongCd: String(data.bjdongCd || ''),
       bun: String(data.bun || ''),
-      ji: String(data.ji || '')
+      ji: String(data.ji || ''),
+      platGbCd: String(data.platGbCd || '0')
     };
     if (!/^\d{5}$/.test(payload.sigunguCd) || !/^\d{5}$/.test(payload.bjdongCd) ||
-        !/^\d{0,4}$/.test(payload.bun) || !/^\d{0,4}$/.test(payload.ji)) {
+        !/^\d{0,4}$/.test(payload.bun) || !/^\d{0,4}$/.test(payload.ji) ||
+        !/^[0-2]$/.test(payload.platGbCd)) {
       throw new Error('공유 링크 형식이 올바르지 않습니다.');
     }
 
